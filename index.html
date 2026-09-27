@@ -278,7 +278,7 @@
   .bk-nav button:hover:not(:disabled){ border-color:var(--ink); }
   .bk-nav button:disabled{ opacity:.35; cursor:default; }
   @media (hover:hover) and (pointer:fine){ .bk-nav{ display:inline-flex; } .bk-note .swipe{ display:none; } }
-  .e .n .sk{ display:block; font:500 10.5px/1.3 "Chivo Mono", monospace; color:var(--dim); letter-spacing:.02em; margin-top:1px; }
+  .e .n .sk{ display:block; font:500 10px/1.3 "Chivo Mono", monospace; color:var(--dim); letter-spacing:0; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .opt .osk{ display:block; font:500 10.5px/1.3 "Chivo Mono", monospace; color:var(--board-dim); margin-top:2px; }
   /* ---------- bracket ---------- */
   .bk-wrap{ position:relative; margin:0 -16px; }
@@ -292,7 +292,7 @@
     padding:0 16px 10px; -webkit-overflow-scrolling:touch; scrollbar-width:none;
   }
   .bk-scroll::-webkit-scrollbar{ display:none; }
-  .bk{ display:flex; width:max-content; --cw:238px; --gap:24px; --slot:158px; }
+  .bk{ display:flex; width:max-content; --cw:238px; --gap:24px; --slot:170px; }
   .bk-col{ width:calc(var(--cw) + var(--gap)); flex:none; scroll-snap-align:start; }
   .bk-col:last-child{ width:var(--cw); }
   .bk-hd{ height:46px; }
