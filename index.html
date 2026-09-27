@@ -646,7 +646,7 @@
         {label:"Semifinal", short:"SF", matches:[ m("15:15","Bana 1"), m("15:15","Bana 2") ]},
         {label:"Final", short:"Final", matches:[ m("17:45","Bana 1") ]}
       ]},
-      {key:"cons", label:"Placeringslottning 9–16", rounds:[
+      {key:"cons", label:"Plate 9–16", rounds:[
         {label:"Omgång 1", short:"R1", matches:[
           m("11:30","Bana 1","brunstrom","suarez","a",null,"W.O."),
           m("11:30","Bana 5","stahl","sahlstrom","b","6-2 6-0"),
@@ -654,7 +654,7 @@
           m("12:45","Bana 2",{ph:"Förlorare av Pettersson Österberg / Ekeland – Lundström / Callero"},"levihn")
         ]},
         {label:"Omgång 2", short:"R2", matches:[ m("15:15","Bana 3"), m("15:15","Bana 4") ]},
-        {label:"Match om 9:e plats", short:"9:e", matches:[ m("17:45","Bana 3") ]}
+        {label:"Plate-final", short:"PF", matches:[ m("17:45","Bana 3") ]}
       ]}
     ]
   };
@@ -685,7 +685,7 @@
         ]},
         {label:"Final", short:"Final", matches:[ m("17:45","Bana 3",null,null,"a",null,"Uppgivet") ]}
       ]},
-      {key:"cons", label:"Placeringslottning 9–16", rounds:[
+      {key:"cons", label:"Plate 9–16", rounds:[
         {label:"Omgång 1", short:"R1", matches:[
           m("11:30","Bana 4","kian","delibas","b","6-2 3-6 10-8"),
           m("11:30","Bana 5","bohlmark","wallen","a","7-5 7-5"),
@@ -696,7 +696,7 @@
           m("15:15","Bana 5",null,null,"b","3-6 6-2 10-6"),
           m("15:15","Bana 4",null,null,"a","6-4 6-4")
         ]},
-        {label:"Match om 9:e plats", short:"9:e", matches:[ m("17:45","Bana 2",null,null,"b","6-4 4-6 10-4") ]}
+        {label:"Plate-final", short:"PF", matches:[ m("17:45","Bana 2",null,null,"b","6-4 4-6 10-4") ]}
       ]}
     ]
   };
@@ -1001,7 +1001,7 @@
   function resCard(label, mt){
     return '<div class="res"><div class="mh"><span>' + esc(label + " · " + mt.t + " · " + mt.c) + '</span><span class="st">Förlust</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
   }
-  document.getElementById("kianRes").innerHTML = resCard("Omgång 1", kc) + resCard("Placering 9–16", kp);
+  document.getElementById("kianRes").innerHTML = resCard("Omgång 1", kc) + resCard("Plate 9–16", kp);
   renderEvent(KIAN_EVENT, document.getElementById("kianDraw"), null, "Kian");
 
   /* ================= info ================= */
