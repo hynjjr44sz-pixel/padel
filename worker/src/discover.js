@@ -1,13 +1,17 @@
-// Finds every upcoming or ongoing event Thea and Kian are entered in, straight from RankedIn:
-// tournaments (with the class they play, partner and draw stages) and team leagues (one entry per
-// play day with the team's ties). Used by the worker (tick + GET /events); index.html has a copy
-// of the same rules for when the worker cannot be reached.
+// Finds every upcoming or ongoing event the club's players (players.json) are entered in, straight from
+// RankedIn: tournaments (one entry per player and class: partner, draw stages) and team leagues (one entry
+// per team and play day, shared by the roster players of that team). Runs for a few players at a time
+// (index.js rotates through the roster); what it did not look at is kept from the previous record.
+// index.html has a copy of the same rules for the opened player when the worker cannot be reached.
 import { localToDate, isoLocal, dayOf, isoDay } from "./tz.js";
+import ROSTER from "./players.js";
 
-export const PLAYERS = [
-  { who: "thea", pid: 1675246, me: "Thea Holmberg Löving" },
-  { who: "kian", pid: 1680004, me: "Kian Borgström" }
-];
+// who = route key on the page ("#thea"), me = full name as RankedIn writes it
+export const PLAYERS = ROSTER.map(p => ({ who: p.key, pid: p.pid, me: p.name, name: p.short, team: p.team, teamId: p.teamId, league: p.league, division: p.division }));
+export const BY_PID = new Map(PLAYERS.map(p => [p.pid, p]));
+// Thea and Kian were the first two players: old push subscriptions ({thea, kian}) and links refer to them.
+export const LEGACY = { thea: 1675246, kian: 1680004 };
+const legacyFirst = pids => pids.slice().sort((a, b) => (Object.values(LEGACY).includes(b) ? 1 : 0) - (Object.values(LEGACY).includes(a) ? 1 : 0));
 export const API = "https://api.rankedin.com/v1";
 const DAY = 864e5, RI = "https://www.rankedin.com";
 
@@ -96,12 +100,18 @@ async function tournament(p, e, get, ctx) {
 async function teamleague(p, e, get, ctx) {
   const h = (await get("/teamleague/GetHeaderAsync?id=" + e.Id + "&language=en")) || {};
   if ((h.EndDate && String(h.EndDate).slice(0, 10) < ctx.today) || [2, 4].includes(h.EventState)) { ctx.ended.add("l" + e.Id); return []; }
-  const teams = await get("/teamleague/GetTeamLeagueTeamDetailsAsync?language=en&teamLeagueId=" + e.Id + "&participantId=" + p.pid);
-  const t = Array.isArray(teams) && teams[0];
+  // The roster knows the team of its own league: no lookup needed.
+  let t = p.league === e.Id && p.teamId ? { teamId: p.teamId, teamName: p.team, divisionName: p.division } : null;
+  if (!t) {
+    const teams = await get("/teamleague/GetTeamLeagueTeamDetailsAsync?language=en&teamLeagueId=" + e.Id + "&participantId=" + p.pid);
+    t = Array.isArray(teams) && teams[0];
+  }
   if (!t) return [];
+  ctx.teams.add(e.Id + ":" + t.teamId);
   const tm = await get("/teamleague/GetTeamMatchesAsync?teamid=" + t.teamId + "&language=en");
+  const mates = PLAYERS.filter(x => x.teamId === t.teamId);
   const old = ctx.prev.find(x => x.kind === "teamleague" && x.teamId === t.teamId && x.players);
-  let players = old ? old.players : null;
+  let players = mates.length ? mates.map(x => x.me) : old ? old.players : null;
   if (!players) {
     try {
       const hp = await get("/TeamLeague/GetTeamLeagueTeamHomepageAsync?teamId=" + t.teamId + "&language=en");
@@ -111,6 +121,7 @@ async function teamleague(p, e, get, ctx) {
       players = null;
     }
   }
+  const pids = legacyFirst([...new Set(mates.map(x => x.pid).concat(p.pid))]), first = BY_PID.get(pids[0]) || p;
   const days = {};
   for (const m of (tm && tm.matches) || []) {
     const d = m.details || {}, day = isoDay(d.date || d.time);
@@ -122,8 +133,9 @@ async function teamleague(p, e, get, ctx) {
       done: !!m.showResults, canceled: !!m.showCanceledInfoText
     });
   }
+  // who/pid/me: the team's first player (Thea/Kian first), for links; pids: every roster player in the team.
   return Object.keys(days).sort().map(day => ({
-    key: "l" + e.Id + "-" + t.teamId + "-" + day, kind: "teamleague", who: p.who, me: p.me, pid: p.pid,
+    key: "l" + e.Id + "-" + t.teamId + "-" + day, kind: "teamleague", who: first.who, me: first.me, pid: first.pid, pids,
     id: e.Id, leagueId: e.Id, name: cleanName(h.Name || e.Name), url: RI + (h.EventUrl || e.Link),
     teamId: t.teamId, team: t.teamName, division: t.divisionName || "", teamUrl: t.teamUrl ? RI + t.teamUrl : null, players,
     date: day, round: days[day].round, ties: days[day].ties.sort((a, b) => (a.time || "99").localeCompare(b.time || "99")),
@@ -132,30 +144,46 @@ async function teamleague(p, e, get, ctx) {
 }
 
 // get(path) -> parsed JSON (throws on HTTP errors; err.budget = out of subrequests).
-// prev: the last discovery record ({events, ended}). Returns {events, ended, partial}.
-export async function discover(get, now, prev) {
-  // Both players in the same tournament: fetch its info and class lists once per run.
+// prev: the last discovery record ({events, ended}). players: whom to look up now (default: everyone).
+// Returns {events, ended, refreshed: [who], partial}: events of the players (and teams) looked up are
+// replaced, everything else is kept from prev. partial = someone in `players` could not be finished.
+export async function discover(get, now, prev, players = PLAYERS) {
+  // Several players in the same tournament or team: fetch its info, class lists and team matches once per run.
   const seen = new Map(), raw = get;
   get = path => { if (!seen.has(path)) seen.set(path, raw(path)); return seen.get(path); };
-  const ctx = { now, today: dayOf(now), prev: (prev && prev.events) || [], ended: new Set((prev && prev.ended) || []) };
-  const out = [];
+  const ctx = { now, today: dayOf(now), prev: (prev && prev.events) || [], ended: new Set((prev && prev.ended) || []), teams: new Set() };
+  const fresh = [], refreshed = new Set(), teams = new Set();
   let partial = false;
-  const keepPrev = (who, id, kind) => ctx.prev.filter(x => x.who === who && x.id === id && (!kind || x.kind === kind)).forEach(x => out.push(x));
-  for (const p of PLAYERS) {
-    let pe;
-    try { pe = await get("/player/ParticipatedEventsAsync?playerId=" + p.pid + "&language=en&skip=0&take=100"); }
-    catch (err) { partial = true; ctx.prev.filter(x => x.who === p.who).forEach(x => out.push(x)); continue; }
-    for (const e of (pe && pe.Payload) || []) {
-      if (![3, 4].includes(e.Type) || [2, 4].includes(e.State)) continue;
-      if (ctx.ended.has((e.Type === 4 ? "t" : "l") + e.Id)) continue;
-      const start = localToDate(e.StartDate);
-      if (start && now - start > (e.Type === 4 ? 30 : 330) * DAY) continue;   // old league still "Active"
-      const kind = e.Type === 4 ? "tournament" : "teamleague";
-      if (partial) { keepPrev(p.who, e.Id, kind); continue; }
-      try { out.push(...await (e.Type === 4 ? tournament : teamleague)(p, e, get, ctx)); }
-      catch (err) { partial = true; keepPrev(p.who, e.Id, kind); }
+  for (const p of players) {
+    const mine = [];
+    ctx.teams = new Set();
+    try {
+      const pe = await get("/player/ParticipatedEventsAsync?playerId=" + p.pid + "&language=en&skip=0&take=100");
+      for (const e of (pe && pe.Payload) || []) {
+        if (![3, 4].includes(e.Type) || [2, 4].includes(e.State)) continue;
+        if (ctx.ended.has((e.Type === 4 ? "t" : "l") + e.Id)) continue;
+        const start = localToDate(e.StartDate);
+        if (start && now - start > (e.Type === 4 ? 30 : 330) * DAY) continue;   // old league still "Active"
+        mine.push(...await (e.Type === 4 ? tournament : teamleague)(p, e, get, ctx));
+      }
+    } catch (err) {
+      partial = true;   // this player keeps the previous entries; out of budget: stop here
+      if (err && err.budget) break;
+      continue;
     }
+    refreshed.add(p.who);
+    ctx.teams.forEach(k => teams.add(k));
+    fresh.push(...mine);
   }
+  const known = new Set(PLAYERS.map(p => p.who));
+  const out = ctx.prev.filter(x => x.kind === "teamleague" ? !teams.has(x.leagueId + ":" + x.teamId) : !refreshed.has(x.who) && known.has(x.who));
+  const byKey = new Map();
+  for (const x of fresh) {
+    const was = byKey.get(x.key);
+    if (was) { was.pids = legacyFirst([...new Set(was.pids.concat(x.pids))]); continue; }
+    byKey.set(x.key, x);
+  }
+  out.push(...byKey.values());
   out.sort((a, b) => a.windowFrom.localeCompare(b.windowFrom) || a.key.localeCompare(b.key));
-  return { events: out, ended: [...ctx.ended].slice(-300), partial };
+  return { events: out, ended: [...ctx.ended].slice(-300), refreshed: [...refreshed], partial };
 }
