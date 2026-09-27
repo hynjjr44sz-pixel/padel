@@ -1178,12 +1178,186 @@
       facts:"Starttider inte klara<br>Laget: Anton Svedman (kapten), Kian Borgström, Andreas Mickos, Oliver Lind, Svante Svedberg, Jones Elmourid, Javier Castilla<br>Nästa omgångar: 7 nov, 12 dec, 16 jan, 13 feb<br><a href=\"https://rankedin.com/en/teamleague/946/spl-swedish-padel-league-herrar-2026-27\" target=\"_blank\" rel=\"noopener\">Serien på RankedIn ↗</a>"});
 
   /* ================= Kian results ================= */
-  var kc = KIAN_EVENT.draws[0].rounds[0].matches[0], kp = KIAN_EVENT.draws[1].rounds[0].matches[0];
   function resCard(label, mt){
-    return '<div class="res"><div class="mh"><span>' + esc(label + " · " + mt.t + " · " + mt.c) + '</span><span class="st">Förlust</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
+    var st = mt.w ? (mt.meWon ? "Vinst" : "Förlust") : "";
+    return '<div class="res"><div class="mh"><span>' + esc(label + " · " + mt.t + " · " + mt.c) + '</span><span class="st">' + st + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
   }
-  document.getElementById("kianRes").innerHTML = resCard("Omgång 1", kc) + resCard("Plate 9–16", kp);
-  renderEvent(KIAN_EVENT, document.getElementById("kianDraw"), null, "Kian");
+  function renderKianAll(){
+    var h = "";
+    KIAN_EVENT.draws.forEach(function(d, di){ d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt){
+      if (mt.hasMe && mt.w) h += resCard(di === 0 ? rd.label : d.label + (r ? " · " + rd.label : ""), mt);
+    }); }); });
+    document.getElementById("kianRes").innerHTML = h;
+    rerenderEvent(KIAN_EVENT, document.getElementById("kianDraw"), null, "Kian");
+  }
+  renderKianAll();
+
+  /* ================= live results (RankedIn) ================= */
+  // Polls the draw endpoint every 60 s while the event window is open and the tab is visible.
+  // Everything is guarded: on any failure the page keeps showing the last known data.
+  // Test hooks: ?t=ISO fakes the clock, ?mock=<url> reads a local JSON instead of the API.
+  var LIVE_EVERY = 60000, LIVE_TIMEOUT = 10000;
+  function liveUrl(src){
+    var mock = params.get("mock");
+    if (mock) return mock;
+    return "https://api.rankedin.com/v1/tournament/GetDrawsForStageAndStrengthAsync?tournamentClassId=" + encodeURIComponent(src.classId) + "&drawStrength=0&drawStage=0&isReadonly=true&language=en";
+  }
+  function inWindow(src){ var t = now(); return !!src && t >= new Date(src.activeFrom) && t <= new Date(src.activeTo); }
+  function hhmm(d){
+    try { return d.toLocaleTimeString("sv-SE", {hour:"2-digit", minute:"2-digit", timeZone:"Europe/Stockholm"}); }
+    catch (e){ return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
+  }
+  // RankedIn participant -> pair key (known pairs by name, unknown pairs are created on the fly)
+  function pairKeyFor(ev, p){
+    var f = p && p.FirstPlayer, id = p && p.EventParticipantId;
+    if (!id || !f || !f.Name || f.Name === "Pending") return null;
+    if (ev.idMap[id]) return ev.idMap[id];
+    var names = [f.Name, p.SecondPlayer && p.SecondPlayer.Name].filter(Boolean), sig = pairSig(names), key = ev.sigMap[sig];
+    if (!key){
+      key = "rk" + id;
+      ev.pairs[key] = {n:names, key:key, me:names.some(function(n){ return slug(n) === slug(ev.meName || ""); })};
+      ev.sigMap[sig] = key;
+    }
+    if (p.Seed && !ev.pairs[key].seed) ev.pairs[key].seed = String(p.Seed);
+    ev.idMap[id] = key;
+    return key;
+  }
+  function cancelNote(mv){
+    var cs = String(mv.CancellationStatus || "").trim();
+    if (!cs && !mv.HasCancellation) return null;
+    if (/w\.?\s*o/i.test(cs)) return "W.O.";
+    if (/ret|upp/i.test(cs)) return "Uppgivet";
+    return cs || "W.O.";
+  }
+  // Score from the winner's side, as in the static data. A match tie-break arrives as 1-0 + LoserTiebreak.
+  function liveScore(mv, cancelled){
+    var ds = mv.Score && mv.Score.DetailedScoring;
+    if (!Array.isArray(ds) || !ds.length) return null;
+    var out = ds.map(function(x){
+      var f = Number(x && x.FirstParticipantScore), s = Number(x && x.SecondParticipantScore), lt = x && x.LoserTiebreak;
+      if (isNaN(f) || isNaN(s)) return null;
+      if (f + s === 1){
+        if (lt != null && !isNaN(Number(lt))){ var w = Math.max(10, Number(lt) + 2); return f ? [w, Number(lt)] : [Number(lt), w]; }
+        return "MTB";
+      }
+      return [f, s];
+    });
+    if (out.some(function(x){ return x === null; })) return null;
+    var won = 0, lost = 0;
+    out.forEach(function(x){ if (x === "MTB" || x[0] > x[1]) won++; else if (x[1] > x[0]) lost++; });
+    if (!cancelled && lost > won) out = out.map(function(x){ return x === "MTB" ? x : [x[1], x[0]]; });
+    return out.map(function(x){ return x === "MTB" ? x : x.join("-"); }).join(" ");
+  }
+  function parseDraws(ev, data){
+    if (!Array.isArray(data)) return null;
+    var ov = {}, any = false;
+    data.forEach(function(dr, k){
+      var el = dr && dr.Elimination;
+      if (!el || !Array.isArray(el.DrawData)) return;
+      var di = -1;
+      ev.specObj.forEach(function(d, j){ if (d.places != null && d.places === el.PlacesStartPos) di = j; });
+      if (di < 0) return;
+      var sd = ev.specObj[di];
+      el.DrawData.forEach(function(col){ (Array.isArray(col) ? col : []).forEach(function(c){
+        if (!c || !c.Round || !c.MatchOrder) return;
+        if (c.TournamentClassId && ev.live && c.TournamentClassId !== ev.live.classId) return;
+        var r = c.Round - 1, i = c.MatchOrder - 1;
+        if (!sd.rounds[r] || !sd.rounds[r].matches[i]) return;
+        var o = {}, ca = c.ChallengerParticipant, cb = c.ChallengedParticipant;
+        var ka = pairKeyFor(ev, ca), kb = pairKeyFor(ev, cb);
+        if (ka) o.a = ka;
+        if (kb) o.b = kb;
+        var tm = /^(\d{4})-\d\d-\d\dT(\d\d):(\d\d)/.exec(c.Date || "");
+        if (tm && +tm[1] > 2000) o.t = tm[2] + ":" + tm[3];
+        var court = String(c.CourtName || "").trim();
+        if (court) o.c = court;
+        var wid = c.WinnerParticipantId;
+        if (wid){
+          var wk = ca && wid === ca.EventParticipantId ? ka : (cb && wid === cb.EventParticipantId ? kb : null);
+          if (wk){
+            var mv = c.MatchViewModel || {};
+            o.wKey = wk; o.note = cancelNote(mv); o.s = liveScore(mv, !!o.note);
+          }
+        }
+        ov[di + ":" + r + ":" + i] = o; any = true;
+      }); });
+    });
+    return any ? ov : null;
+  }
+
+  var LIVE = [
+    {ev:THEA_EVENT, bar:document.getElementById("live-thea"), render:renderTheaAll},
+    {ev:KIAN_EVENT, bar:document.getElementById("live-kian"), render:renderKianAll}
+  ];
+  function setBar(L, state){
+    var bar = L.bar;
+    if (!bar) return;
+    if (state === "off"){ bar.hidden = true; return; }
+    bar.hidden = false;
+    bar.className = "livebar" + (state === "ok" ? " on" : (state === "err" ? " stale" : " wait"));
+    var txt = state === "ok" ? "<b>Live</b> · uppdaterad " + esc(hhmm(L.okAt)) :
+      state === "err" ? "Kunde inte hämta – visar senast kända" + (L.okAt ? " (" + esc(hhmm(L.okAt)) + ")" : "") :
+      "<b>Live</b> · hämtar resultat";
+    bar.querySelector(".ltxt").innerHTML = txt;
+  }
+  function withTimeout(p, ms, ctl){
+    return new Promise(function(res, rej){
+      var tm = setTimeout(function(){ try { if (ctl) ctl.abort(); } catch (e){} rej(new Error("timeout")); }, ms);
+      p.then(function(v){ clearTimeout(tm); res(v); }, function(e){ clearTimeout(tm); rej(e); });
+    });
+  }
+  function apply(L, ov){
+    var sig = JSON.stringify(ov);
+    if (sig === L.sig) return;
+    var prev = L.ev.overlay;
+    try {
+      L.ev.overlay = ov; build(L.ev); L.render(); L.sig = sig;
+    } catch (e){
+      L.ev.overlay = prev;
+      try { build(L.ev); L.render(); } catch (e2){}
+      throw e;
+    }
+  }
+  function poll(L){
+    clearTimeout(L.timer); L.timer = null;
+    if (!inWindow(L.ev.live)){ setBar(L, "off"); schedule(L); return; }
+    if (L.busy || document.visibilityState === "hidden") return;
+    L.busy = true;
+    if (!L.okAt && !L.failed) setBar(L, "wait");
+    var ctl = typeof AbortController === "function" ? new AbortController() : null, p;
+    try {
+      p = withTimeout(fetch(liveUrl(L.ev.live), {cache:"no-store", credentials:"omit", signal:ctl ? ctl.signal : undefined})
+        .then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), LIVE_TIMEOUT, ctl);
+    } catch (e){ p = Promise.reject(e); }
+    p.then(function(data){
+      var ov = parseDraws(L.ev, data);
+      if (!ov) throw new Error("unexpected data");
+      apply(L, ov);
+      L.okAt = now(); L.failed = false;
+      setBar(L, "ok");
+    }).catch(function(err){
+      L.failed = true;
+      setBar(L, "err");
+      if (window.console) console.warn("Live-uppdatering misslyckades:", err && err.message);
+    }).then(function(){
+      L.busy = false; L.lastPoll = Date.now();
+      schedule(L);
+    });
+  }
+  function schedule(L){
+    clearTimeout(L.timer);
+    if (document.visibilityState === "hidden"){ L.timer = null; return; }
+    L.timer = setTimeout(function(){ poll(L); }, LIVE_EVERY);
+  }
+  document.addEventListener("visibilitychange", function(){
+    LIVE.forEach(function(L){
+      if (document.visibilityState === "hidden"){ clearTimeout(L.timer); L.timer = null; }
+      else if (!L.lastPoll || Date.now() - L.lastPoll > 5000) poll(L);
+      else schedule(L);
+    });
+  });
+  LIVE.forEach(function(L){ try { poll(L); } catch (e){} });
+
 
   /* ================= info ================= */
   var SRC = {
