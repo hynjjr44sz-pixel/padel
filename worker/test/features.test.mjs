@@ -234,3 +234,26 @@ test("draw check: every 15 min within 48 h of the start, hourly up to 7 days", a
     assert.equal(seen.length, 2, seen.join(" "));
   } finally { globalThis.fetch = orig; }
 });
+
+test("ranking: baseline silent, new Monday list -> one notis per player, unchanged -> no write", async () => {
+  const { rankingChecks } = await import("../src/index.js");
+  const store = new Map(), puts = [];
+  const env = { PUSH: { get: async k => store.get(k) ?? null, put: async (k, v) => { puts.push(k); store.set(k, v); } }, API_BASE: "http://x" };
+  let list = { d: "2026-09-21T00:00:00", s: 150, p: 68.695 };
+  const orig = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ Payload: [{ Participant: { NewParticipantId: 1675246 }, ParticipantPoints: { RankingDate: list.d, Standing: list.s, Points: list.p } }] }));
+  const P = [{ who: "thea", pid: 1675246, name: "Thea", q: "Holmberg", rt: 4, ag: 83, list: "Dam huvudlista" }];
+  try {
+    const t = new Date("2026-09-27T20:52:00+02:00");
+    assert.deepEqual(await rankingChecks(env, t, { left: 45 }, {}, P), []);
+    assert.equal(puts.length, 1);
+    assert.deepEqual(await rankingChecks(env, t, { left: 45 }, {}, P), []);
+    assert.equal(puts.length, 1, "unchanged: no KV write");
+    list = { d: "2026-09-28T00:00:00", s: 142, p: 78.695 };
+    const n = await rankingChecks(env, new Date("2026-09-28T03:52:00+02:00"), { left: 45 }, {}, P);
+    assert.equal(n.length, 1);
+    assert.equal(n[0].m.title, "Ny ranking: Thea #142 ▲︎ 8 platser");
+    assert.equal(n[0].m.body, "78.7 p (+10.0) · Dam huvudlista");
+    assert.equal(n[0].m.url, "./#thea");
+  } finally { globalThis.fetch = orig; }
+});

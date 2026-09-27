@@ -6,6 +6,7 @@ import { parse, snapshot, notes, drawNote } from "./rankedin.js";
 import { discover, drawPath, rubbersPath, namesPath, drawsOf, API } from "./discover.js";
 import { parseTie, snapshotTie, tieNotes } from "./teamleague.js";
 import { b64u, vapidKey, send } from "./webpush.js";
+import { dayOf } from "./tz.js";
 
 // Push services we are willing to POST to (no open relay). PUSH_HOST_ANY=1 is for local tests only.
 const PUSH_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(fcm\.googleapis\.com|android\.googleapis\.com|push\.services\.mozilla\.com|push\.apple\.com|notify\.windows\.com)(:\d+)?\//;
@@ -149,6 +150,39 @@ export function pastOf(rec, events, t) {
 const PUB_MINUTE = 37;   // not exported: workerd only accepts functions and handlers as module exports
 // Draws are often published the evening before or the same morning: within 48 h of the start the check also
 // runs every 15 min (minutes 7, 22, 37, 52), limited to those classes.
+// New SPF ranking (published in the night to Monday): a look every hour at minute 52 (2 RankedIn calls),
+// KV "rank:<pid>" written only when RankedIn's ranking date/standing/points change; a new ranking date
+// gives one notis per player. The first look is the baseline.
+const RANK_MINUTE = 52;
+const RANKED = [
+  { who: "thea", pid: 1675246, name: "Thea", q: "Holmberg", rt: 4, ag: 83, list: "Dam huvudlista" },
+  { who: "kian", pid: 1680004, name: "Kian", q: "Borgström", rt: 3, ag: 82, list: "Herrar huvudlista" }
+];
+export async function rankingChecks(env, t, budget, log, players = RANKED) {
+  const get = getter(env, budget), msgs = [];
+  for (const p of players) {
+    let x;
+    const q = "/Ranking/SearchRankingPlayersAsync?rankingId=1917&rankingType=" + p.rt + "&ageGroup=" + p.ag +
+      "&weekFromNow=0&language=en&searchTerm=" + encodeURIComponent(p.q) + "&skip=0&take=20&rankingDate=" + dayOf(t);
+    try { x = await get(q); } catch (e) { if (e.budget) break; console.warn("ranking", p.who, e.message); continue; }
+    const me = ((x && x.Payload) || []).find(r => r && r.Participant && r.Participant.NewParticipantId === p.pid && r.ParticipantPoints);
+    if (!me) continue;
+    const pp = me.ParticipantPoints, cur = { d: String(pp.RankingDate).slice(0, 10), s: pp.Standing, p: pp.Points };
+    const key = "rank:" + p.pid, raw = await env.PUSH.get(key), prev = raw ? JSON.parse(raw) : null;
+    if (prev && prev.d === cur.d && prev.s === cur.s && prev.p === cur.p) continue;
+    await env.PUSH.put(key, JSON.stringify(cur));
+    log.writes = (log.writes || 0) + 1;
+    if (!prev || prev.d >= cur.d) continue;   // baseline or a correction of the same list: no notis
+    const up = prev.s - cur.s, dp = cur.p - prev.p, f = v => v.toFixed(v >= 20 ? 1 : 2);
+    msgs.push({ who: p.who, m: {
+      title: "Ny ranking: " + p.name + " #" + cur.s + (up ? (up > 0 ? " \u25B2\uFE0E " : " \u25BC\uFE0E ") + Math.abs(up) + (Math.abs(up) === 1 ? " plats" : " platser") : " (oförändrad)"),
+      body: f(cur.p) + " p" + (dp ? " (" + (dp > 0 ? "+" : "\u2212") + Math.abs(dp).toFixed(1) + ")" : "") + " · " + p.list,
+      tag: "padel-rank-" + p.pid, url: "./#" + p.who } });
+  }
+  if (msgs.length) log.ranked = msgs.length;
+  return msgs;
+}
+
 export async function drawChecks(env, t, list, budget, log, within = 7 * DAY) {
   const soon = list.filter(e => e.kind === "tournament" && e.tournamentId && e.classId &&
     new Date(e.windowTo) > t && new Date(e.windowFrom) - t <= within);
@@ -207,6 +241,9 @@ export async function tick(env, events) {
   const mm = t.getUTCMinutes(), full = mm === (env.PUB_MINUTE != null ? +env.PUB_MINUTE : PUB_MINUTE);   // PUB_MINUTE: local tests only
   if (full || (env.PUB_MINUTE == null && mm % 15 === PUB_MINUTE % 15)) {
     try { pubMsgs = await drawChecks(env, t, list, budget, log, full ? 7 * DAY : 2 * DAY); } catch (e) { console.warn("draw checks", e.message); }
+  }
+  if (!events && env.RANK_OFF !== "1" && mm === RANK_MINUTE) {   // RANK_OFF: local tests only
+    try { pubMsgs.push(...await rankingChecks(env, t, budget, log)); } catch (e) { console.warn("ranking checks", e.message); }
   }
   const evs = activeEvents(t, list);
   if (!evs.length && !pubMsgs.length) {

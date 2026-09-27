@@ -3439,7 +3439,8 @@
     var c = store.json(TREND_KEY);
     applyTrend(c);
     ["thea", "kian"].forEach(renderTrend);
-    if (c && c.t && Date.now() - c.t < 6 * HOUR) return;
+    // New SPF ranking comes out in the night to Monday: on Mondays the cache lasts 1 h instead of 6 h.
+    if (c && c.t && Date.now() - c.t < (new Date().getDay() === 1 ? 1 : 6) * HOUR) return;
     Promise.all([fetchTrend("thea"), fetchTrend("kian")]).then(function(r){
       var n = {t:Date.now(), thea:r[0], kian:r[1]};
       if (!Object.keys(r[0]).length && !Object.keys(r[1]).length) return;   // RankedIn down: keep what we have
