@@ -133,6 +133,9 @@
   .bell[aria-pressed="true"] .bd{ display:block; }
   .bell .bd{ display:none; }
   .brand{ min-width:0; }
+  .brand{ display:flex; align-items:center; gap:8px; }
+  .brand img{ height:24px; width:auto; flex:none; }
+  .brand span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
   @media (max-width:379px){ .bell{ width:30px; padding:0; justify-content:center; } .bell span{ display:none; } }
   .nhint{
     margin:8px 0 0; padding:9px 12px; border-radius:12px; background:var(--surface); border:1px solid var(--line);
@@ -510,7 +513,7 @@
   <header class="top">
     <div class="top-in">
       <div class="brandrow">
-        <div class="brand">Nynäs Padel Club</div>
+        <div class="brand"><img src="img/nynas-logo.png" width="78" height="100" alt=""><span>Nynäs Padel Club</span></div>
         <div class="tools">
           <div class="today" id="today">Sön 27 sep</div>
           <button class="bell" id="bell" type="button" aria-pressed="false" aria-label="Notiser" title="Notis när ett resultat kommer in">
