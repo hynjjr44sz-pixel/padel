@@ -331,6 +331,15 @@
   .bk-note i{ display:inline-block; width:14px; height:0; border-top:2.5px solid var(--accent); vertical-align:3px; margin-right:6px; }
 
   table.gt{ width:100%; border-collapse:collapse; font-size:13px; }
+  .tbl{ margin-top:14px; padding:12px 14px 6px; }
+  .tblhd{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:4px; }
+  .tblhd b{ font:900 20px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; }
+  .tblhd span{ font:500 11px/1.3 "Chivo Mono", monospace; color:var(--dim); text-align:right; }
+  .tbl .gt td:first-child{ max-width:0; width:52%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tbl .gt th, .tbl .gt td{ padding-left:3px; padding-right:3px; }
+  .tbl .gt tr.me td{ background:var(--accent-soft); font-weight:700; }
+  .tbl .gt tr.me td:first-child{ box-shadow:inset 3px 0 0 var(--accent); }
+  .tpos{ display:inline-block; width:18px; color:var(--dim); font:500 11px/1 "Chivo Mono", monospace; }
   .gt th{ font:500 10.5px/1 "Chivo Mono", monospace; color:var(--dim); text-align:right; padding:6px 4px; }
   .gt th:first-child, .gt td:first-child{ text-align:left; }
   .gt td{ padding:8px 4px; border-top:1px solid var(--line); text-align:right; font-family:"Chivo Mono", monospace; }
@@ -2854,6 +2863,37 @@
     if (inWin(e)) o.recent = recentHtml(D.who, tieFinished(m));
     setHero(D, o);
     D.el.draw.innerHTML = tlListHtml(e, m, day);
+    tlTableInto(D.el.draw, e);
+  }
+  /* ---- team league: division table (RankedIn pools -> standings), own team highlighted ---- */
+  var TBL = {};
+  function tlNorm(x){ return String(x || "").toLowerCase().replace(/[\s\u2013\u2014-]+/g, " ").trim(); }
+  function tlTable(e){
+    var lid = e.leagueId || e.id, k = lid + ":" + e.division, c = TBL[k];
+    if (c && Date.now() - c.t < 10 * 60000) return c.p;
+    var p = riGet("/teamleague/GetPoolsInfoAsync?id=" + lid + "&language=en").then(function(x){
+      var want = tlNorm(e.division), pool = ((x && x.pools) || []).filter(function(pl){ var n = tlNorm(pl.name); return want && (n === want || n.slice(-want.length - 3).indexOf(" " + want) >= 0 || n.lastIndexOf(want) === n.length - want.length); })[0];
+      if (!pool) throw new Error("pool");
+      return riGet("/teamleague/GetTeamStandingsAsync?poolId=" + pool.id + "&language=en").then(function(y){ return {pool:pool, rows:(y && y.scoresViewModels) || []}; });
+    });
+    TBL[k] = {t:Date.now(), p:p};
+    p.catch(function(){ delete TBL[k]; });
+    return p;
+  }
+  function tlTableHtml(e, d){
+    var mine = function(r){ return (e.teamId && String(r.participantUrl || "").indexOf("/" + e.teamId) >= 0) || r.participantName === e.team; };
+    var played = d.rows.some(function(r){ return r.played > 0; });
+    return '<div class="card tbl"><div class="tblhd"><b>Tabell</b><span>' + esc(e.division) + (played ? "" : " · inga matcher spelade än") + '</span></div>' +
+      '<table class="gt"><thead><tr><th>Lag</th><th title="Spelade">S</th><th title="Vunna">V</th><th title="Oavgjorda">O</th><th title="Förlorade">F</th><th title="Matchskillnad">+/-</th><th title="Poäng">P</th></tr></thead><tbody>' +
+      d.rows.map(function(r){
+        var gd = r.gamesDifference || 0;
+        return '<tr' + (mine(r) ? ' class="me"' : '') + '><td><span class="tpos">' + r.standing + '</span>' + esc(r.participantName) + '</td><td>' + r.played + '</td><td>' + r.wins + '</td><td>' + r.draws + '</td><td>' + r.losses + '</td><td>' + (gd > 0 ? "+" : "") + gd + '</td><td><b>' + r.matchPoints + '</b></td></tr>';
+      }).join("") + '</tbody></table></div>';
+  }
+  function tlTableInto(host, e){
+    if (!host || !e || !e.division) return;
+    var box = document.createElement("div"); box.className = "tblwrap"; host.appendChild(box);
+    tlTable(e).then(function(d){ if (d.rows.length) box.innerHTML = tlTableHtml(e, d); }, function(){});
   }
   function tlListHtml(e, m, day){
     return m.ties.map(function(x){
@@ -3052,6 +3092,7 @@
       o.h = m.ties.length > 1 ? "Lagmatcher" : "Lagmatch"; o.meta = e.team + (e.division ? " · " + e.division : "");
       setHero(D, o);
       D.el.draw.innerHTML = tlListHtml(e, m, riDate(e.date + "T12:00"));
+      tlTableInto(D.el.draw, e);
       return;
     }
     var ev = D.model || buildTour(e, []), st = tourState(ev), npairs = Object.keys(ev.pairs).length || e.pairs || 0;
