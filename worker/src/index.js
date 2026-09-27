@@ -1,7 +1,10 @@
 // padel-push: Web Push for padel.holmberg.st. A cron tick every minute polls RankedIn while an
-// event in events.js is active, diffs against the last state in KV and pushes new results.
-import { EVENTS, activeEvents } from "./events.js";
-import { drawUrl, parse, snapshot, notes } from "./rankedin.js";
+// event is active, diffs against the last state in KV and pushes new results. Events come from
+// discover.js (every event Thea and Kian enter on RankedIn, refreshed hourly) merged with events.js.
+import { EVENTS, activeEvents, merge, normalize } from "./events.js";
+import { parse, snapshot, notes } from "./rankedin.js";
+import { discover, drawPath, rubbersPath, API } from "./discover.js";
+import { parseTie, snapshotTie, tieNotes } from "./teamleague.js";
 import { b64u, vapidKey, send } from "./webpush.js";
 
 // Push services we are willing to POST to (no open relay). PUSH_HOST_ANY=1 is for local tests only.
@@ -46,8 +49,16 @@ async function handle(req, env) {
   // Writes only from the site (or localhost): keeps drive-by pages from filling KV (1000 writes/day).
   if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
   const route = req.method + " " + url.pathname;
-  if (route === "GET /health") return json({ ok: true, active: activeEvents(now(env)).map(e => e.cls) }, 200, h);
-  if (route === "GET /vapid") return json({ key: env.VAPID_PUBLIC_KEY || "", classes: EVENTS.map(e => e.classId) }, env.VAPID_PUBLIC_KEY ? 200 : 503, h);
+  if (route === "GET /health") {
+    const rec = await loadRecord(env);
+    return json({ ok: true, active: activeEvents(now(env), merge(rec ? rec.events : [])).map(e => e.cls || e.name), discoveredAt: rec ? rec.at : null }, 200, h);
+  }
+  if (route === "GET /vapid") return json({ key: env.VAPID_PUBLIC_KEY || "", classes: await covers(env) }, env.VAPID_PUBLIC_KEY ? 200 : 503, h);
+  if (route === "GET /events") {
+    const t = now(env), rec = await loadRecord(env);
+    const events = merge(rec ? rec.events : []).filter(e => new Date(e.windowTo) > +t - 36 * 3600e3);
+    return json({ at: rec ? rec.at : null, src: "worker", events }, 200, { ...h, "Cache-Control": "public, max-age=300" });
+  }
   if (route === "POST /subscribe") {
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
@@ -72,36 +83,126 @@ async function handle(req, env) {
 }
 
 const now = env => env.NOW ? new Date(env.NOW) : new Date();   // NOW: local tests only
+const H = 3600e3, SUBREQUESTS = 45;
 
-async function fetchStage(env, ev, stage) {
-  const u = env.FIXTURE_URL ? env.FIXTURE_URL.replace("{classId}", ev.classId).replace("{stage}", stage) : drawUrl(ev.classId, stage);
+/* ---- discovered events: KV "disc" = {at, events, ended, partial}. Read at most every 5 min per isolate. ---- */
+let MEM = { rec: undefined, readAt: 0, tryAt: 0 };
+export function _resetMemory() { MEM = { rec: undefined, readAt: 0, tryAt: 0 }; }
+async function loadRecord(env) {
+  if (MEM.rec !== undefined && Date.now() - MEM.readAt < 5 * 60e3) return MEM.rec;
+  let rec = null;
+  try { rec = JSON.parse((await env.PUSH.get("disc")) || "null"); } catch (e) { rec = null; }
+  MEM.rec = rec; MEM.readAt = Date.now();
+  return rec;
+}
+async function covers(env) {
+  const rec = await loadRecord(env), out = EVENTS.map(e => e.classId);
+  merge(rec ? rec.events : []).forEach(e => (e.cover || []).forEach(c => { if (!out.map(String).includes(String(c))) out.push(c); }));
+  return out;
+}
+// Hourly at minute 7, when nothing is stored yet, after a partial run, or when the record is 6 h old.
+// No KV write unless the list changed (or 6 h passed, which also refreshes "at").
+export function discoveryDue(rec, t) {
+  if (Date.now() - MEM.tryAt < 5 * 60e3 && rec) return false;
+  return !rec || !!rec.partial || t.getUTCMinutes() === 7 || +t - new Date(rec.at) > 6 * H;
+}
+function getter(env, budget) {
+  return async path => {
+    if (budget.left <= 0) { const e = new Error("subrequest budget"); e.budget = true; throw e; }
+    budget.left--;
+    const res = await fetch((env.API_BASE || API) + path, { headers: { "Accept": "application/json" }, signal: AbortSignal.timeout(10000) });
+    if (!res.ok) throw new Error("RankedIn HTTP " + res.status + " " + path.split("?")[0]);
+    return res.json();
+  };
+}
+export async function runDiscovery(env, t, budget, rec, log = {}) {
+  MEM.tryAt = Date.now();
+  const mine = { left: Math.min(35, budget.left) }, start = mine.left;
+  const res = await discover(getter(env, mine), t, rec);
+  budget.left -= start - mine.left;
+  const next = { at: t.toISOString(), events: res.events, ended: res.ended };
+  if (res.partial) next.partial = true;
+  const sig = r => JSON.stringify([r.events, r.ended, !!r.partial]);
+  log.discovered = res.events.length;
+  if (!rec || sig(rec) !== sig(next) || +t - new Date(rec.at) > 6 * H) {
+    await env.PUSH.put("disc", JSON.stringify(next));
+    log.writes = (log.writes || 0) + 1;
+    rec = next;
+  }
+  MEM.rec = rec; MEM.readAt = Date.now();
+  return rec;
+}
+
+async function fetchDraw(env, get, classId, stage, strength) {
+  if (!env.FIXTURE_URL) return get(drawPath(classId, stage, strength));
+  const u = env.FIXTURE_URL.replace("{classId}", classId).replace("{stage}", stage).replace("{strength}", strength || 0);
   const res = await fetch(u, { headers: { "Accept": "application/json" }, signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error("RankedIn HTTP " + res.status);
   return res.json();
 }
 
-const SUBREQUESTS = 45;
-// One cron tick. Returns what happened (used by tests and logs).
-export async function tick(env, events = EVENTS) {
-  const evs = activeEvents(now(env), events);
-  if (!evs.length) return { active: 0 };
-  const msgs = [], log = { active: evs.length, writes: 0, sent: 0, removed: 0 };
-  let fetches = 0;
+// One cron tick. events: explicit list (tests); otherwise discovered + static. Returns what happened.
+export async function tick(env, events) {
+  const t = now(env), budget = { left: SUBREQUESTS }, log = { writes: 0, sent: 0, removed: 0 };
+  let list;
+  if (events) list = events.map(normalize);
+  else {
+    let rec = await loadRecord(env);
+    if (discoveryDue(rec, t)) {
+      try { rec = await runDiscovery(env, t, budget, rec, log); } catch (e) { console.warn("discovery", e.message); }
+    }
+    list = merge(rec ? rec.events : []);
+  }
+  const evs = activeEvents(t, list);
+  if (!evs.length) return log.discovered != null ? { active: 0, discovered: log.discovered, writes: log.writes } : { active: 0 };
+  log.active = evs.length;
+
+  // Units of work: one per class (shared by both players) and one per team league tie.
+  const units = new Map();
   for (const ev of evs) {
-    let matches;
+    if (ev.kind === "teamleague") {
+      (ev.ties || []).forEach(tie => { if (!tie.canceled) units.set("tm" + tie.id, { key: "st:tm" + tie.id, kind: "tl", tie, ev, cost: 1 }); });
+    } else if (ev.classId) {
+      const k = "c" + ev.classId, u = units.get(k) || { key: "st:" + ev.classId, kind: "t", classId: ev.classId, draws: ev.draws || [[0, 0], [1, 0]], evs: [] };
+      u.evs.push(ev); u.cost = u.draws.length;
+      units.set(k, u);
+    }
+  }
+  // Free plan: 50 subrequests per invocation. RankedIn gets at most 30 (rotating when there is more),
+  // pushes get the rest.
+  const arr = [...units.values()], cap = Math.min(30, budget.left - 5), start = t.getUTCMinutes() % Math.max(1, arr.length);
+  const get = getter(env, budget), msgs = [];
+  let fetches = 0;
+  log.units = arr.length; log.polled = 0;
+  for (let i = 0; i < arr.length; i++) {
+    const u = arr[(start + i) % arr.length];
+    if (fetches + u.cost > cap) continue;
+    let prev = null;
+    try { prev = JSON.parse((await env.PUSH.get(u.key)) || "null"); } catch (e) { prev = null; }
+    if (prev && prev._done && t.getUTCMinutes() % 10) continue;   // finished: a look every 10 min is enough
+    fetches += u.cost; log.polled++;
+    let after;
     try {
-      const stages = ev.stages || [0];
-      fetches += stages.length;
-      matches = parse(await Promise.all(stages.map(s => fetchStage(env, ev, s))));
+      if (u.kind === "t") {
+        const matches = parse(await Promise.all(u.draws.map(([st, sg]) => fetchDraw(env, get, u.classId, st, sg))));
+        if (!matches.length) continue;
+        after = snapshot(matches);
+        const fmt = u.evs[0].format;
+        if (matches.every(m => m.w) && (fmt === "groups" || matches.some(m => m.kind === "ko" && m.di === 0 && m.r === m.R - 1))) after._done = 1;
+        // First look at an event is the baseline: results already there never notify (same as the page).
+        if (prev) u.evs.forEach(ev => notes(ev, matches, prev).forEach(m => msgs.push({ who: ev.who, m })));
+      } else {
+        const rubbers = parseTie(await get(rubbersPath(u.tie.id)));
+        if (!rubbers.length) continue;
+        after = snapshotTie(rubbers);
+        if (prev) tieNotes(u.ev, u.tie, rubbers, prev).forEach(m => msgs.push({ who: u.ev.who, m }));
+      }
     } catch (e) {
-      console.warn("fetch", ev.classId, e.message);
+      console.warn("fetch", u.key, e.message);
       continue;
     }
-    if (!matches.length) continue;
-    const key = "st:" + ev.classId, prev = await env.PUSH.get(key), after = snapshot(matches), next = JSON.stringify(after);
-    // First look at an event is the baseline: results already there never notify (same as the page).
-    if (prev) notes(ev, matches, JSON.parse(prev)).forEach(m => msgs.push({ who: ev.who, m }));
-    if (prev !== next) { await env.PUSH.put(key, next); log.writes++; }   // free KV: 1000 writes/day
+    const next = JSON.stringify(after);
+    if (JSON.stringify(prev) !== next) { await env.PUSH.put(u.key, next); log.writes++; }   // free KV: 1000 writes/day
   }
   if (!msgs.length) return log;
   const key = await vapidKey(env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY);
@@ -112,20 +213,19 @@ export async function tick(env, events = EVENTS) {
     subs.push(...page.keys.map(k => k.name));
     cursor = page.list_complete ? null : page.cursor;
   } while (cursor);
-  // Free plan: 50 subrequests per invocation (RankedIn fetches + one per push). Stay well under it:
-  // fold everything into one notis per device when needed, and cap the number of devices.
-  const budget = SUBREQUESTS - fetches;
+  // Fold everything into one notis per device when needed, and cap the number of devices.
+  const pushBudget = Math.max(0, budget.left);
   let out = msgs;
-  if (subs.length * msgs.length > budget && msgs.length > 1) {
+  if (subs.length * msgs.length > pushBudget && msgs.length > 1) {
     const url = msgs[msgs.length - 1].m.url;
     out = [...new Set(msgs.map(x => x.who))].map(who => {
       const ms = msgs.filter(x => x.who === who).map(x => x.m);
       return { who, m: ms.length === 1 ? ms[0] : { title: ms.length + " nya resultat", body: ms.map(m => m.title).join("\n"), tag: "padel-sammanfattning", url } };
     });
   }
-  if (subs.length * out.length > budget) {
-    console.warn("push budget: " + subs.length + " devices, sending to the first " + Math.floor(budget / out.length));
-    subs.length = Math.floor(budget / out.length);
+  if (subs.length * out.length > pushBudget) {
+    console.warn("push budget: " + subs.length + " devices, sending to the first " + Math.floor(pushBudget / out.length));
+    subs.length = Math.floor(pushBudget / out.length);
   }
   const jwts = {};   // one VAPID JWT per push service per tick (CPU time on the free plan is 10 ms)
   await Promise.all(subs.map(async name => {

@@ -9,14 +9,25 @@ import { join } from "node:path";
 import assert from "node:assert/strict";
 import { makeSubscription, makeVapid, td } from "./helpers.mjs";
 import { b64u } from "../src/webpush.js";
+import { route } from "./fake-rankedin.mjs";
 
 const dir = new URL("..", import.meta.url).pathname, FX = new URL("./fixtures/", import.meta.url).pathname;
 const P = 18787, W = 18788;
 let fixture = "dc_1031.json";
-const pushes = [], fixtureHits = [];
+const pushes = [], fixtureHits = [], apiHits = [];
 const srv = http.createServer((req, res) => {
   const u = new URL(req.url, "http://x");
-  if (u.pathname === "/rankedin") { fixtureHits.push(u.search); res.setHeader("Content-Type", "application/json"); return res.end(readFileSync(FX + fixture)); }
+  if (u.pathname === "/rankedin") {
+    res.setHeader("Content-Type", "application/json");
+    if (u.searchParams.get("classId") !== "164681") return res.end("[]");   // other live classes: no draw
+    fixtureHits.push(u.search); return res.end(readFileSync(FX + fixture));
+  }
+  if (u.pathname.startsWith("/api/")) {   // discovery: the fake RankedIn API
+    apiHits.push(u.pathname);
+    const body = route(req.url.slice(4));
+    res.statusCode = body == null ? 404 : 200; res.setHeader("Content-Type", "application/json");
+    return res.end(JSON.stringify(body ?? {}));
+  }
   if (u.pathname.startsWith("/push/")) {
     const chunks = [];
     req.on("data", c => chunks.push(c));
@@ -30,7 +41,7 @@ await new Promise(r => srv.listen(P, "127.0.0.1", r));
 const v = await makeVapid();
 writeFileSync(dir + ".dev.vars", [
   "VAPID_PUBLIC_KEY=" + v.VAPID_PUBLIC_KEY, "VAPID_PRIVATE_KEY='" + v.VAPID_PRIVATE_KEY + "'", "PUSH_HOST_ANY=1",
-  "FIXTURE_URL=http://127.0.0.1:" + P + "/rankedin?classId={classId}&stage={stage}", "NOW=2026-09-27T12:00:00+02:00"].join("\n") + "\n");
+  "FIXTURE_URL=http://127.0.0.1:" + P + "/rankedin?classId={classId}&stage={stage}", "API_BASE=http://127.0.0.1:" + P + "/api", "NOW=2026-09-27T12:00:00+02:00"].join("\n") + "\n");
 const persist = mkdtempSync(join(tmpdir(), "padel-kv-"));
 const wr = spawn("npx", ["wrangler", "dev", "--test-scheduled", "--port", String(W), "--ip", "127.0.0.1", "--persist-to", persist, "--show-interactive-dev-session=false"],
   { cwd: dir, stdio: ["ignore", "pipe", "pipe"], detached: true,
@@ -58,6 +69,9 @@ try {
   const cron = () => fetch(base + "/__scheduled?cron=" + encodeURIComponent("* * * * *"));
   await cron(); await sleep(1500);
   ok("baseline tick: RankedIn fetched, no push", fixtureHits.length === 1 && pushes.length === 0, { fixtureHits, pushes: pushes.length });
+  ok("first tick ran discovery against the (fake) RankedIn API", apiHits.some(x => /ParticipatedEventsAsync/.test(x)) && apiHits.length <= 45, apiHits.length);
+  const evs = await (await fetch(base + "/events", { headers: { Origin: "http://localhost:8765" } })).json();
+  ok("GET /events: discovered tournaments and SPL play days", evs.src === "worker" && evs.events.some(e => e.key === "t173729-thea") && evs.events.some(e => e.kind === "teamleague" && e.who === "kian"), evs.events.map(e => e.key));
   fixture = "dc_1112.json";
   await cron();
   for (let i = 0; i < 40 && pushes.length < 4; i++) await sleep(250);

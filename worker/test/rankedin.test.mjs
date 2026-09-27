@@ -61,6 +61,9 @@ test("round robin pool: row-side scores, one entry per match", () => {
   const before = snapshot(m);
   delete before["6773468"];   // pretend Oscar P A - Kian was not played yet
   const n = notes(kian, m, before);
-  assert.deepEqual(n.map(x => x.title), ["Kian och Andreas förlorade gruppmatchen 3-6 2-6"]);
+  // The last group match also finishes the group: final placing as its own notis.
+  assert.deepEqual(n.map(x => x.title), ["Kian och Andreas förlorade gruppmatchen 3-6 2-6", "Kian och Andreas slutade fyra i gruppen"]);
   assert.equal(n[0].body, "Mot P A / Lindgren.");
+  assert.equal(n[1].tag, "padel-166357:grupp:gruppspel");
+  assert.match(n[1].body, /^1\. .+ 3–0\n2\. /);
 });

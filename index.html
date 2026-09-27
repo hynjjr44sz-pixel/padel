@@ -483,6 +483,24 @@
   .route li.lost .node{ border-color:var(--loss); background:var(--loss-soft); }
   .route li.out{ opacity:.5; }
 
+  /* ---------- discovered events (any tournament / team league) ---------- */
+  .dyn[hidden], [data-ev][hidden], .seg[hidden], .bk-note[hidden]{ display:none; }
+  .grp + .grp{ margin-top:12px; }
+  .grp h3{ margin:0 0 4px; font:800 19px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.04em; }
+  .gt .gsk{ display:block; font:500 10.5px/1.3 "Chivo Mono", monospace; color:var(--dim); font-weight:500; }
+  .gm{ display:grid; gap:8px; margin-top:12px; }
+  .gm .res{ border-radius:12px; }
+  .res.mine{ border-color:var(--accent); }
+  .tie + .tie{ margin-top:26px; }
+  .tiehd{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; margin-bottom:10px; }
+  .tiehd .tt{ font:800 20px/1.05 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; overflow-wrap:anywhere; }
+  .tiehd .tt i{ font-style:normal; color:var(--faint); }
+  .tiehd .tm{ font:500 11.5px/1.4 "Chivo Mono", monospace; color:var(--dim); margin-top:4px; }
+  .tiehd .ts{ font:900 36px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; text-align:right; }
+  .tiehd .ts small{ display:block; font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); margin-top:3px; }
+  .empty{ font-size:13.5px; line-height:1.45; color:var(--dim); margin:0; }
+  .court-no[hidden]{ display:none; }
+
   footer{ margin-top:48px; padding-top:18px; border-top:2px solid var(--ink); display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
   footer b{ font:900 22px/1 "Big Shoulders Display", sans-serif; letter-spacing:.12em; text-transform:uppercase; }
   footer span{ font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); }
@@ -526,7 +544,7 @@
       </div>
       <div class="tabs" role="tablist" aria-label="Spelare">
         <button class="tab" role="tab" id="tab-thea" aria-controls="p-thea" aria-selected="true"><b>Thea</b><span id="tabSubThea">Damer C</span></button>
-        <button class="tab" role="tab" id="tab-kian" aria-controls="p-kian" aria-selected="false" tabindex="-1"><b>Kian</b><span>Herrar C · klart</span></button>
+        <button class="tab" role="tab" id="tab-kian" aria-controls="p-kian" aria-selected="false" tabindex="-1"><b>Kian</b><span id="tabSubKian">Herrar C · klart</span></button>
       </div>
       <p class="nhint" id="nHint" role="status" aria-live="polite" hidden></p>
     </div>
@@ -542,7 +560,8 @@
   <!-- ================= THEA ================= -->
   <main role="tabpanel" id="p-thea" aria-labelledby="tab-thea" tabindex="-1">
     <div class="livebar" id="live-thea" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div>
-    <div class="hero">
+    <div class="dyn" id="dyn-thea" hidden></div>
+    <div class="hero" data-ev>
       <img src="img/thea.jpg" width="900" height="1017" alt="Thea Holmberg Löving i Nynäs-jackan" fetchpriority="high">
       <div class="scrim"></div>
       <svg class="court" viewBox="0 0 390 230" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1">
@@ -561,15 +580,15 @@
         </div>
       </div>
     </div>
-    <div class="board" aria-live="polite">
+    <div class="board" data-ev aria-live="polite">
       <div class="countdown" id="countdown"><span class="l"><span class="dot"></span><span id="cdText">–</span></span><a href="https://www.rankedin.com/en/tournament/66374/jarfalla-padel-open-no-11-sanktionerad-b-c-d" target="_blank" rel="noopener">RankedIn ↗︎</a></div>
       <div class="lastres" id="heroLast" hidden></div>
       <div class="vs" id="heroVs"></div>
     </div>
 
-    <ol class="route" id="route" aria-label="Vägen till final"></ol>
+    <ol class="route" id="route" data-ev aria-label="Vägen till final"></ol>
 
-    <section aria-labelledby="h-br">
+    <section aria-labelledby="h-br" data-ev>
       <div class="sh"><h2 id="h-br">Spelträd</h2><div class="meta">Damer C · 16 par</div></div>
       <div id="theaDraw"></div>
     </section>
@@ -607,7 +626,7 @@
     </section>
 
     <section aria-labelledby="h-up">
-      <div class="sh"><h2 id="h-up">Kommande</h2><div class="meta">Okt</div></div>
+      <div class="sh"><h2 id="h-up">Kommande</h2><div class="meta" id="theaUpMeta">Okt</div></div>
       <div class="ups" id="theaUp"></div>
     </section>
 
@@ -620,7 +639,8 @@
   <!-- ================= KIAN ================= -->
   <main role="tabpanel" id="p-kian" aria-labelledby="tab-kian" tabindex="-1" hidden>
     <div class="livebar" id="live-kian" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div>
-    <div class="hero khero2">
+    <div class="dyn" id="dyn-kian" hidden></div>
+    <div class="hero khero2" data-ev>
       <img src="img/kian.jpg" width="831" height="1038" alt="Kian Borgström med racket" loading="lazy">
       <div class="scrim"></div>
       <svg class="court" viewBox="0 0 390 230" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1">
@@ -639,7 +659,7 @@
         </div>
       </div>
     </div>
-    <div class="board">
+    <div class="board" data-ev>
       <div class="countdown"><div class="l"><span class="dot"></span><span>Nästa: SPL med laget lör 3 okt</span></div><a href="https://www.rankedin.com/en/player/R000266815/kian-borgstrom" target="_blank" rel="noopener">RankedIn ↗︎</a></div>
       <div class="kid">
         <div class="kname">Kian <span>Borgström</span></div>
@@ -647,13 +667,13 @@
       </div>
     </div>
 
-    <section aria-labelledby="h-kj">
+    <section aria-labelledby="h-kj" data-ev>
       <div class="sh"><h2 id="h-kj">Järfälla</h2><div class="meta">Fre 26 sep · Herrar C</div></div>
       <div class="results" id="kianRes"></div>
       <p class="winners">Herrar C vanns av <b>Limér / Öberg</b>. Finalen mot Gavelin / Veizaga avslutades med uppgivet.</p>
     </section>
 
-    <section aria-labelledby="h-kbr">
+    <section aria-labelledby="h-kbr" data-ev>
       <div class="sh"><h2 id="h-kbr">Spelträd</h2><div class="meta">Herrar C · 16 par</div></div>
       <div id="kianDraw"></div>
     </section>
@@ -683,7 +703,7 @@
     </section>
 
     <section aria-labelledby="h-kup">
-      <div class="sh"><h2 id="h-kup">Kommande</h2><div class="meta">Okt</div></div>
+      <div class="sh"><h2 id="h-kup">Kommande</h2><div class="meta" id="kianUpMeta">Okt</div></div>
       <div class="ups" id="kianUp"></div>
     </section>
 
@@ -753,11 +773,17 @@
   var PLAYERS = {"Sara Moshiri":[135851,13.84,65],"Fredrika Berghman":[186998,13.26,65],"Helene Brunström":[122533,14.68,65],"Linda Jakobsson":[158501,14.98,65],"Cathrin Sjögren":[500979,12.6,65],"Maria Ramsten":[498648,13.41,65],"Sanna Aufwerber":[639823,12.52,65],"Melanie Sundell":[392512,12.47,65],"Hanna Wallerman":[250594,14.47,65],"Malin Lundberg Aguilera":[676951,15.01,65],"Sofia Blomqvist":[155393,12.38,65],"Veronica arneflod":[662597,13.33,65],"Rebecka Persson":[72553,13.47,65],"Marina Bradbury":[259696,14.04,65],"Alva Sahlström Dahl":[962013,11.71,65],"Ellinor Ekstedt":[1865740,12.96,65],"Olivia Jaldeborg":[2720500,13.63,65],"Ella Olofsson":[602770,11.92,65],"Chloé Ståhl":[1584329,13.17,65],"Ayla Abel":[1833027,13.01,65],"Anna-Karin Andersson":[782664,12.14,65],"Jenny Karlsson":[85952,12.89,65],"Suarez Jessica":[160762,13.08,65],"Lina Holmberg":[736738,14.04,65],"Thea Holmberg Löving":[1675246,15.94,65],"Cassandra Ersson":[1849853,13.89,65],"Luna Levihn":[1643823,10.63,65],"Molly Bondesson":[1632036,12.03,65],"Filippa Pettersson Österberg":[675332,13.26,65],"Astrid Ekeland":[1873186,12.68,65],"Carla Lundström":[1640174,13.18,65],"Beatriz Callero":[1773002,14.62,65],"Hugo Kamnelius":[1855094,14.47,64],"Arvid Hjoberg":[54257,15.17,64],"Kian Borgström":[1680004,11.56,64],"Andreas Mickos":[2073852,11.7,64],"Martin Gavelin":[58662,16.47,64],"Nicolas Veizaga":[160512,14.93,64],"Viggo Rönnbäck":[2514030,13.1,64],"Christopher Wessman":[371964,16.05,64],"Omar Zavala":[2284041,14.41,64],"Oscar P A":[2645536,14.61,64],"Sam Tomsic Norrbelius":[643986,11.37,64],"Alex Danielson":[1058034,10.53,64],"Adam Limér":[229290,16.71,64],"Linus Öberg":[739240,13.58,64],"Ludwig Wallén":[966896,12.47,64],"Eric Norlén":[1098091,12.39,64],"Hampus Persson":[812142,13.58,64],"Ludwig Öberg":[151351,14.57,64],"Henrik Böhlmark":[123989,14.13,64],"Erik Mossakowski":[1866515,14.13,64],"Emanuel Magnusson":[3445224,14.59,64],"Rasmus Björkqvist":[1519257,13.09,64],"Ilyas Delibas":[1731982,14.04,64],"Gabriel Orrego":[2214512,13.33,64],"Nicklas Hedstål":[39338,15.31,64],"Matte Dennemo":[154962,15.72,64],"William Moxness":[1885112,11.96,64],"Elliot Kindstrand":[331400,14.12,64],"Tim Wallin":[749144,14.55,64],"Carl-johan Blum":[251588,14.33,64],"Pablo Salcedo":[102864,13.47,64],"Pontus Björnström":[891369,13.06,64]};
   function pskill(p){
     if (!p || !p.n) return null;
-    var v = p.n.map(function(n){ var x = PLAYERS[n]; return x && x[1] != null ? x[1] : null; });
+    // Discovered events: pairs carry player ids + rating id (WD/MD/XD), fetched into SKV; RatingBegin from the draw as fallback.
+    var v = p.n.map(function(n, i){
+      if (p.ids && p.rid && p.ids[i] && SKV[p.ids[i] + ":" + p.rid] != null) return SKV[p.ids[i] + ":" + p.rid];
+      var x = PLAYERS[n];
+      if (x && x[1] != null && (!p.rid || x[2] === p.rid)) return x[1];
+      return p.rb && p.rb[i] != null ? p.rb[i] : null;
+    });
     return v.some(function(x){ return x != null; }) ? v : (p.skill || null);
   }
   function fmtSkill(v){ return v ? v.map(function(x){ return x == null ? "–" : x.toFixed(2); }).join(" · ") : ""; }
-  var SKILL_KEY = "padel-skill-v1";
+  var SKILL_KEY = "padel-skill-v1", SKV = {};
   function applySkillCache(){
     try{ var c = JSON.parse(localStorage.getItem(SKILL_KEY) || "null"); if (c && c.v) Object.keys(c.v).forEach(function(n){ if (PLAYERS[n]) PLAYERS[n][1] = c.v[n]; }); return c; }catch(e){ return null; }
   }
@@ -953,7 +979,8 @@
 
   function matchState(ev, mt){
     if (mt.w) return "done";
-    var t = now(), s = at(ev.date, mt.t);
+    var t = now(), s = mt.at || (ev.date && mt.t ? at(ev.date, mt.t) : null);
+    if (!s) return "up";
     if (t < s) return "up";
     if (t < new Date(+s + 90 * 60000)) return "live";
     return "nr";
@@ -993,7 +1020,7 @@
     draw.rounds.forEach(function(rd, r){
       var last = r === draw.rounds.length - 1;
       var f = rd.matches[0];
-      var times = rd.matches.map(function(x){ return x.t; }).filter(function(v, i, a){ return a.indexOf(v) === i; });
+      var times = rd.matches.map(function(x){ return x.dl ? x.dl + " " + x.t : x.t; }).filter(function(v, i, a){ return v && a.indexOf(v) === i; });
       html += '<div class="bk-col"><div class="bk-hd"><b>' + esc(rd.label) + '</b><span>' + (r + 1) + '/' + draw.rounds.length + ' · ' + times.join(", ") + '</span></div><div class="bk-body" style="--n:' + n1 + '">';
       rd.matches.forEach(function(mt, i){
         var isNext = mt === nextMatch;
@@ -1001,7 +1028,7 @@
         html += '<div class="slot ' + (i % 2 ? "odd" : "even") + '">';
         if (r > 0) html += '<span class="in' + (mt.hasMe && (mt.a.via || mt.b.via) ? " hot" : "") + '"></span>';
         if (!last){ var hot = mt.meWon ? " hot" : ""; html += '<span class="out' + hot + '"></span><span class="vl' + hot + '"></span>'; }
-        html += '<div class="' + mcls + '"><div class="mh"><span>' + esc(mt.t + " · " + mt.c) + '</span>' + statusLabel(ev, mt, isNext) + '</div>' +
+        html += '<div class="' + mcls + '"><div class="mh"><span>' + esc([mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : "")) + '</span>' + statusLabel(ev, mt, isNext) + '</div>' +
           entrantRow(mt, "a") + entrantRow(mt, "b") + '</div></div>';
       });
       html += '</div></div>';
@@ -1017,12 +1044,19 @@
 
   function renderGroups(ev, draw, host){
     (draw.groups || []).forEach(function(g){
-      var d = document.createElement("div"); d.className = "card";
-      d.innerHTML = '<h3 class="rn">' + esc(g.name) + '</h3><table class="gt"><thead><tr><th>Par</th><th>S</th><th>V</th><th>F</th><th>+/-</th></tr></thead><tbody>' +
-        g.rows.slice().sort(function(a, b){ return b.won - a.won || b.diff - a.diff; }).map(function(x){
+      var d = document.createElement("div"); d.className = "card grp";
+      var rows = g.rows.slice().sort(function(a, b){ return (a.standing || 99) - (b.standing || 99) || b.won - a.won || b.diff - a.diff; });
+      d.innerHTML = '<h3>' + esc(g.name) + '</h3><table class="gt"><thead><tr><th>Par</th><th>S</th><th>V</th><th>F</th><th>+/-</th></tr></thead><tbody>' +
+        rows.map(function(x){
           var p = ev.pairs[x.pair];
-          return '<tr' + (p.me ? ' class="me"' : '') + '><td>' + esc(short(p)) + '</td><td>' + x.played + '</td><td>' + x.won + '</td><td>' + x.lost + '</td><td>' + (x.diff > 0 ? "+" : "") + x.diff + '</td></tr>';
-        }).join("") + '</tbody></table>';
+          if (!p) return "";
+          var sk = pskill(p);
+          return '<tr' + (p.me ? ' class="me"' : '') + '><td>' + esc(short(p)) + (sk ? '<small class="gsk">' + fmtSkill(sk) + '</small>' : '') + '</td><td>' + x.played + '</td><td>' + x.won + '</td><td>' + x.lost + '</td><td>' + (x.diff > 0 ? "+" : "") + x.diff + '</td></tr>';
+        }).join("") + '</tbody></table>' +
+        (g.matches && g.matches.length ? '<div class="gm">' + g.matches.map(function(mt){
+          var st = matchState(ev, mt), lab = st === "done" ? (mt.note || "Klar") : st === "live" ? "Pågår" : st === "nr" ? "Ej rapporterad" : "";
+          return '<div class="res' + (mt.hasMe ? " mine" : "") + '"><div class="mh"><span>' + esc([mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : "")) + '</span><span class="st' + (st === "live" ? " nx" : st === "nr" ? " nr" : "") + '">' + esc(lab) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
+        }).join("") + '</div>' : "");
       host.appendChild(d);
     });
   }
@@ -1045,9 +1079,11 @@
         window.dispatchEvent(new Event("resize"));
       });
     });
+    if (ev.draws.length < 2) seg.hidden = true;   // one draw: nothing to choose between
     host.appendChild(seg);
     views.forEach(function(v){ host.appendChild(v); });
     var note = document.createElement("div"); note.className = "bk-note";
+    if (!ev.draws.some(function(d){ return (d.format || ev.format) !== "groups"; })) note.hidden = true;
     note.innerHTML = '<span><i></i>' + esc(who) + 's väg</span><span class="swipe">Svep för nästa rond →</span>' +
       '<span class="bk-nav"><button type="button" aria-label="Föregående rond">←</button><button type="button" aria-label="Nästa rond">→</button></span>';
     host.appendChild(note);
@@ -1758,6 +1794,982 @@
     try { poll(L); } catch (e){}
   });
 
+
+  /* ================= discovered events: any tournament or team league ================= */
+  // The push worker (GET /events) finds every event Thea and Kian are entered in on RankedIn.
+  // Fallback 1: the same discovery straight against RankedIn from this page. Fallback 2: the static data above.
+  // A tab shows a discovered event when it is on today (or the next one coming); Järfälla no 11 keeps its own view.
+  var RI_API = "https://api.rankedin.com/v1", RI_WEB = "https://www.rankedin.com", HOUR = 3600e3;
+  var WHO = {
+    thea:{pid:1675246, me:"Thea Holmberg Löving", name:"Thea", img:"img/thea.jpg", w:900, h:1017, alt:"Thea Holmberg Löving i Nynäs-jackan", cls:"hero", staticEv:THEA_EVENT, sub:"tabSubThea"},
+    kian:{pid:1680004, me:"Kian Borgström", name:"Kian", img:"img/kian.jpg", w:831, h:1038, alt:"Kian Borgström med racket", cls:"hero khero2", staticEv:KIAN_EVENT, sub:"tabSubKian"}
+  };
+  var EV_KEY = "padel.events.v1", DISC = null, DYN = {thea:null, kian:null};
+
+  /* ---- Europe/Stockholm time (RankedIn sends local wall-clock times without offset) ---- */
+  function lastSun(y, m){ var d = new Date(Date.UTC(y, m + 1, 0, 1)); d.setUTCDate(d.getUTCDate() - d.getUTCDay()); return +d; }
+  function sthOff(ms){ var y = new Date(ms).getUTCFullYear(); return ms >= lastSun(y, 2) && ms < lastSun(y, 9) ? 2 : 1; }
+  function riDate(s){
+    s = String(s || "");
+    var m = /^(\d{4})-(\d\d)-(\d\d)(?:[T ](\d\d):(\d\d))?/.exec(s), y, mo, d, h = 0, mi = 0;
+    if (m){ y = +m[1]; mo = +m[2]; d = +m[3]; h = +(m[4] || 0); mi = +(m[5] || 0); }
+    else if ((m = /^(\d\d)\/(\d\d)\/(\d{4})(?: (\d\d):(\d\d))?/.exec(s))){ d = +m[1]; mo = +m[2]; y = +m[3]; h = +(m[4] || 0); mi = +(m[5] || 0); }
+    else return null;
+    if (y < 2000) return null;
+    var local = Date.UTC(y, mo - 1, d, h, mi);
+    return new Date(sthOff(local - 2 * HOUR) === 2 ? local - 2 * HOUR : local - HOUR);
+  }
+  function isoLocal(day, hhmm){ return day + "T" + hhmm + ":00+0" + sthOff(+riDate(day + "T" + hhmm)) + ":00"; }
+  function loc(d){ return new Date(+d + sthOff(+d) * HOUR); }   // read with getUTC*
+  function dayOf(d){ return loc(d).toISOString().slice(0, 10); }
+  function isoDay(s){ var m = /^(\d\d)\/(\d\d)\/(\d{4})/.exec(String(s || "")); return m ? m[3] + "-" + m[2] + "-" + m[1] : String(s || "").slice(0, 10); }
+  var DOW = ["sön","mån","tis","ons","tor","fre","lör"];
+  function dayLabel(d){ var x = loc(d); return DOW[x.getUTCDay()] + " " + x.getUTCDate() + " " + MON[x.getUTCMonth()]; }
+  function dayMon(d){ var x = loc(d); return x.getUTCDate() + " " + MON[x.getUTCMonth()]; }
+  function hm(d){ var x = loc(d); return ("0" + x.getUTCHours()).slice(-2) + ":" + ("0" + x.getUTCMinutes()).slice(-2); }
+  function cap(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+  function inWin(e, t){ t = t || now(); return t >= new Date(e.windowFrom) && t <= new Date(e.windowTo); }
+  function hhmmOf(d){ var m = /^(\d{4})-\d\d-\d\dT(\d\d):(\d\d)/.exec(d || ""); return m && +m[1] > 2000 ? m[2] + ":" + m[3] : ""; }
+  function courtName(c){ c = String(c || "").trim(); return /^\d+$/.test(c) ? "Bana " + c : c; }
+  try { document.getElementById("today").textContent = cap(dayLabel(now())); } catch (e){}
+
+  /* ---- RankedIn ---- */
+  function drawPath(cid, st, sg){ return "/tournament/GetDrawsForStageAndStrengthAsync?tournamentClassId=" + cid + "&drawStrength=" + (sg || 0) + "&drawStage=" + st + "&isReadonly=true&language=en"; }
+  function rubbersPath(id){ return "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=" + id + "&language=en"; }
+  function riGet(path, ms){
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    try {
+      return withTimeout(fetch(RI_API + path, {cache:"no-store", credentials:"omit", signal:ctl ? ctl.signal : undefined})
+        .then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), ms || LIVE_TIMEOUT, ctl);
+    } catch (e){ return Promise.reject(e); }
+  }
+  function ratingFor(cls){
+    cls = String(cls || "");
+    if (/mix|xd/i.test(cls)) return 66;
+    if (/dam|women|flick|girl/i.test(cls)) return 65;
+    if (/herr|men|pojk|boy/i.test(cls)) return 64;
+    return null;
+  }
+  function cleanName(n){
+    n = String(n || "").replace(/\s+/g, " ").trim();
+    var spl = /^SPL Swedish Padel League (\S+)/i.exec(n);
+    if (spl) return "SPL " + spl[1];
+    return n.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+[-–]\s+(sanktion|powered|pwr|by\b|endags).*$/i, "")
+      .replace(/\s+(powered|pwr) by.*$/i, "").replace(/\s+/g, " ").trim() || n;
+  }
+
+  /* ---- skill for any player: SPF rating by player id (WD 65, MD 64, XD 66), cached 20 min ---- */
+  var SKV_KEY = "padel-skill-v2", SKT = {}, skWant = {}, skTimer = null;
+  (function(){ var c = store.json(SKV_KEY); if (c && c.v){ for (var k in c.v) SKV[k] = c.v[k]; SKT = c.t || {}; } })();
+  function wantSkills(pairs){
+    pairs.forEach(function(p){
+      if (!p || !p.ids || !p.rid) return;
+      p.ids.forEach(function(id){ if (id && !(SKT[id] && Date.now() - SKT[id] < 20 * 60000 && SKV[id + ":" + p.rid] != null)) skWant[id] = true; });
+    });
+    if (!skTimer && Object.keys(skWant).length) skTimer = setTimeout(fetchSkills, 400);
+  }
+  function fetchSkills(){
+    skTimer = null;
+    var ids = Object.keys(skWant).slice(0, 40), changed = false, left = ids.length;
+    ids.forEach(function(id){ delete skWant[id]; });
+    if (!left || !window.fetch) return;
+    function one(){
+      var id = ids.shift();
+      if (!id) return;
+      riGet("/rating/GetPlayerRatingAsync?id=" + encodeURIComponent(id)).then(function(a){
+        (Array.isArray(a) ? a : []).forEach(function(r){
+          if ([64, 65, 66].indexOf(r.RatingId) >= 0 && typeof r.RatingValue === "number" && SKV[id + ":" + r.RatingId] !== r.RatingValue){ SKV[id + ":" + r.RatingId] = r.RatingValue; changed = true; }
+        });
+        SKT[id] = Date.now();
+      }).catch(function(){}).then(function(){
+        if (--left > 0) return one();
+        store.set(SKV_KEY, JSON.stringify({v:SKV, t:SKT}));
+        if (changed) ["thea", "kian"].forEach(function(w){ if (DYN[w]) try { dynRender(DYN[w]); } catch (e){} });
+        if (Object.keys(skWant).length) skTimer = setTimeout(fetchSkills, 400);
+      });
+    }
+    for (var i = 0; i < 6; i++) one();
+  }
+
+  /* ---- tournament: RankedIn draws -> flat match list (same as worker/src/rankedin.js parse) ---- */
+  function flatParse(ko, rr){
+    var out = [];
+    function koPair(p){
+      var f = p && p.FirstPlayer;
+      if (!p || !p.EventParticipantId || !f || !f.Name || f.Name === "Pending") return null;
+      return {id:String(p.EventParticipantId), n:[f.Name, p.SecondPlayer && p.SecondPlayer.Name].filter(Boolean)};
+    }
+    function rrPair(c){
+      var pl = c && c.ParticipantCell && c.ParticipantCell.Players;
+      if (!Array.isArray(pl) || !pl.length) return null;
+      return {id:"p" + pl.map(function(x){ return x.Id; }).join("-"), n:pl.map(function(x){ return x.Name; }).filter(Boolean)};
+    }
+    function koLabel(r, R, plate){
+      if (plate) return r === R - 1 ? "Plate-final" : "Omgång " + (r + 1);
+      return r === R - 1 ? "Final" : r === R - 2 ? "Semifinal" : r === R - 3 ? "Kvartsfinal" : "Omgång " + (r + 1);
+    }
+    ko.forEach(function(dr, di){ var el = dr.Elimination; el.DrawData.forEach(function(col){ (Array.isArray(col) ? col : []).forEach(function(c){
+      if (!c || !c.Round || !c.MatchId) return;
+      var R = c.MaxRound || c.Round, r = c.Round - 1, mv = c.MatchViewModel || {};
+      var a = koPair(c.ChallengerParticipant), b = koPair(c.ChallengedParticipant);
+      var m = {id:String(c.MatchId), di:di, r:r, R:R, kind:"ko", label:koLabel(r, R, di > 0), dlabel:di > 0 ? "Plate" : "Lottning",
+        a:a, b:b, w:null, s:null, note:null, t:hhmmOf(c.Date), c:String(c.CourtName || "").trim(), date:c.Date || ""};
+      var wid = c.WinnerParticipantId && String(c.WinnerParticipantId);
+      if (wid && (a && a.id === wid || b && b.id === wid)){ m.w = a && a.id === wid ? "a" : "b"; m.note = cancelNote(mv); m.s = liveScore(mv, !!m.note); }
+      out.push(m);
+    }); }); });
+    out.pools = [];
+    rr.forEach(function(dr, k){
+      var pool = dr.RoundRobin, g = pool.Pool, name = String(pool.Name || "");
+      var dlabel = /^round ?robin$/i.test(name) || !name ? "Gruppspel" : name.replace(/^(pool|group)\s*/i, "Grupp ");
+      out.pools.push({di:ko.length + k, label:dlabel, rows:(Array.isArray(pool.Standings) ? pool.Standings : []).map(function(r){
+        return {n:[r.DoublesPlayer1Model && r.DoublesPlayer1Model.Name, r.DoublesPlayer2Model && r.DoublesPlayer2Model.Name].filter(Boolean), standing:r.Standing, wins:r.Wins || 0, losses:r.Losses || 0};
+      }).filter(function(r){ return r.n.length; })});
+      for (var i = 1; i < g.length; i++) for (var j = i + 1; j < (g[i] || []).length; j++){
+        var cell = g[i][j], mc = cell && cell.MatchCell;
+        if (!mc || !mc.MatchId) continue;
+        var a = rrPair(g[i][0]), b = rrPair(g[0] && g[0][j]), res = mc.MatchResults || {};
+        var m = {id:String(mc.MatchId), di:ko.length + k, r:0, R:1, kind:"rr", label:dlabel, dlabel:dlabel,
+          a:a, b:b, w:null, s:null, note:null, t:hhmmOf(mc.Date), c:String(mc.Court || "").trim(), date:mc.Date || ""};
+        if (a && b && (res.HasScore || res.HasCancellation) && typeof res.IsFirstParticipantWinner === "boolean"){
+          m.w = res.IsFirstParticipantWinner ? "a" : "b"; m.note = cancelNote(res); m.s = liveScore(res, !!m.note);
+        }
+        out.push(m);
+      }
+    });
+    return out;
+  }
+  function flatSnap(matches){
+    var s = {};
+    matches.forEach(function(m){ var w = m.w ? m[m.w].id : ""; if (m.a || m.b || w) s[m.id] = [m.a ? m.a.id : "", m.b ? m.b.id : "", w].join(","); });
+    return s;
+  }
+  function unpackSnap(v){ var p = String(v || "").split(","); return {a:p[0] || "", b:p[1] || "", w:p[2] || ""}; }
+  // Same wording, ids and tags as the worker's notes(), so the OS never shows the same result twice.
+  function tNotes(ev, matches, before){
+    var cid = ev.classId, cls = ev.cls, me = slug(ev.me), unpack = unpackSnap;
+    var isMe = function(p){ return !!p && p.n.some(function(n){ return slug(n) === me; }); };
+    matches.forEach(function(m){ m.hasMe = isMe(m.a) || isMe(m.b); m.ms = isMe(m.a) ? "a" : "b"; m.meWon = !!(m.w && m.hasMe && m.w === m.ms); });
+    var main = matches.filter(function(m){ return m.di === 0; }), R = main.length ? Math.max.apply(null, main.map(function(m){ return m.R; })) : 0;
+    var cmp = function(x, y){ return (x.date < y.date ? -1 : x.date > y.date ? 1 : 0) || x.di - y.di || x.r - y.r; };
+    var played = matches.filter(function(m){ return m.hasMe && m.w; }).sort(cmp), pending = matches.filter(function(m){ return m.hasMe && !m.w; }).sort(cmp);
+    var next = pending[0] || null, last = played[played.length - 1] || null;
+    var lostMain = played.filter(function(m){ return m.di === 0 && !m.meWon; })[0] || null;
+    var champ = !!(last && last.kind === "ko" && last.di === 0 && last.r === last.R - 1 && last.meWon);
+    var rName = function(m){ return m.kind === "rr" || m.di === 0 ? m.label : m.dlabel + " · " + m.label; };
+    var rDef = function(m){
+      if (m.kind === "rr") return "gruppmatchen";
+      var l = m.label.toLowerCase();
+      if (/final$/.test(l)) l += "en";
+      return m.di > 0 && !/^plate/.test(l) ? "plate " + l : l;
+    };
+    var when = function(m){ return [m.t, m.c].filter(Boolean); };
+    var nextText = function(){
+      if (!next) return "";
+      var op = next[next.ms === "a" ? "b" : "a"];
+      return " Nästa: " + [rName(next).toLowerCase(), when(next).join(", ")].filter(Boolean).join(" ") + (op ? " mot " + short(op) : "") + ".";
+    };
+    var outCopy2 = function(mp){
+      var names = firstNames(mp);
+      if (champ) return names + " vann " + cls + ". Grattis!";
+      if (last && last.di !== 0) return "Dagen är slut. Bra kämpat, " + names + ".";
+      if (!lostMain) return "Dagen är slut.";
+      if (lostMain.kind === "ko" && lostMain.r === R - 1) return "Tvåa i " + cls + ". Silver efter en stark dag.";
+      if (lostMain.kind === "ko" && lostMain.r === R - 2) return "Semifinalen blev slutstation. Topp fyra, starkt jobbat.";
+      if (lostMain.kind === "ko" && lostMain.r === R - 3) return "Kvartsfinalen blev slutstation. Topp åtta, bra kämpat.";
+      return "Dagen är slut. Bra kämpat, " + names + ".";
+    };
+    var mine = [], covered = {}, others = [];
+    matches.forEach(function(m){
+      var was = unpack(before[m.id]);
+      if (!m.w || was.w) return;
+      var wp = m[m.w], lp = m[m.w === "a" ? "b" : "a"], fin = m.kind === "ko" && m.r === m.R - 1, id = cid + ":m" + m.id;
+      if (m.hasMe){
+        var mp = m[m.ms], op = m[m.ms === "a" ? "b" : "a"];
+        var sc = (m.s ? (m.meWon ? m.s : flip(m.s)) : "") || m.note || "";
+        var title = m.di === 0 && fin && m.meWon ? firstNames(mp) + " vann " + cls + "!" : firstNames(mp) + (m.meWon ? " vann " : " förlorade ") + rDef(m) + (sc ? " " + sc : "");
+        var body = op ? "Mot " + short(op) + "." : "";
+        if (m.meWon) body += nextText();
+        else if (!next && m.kind === "ko") body += " " + outCopy2(mp);
+        if (m.meWon && next) covered[next.id] = true;
+        mine.push({id:id, title:title, body:body.trim()});
+      } else if (wp){
+        var res = m.s || m.note || "";
+        var t2 = rName(m) + ": " + short(wp) + (m.kind === "rr" ? " vann" : fin ? (m.di === 0 ? " vann " + cls : " vann plate") : " vidare");
+        others.push({id:id, wk:wp.id, title:t2, body:(res + (lp ? " mot " + short(lp) : "")).trim() + " · " + cls,
+          how:lp ? ("Vann " + rDef(m) + " " + res + " mot " + short(lp)).replace(/\s+/g, " ").trim() : ""});
+      }
+    });
+    if (next){
+      var os = next.ms === "a" ? "b" : "a", op2 = next[os], was2 = unpack(before[next.id]);
+      if (op2 && !was2[os] && !covered[next.id]){
+        var how = "";
+        others = others.filter(function(o){ if (o.wk !== op2.id) return true; how = o.how; return false; });
+        mine.push({id:cid + ":opp:m" + next.id + ":" + op2.id, title:firstNames(next[next.ms]) + " möter " + short(op2),
+          body:(how ? how + ". " : "") + [rName(next), when(next).join(" · ")].filter(Boolean).join(" ")});
+      }
+    }
+    var ORD = ["etta", "tvåa", "trea", "fyra", "femma", "sexa", "sjua", "åtta"];
+    (matches.pools || []).forEach(function(pl){
+      var ms = matches.filter(function(m){ return m.kind === "rr" && m.di === pl.di; });
+      if (!ms.length || !ms.some(function(m){ return m.hasMe; }) || ms.some(function(m){ return !m.w; }) || ms.every(function(m){ return unpack(before[m.id]).w; })) return;
+      var rows = pl.rows.slice().sort(function(x, y){ return (x.standing || 99) - (y.standing || 99); });
+      if (!rows.length){
+        var tb = {};
+        ms.forEach(function(m){ ["a", "b"].forEach(function(sd){ if (!m[sd]) return; var r = tb[m[sd].id] = tb[m[sd].id] || {n:m[sd].n, wins:0, losses:0}; if (m.w === sd) r.wins++; else r.losses++; }); });
+        rows = Object.keys(tb).map(function(k){ return tb[k]; }).sort(function(x, y){ return y.wins - x.wins; });
+      }
+      var mi = -1;
+      rows.forEach(function(r, i){ if (mi < 0 && r.n.some(function(n){ return slug(n) === me; })) mi = i; });
+      if (mi < 0) return;
+      var place = rows[mi].standing || mi + 1, where = pl.label === "Gruppspel" ? "gruppen" : pl.label;
+      mine.push({id:cid + ":grupp:" + slug(pl.label), title:firstNames(rows[mi]) + " slutade " + (ORD[place - 1] || place + ":a") + " i " + where,
+        body:rows.slice(0, 5).map(function(r, i){ return (r.standing || i + 1) + ". " + short(r) + " " + r.wins + "–" + r.losses; }).join("\n")});
+    });
+    var out = [];
+    if (others.length > 3) out.push({id:cid + ":batch:" + others.map(function(o){ return o.id; }).join(","), title:cls + ": " + others.length + " nya resultat",
+      body:others.slice(0, 4).map(function(o){ return o.title; }).join("\n"), tag:"padel-" + cid + "-klass", batch:others.map(function(o){ return o.id; })});
+    else others.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + o.id}); });
+    mine.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + o.id}); });
+    return out;
+  }
+
+  /* ---- tournament: RankedIn draws -> the page's draw model (bracket tabs + group tables) ---- */
+  function buildTour(e, datas){
+    var ev = {dyn:true, e:e, cls:e.cls, meName:e.me, pairs:{}, draws:[], mainIdx:-1, rid:e.rating || ratingFor(e.cls), days:{}};
+    var ko = [], rr = [];
+    (datas || []).forEach(function(data){ (Array.isArray(data) ? data : []).forEach(function(dr){
+      if (dr && dr.Elimination && Array.isArray(dr.Elimination.DrawData)) ko.push(dr);
+      else if (dr && dr.RoundRobin && Array.isArray(dr.RoundRobin.Pool)) rr.push(dr);
+    }); });
+    ko.sort(function(x, y){ return (x.Elimination.PlacesStartPos || 0) - (y.Elimination.PlacesStartPos || 0); });
+    if (!ev.rid){ var any = ko.concat(rr)[0]; if (any && [64, 65, 66].indexOf(any.RatingId) >= 0) ev.rid = any.RatingId; }
+    ev.flat = flatParse(ko, rr);
+    function pairOf(players, seed){
+      var names = [], ids = [], rb = [];
+      players.forEach(function(x){
+        if (x && x.Name && !/^(pending|bye)$/i.test(String(x.Name).trim())){ names.push(x.Name); ids.push(x.Id || null); rb.push(typeof x.RatingBegin === "number" ? x.RatingBegin : null); }
+      });
+      if (!names.length) return null;
+      var k = pairSig(names), p = ev.pairs[k];
+      if (!p) p = ev.pairs[k] = {key:k, n:names, ids:ids, rb:rb, rid:ev.rid, me:ids.indexOf(e.pid) >= 0 || names.some(function(n){ return slug(n) === slug(e.me); })};
+      if (seed && !p.seed) p.seed = String(seed);
+      return p;
+    }
+    function when(mt, d){ mt.t = hhmmOf(d); mt.at = mt.t ? riDate(d) : null; if (mt.at) ev.days[dayOf(mt.at)] = true; }
+    function koMatch(c){
+      var mt = {t:"", c:"", a:null, b:null, w:null, s:null, note:null, at:null, mid:null};
+      if (!c) return mt;
+      when(mt, c.Date); mt.c = courtName(c.CourtName); mt.mid = c.MatchId ? String(c.MatchId) : null;
+      var ep = {}, sides = {a:c.ChallengerParticipant, b:c.ChallengedParticipant};
+      ["a", "b"].forEach(function(sd){
+        var x = sides[sd];
+        if (!x || !x.EventParticipantId || !x.FirstPlayer) return;
+        var p = pairOf([x.FirstPlayer, x.SecondPlayer].filter(Boolean), x.Seed);
+        if (p){ mt[sd] = p.key; ep[sd] = String(x.EventParticipantId); }
+      });
+      var wid = c.WinnerParticipantId && String(c.WinnerParticipantId);
+      if (wid && (ep.a === wid || ep.b === wid)){ var mv = c.MatchViewModel || {}; mt.w = ep.a === wid ? "a" : "b"; mt.note = cancelNote(mv); mt.s = liveScore(mv, !!mt.note); }
+      return mt;
+    }
+    var koDraws = ko.map(function(dr, di){
+      var el = dr.Elimination, cells = [], plate = di > 0;
+      el.DrawData.forEach(function(col){ (Array.isArray(col) ? col : []).forEach(function(c){ if (c && c.Round && c.MatchOrder) cells.push(c); }); });
+      var R = Math.max(el.Width || 0, 1), n1 = Math.max(el.Height || 0, 1);
+      cells.forEach(function(c){ R = Math.max(R, c.MaxRound || 0, c.Round); if (c.Round === 1) n1 = Math.max(n1, c.MatchOrder); });
+      var d = {key:"k" + di, places:el.PlacesStartPos, rounds:[],
+        label:plate ? "Plate" + (el.PlacesStartPos ? " " + el.PlacesStartPos + (el.PlacesEndPos ? "–" + el.PlacesEndPos : "") : "") : (rr.length ? "Slutspel" : "Lottning")};
+      for (var r = 0; r < R; r++){
+        var cnt = Math.max(1, Math.ceil(n1 / Math.pow(2, r)));
+        cells.forEach(function(c){ if (c.Round === r + 1) cnt = Math.max(cnt, c.MatchOrder); });
+        var fin = r === R - 1;
+        var rd = {label:plate ? (fin ? "Plate-final" : "Omgång " + (r + 1)) : (fin ? "Final" : r === R - 2 ? "Semifinal" : r === R - 3 ? "Kvartsfinal" : "Omgång " + (r + 1)),
+          short:plate ? (fin ? "PF" : "R" + (r + 1)) : (fin ? "Final" : r === R - 2 ? "SF" : r === R - 3 ? "KF" : "R" + (r + 1)), matches:[]};
+        for (var i = 0; i < cnt; i++){
+          var hit = null;
+          cells.forEach(function(c){ if (c.Round === r + 1 && c.MatchOrder === i + 1) hit = c; });
+          rd.matches.push(koMatch(hit));
+        }
+        d.rounds.push(rd);
+      }
+      return d;
+    });
+    var groups = rr.map(function(dr){
+      var pool = dr.RoundRobin, g = pool.Pool, name = String(pool.Name || ""), rowP = {};
+      var label = /^round ?robin$/i.test(name) || !name ? "Gruppspel" : name.replace(/^(pool|group)\s*/i, "Grupp ");
+      for (var i = 1; i < g.length; i++){ var pc = g[i] && g[i][0] && g[i][0].ParticipantCell; if (pc && Array.isArray(pc.Players)) rowP[i] = pairOf(pc.Players, pc.Seed); }
+      var grp = {name:label, rows:[], matches:[]};
+      (Array.isArray(pool.Standings) ? pool.Standings : []).forEach(function(s){
+        var p = pairOf([s.DoublesPlayer1Model, s.DoublesPlayer2Model].filter(Boolean));
+        if (p) grp.rows.push({pair:p.key, played:s.Played || 0, won:s.Wins || 0, lost:s.Losses || 0, diff:s.GamesDifference || 0, standing:s.Standing || 0});
+      });
+      if (!grp.rows.length) Object.keys(rowP).forEach(function(k){ if (rowP[k]) grp.rows.push({pair:rowP[k].key, played:0, won:0, lost:0, diff:0}); });
+      for (i = 1; i < g.length; i++) for (var j = i + 1; j < (g[i] || []).length; j++){
+        var mc = g[i][j] && g[i][j].MatchCell;
+        if (!mc || !mc.MatchId) continue;
+        var A = rowP[i], B = rowP[j], res = mc.MatchResults || {};
+        var mt = {t:"", c:courtName(mc.Court), a:A ? {pair:A} : {ph:"–"}, b:B ? {pair:B} : {ph:"–"}, w:null, s:null, note:null, mid:String(mc.MatchId)};
+        when(mt, mc.Date);
+        if (A && B && (res.HasScore || res.HasCancellation) && typeof res.IsFirstParticipantWinner === "boolean"){
+          mt.w = res.IsFirstParticipantWinner ? "a" : "b"; mt.note = cancelNote(res); mt.s = liveScore(res, !!mt.note);
+        }
+        mt.hasMe = !!((A && A.me) || (B && B.me));
+        mt.meWon = !!(mt.w && mt[mt.w].pair && mt[mt.w].pair.me);
+        grp.matches.push(mt);
+      }
+      grp.matches.sort(function(x, y){ return (x.at ? +x.at : 9e15) - (y.at ? +y.at : 9e15); });
+      return grp;
+    });
+    if (groups.length) ev.draws.push({key:"g", format:"groups", groups:groups, label:groups.length > 1 ? "Grupper" : groups[0].name});
+    koDraws.forEach(function(d, k){ ev.draws.push(d); if (k === 0) ev.mainIdx = ev.draws.length - 1; });
+    ev.draws.forEach(function(d){
+      if (d.format === "groups") return;
+      resolve(ev, d);
+      d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt){ if (r > 0){ if (mt.a.pair) mt.a.via = true; if (mt.b.pair) mt.b.via = true; } }); });
+    });
+    // Several play days: show the weekday next to the time
+    if (Object.keys(ev.days).length > 1) ev.draws.forEach(function(d){
+      (d.format === "groups" ? d.groups.map(function(g){ return {matches:g.matches}; }) : d.rounds).forEach(function(rd){ rd.matches.forEach(function(mt){ if (mt.at) mt.dl = cap(DOW[loc(mt.at).getUTCDay()]); }); });
+    });
+    return ev;
+  }
+  function tourState(ev){
+    var items = [];
+    ev.draws.forEach(function(d, di){
+      if (d.format === "groups") d.groups.forEach(function(g){ g.matches.forEach(function(mt){ if (mt.hasMe) items.push({mt:mt, d:d, di:di, rd:{label:g.name, short:g.name === "Gruppspel" ? "Grupp" : g.name}, r:0, kind:"rr"}); }); });
+      else d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt, i){ if (mt.hasMe) items.push({mt:mt, d:d, di:di, rd:rd, r:r, i:i, kind:"ko"}); }); });
+    });
+    function k(x){ return x.mt.at ? +x.mt.at : 9e15; }
+    items.sort(function(a, b){ return k(a) - k(b) || (a.kind === b.kind ? 0 : a.kind === "rr" ? -1 : 1) || a.di - b.di || a.r - b.r; });
+    var played = items.filter(function(x){ return x.mt.w; }), pending = items.filter(function(x){ return !x.mt.w; });
+    var main = ev.draws[ev.mainIdx], R = main ? main.rounds.length : 0, last = played[played.length - 1] || null;
+    return {next:pending[0] || null, last:last, R:R, played:played,
+      lostMain:played.filter(function(x){ return x.kind === "ko" && x.di === ev.mainIdx && !x.mt.meWon; })[0] || null,
+      champ:!!(last && last.kind === "ko" && last.di === ev.mainIdx && last.r === R - 1 && last.mt.meWon)};
+  }
+  function dynRound(ev, x){ return x.kind === "rr" || x.di === ev.mainIdx ? x.rd.label : x.d.label.replace(/\s*\d.*$/, "") + " · " + x.rd.label; }
+  function mePair(mt){ return mt[meSide(mt)].pair; }
+  function dynOutCopy(ev, st){
+    var e = ev.e, x = st.last, names = x ? firstNames(mePair(x.mt)) : "";
+    if (st.champ) return names + " vann " + e.cls + ". Grattis!";
+    var R = st.R, lm = st.lostMain;
+    if (lm && lm.r === R - 1) return "Tvåa i " + e.cls + ". Silver, starkt jobbat.";
+    if (lm && lm.r === R - 2) return "Semifinalen blev slutstation. Topp fyra, starkt jobbat.";
+    if (lm && lm.r === R - 3) return "Kvartsfinalen blev slutstation. Topp åtta, bra kämpat.";
+    if (x && x.kind === "rr" && ev.mainIdx < 0){
+      var g = x.d.groups.filter(function(gg){ return gg.name === x.rd.label; })[0], row = g && g.rows.filter(function(r){ var p = ev.pairs[r.pair]; return p && p.me; })[0];
+      var ORD = ["etta", "tvåa", "trea", "fyra", "femma", "sexa"];
+      if (row && row.standing && g.matches.every(function(m){ return m.w; })) return cap(ORD[row.standing - 1] || row.standing + ":a") + " i " + (g.name === "Gruppspel" ? "gruppen" : g.name) + ". Bra kämpat, " + names + ".";
+    }
+    return names ? "Klart för den här gången. Bra kämpat, " + names + "." : "Klart.";
+  }
+
+  /* ---- team league (SPL): rubbers of a tie (camelCase; challenger = home team, scores from the challenger's side) ---- */
+  var TL_TYPE = {3:"Herr", 4:"Dam", 5:"Mixed"}, TL_RID = {3:64, 4:65, 5:66};
+  function tlSide(x){
+    if (!x || !x.player1Id) return null;
+    var ids = [x.player1Id, x.player2Id].filter(Boolean), n = [x.name, x.player2Name].map(function(s){ return String(s || "").trim(); }).filter(Boolean);
+    if (!n.length || /^pending$/i.test(n[0])) return null;
+    return {id:ids.join("-"), ids:ids, n:n};
+  }
+  function tlSets(sc){
+    var ds = sc && sc.detailedScoring;
+    if (!Array.isArray(ds) || !ds.length) return null;
+    var out = ds.map(function(x){
+      var f = Number(x && x.firstParticipantScore), s = Number(x && x.secondParticipantScore), lt = x && x.loserTiebreak;
+      if (isNaN(f) || isNaN(s)) return null;
+      if (f + s === 1 && lt != null && !isNaN(Number(lt))){ var w = Math.max(10, Number(lt) + 2); return f ? w + "-" + lt : lt + "-" + w; }
+      return f + "-" + s;
+    });
+    return out.some(function(x){ return x === null; }) ? null : out.join(" ");
+  }
+  function parseTie(data){
+    var out = [];
+    (Array.isArray(data) ? data : []).forEach(function(g){
+      var type = g && g.settings && g.settings.matchType, list = (g && g.matches && g.matches.matches) || [];
+      list.forEach(function(m){
+        if (!m || !m.id) return;
+        var r = m.matchResult || {}, a = tlSide(m.challenger), b = tlSide(m.challenged);
+        var x = {id:String(m.id), type:type, kind:TL_TYPE[type] || "", k:out.length + 1, a:a, b:b, w:null, s:null, note:null, date:m.date || ""};
+        var cancel = m.cancellation || r.cancellationStatus || (r.hasCancellation ? "W.O." : null);
+        if (a && b && (r.isPlayed || m.state === 6 || cancel) && typeof r.isFirstParticipantWinner === "boolean"){
+          x.w = r.isFirstParticipantWinner ? "a" : "b"; x.s = tlSets(r.score);
+          if (cancel) x.note = /ret|upp/i.test(String(cancel)) ? "Uppgivet" : "W.O.";
+        }
+        out.push(x);
+      });
+    });
+    return out;
+  }
+  function snapTie(rubbers){
+    var s = {};
+    rubbers.forEach(function(r){ if (r.a || r.b || r.w) s[r.id] = [r.a ? r.a.id : "", r.b ? r.b.id : "", r.w || ""].join(","); });
+    if (rubbers.length && rubbers.every(function(r){ return r.w; })) s._done = 1;
+    return s;
+  }
+  function ourSide(tie, rubbers, pid){
+    for (var i = 0; i < rubbers.length; i++) for (var k = 0; k < 2; k++){ var sd = "ab"[k], p = rubbers[i][sd]; if (p && p.ids.map(String).indexOf(String(pid)) >= 0) return sd; }
+    return tie.home === false ? "b" : "a";
+  }
+  // Same wording, ids and tags as worker/src/teamleague.js tieNotes().
+  function tieNotes(ev, tie, rubbers, before){
+    var pid = String(ev.pid), isMe = function(p){ return !!p && p.ids.map(String).indexOf(pid) >= 0; };
+    var us = ourSide(tie, rubbers, pid), them = us === "a" ? "b" : "a", cid = "tm" + tie.id;
+    var score = function(r){ var s = r.s ? (us === "a" ? r.s : flip(r.s)) : ""; return s || r.note || ""; };
+    var W = 0, L = 0;
+    rubbers.forEach(function(r){ if (r.w){ if (r.w === us) W++; else L++; } });
+    var tieScore = ev.team + " " + W + "–" + L + " " + tie.opp, mine = [], others = [];
+    rubbers.forEach(function(r){
+      var was = unpackSnap(before[r.id]);
+      if (!r.w || was.w) return;
+      var ours = r[us], theirs = r[them], won = r.w === us, sc = score(r), id = cid + ":r" + r.id;
+      if (isMe(ours)) mine.push({id:id, title:firstNames(ours) + (won ? " vann sin match " : " förlorade sin match ") + sc, body:("Mot " + short(theirs) + ". Ställning: " + tieScore + ".").trim()});
+      else others.push({id:id, title:ev.team + ": " + short(ours) + (won ? " vann " : " förlorade ") + sc, body:"Mot " + short(theirs) + " · " + tieScore});
+    });
+    rubbers.forEach(function(r){
+      if (r.w || !isMe(r[us]) || !r[them]) return;
+      if (unpackSnap(before[r.id])[them]) return;
+      mine.push({id:cid + ":opp:r" + r.id + ":" + r[them].id, title:firstNames(r[us]) + " möter " + short(r[them]),
+        body:[ev.name, ev.team + " mot " + tie.opp, tie.time, tie.venue].filter(Boolean).join(" · ")});
+    });
+    var out = [];
+    if (others.length > 3) out.push({id:cid + ":batch:" + others.map(function(o){ return o.id; }).join(","), title:ev.team + ": " + others.length + " nya resultat",
+      body:others.slice(0, 4).map(function(o){ return o.title; }).join("\n"), tag:"padel-" + cid + "-lag", batch:others.map(function(o){ return o.id; })});
+    else others.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + o.id}); });
+    mine.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + o.id}); });
+    var done = rubbers.length && rubbers.every(function(r){ return r.w; });
+    var wasDone = before._done || (rubbers.length && rubbers.every(function(r){ return unpackSnap(before[r.id]).w; }));
+    if (done && !wasDone){
+      var t = W > L ? ev.team + " vann mot " + tie.opp + " " + W + "–" + L : W < L ? ev.team + " förlorade mot " + tie.opp + " " + W + "–" + L : ev.team + " och " + tie.opp + " delade " + W + "–" + L;
+      var myR = rubbers.filter(function(r){ return isMe(r[us]); })[0];
+      var body = [ev.name + (ev.round ? " omgång " + ev.round : ""), myR ? firstNames(myR[us]) + (myR.w === us ? " vann sin match " : " förlorade sin match ") + score(myR) : ""].filter(Boolean).join(". ") + ".";
+      out.push({id:cid + ":klar", title:t, body:body, tag:"padel-" + cid + ":klar"});
+    }
+    return out;
+  }
+  function buildTL(e, datas){
+    var ties = (e.ties || []).map(function(tie, i){
+      var rubbers = parseTie(datas && datas[i]), us = ourSide(tie, rubbers, e.pid), W = 0, L = 0;
+      var start = tie.time ? riDate(e.date + "T" + tie.time) : null;
+      rubbers.forEach(function(r){ if (r.w){ if (r.w === us) W++; else L++; } if (!start && hhmmOf(r.date) && hhmmOf(r.date) !== "00:00") start = riDate(r.date); });
+      var mts = rubbers.map(function(r){
+        var rid = TL_RID[r.type] || null;
+        function P(x){ return x ? {pair:{key:x.id, n:x.n, ids:x.ids, rid:rid, me:x.ids.map(String).indexOf(String(e.pid)) >= 0}} : {ph:"Inte publicerad"}; }
+        var mt = {t:start ? hm(start) : "", c:"", a:P(r.a), b:P(r.b), w:r.w, note:r.note, s:r.s ? (r.w === "b" ? flip(r.s) : r.s) : null, r:r, at:start};
+        mt.hasMe = !!((mt.a.pair && mt.a.pair.me) || (mt.b.pair && mt.b.pair.me));
+        mt.meWon = !!(mt.w && mt[mt.w].pair && mt[mt.w].pair.me);
+        return mt;
+      });
+      return {tie:tie, rubbers:rubbers, mts:mts, us:us, W:W, L:L, start:start, done:!!(rubbers.length && rubbers.every(function(r){ return r.w; }))};
+    });
+    return {tl:true, e:e, ties:ties};
+  }
+
+  /* ---- rendering (reuses the page's hero, board, route, bracket and group styles) ---- */
+  var COURT_SVG = '<svg class="court" viewBox="0 0 390 230" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1"><path d="M20 229 L110 20 H280 L370 229 Z"/><path d="M58 140 H332"/><path d="M195 140 V229"/><path d="M92 62 H298" stroke-dasharray="3 5"/></svg>';
+  function dynShell(who){
+    var W = WHO[who];
+    return '<div class="livebar" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div>' +
+      '<div class="' + W.cls + '"><img src="' + W.img + '" width="' + W.w + '" height="' + W.h + '" alt="' + esc(W.alt) + '"><div class="scrim"></div>' + COURT_SVG +
+      '<div class="hero-top"><a class="glass" data-r="link" target="_blank" rel="noopener"></a><span class="glass" data-r="pill"><span class="dot"></span><span>–</span></span></div>' +
+      '<div class="hero-bot"><div class="eyebrow" data-r="round"></div><div class="timeline-big"><div class="bigtime" data-r="time">–</div><div class="court-no" data-r="cno"><small data-r="clab">Bana</small><b data-r="court"></b></div></div></div></div>' +
+      '<div class="board" aria-live="polite"><div class="countdown" data-r="cd"><span class="l"><span class="dot"></span><span data-r="cdt">–</span></span><a data-r="rl" target="_blank" rel="noopener">RankedIn ↗︎</a></div>' +
+      '<div class="lastres" data-r="last" hidden></div><div class="vs" data-r="vs"></div></div>' +
+      '<ol class="route" data-r="route" aria-label="Vägen genom tävlingen" hidden></ol>' +
+      '<section aria-labelledby="dh-' + who + '"><div class="sh"><h2 id="dh-' + who + '" data-r="h">Spelträd</h2><div class="meta" data-r="meta"></div></div><div data-r="draw"></div></section>';
+  }
+  function meTeamRow(p, right){
+    var sv = pskill(p), info = p.n.map(function(n){ return n.split(" ")[0]; }).join(" och ") + (sv ? " · skill " + fmtSkill(sv) : "");
+    return '<div class="team me">' + avatars(p, "") + '<div class="tname">' + esc(short(p)) + '<small>' + esc(info) + '</small></div>' + (right || (p.seed ? '<span class="seed">[' + esc(p.seed) + ']</span>' : '<span></span>')) + '</div>';
+  }
+  var OPP_NAME = 'style="font:800 21px/1.02 \'Big Shoulders Display\',sans-serif;text-transform:uppercase;color:var(--board-ink);letter-spacing:.02em"';
+  function oppRow(op, ev, right){
+    if (op && op.pair){
+      var sv = pskill(op.pair);
+      return '<div class="team opp">' + avatars(op.pair, "") + '<div class="tname" ' + OPP_NAME + '>' + esc(short(op.pair)) + '<small>' + esc(op.pair.n.map(function(n){ return n.split(" ")[0]; }).join(" och ") + (sv ? " · skill " + fmtSkill(sv) : "")) + '</small></div>' +
+        (right || (op.pair.seed ? '<span class="seed">[' + esc(op.pair.seed) + ']</span>' : '<span></span>')) + '</div>';
+    }
+    if (op && op.from){
+      return '<div class="team opp"><span></span><div class="tname">Mot vinnaren av<div class="opts">' + op.from.map(function(pp, i){
+        return (i ? '<div class="opt"><i>eller</i></div>' : "") + '<div class="opt">' + avatars(pp, "md") + '<span>' + esc(short(pp)) + (pskill(pp) ? '<small class="osk">skill ' + fmtSkill(pskill(pp)) + '</small>' : '') + '</span></div>';
+      }).join("") + '</div></div><span></span></div>';
+    }
+    return '<div class="team opp"><span></span><div class="tname">' + esc((op && op.ph) || "Motståndare klara senare") + '</div>' + (right || "<span></span>") + '</div>';
+  }
+  function tilesFor(mt){
+    var side = meSide(mt), ss = sets(mt.s);
+    if (!ss.length) return '<span class="rs">' + esc(mt.note || (mt.meWon ? "Vinst" : "Förlust")) + '</span>';
+    return '<span class="tiles" aria-label="' + esc(mePersp(mt)) + '">' + ss.map(function(p){
+      var mine = mt.w === side ? p[0] : p[1], th = mt.w === side ? p[1] : p[0];
+      var mw = typeof mine === "number" ? mine > th : mt.w === side, tw = typeof th === "number" ? th > mine : mt.w !== side;
+      return '<span class="' + (mw ? "w" : "") + '">' + esc(mine) + '</span><span class="' + (tw ? "w" : "") + '">' + esc(th) + '</span>';
+    }).join("") + '</span>';
+  }
+  function whenText(mt){ return [mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : ""); }
+  function setHero(D, o){
+    var el = D.el;
+    el.link.textContent = o.link || ""; el.link.href = o.url || RI_WEB; el.rl.href = o.url || RI_WEB;
+    el.round.textContent = o.round || "";
+    el.time.textContent = o.big || "–";
+    el.cno.hidden = !o.court; el.clab.textContent = o.clab || "Bana"; el.court.textContent = o.court || "";
+    el.pill.className = "glass" + (o.pcls ? " " + o.pcls : "");
+    el.pill.innerHTML = '<span class="dot"></span><span>' + esc(o.pill || "–") + '</span>';
+    el.cd.className = "countdown" + (o.live ? " live" : "");
+    el.cdt.textContent = o.txt || "";
+    el.vs.innerHTML = o.vs || "";
+    el.last.hidden = !o.last; el.last.innerHTML = o.last || "";
+    el.route.hidden = !o.route; el.route.innerHTML = o.route || "";
+    el.h.textContent = o.h || "Spelträd"; el.meta.textContent = o.meta || "";
+    var sub = document.getElementById(WHO[D.who].sub);
+    if (sub && o.sub) sub.textContent = o.sub;
+  }
+  function timing(s, t, rl){   // -> pill, txt, live, pcls
+    if (!s) return {pill:"Nästa", txt:rl + " · tid inte satt"};
+    if (t < s){
+      var same = s - t < 16 * HOUR;
+      return {pill:same ? "Om " + fmtLeft(s - t) : cap(dayLabel(s)), txt:same ? rl + " börjar om " + fmtLeft(s - t) : rl + " " + dayLabel(s) + " " + hm(s)};
+    }
+    if (t < new Date(+s + 90 * 60000)) return {pill:"Pågår", pcls:"live", live:true, txt:defForm(rl) + " pågår"};
+    return {pill:"Väntar", pcls:"done", txt:defForm(rl) + " är slut. Väntar på resultat från RankedIn."};
+  }
+
+  function renderDynTour(D){
+    var e = D.e, ev = D.model || buildTour(e, []), st = tourState(ev), x = st.next || st.last, t = now(), W = WHO[D.who], o = {link:e.name || "Turnering", url:e.url};
+    wantSkills(Object.keys(ev.pairs).map(function(k){ return ev.pairs[k]; }));
+    var npairs = Object.keys(ev.pairs).length || e.pairs || 0;
+    o.h = !ev.draws.length ? "Lottning" : ev.draws.some(function(d){ return d.format !== "groups"; }) ? "Spelträd" : "Grupper";
+    o.meta = e.cls + (npairs ? " · " + npairs + " par" : "");
+    if (!x){
+      var start = riDate(e.start) || new Date(e.windowFrom), partner = e.partner ? e.partner.split(" ")[0] : "";
+      o.round = e.cls + (partner ? " · med " + partner : "");
+      o.big = dayOf(start) === dayOf(t) ? hm(start) : dayMon(start);
+      if (t < start){ o.pill = start - t < 16 * HOUR ? "Om " + fmtLeft(start - t) : cap(dayLabel(start)); }
+      else if (inWin(e)){ o.pill = "Pågår"; o.pcls = "live"; o.live = true; }
+      else { o.pill = "Klar"; o.pcls = "done"; }
+      o.txt = ev.draws.length ? "Lottningen är klar. " + W.name + " har inga matcher inlagda än." : "Lottningen är inte klar än. Start " + dayLabel(start) + " " + hm(start) + ".";
+      o.sub = e.cls + " · " + (inWin(e) ? "idag" : dayLabel(start));
+      var mp = {n:[e.me, e.partner].filter(Boolean), ids:[e.pid, e.partnerId || null], rid:ev.rid, me:true, seed:e.seed || ""};
+      wantSkills([mp]);
+      o.vs = meTeamRow(mp) + oppRow({ph:ev.draws.length ? "Motståndare klara senare" : "Motståndare klara när lottningen kommer"}, ev);
+    } else {
+      var mt = x.mt, rl = dynRound(ev, x);
+      o.round = rl + " · " + e.cls; o.big = mt.t || dayMon(mt.at || riDate(e.start) || t);
+      o.court = mt.c ? mt.c.replace(/^Bana\s*/, "") : "";
+      if (st.next){
+        var tm = timing(mt.at, t, rl);
+        o.pill = tm.pill; o.pcls = tm.pcls; o.live = tm.live; o.txt = tm.txt + (tm.live && mt.c ? " · " + mt.c : "");
+        o.sub = x.rd.short + (mt.t ? " " + mt.t : "") + (tm.live ? " · pågår" : "");
+      } else {
+        o.pill = st.champ ? "Vinnare" : "Klar"; o.pcls = st.champ ? "live" : "done";
+        o.txt = dynOutCopy(ev, st); o.sub = st.champ ? "Vann " + e.cls : e.cls + " · klart";
+      }
+      var ms = meSide(mt), right = null;
+      if (!st.next && mt.w) right = '<span class="tag">' + (mt.meWon ? "Vinst" : "Förlust") + '<b>' + esc(mePersp(mt) || mt.note || "") + '</b></span>';
+      o.vs = meTeamRow(mt[ms].pair) + oppRow(mt[ms === "a" ? "b" : "a"], ev, right);
+      var L = st.next && st.last;
+      if (L){
+        var lop = L.mt[meSide(L.mt) === "a" ? "b" : "a"];
+        o.last = '<span>' + esc(L.rd.label) + ': <b>' + (L.mt.meWon ? "vinst" : "förlust") + '</b> mot ' + esc(lop.pair ? short(lop.pair) : "–") + '</span><span class="sc">' + esc(mePersp(L.mt) || L.mt.note || "") + '</span>';
+      }
+      o.route = dynRouteHtml(ev, st);
+    }
+    setHero(D, o);
+    var host = D.el.draw;
+    if (!ev.draws.length){
+      host.innerHTML = '<p class="empty">Lottningen är inte publicerad än. Den dyker upp här när arrangören lägger ut den.</p>';
+      return;
+    }
+    var nm = st.next && st.next.mt, sel = 0;
+    if (x) sel = x.di;
+    if (!host.querySelector(".seg")){ host.innerHTML = ""; renderEvent(ev, host, nm, W.name, sel); }
+    else rerenderEvent(ev, host, nm, W.name);
+  }
+  function dynRouteHtml(ev, st){
+    var h = "", n = 0, out = !!(st.lostMain || st.champ);
+    ev.draws.forEach(function(d){
+      if (d.format !== "groups") return;
+      d.groups.forEach(function(g){ g.matches.forEach(function(mt){
+        if (!mt.hasMe) return;
+        n++;
+        var op = mt[meSide(mt) === "a" ? "b" : "a"], cls = mt.w ? (mt.meWon ? "done" : "lost") : (st.next && st.next.mt === mt ? "next" : "");
+        var st2 = matchState(ev, mt), right = mt.w ? tilesFor(mt) : '<span class="rs">' + (st2 === "live" ? "Pågår" : st2 === "nr" ? "Väntar på resultat" : cls === "next" ? "Nästa" : "") + '</span>';
+        h += '<li class="' + cls + '"><span class="node"></span><div><div class="rn">' + esc((g.name === "Gruppspel" ? "Grupp" : g.name) + " · " + n) + '</div><div class="rm">' + esc("mot " + (op.pair ? short(op.pair) : "–") + (whenText(mt) ? " · " + whenText(mt) : "")) + '</div></div>' + right + '</li>';
+      }); });
+    });
+    var main = ev.draws[ev.mainIdx];
+    if (main && main.rounds.some(function(rd){ return rd.matches.some(function(m){ return m.hasMe; }); })){
+      var i0 = -1;
+      main.rounds.forEach(function(rd, r){ rd.matches.forEach(function(m, i){ if (m.hasMe && i0 < 0) i0 = i << r; }); });
+      main.rounds.forEach(function(rd, r){
+        var mt = rd.matches.filter(function(m){ return m.hasMe; })[0], slot = rd.matches[Math.max(0, i0) >> r] || rd.matches[0], cls = "", right, meta = whenText(slot);
+        if (mt && mt.w){ cls = mt.meWon ? "done" : "lost"; right = tilesFor(mt); meta = whenText(mt); }
+        else if (mt){ cls = "next"; var s3 = matchState(ev, mt); right = '<span class="rs">' + (s3 === "live" ? "Pågår" : s3 === "nr" ? "Väntar på resultat" : "Nästa") + '</span>'; meta = whenText(mt); }
+        else if (out){ cls = "out"; right = '<span class="rs"></span>'; }
+        else right = '<span class="rs">Vid vinst</span>';
+        h += '<li class="' + cls + '"><span class="node"></span><div><div class="rn">' + esc(rd.label) + '</div><div class="rm">' + esc(meta || "Tid kommer") + '</div></div>' + right + '</li>';
+      });
+    }
+    return h;
+  }
+
+  function renderDynTL(D){
+    var e = D.e, m = D.model || buildTL(e, []), t = now(), W = WHO[D.who], o = {link:e.name, url:e.url};
+    var cur = m.ties.filter(function(x){ return !x.done; })[0] || m.ties[m.ties.length - 1];
+    var day = riDate(e.date + "T12:00"), pairs = [];
+    m.ties.forEach(function(x){ x.mts.forEach(function(mt){ ["a", "b"].forEach(function(sd){ if (mt[sd].pair) pairs.push(mt[sd].pair); }); }); });
+    wantSkills(pairs);
+    o.round = e.name + (e.round ? " · omgång " + e.round : "");
+    o.h = m.ties.length > 1 ? "Lagmatcher" : "Lagmatch";
+    o.meta = e.team + (e.division ? " · " + e.division : "");
+    if (e.round){ o.court = String(e.round); o.clab = "Omg"; }
+    if (!cur){ o.big = dayMon(day); o.pill = cap(dayLabel(day)); o.txt = "Inga lagmatcher inlagda."; setHero(D, o); D.el.draw.innerHTML = ""; return; }
+    var tie = cur.tie, myMt = cur.mts.filter(function(x){ return x.hasMe; })[0] || null;
+    o.big = cur.start ? hm(cur.start) : dayMon(day);
+    var allDone = m.ties.every(function(x){ return x.done; }), vsTxt = (tie.home ? "Hemma" : "Borta") + " mot " + tie.opp;
+    if (allDone){
+      o.pill = "Klart"; o.pcls = "done";
+      o.txt = m.ties.map(function(x){ return x.W > x.L ? e.team + " vann mot " + x.tie.opp + " " + x.W + "–" + x.L : x.W < x.L ? "Förlust mot " + x.tie.opp + " " + x.W + "–" + x.L : "Oavgjort mot " + x.tie.opp + " " + x.W + "–" + x.L; }).join(". ") + ".";
+      o.sub = e.name + " · klart";
+    } else if (cur.start && t < cur.start){
+      var same = cur.start - t < 16 * HOUR;
+      o.pill = same ? "Om " + fmtLeft(cur.start - t) : cap(dayLabel(cur.start));
+      o.txt = vsTxt + " · " + (same ? "börjar om " + fmtLeft(cur.start - t) : dayLabel(cur.start) + " " + hm(cur.start)) + (tie.venue ? " · " + tie.venue : "");
+      o.sub = e.name + " · " + (same ? hm(cur.start) : dayLabel(cur.start));
+    } else if (inWin(e) && (cur.start || cur.rubbers.some(function(r){ return r.w; }))){
+      o.pill = "Pågår"; o.pcls = "live"; o.live = true;
+      o.txt = "Lagmatchen pågår · " + vsTxt + (tie.venue ? " · " + tie.venue : "");
+      o.sub = e.name + " · pågår";
+    } else if (inWin(e)){
+      o.pill = "Idag"; o.txt = vsTxt + " · tid inte klar" + (tie.venue ? " · " + tie.venue : ""); o.sub = e.name + " · idag";
+    } else {
+      o.pill = cap(dayLabel(day)); o.txt = vsTxt + " · " + dayLabel(day) + (tie.time ? " " + tie.time : ", tid inte klar") + (tie.venue ? " · " + tie.venue : "");
+      o.sub = e.name + " · " + dayLabel(day);
+    }
+    if (myMt){
+      var ms = meSide(myMt), right = myMt.w ? '<span class="tag">' + (myMt.meWon ? "Vinst" : "Förlust") + '<b>' + esc(mePersp(myMt) || myMt.note || "") + '</b></span>' : null;
+      o.vs = meTeamRow(myMt[ms].pair) + oppRow(myMt[ms === "a" ? "b" : "a"], null, right);
+    } else {
+      o.vs = '<div class="team me"><span></span><div class="tname">' + esc(e.team) + '<small>' + esc(W.name + (cur.rubbers.length ? " spelar inte den här matchen" : " · laguppställningen kommer senare")) + '</small></div><span class="seed">' + (tie.home ? "Hemma" : "Borta") + '</span></div>' +
+        '<div class="team opp"><span></span><div class="tname" ' + OPP_NAME + '>' + esc(tie.opp) + '<small>' + esc(tie.venue || "Plats inte klar") + '</small></div><span></span></div>';
+    }
+    if (cur.W + cur.L) o.last = '<span>Ställning mot ' + esc(tie.opp) + '</span><span class="sc"><b>' + cur.W + "–" + cur.L + '</b></span>';
+    setHero(D, o);
+    D.el.draw.innerHTML = m.ties.map(function(x){
+      var tt = x.tie, home = tt.home ? e.team : tt.opp, away = tt.home ? tt.opp : e.team;
+      var meta = [x.start ? dayLabel(x.start) + " " + hm(x.start) : dayLabel(day), tt.venue, tt.home ? "hemma" : "borta"].filter(Boolean).join(" · ");
+      return '<div class="tie"><div class="tiehd"><div><div class="tt">' + esc(home) + ' <i>–</i> ' + esc(away) + '</div><div class="tm">' + esc(meta) + '</div></div>' +
+        (x.W + x.L ? '<div class="ts">' + x.W + '–' + x.L + '<small>' + (x.done ? "Slut" : "Ställning") + '</small></div>' : '<div></div>') + '</div>' +
+        (x.mts.length ? '<div class="results">' + x.mts.map(function(mt){
+          var r = mt.r, st2 = mt.w ? (mt.w === x.us ? "Vinst" : "Förlust") : (inWin(e) && x.start && now() >= x.start ? "Pågår" : "");
+          return '<div class="res' + (mt.hasMe ? " mine" : "") + '"><div class="mh"><span>' + esc("Match " + r.k + (r.kind ? " · " + r.kind : "")) + '</span><span class="st' + (st2 === "Pågår" ? " nx" : "") + '">' + esc(st2) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
+        }).join("") + '</div>' : '<p class="empty">Laguppställningarna är inte publicerade än.</p>') + '</div>';
+    }).join("");
+  }
+  function dynRender(D){
+    if (D.dead) return;
+    if (D.e.kind === "teamleague") renderDynTL(D); else renderDynTour(D);
+  }
+  function dynBuild(D){ D.model = D.e.kind === "teamleague" ? buildTL(D.e, D.datas) : buildTour(D.e, D.datas); }
+
+  /* ---- live polling + notiser for the discovered event on each tab ---- */
+  function dynPaths(e){
+    return e.kind === "teamleague" ? (e.ties || []).map(function(t){ return rubbersPath(t.id); }) :
+      (e.draws || [[0, 0], [1, 0]]).map(function(d){ return drawPath(e.classId, d[0], d[1]); });
+  }
+  function dynLocal(D){ return notiOn() && !(pushOn() && (D.e.cover || []).length && D.e.cover.every(function(c){ return pushCovers(c + ":"); })); }
+  function dynSnap(D){
+    if (D.e.kind === "teamleague") return D.model.ties.map(function(x){ return snapTie(x.rubbers); });
+    return flatSnap(D.model.flat);
+  }
+  function dynNotify(D, before){
+    var e = D.e, list = [];
+    if (e.kind === "teamleague") D.model.ties.forEach(function(x, i){ list = list.concat(tieNotes(e, x.tie, x.rubbers, before[i] || {})); });
+    else list = tNotes({classId:e.classId, cls:e.cls, me:e.me, who:e.who}, D.model.flat, before);
+    list.forEach(function(o){
+      if (o.batch){
+        var fresh = o.batch.filter(function(id){ return !notified(id); });
+        if (!fresh.length) return;
+        o.batch.forEach(markNotified);
+      }
+      showNote(o.id, o.title, o.body, "#" + D.who, o.tag);
+    });
+  }
+  function dynCacheKey(D){ return "padel.dyn." + D.e.key; }
+  function dynPoll(D){
+    clearTimeout(D.timer); D.timer = null;
+    if (D.dead) return;
+    var live = inWin(D.e);
+    if (!live){ setBar(D, "off"); if (D.okAt && Date.now() - D.fetchedAt < 30 * 60000) return; }
+    if (D.busy || (document.visibilityState === "hidden" && !(live && dynLocal(D)))) return;
+    D.busy = true;
+    if (live && !D.okAt && !D.failed) setBar(D, "wait");
+    Promise.all(dynPaths(D.e).map(function(p){ return riGet(p); })).then(function(datas){
+      if (D.dead) return;
+      D.datas = datas; D.okAt = now(); D.fetchedAt = Date.now(); D.failed = false;
+      dynBuild(D); dynRender(D);
+      if (live) setBar(D, "ok");
+      if (!CACHE_OFF) store.set(dynCacheKey(D), JSON.stringify({at:new Date().toISOString(), datas:datas}));
+      var snap = dynSnap(D);
+      // First successful fetch = baseline: results already there never notify (same as the worker)
+      if (D.snap && live){ try { dynNotify(D, D.snap); } catch (e){ if (window.console) console.warn("Notis misslyckades:", e && e.message); } }
+      D.snap = snap;
+    }).catch(function(err){
+      D.failed = true;
+      if (live) setBar(D, "err");
+      if (window.console) console.warn("Hämtning misslyckades:", err && err.message);
+    }).then(function(){ D.busy = false; D.lastPoll = Date.now(); dynSchedule(D); });
+  }
+  function dynSchedule(D){
+    clearTimeout(D.timer); D.timer = null;
+    if (D.dead || !inWin(D.e)) return;
+    var hidden = document.visibilityState === "hidden";
+    if (hidden && !dynLocal(D)) return;
+    D.timer = setTimeout(function(){ dynPoll(D); }, hidden ? 2 * LIVE_EVERY : LIVE_EVERY);
+  }
+  document.addEventListener("visibilitychange", function(){
+    ["thea", "kian"].forEach(function(w){
+      var D = DYN[w];
+      if (!D) return;
+      if (document.visibilityState === "hidden"){ if (!dynLocal(D)){ clearTimeout(D.timer); D.timer = null; } }
+      else if (!D.lastPoll || Date.now() - D.lastPoll > 5000) dynPoll(D);
+      else dynSchedule(D);
+    });
+  });
+
+  /* ---- which event each tab shows ---- */
+  function pickHero(who){
+    var t = now(), list = ((DISC && DISC.events) || []).filter(function(e){ return e.who === who && e.windowFrom && e.windowTo; });
+    var W = WHO[who], sid = W.staticEv && W.staticEv.live && W.staticEv.live.classId;
+    var on = list.filter(function(e){ return inWin(e, t); });
+    function rank(e){ return e.kind === "tournament" && e.classId === sid ? 0 : e.kind === "teamleague" ? 1 : 2; }
+    if (on.length) return on.sort(function(a, b){ return rank(a) - rank(b) || String(a.windowFrom).localeCompare(String(b.windowFrom)); })[0];
+    return list.filter(function(e){ return new Date(e.windowFrom) > t; }).sort(function(a, b){ return String(a.windowFrom).localeCompare(String(b.windowFrom)); })[0] || null;
+  }
+  function setStatic(who, show){
+    [].forEach.call(document.querySelectorAll("#p-" + who + " [data-ev]"), function(x){ x.hidden = !show; });
+  }
+  function setMode(who, e){
+    var W = WHO[who], box = document.getElementById("dyn-" + who), D = DYN[who];
+    var isStatic = !e || (e.kind === "tournament" && W.staticEv && W.staticEv.live && e.classId === W.staticEv.live.classId);
+    if (isStatic){
+      if (D){ D.dead = true; clearTimeout(D.timer); DYN[who] = null; }
+      if (box){ box.hidden = true; box.innerHTML = ""; }
+      setStatic(who, true);
+      return;
+    }
+    if (D && D.e.key === e.key){
+      D.e = e;
+      if (D.datas) dynBuild(D);
+      dynRender(D);
+      if (!D.busy && !D.timer) dynPoll(D);
+      return;
+    }
+    if (D){ D.dead = true; clearTimeout(D.timer); }
+    D = DYN[who] = {who:who, e:e, box:box, el:{}};
+    box.innerHTML = dynShell(who);
+    [].forEach.call(box.querySelectorAll("[data-r]"), function(x){ D.el[x.getAttribute("data-r")] = x; });
+    D.bar = box.querySelector(".livebar");
+    setStatic(who, false);
+    box.hidden = false;
+    var c = CACHE_OFF ? null : store.json(dynCacheKey(D));
+    if (c && Array.isArray(c.datas)){ D.datas = c.datas; D.cachedAt = new Date(c.at); }
+    try { dynBuild(D); } catch (err){ D.datas = null; dynBuild(D); }
+    dynRender(D);
+    dynPoll(D);
+  }
+
+  /* ---- Kommande, from the discovered list ---- */
+  function tourCard(e){
+    var s = riDate(e.start) || new Date(e.windowFrom), en = riDate(e.end) || s, sd = loc(s), ed = loc(en), multi = dayOf(s) !== dayOf(en);
+    var mon = MON[sd.getUTCMonth()] + (multi && ed.getUTCMonth() !== sd.getUTCMonth() ? "–" + MON[ed.getUTCMonth()] : "");
+    var facts = ["Start " + dayLabel(s) + " " + hm(s) + (e.closes && riDate(e.closes) && riDate(e.closes) > now() ? " · anmälan stänger " + dayMon(riDate(e.closes)) : "")];
+    if (e.pairs) facts.push(e.pairs + " par anmälda i " + esc(e.cls));
+    if (e.published) facts.push("Lottningen är klar" + (e.format === "groups" ? " · gruppspel" : e.format === "mixed" ? " · grupper och slutspel" : e.format === "knockout" ? " · utslagsspel" : ""));
+    facts.push('<a href="' + esc(e.url || RI_WEB) + '" target="_blank" rel="noopener">Turneringen på RankedIn ↗︎</a>');
+    return upCard({dow:multi ? cap(DOW[sd.getUTCDay()]) + "–" + DOW[ed.getUTCDay()] : cap(DOW[sd.getUTCDay()]), day:multi ? sd.getUTCDate() + "–" + ed.getUTCDate() : String(sd.getUTCDate()), mon:mon,
+      title:e.name || "Turnering", cls:e.cls, what:esc([e.partner ? "Med " + e.partner : "", [e.venue, e.address].filter(Boolean).join(", ")].filter(Boolean).join(" · ")), facts:facts.join("<br>")});
+  }
+  function tlCard(e, later){
+    var d = loc(riDate(e.date + "T12:00")), spl = /^SPL/.test(e.name || "");
+    var span = function(s){ return ' <span class="mono" style="color:var(--dim);font-size:11.5px">· ' + esc(s) + '</span>'; };
+    var times = (e.ties || []).map(function(t){ return t.time; }).filter(Boolean);
+    var facts = [times.length ? "Start " + times[0] : "Tid och plats inte klart"];
+    if (e.players && e.players.length) facts.push("Laget: " + esc(e.players.join(", ")));
+    if (later.length) facts.push("Nästa omgångar: " + esc(later.join(", ")));
+    facts.push('<a href="' + esc(e.url || RI_WEB) + '" target="_blank" rel="noopener">Serien på RankedIn ↗︎</a>');
+    return upCard({dow:cap(DOW[d.getUTCDay()]), day:String(d.getUTCDate()), mon:MON[d.getUTCMonth()], title:e.name || "Lagserie",
+      what:esc((spl ? "Swedish Padel League · " : "") + e.team + (e.division ? " · " + e.division : "") + (spl ? ". Lagserie, inte SPT." : ". Lagserie.")),
+      list:(e.ties || []).map(function(t){ return esc(t.home ? e.team + " – " + t.opp : t.opp + " – " + e.team) + (t.time ? span(t.time) : "") + (t.venue ? span(t.venue) : ""); }),
+      facts:facts.join("<br>")});
+  }
+  function renderUps(who){
+    var host = document.getElementById(who + "Up"), meta = document.getElementById(who + "UpMeta");
+    if (!host || !DISC) return;
+    var t = now(), list = DISC.events.filter(function(e){ return e.who === who && new Date(e.windowFrom) > t; });
+    var html = [], seen = {}, months = [];
+    list.forEach(function(e){
+      var m = MON[loc(new Date(e.windowFrom)).getUTCMonth()];
+      if (e.kind === "teamleague"){
+        var k = e.leagueId + ":" + e.teamId;
+        if (seen[k]) return;
+        seen[k] = true;
+        var later = list.filter(function(x){ return x.kind === "teamleague" && x.leagueId === e.leagueId && x.teamId === e.teamId && x !== e; })
+          .map(function(x){ return dayMon(riDate(x.date + "T12:00")); });
+        html.push(tlCard(e, later));
+      } else html.push(tourCard(e));
+      if (months.indexOf(m) < 0) months.push(m);
+    });
+    host.innerHTML = html.length ? html.join("") : '<p class="empty">Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva.</p>';
+    if (meta) meta.textContent = months.length ? cap(months.slice(0, 3).join(" · ")) : "";
+  }
+
+  /* ---- discovery straight against RankedIn (when the worker cannot be reached); same rules as worker/src/discover.js ---- */
+  function clientDiscover(prev){
+    var t = now(), today = dayOf(t), DAY = 864e5, out = [], ended = {}, prevEv = (prev && prev.events) || [];
+    function venueOf(info){
+      var l = String(info.LocationName || "").split(",")[0].trim(), a = String(info.Address || "").split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+      return {venue:l, address:[a[0] || "", (a[1] || "").replace(/^\d{3}\s?\d{2}\s*/, "")].filter(Boolean).join(", ")};
+    }
+    function hhmmT(s){ var m = /(\d\d):(\d\d)(?::\d\d)?$/.exec(String(s || "").trim()); return m && m[1] + m[2] !== "0000" ? m[1] + ":" + m[2] : ""; }
+    function tournament(p, e){
+      var info, where, found = [];
+      return riGet("/tournament/GetInfoAsync?id=" + e.Id + "&language=en").then(function(x){
+        info = (x && x.TournamentSidebarModel) || {};
+        var endDay = String(info.EndDate || info.StartDate || e.StartDate).slice(0, 10);
+        if (endDay < today || [2, 4].indexOf(info.EventState) >= 0){ ended["t" + e.Id] = 1; return null; }
+        where = venueOf(info);
+        var old = prevEv.filter(function(x){ return x.kind === "tournament" && x.who === p.who && x.tournamentId === e.Id && x.classId; });
+        if (old.length) found = old.map(function(x){ return {classId:x.classId, cls:x.cls, partner:x.partner, partnerId:x.partnerId, pairs:x.pairs, seed:x.seed}; });
+        else return Promise.all((info.Classes || []).map(function(c){
+          return riGet("/tournament/GetPlayersForClassAsync?tournamentId=" + e.Id + "&tournamentClassId=" + c.Id + "&language=en").then(function(pl){
+            var parts = (pl && pl.Participants) || [];
+            parts.forEach(function(x){
+              var pp = x.Participant || {}, a = pp.FirstPlayer || {}, b = pp.SecondPlayer || {};
+              if (a.Id !== p.pid && b.Id !== p.pid) return;
+              var o = a.Id === p.pid ? b : a;
+              found.push({classId:c.Id, cls:c.Name, partner:o.Name || "", partnerId:o.Id || null, pairs:parts.length, seed:pp.Seed || ""});
+            });
+          });
+        }));
+      }).then(function(){
+        if (!info || !found.length) return;
+        return riGet("/tournament/GetClassesAndDrawNamesAsync/?tournamentId=" + e.Id).catch(function(){ return []; }).then(function(names){
+          found.forEach(function(f){
+            var row = (Array.isArray(names) ? names : []).filter(function(x){ return x.Id === f.classId; })[0], draws = null;
+            if (row && row.TournamentDraws && row.TournamentDraws.length){
+              var seen = {};
+              draws = [];
+              row.TournamentDraws.forEach(function(d){ var k = (d.Stage || 0) + ":" + (d.Strength || 0); if (!seen[k]){ seen[k] = 1; draws.push([d.Stage || 0, d.Strength || 0]); } });
+              draws.sort(function(x, y){ return x[0] - y[0] || x[1] - y[1]; });
+            }
+            var sDay = String(info.StartDate || e.StartDate).slice(0, 10), eDay = String(info.EndDate || info.StartDate || e.StartDate).slice(0, 10);
+            out.push({key:"t" + f.classId + "-" + p.who, kind:"tournament", who:p.who, me:p.me, pid:p.pid, id:e.Id, tournamentId:e.Id, classId:f.classId, cls:f.cls,
+              name:cleanName(info.TournamentName || e.Name), url:RI_WEB + (info.Url || e.Link), start:info.StartDate || e.StartDate, end:info.EndDate || null, closes:info.ClosingDate || null,
+              venue:where.venue, address:where.address, partner:f.partner, partnerId:f.partnerId, pairs:f.pairs, seed:f.seed, rating:ratingFor(f.cls), draws:draws, format:null, published:!!draws,
+              windowFrom:isoLocal(sDay, "07:00"), windowTo:isoLocal(eDay, "23:00"), cover:[String(f.classId)]});
+          });
+        });
+      });
+    }
+    function teamleague(p, e){
+      var h, team;
+      return riGet("/teamleague/GetHeaderAsync?id=" + e.Id + "&language=en").then(function(x){
+        h = x || {};
+        if ((h.EndDate && String(h.EndDate).slice(0, 10) < today) || [2, 4].indexOf(h.EventState) >= 0){ ended["l" + e.Id] = 1; return null; }
+        return riGet("/teamleague/GetTeamLeagueTeamDetailsAsync?language=en&teamLeagueId=" + e.Id + "&participantId=" + p.pid);
+      }).then(function(teams){
+        team = Array.isArray(teams) && teams[0];
+        if (!team) return null;
+        return riGet("/teamleague/GetTeamMatchesAsync?teamid=" + team.teamId + "&language=en");
+      }).then(function(tm){
+        if (!tm || !team) return;
+        var days = {};
+        ((tm && tm.matches) || []).forEach(function(m){
+          var d = m.details || {}, day = isoDay(d.date || d.time);
+          if (!/^\d{4}-\d\d-\d\d$/.test(day) || day < today) return;
+          var home = !!(m.team1 && m.team1.id === team.teamId), opp = (home ? m.team2 : m.team1) || {};
+          (days[day] = days[day] || {round:d.round || null, ties:[]}).ties.push({id:m.matchId, time:hhmmT(d.time), home:home, opp:opp.name || "", oppId:opp.id || null,
+            venue:String(d.locationName || m.location || "").trim(), address:[d.address, d.city].filter(Boolean).join(", "), done:!!m.showResults, canceled:!!m.showCanceledInfoText});
+        });
+        var old = prevEv.filter(function(x){ return x.kind === "teamleague" && x.teamId === team.teamId && x.players; })[0];
+        Object.keys(days).sort().forEach(function(day){
+          out.push({key:"l" + e.Id + "-" + team.teamId + "-" + day, kind:"teamleague", who:p.who, me:p.me, pid:p.pid, id:e.Id, leagueId:e.Id, name:cleanName(h.Name || e.Name),
+            url:RI_WEB + (h.EventUrl || e.Link), teamId:team.teamId, team:team.teamName, division:team.divisionName || "", players:old ? old.players : null,
+            date:day, round:days[day].round, ties:days[day].ties, windowFrom:isoLocal(day, "07:00"), windowTo:isoLocal(day, "23:00"),
+            cover:days[day].ties.map(function(x){ return "tm" + x.id; })});
+        });
+      });
+    }
+    return Promise.all(["thea", "kian"].map(function(who){
+      var p = {who:who, pid:WHO[who].pid, me:WHO[who].me};
+      return riGet("/player/ParticipatedEventsAsync?playerId=" + p.pid + "&language=en&skip=0&take=100").then(function(pe){
+        return Promise.all(((pe && pe.Payload) || []).map(function(e){
+          if ([3, 4].indexOf(e.Type) < 0 || [2, 4].indexOf(e.State) >= 0) return null;
+          var s = riDate(e.StartDate);
+          if (s && t - s > (e.Type === 4 ? 30 : 330) * DAY) return null;
+          return (e.Type === 4 ? tournament : teamleague)(p, e).catch(function(){
+            prevEv.filter(function(x){ return x.who === who && x.id === e.Id; }).forEach(function(x){ out.push(x); });
+          });
+        }));
+      });
+    })).then(function(){
+      out.sort(function(a, b){ return String(a.windowFrom).localeCompare(String(b.windowFrom)) || a.key.localeCompare(b.key); });
+      return {at:new Date().toISOString(), src:"client", events:out};
+    });
+  }
+
+  /* ---- load: cache -> worker -> RankedIn directly; every 30 min ---- */
+  function applyDisc(d){
+    if (!d || !Array.isArray(d.events)) return;
+    DISC = d;
+    if (d.src === "worker"){
+      var l = store.json(PUSH_CLS_KEY);
+      if (!Array.isArray(l)) l = [];
+      d.events.forEach(function(e){ (e.cover || []).forEach(function(c){ if (l.map(String).indexOf(String(c)) < 0) l.push(c); }); });
+      store.set(PUSH_CLS_KEY, JSON.stringify(l));
+    }
+    ["thea", "kian"].forEach(function(w){
+      try { renderUps(w); } catch (e){ if (window.console) console.warn("Kommande:", e && e.message); }
+      try { setMode(w, pickHero(w)); } catch (e){
+        if (window.console) console.warn("Visning:", e && e.message);
+        try { setMode(w, null); } catch (e2){}
+      }
+    });
+  }
+  var discBusy = false;
+  function loadEvents(){
+    if (discBusy) return;
+    discBusy = true;
+    var cached = store.json(EV_KEY);
+    var fromWorker = PUSH_API ? withTimeout(fetch(PUSH_API + "/events", {credentials:"omit"}).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), 8000)
+      : Promise.reject(new Error("no worker"));
+    fromWorker.then(function(b){
+      if (!b || !b.at || !Array.isArray(b.events)) throw new Error("no discovery yet");
+      b.src = "worker";
+      return b;
+    }).catch(function(err){
+      if (window.console) console.warn("Tävlingslistan från servern gick inte att hämta:", err && err.message);
+      if (cached && cached.savedAt && Date.now() - cached.savedAt < 30 * 60000) return cached;
+      return clientDiscover(cached);
+    }).then(function(d){
+      if (!d) return;
+      if (d !== cached){ d.savedAt = Date.now(); store.set(EV_KEY, JSON.stringify(d)); }
+      applyDisc(d);
+    }).catch(function(err){
+      if (window.console) console.warn("Tävlingslistan gick inte att hämta:", err && err.message);
+    }).then(function(){ discBusy = false; });
+  }
+  try {
+    var cachedDisc = store.json(EV_KEY);
+    if (cachedDisc) applyDisc(cachedDisc);
+  } catch (e){}
+  try { loadEvents(); } catch (e){}
+  setInterval(function(){ try { loadEvents(); } catch (e){} }, 30 * 60000);
+  // Re-pick the tab's event now and then (a window opens or closes) and keep the countdowns fresh.
+  setInterval(function(){
+    if (!DISC) return;
+    ["thea", "kian"].forEach(function(w){ try { var e = pickHero(w), D = DYN[w]; if ((D && D.e.key) !== (e && e.key)) setMode(w, e); else if (D) dynRender(D); } catch (err){} });
+  }, 30000);
 
   /* ================= info ================= */
   var SRC = {

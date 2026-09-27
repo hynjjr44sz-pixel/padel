@@ -77,9 +77,13 @@ export function parse(stages) {
     }
     out.push(m);
   })));
+  out.pools = [];
   rr.forEach((pool, k) => {
     const g = pool.Pool, name = String(pool.Name || "");
     const dlabel = /^round ?robin$/i.test(name) || !name ? "Gruppspel" : name.replace(/^(pool|group)\s*/i, "Grupp ");
+    out.pools.push({ di: ko.length + k, label: dlabel, rows: (Array.isArray(pool.Standings) ? pool.Standings : []).map(r => ({
+      n: [r.DoublesPlayer1Model && r.DoublesPlayer1Model.Name, r.DoublesPlayer2Model && r.DoublesPlayer2Model.Name].filter(Boolean),
+      standing: r.Standing, wins: r.Wins || 0, losses: r.Losses || 0 })).filter(r => r.n.length) });
     // Grid: row i vs column j, scores from the row's side. Each match appears twice; take j > i.
     for (let i = 1; i < g.length; i++) for (let j = i + 1; j < (g[i] || []).length; j++) {
       const cell = g[i][j], mc = cell && cell.MatchCell;
@@ -176,6 +180,23 @@ export function notes(ev, matches, before) {
         body: (how ? how + ". " : "") + [roundName(next), when(next).join(" · ")].filter(Boolean).join(" ") });
     }
   }
+  // My group just finished: final placing (from RankedIn's standings, else wins and game difference).
+  const ORD = ["etta", "tvåa", "trea", "fyra", "femma", "sexa", "sjua", "åtta"];
+  (matches.pools || []).forEach(pl => {
+    const ms = matches.filter(m => m.kind === "rr" && m.di === pl.di);
+    if (!ms.length || !ms.some(m => m.hasMe) || ms.some(m => !m.w) || ms.every(m => unpack(before[m.id]).w)) return;
+    let rows = pl.rows.slice().sort((x, y) => (x.standing || 99) - (y.standing || 99));
+    if (!rows.length) {
+      const t = {};
+      ms.forEach(m => ["a", "b"].forEach(sd => { if (!m[sd]) return; const r = t[m[sd].id] = t[m[sd].id] || { n: m[sd].n, wins: 0, losses: 0 }; if (m.w === sd) r.wins++; else r.losses++; }));
+      rows = Object.values(t).sort((x, y) => y.wins - x.wins);
+    }
+    const mi = rows.findIndex(r => r.n.some(n => slug(n) === me));
+    if (mi < 0) return;
+    const place = rows[mi].standing || mi + 1, where = pl.label === "Gruppspel" ? "gruppen" : pl.label;
+    mine.push({ id: cid + ":grupp:" + slug(pl.label), title: firstNames(rows[mi]) + " slutade " + (ORD[place - 1] || place + ":a") + " i " + where,
+      body: rows.slice(0, 5).map((r, i) => (r.standing || i + 1) + ". " + short(r) + " " + r.wins + "–" + r.losses).join("\n") });
+  });
   const out = [];
   if (others.length > 3) {
     out.push({ title: cls + ": " + others.length + " nya resultat", body: others.slice(0, 4).map(o => o.title).join("\n"), tag: "padel-" + cid + "-klass", url });
