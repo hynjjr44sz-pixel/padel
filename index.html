@@ -2526,11 +2526,19 @@
     var out = Object.keys(by).map(function(k){ return by[k]; }).sort(function(x, y){ return String(y.windowTo).localeCompare(String(x.windowTo)); }).slice(0, 60);
     store.set(ARCH_KEY, JSON.stringify(out));
   }
+  // A class can finish before the tournament's last day (RankedIn only gives the tournament's dates):
+  // it counts as done once every match in the page's own draw for it has a winner.
+  function evDone(e){
+    if (!e || e.kind !== "tournament") return false;
+    var s = [THEA_EVENT, KIAN_EVENT].filter(function(x){ return x && x.live && x.live.classId === e.classId; })[0];
+    if (!s || !s.draws || !s.draws.length) return false;
+    return s.draws.every(function(d){ return (d.rounds || []).every(function(r){ return r.matches.every(function(m){ return !!m.w; }); }); });
+  }
   function pastEvents(who){
     var t = now(), seen = {}, out = [];
     var d = typeof DISC !== "undefined" && DISC ? DISC : null;
     [].concat((d && d.past) || [], (d && d.events) || [], archiveList()).forEach(function(e){
-      if (!e || e.who !== who || !e.windowTo || seen[e.key] || new Date(e.windowTo) >= t) return;
+      if (!e || e.who !== who || !e.windowTo || seen[e.key] || (new Date(e.windowTo) >= t && !evDone(e))) return;
       seen[e.key] = true; out.push(e);
     });
     return out.sort(function(x, y){ return String(y.windowTo).localeCompare(String(x.windowTo)); });
@@ -3150,7 +3158,7 @@
   function pickHero(who){
     var t = now(), list = ((DISC && DISC.events) || []).filter(function(e){ return e.who === who && e.windowFrom && e.windowTo; });
     var W = WHO[who], sid = W.staticEv && W.staticEv.live && W.staticEv.live.classId;
-    var on = list.filter(function(e){ return inWin(e, t); });
+    var on = list.filter(function(e){ return inWin(e, t) && !evDone(e); });
     function rank(e){ return e.kind === "tournament" && e.classId === sid ? 0 : e.kind === "teamleague" ? 1 : 2; }
     if (on.length){
       var e0 = on.sort(function(a, b){ return rank(a) - rank(b) || String(a.windowFrom).localeCompare(String(b.windowFrom)); })[0];
