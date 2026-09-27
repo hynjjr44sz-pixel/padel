@@ -453,6 +453,7 @@
   .kbig .lab span{ font:500 11.5px/1.3 "Chivo Mono", monospace; color:var(--board-dim); }
   .knote{ position:relative; font-size:15px; line-height:1.4; margin:14px 0 0; padding:12px 0 14px; border-top:1px solid var(--board-line); }
   .khero2 > img{ object-position:50% 0%; }
+  .hero{ touch-action:pan-y; }
   .khero2 .court-no b{ font-size:clamp(28px, 8vw, 40px); }
   .khero2 .bigtime{ font-size:clamp(84px, 26vw, 136px); }
   .khero2 .timeline-big{ gap:10px; }
@@ -3486,6 +3487,45 @@
 
   /* ================= tabs (hash) ================= */
   var tabs = [document.getElementById("tab-thea"), document.getElementById("tab-kian")];
+  /* ================= swipe the photo to switch player ================= */
+  // Horizontal swipe on a hero (the big photo): left -> Kian, right -> Thea. The photo follows the finger a
+  // little, vertical scrolling stays native (touch-action: pan-y).
+  (function(){
+    var sx = 0, sy = 0, el = null, dx = 0, lock = null;
+    var calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    function cur(){ return tabs[0].getAttribute("aria-selected") === "true" ? 0 : 1; }
+    document.addEventListener("touchstart", function(e){
+      var h = e.target.closest && e.target.closest("main:not([hidden]) .hero");
+      if (!h || e.touches.length !== 1 || e.target.closest("a, button")) { el = null; return; }
+      el = h; sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; lock = null;
+      el.style.transition = "none";
+    }, {passive:true});
+    document.addEventListener("touchmove", function(e){
+      if (!el) return;
+      var x = e.touches[0].clientX - sx, y = e.touches[0].clientY - sy;
+      if (lock === null && (Math.abs(x) > 8 || Math.abs(y) > 8)) lock = Math.abs(x) > Math.abs(y) * 1.2 ? "x" : "y";
+      if (lock !== "x") return;
+      var i = cur(), toward = x < 0 ? 1 : 0;
+      dx = x;
+      var pull = toward === i ? x * 0.18 : x * 0.45;   // rubber band when there is no player that way
+      if (!calm) el.style.transform = "translateX(" + pull.toFixed(1) + "px)";
+    }, {passive:true});
+    function end(){
+      if (!el) return;
+      var h = el, i = cur(), j = dx < 0 ? 1 : 0;
+      el = null;
+      h.style.transition = calm ? "" : "transform .32s cubic-bezier(.2,.8,.2,1)";
+      h.style.transform = "";
+      if (lock === "x" && Math.abs(dx) > 60 && j !== i){
+        tabs[j].click();
+        var nh = document.querySelector("#" + tabs[j].getAttribute("aria-controls") + " .hero:not([hidden])");
+        if (nh && !calm && nh.animate) nh.animate([{transform:"translateX(" + (j ? 40 : -40) + "px)", opacity:.4}, {transform:"none", opacity:1}], {duration:320, easing:"cubic-bezier(.2,.8,.2,1)"});
+      }
+    }
+    document.addEventListener("touchend", end, {passive:true});
+    document.addEventListener("touchcancel", end, {passive:true});
+  })();
+
   function select(id, focus){
     tabs.forEach(function(t){
       var on = t.id === "tab-" + id;
