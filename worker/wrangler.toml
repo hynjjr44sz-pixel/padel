@@ -1,0 +1,18 @@
+name = "padel-push"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+# deploy.sh fills in the id (creates the namespace "padel-push" if missing)
+[[kv_namespaces]]
+binding = "PUSH"
+id = "REPLACE_WITH_KV_ID"
+
+[triggers]
+crons = ["* * * * *"]
+
+[vars]
+ORIGIN = "https://padel.holmberg.st"
+VAPID_SUBJECT = "https://padel.holmberg.st"
+
+# Secrets (set by deploy.sh with `wrangler secret put`): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY

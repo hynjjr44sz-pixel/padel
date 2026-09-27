@@ -1,0 +1,12 @@
+{
+  "name": "padel-push",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/",
+    "dev": "wrangler dev --test-scheduled"
+  },
+  "devDependencies": {
+    "wrangler": "4.141.0"
+  }
+}
