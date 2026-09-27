@@ -5,7 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Padel matchdag</title>
 <meta name="description" content="Thea och Kian på banan: nästa match, spelträd, form och ranking.">
-<meta name="theme-color" content="#0A1733">
+<meta name="theme-color" content="#EDF0F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#040A1B" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Padel">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Instrument+Sans:wght@400;500;600;700&family=Chivo+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -97,9 +106,10 @@
     .top{ background:color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter:saturate(1.4) blur(16px); backdrop-filter:saturate(1.4) blur(16px); }
   }
   .top-in{ max-width:640px; margin:0 auto; }
-  .brandrow{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:8px; }
+  .brandrow{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; min-height:28px; }
+  .tools{ display:flex; align-items:center; gap:10px; flex:none; }
   .brand{ font:800 15px/1 "Big Shoulders Display", sans-serif; letter-spacing:.16em; text-transform:uppercase; }
-  .today{ font:500 11px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
+  .today{ white-space:nowrap; font:500 11px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
   .tabs{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; background:var(--surface-2); border-radius:14px; }
   .tab{
     appearance:none; border:0; background:transparent; color:var(--dim); cursor:pointer; text-align:left;
@@ -110,6 +120,42 @@
   .tab[aria-selected="true"]{ background:var(--navy); color:var(--board-ink); box-shadow:0 6px 16px -10px rgba(6,13,34,.7); }
   .tab[aria-selected="true"] span{ color:var(--racket); }
   [role="tabpanel"][hidden]{ display:none; }
+
+  /* ---------- app: notiser + installera ---------- */
+  .bell{
+    appearance:none; display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 11px 0 9px; flex:none;
+    border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--dim); cursor:pointer;
+    font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase;
+  }
+  .bell svg{ width:15px; height:15px; flex:none; }
+  .bell:hover{ border-color:var(--ink); color:var(--ink); }
+  .bell[aria-pressed="true"]{ background:var(--solid); border-color:var(--solid); color:var(--solid-ink); }
+  .bell[aria-pressed="true"] .bd{ display:block; }
+  .bell .bd{ display:none; }
+  .brand{ min-width:0; }
+  @media (max-width:379px){ .bell{ width:30px; padding:0; justify-content:center; } .bell span{ display:none; } }
+  .nhint{
+    margin:8px 0 0; padding:9px 12px; border-radius:12px; background:var(--surface); border:1px solid var(--line);
+    font-size:13px; line-height:1.4; color:var(--ink); cursor:pointer; box-shadow:var(--shadow);
+  }
+  .nhint[hidden], .appbar[hidden]{ display:none; }
+  .appbar{
+    display:flex; align-items:center; gap:12px; margin:6px 0 10px; padding:9px 8px 9px 10px;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  }
+  .appbar img{ width:36px; height:36px; border-radius:9px; flex:none; }
+  .appbar .t{ flex:1; min-width:0; font-size:12.5px; line-height:1.3; color:var(--dim); }
+  .appbar .t b{ display:block; color:var(--ink); font-size:14px; font-weight:700; }
+  .appbar .go{
+    appearance:none; border:0; cursor:pointer; flex:none; padding:8px 12px; border-radius:10px;
+    background:var(--solid); color:var(--solid-ink); font:700 13px/1 "Instrument Sans", sans-serif;
+  }
+  .appbar .go[hidden]{ display:none; }
+  .appbar .x{
+    appearance:none; border:0; background:transparent; color:var(--faint); cursor:pointer; flex:none;
+    width:30px; height:30px; border-radius:8px; font:500 20px/1 system-ui, sans-serif;
+  }
+  .appbar .x:hover{ background:var(--surface-2); color:var(--ink); }
 
   /* ---------- photo hero ---------- */
   .hero{
@@ -327,6 +373,31 @@
   .hrow.l .r b{ color:var(--loss); }
   .hrow.new .o::after{ content:"Idag"; margin-left:8px; font:600 10px/1 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); vertical-align:2px; }
 
+  /* ---------- recent tournaments ---------- */
+  .tsum{ display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; margin:0 0 12px; font-size:13.5px; line-height:1.35; color:var(--dim); }
+  .tsum b{ font:900 30px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.01em; color:var(--ink); }
+  .tours{ padding:2px 14px; }
+  .tr{ display:grid; grid-template-columns:76px minmax(0,1fr) auto; gap:12px; align-items:center; padding:11px 0; }
+  .tr + .tr{ border-top:1px solid var(--line); }
+  .pb{
+    display:flex; align-items:center; justify-content:center; height:30px; padding:0 4px; border-radius:8px; white-space:nowrap;
+    font:800 14.5px/1 "Big Shoulders Display", sans-serif; letter-spacing:.05em; text-transform:uppercase;
+    background:var(--surface-2); color:var(--ink);
+  }
+  .pb.win{ background:var(--ball); color:#0A1733; }
+  .pb.hi{ background:var(--panel); color:var(--racket); }
+  .pb.long{ font-size:12.5px; letter-spacing:.02em; }
+  .pb.now{ background:var(--accent-soft); color:var(--accent); box-shadow:inset 0 0 0 1.5px var(--accent); gap:6px; }
+  .pb.now i{ width:6px; height:6px; border-radius:50%; background:currentColor; flex:none; }
+  .tr .dt{ display:block; text-align:center; margin-top:5px; font:500 10.5px/1 "Chivo Mono", monospace; letter-spacing:.04em; text-transform:uppercase; color:var(--dim); }
+  .tr .tn{ font-weight:700; font-size:14px; line-height:1.25; color:var(--ink); text-decoration:none; overflow-wrap:anywhere; }
+  .tr .tn:hover{ text-decoration:underline; }
+  .tr .tn span{ font:500 11px/1 "Chivo Mono", monospace; color:var(--faint); margin-left:3px; }
+  .tr .tm{ font-size:12px; line-height:1.35; color:var(--dim); margin-top:2px; }
+  .tr .wl{ text-align:right; }
+  .tr .wl b{ display:block; font:900 22px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; }
+  .tr .wl span{ display:block; margin-top:4px; font:500 10.5px/1.2 "Chivo Mono", monospace; color:var(--dim); white-space:nowrap; }
+
   /* ---------- upcoming ---------- */
   .ups{ display:grid; gap:10px; }
   .up{ display:grid; grid-template-columns:62px 1fr; gap:14px; }
@@ -425,7 +496,7 @@
   @media (prefers-reduced-motion: no-preference){
     [role="tabpanel"]:not([hidden]){ animation:rise .38s cubic-bezier(.2,.7,.2,1) both; }
     @keyframes rise{ from{ opacity:0; transform:translateY(8px); } }
-    .glass.live .dot, .countdown.live .dot, .livebar.on .ldot{ animation:pulse 1.4s ease-in-out infinite; }
+    .glass.live .dot, .countdown.live .dot, .livebar.on .ldot, .pb.now i{ animation:pulse 1.4s ease-in-out infinite; }
     @keyframes pulse{ 50%{ opacity:.25; transform:scale(.8); } }
     .draw-line{ stroke-dasharray:var(--len); stroke-dashoffset:var(--len); transition:stroke-dashoffset 1.3s cubic-bezier(.3,.6,.2,1); }
     .drawn .draw-line{ stroke-dashoffset:0; }
@@ -440,14 +511,28 @@
     <div class="top-in">
       <div class="brandrow">
         <div class="brand">Nynäs Padel Club</div>
-        <div class="today" id="today">Sön 27 sep</div>
+        <div class="tools">
+          <div class="today" id="today">Sön 27 sep</div>
+          <button class="bell" id="bell" type="button" aria-pressed="false" aria-label="Notiser" title="Notis när ett resultat kommer in">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8.5a6 6 0 0 1 12 0c0 6.5 2.5 8.5 2.5 8.5h-17S6 15 6 8.5"/><path d="M10.2 20.5a2 2 0 0 0 3.6 0"/><circle class="bd" cx="18.5" cy="4.5" r="2.6" fill="#FFD84A" stroke="none"/></svg>
+            <span>Notiser</span>
+          </button>
+        </div>
       </div>
       <div class="tabs" role="tablist" aria-label="Spelare">
         <button class="tab" role="tab" id="tab-thea" aria-controls="p-thea" aria-selected="true"><b>Thea</b><span id="tabSubThea">Damer C</span></button>
         <button class="tab" role="tab" id="tab-kian" aria-controls="p-kian" aria-selected="false" tabindex="-1"><b>Kian</b><span>Herrar C · klart</span></button>
       </div>
+      <p class="nhint" id="nHint" role="status" aria-live="polite" hidden></p>
     </div>
   </header>
+
+  <div class="appbar" id="appbar" hidden>
+    <img src="icons/icon-192.png" width="36" height="36" alt="">
+    <div class="t"><b>Installera appen</b><span></span></div>
+    <button class="go" type="button" hidden>Installera</button>
+    <button class="x" type="button" aria-label="Stäng">×</button>
+  </div>
 
   <!-- ================= THEA ================= -->
   <main role="tabpanel" id="p-thea" aria-labelledby="tab-thea" tabindex="-1">
@@ -503,6 +588,12 @@
         <div class="k"><span>Form, 10 senaste</span><span>äldst → senast</span></div>
         <div class="form" id="theaForm"></div>
       </div>
+    </section>
+
+    <section aria-labelledby="h-tt">
+      <div class="sh"><h2 id="h-tt">Senaste tävlingar</h2><div class="meta">2026</div></div>
+      <p class="tsum" id="theaSum"></p>
+      <div class="card tours" id="theaTours"></div>
     </section>
 
     <section aria-labelledby="h-hist">
@@ -580,6 +671,12 @@
       <p class="sub">En vinst på de tio senaste. Ny chans med laget i SPL den 3 oktober.</p>
     </section>
 
+    <section aria-labelledby="h-ktt">
+      <div class="sh"><h2 id="h-ktt">Senaste tävlingar</h2><div class="meta">2026</div></div>
+      <p class="tsum" id="kianSum"></p>
+      <div class="card tours" id="kianTours"></div>
+    </section>
+
     <section aria-labelledby="h-kup">
       <div class="sh"><h2 id="h-kup">Kommande</h2><div class="meta">Okt</div></div>
       <div class="ups" id="kianUp"></div>
@@ -606,6 +703,18 @@
   var params = new URLSearchParams(location.search);
   function now(){ var t = params.get("t"); return t ? new Date(t) : new Date(); }
   function at(date, hhmm){ return new Date(date + "T" + hhmm + ":00+02:00"); }
+  // localStorage can be missing or throw (private mode, blocked site data): never let that break the page.
+  var store = {
+    get:function(k){ try { return window.localStorage.getItem(k); } catch (e){ return null; } },
+    set:function(k, v){ try { window.localStorage.setItem(k, v); return true; } catch (e){ return false; } },
+    json:function(k){ try { return JSON.parse(store.get(k)); } catch (e){ return null; } }
+  };
+  var UA = navigator.userAgent || "";
+  var IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  function standalone(){
+    try { return navigator.standalone === true || (!!window.matchMedia && window.matchMedia("(display-mode: standalone)").matches); }
+    catch (e){ return false; }
+  }
 
   // Photos that read as a face at avatar size (others get initials)
   var PHOTOS = {
@@ -941,8 +1050,9 @@
   function mePersp(mt){ return mt.s ? (mt.w === meSide(mt) ? mt.s : flip(mt.s)) : ""; }
   function roundName(x){ return x.di === 0 ? x.rd.label : x.d.label.replace(/\s*\d.*$/, "") + " · " + x.rd.label; }
   function defForm(label){ return /final$/i.test(label) ? label + "en" : label; }
-  function theaState(){
-    var ev = THEA_EVENT, played = [], pending = [];
+  function theaState(ev){
+    ev = ev || THEA_EVENT;
+    var played = [], pending = [];
     ev.draws.forEach(function(d, di){ d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt, i){
       if (mt.hasMe) (mt.w ? played : pending).push({mt:mt, d:d, di:di, rd:rd, r:r, i:i});
     }); }); });
@@ -1076,6 +1186,7 @@
     renderHero();
     rerenderEvent(THEA_EVENT, document.getElementById("theaDraw"), TS.next && TS.next.mt, "Thea");
     renderHist();
+    renderTours("thea");
   }
   setInterval(function(){ renderHero(); renderVs(); }, 30000);
 
@@ -1116,7 +1227,75 @@
     document.getElementById("theaForm").innerHTML = chips(all.slice(0, 10).reverse().map(function(x){ return x.r; }));
   }
   function chips(list){ return list.map(function(r){ return '<div class="chip ' + (r === "W" ? "w" : "l") + '" title="' + (r === "W" ? "Vinst" : "Förlust") + '">' + (r === "W" ? "V" : "F") + '</div>'; }).join(""); }
+  /* ================= recent tournaments ================= */
+  // b = placement badge. Thea's Järfälla row (live:true) is computed from the draw.
+  var RI = "https://www.rankedin.com/en/tournament/";
+  var TOURS = {
+    thea:[
+      {live:true, d:"2026-09-27", n:"Järfälla Padel Open no 11", u:RI + "66374/jarfalla-padel-open-no-11-sanktionerad-b-c-d", c:"Damer C", p:"Cassandra Ersson"},
+      {d:"2026-09-13", n:"Trosa September Open", u:RI + "69553/trosa-september-open-sanktionerad-herr-dam-b-c-d-mixed-endagars", c:"Dam C", p:"Cassandra Ersson", b:"Final", x:"tvåa", w:2, l:1, pts:4.8},
+      {d:"2026-08-30", n:"UNO Augusti Open", u:RI + "70393/uno-augusti-open-29-30-8-2026", c:"Dam C", p:"Nathalie Hällegard", b:"Vinnare", w:4, l:0, pts:10},
+      {d:"2026-08-23", n:"Järfälla Padel Open no 10", u:RI + "66371/jarfalla-padel-open-no-10-sanktionerad-b-c-d", c:"Damer C", p:"Alva Sahlström Dahl", b:"KF", x:"delad 5:e", w:1, l:1, pts:1.75},
+      {d:"2026-07-25", n:"UNO July Open", u:RI + "69709/uno-july-open-25-7-dam-b-c-och-herr-c", c:"Dam C", p:"Cassandra Ersson", b:"Vinnare", w:3, l:0, pts:8},
+      {d:"2026-07-11", n:"Vista Padel Open Summer Edition", u:RI + "68341/vista-padel-open-summer-edition-huddinge-sanktionerad-herr-dam-b-c-d-mix-herr-dam-veteran-45-powered-by-hell-ice-coffee", c:"Dam C", p:"Nathalie Hällegard", b:"Vinnare", x:"inget set förlorat", w:4, l:0, pts:10},
+      {d:"2026-06-07", n:"Good to Great Volvo Open", u:RI + "65712/good-to-great-volvo-open-b-c-d-mixed", c:"Damer C", p:"Nathalie Hällegard", b:"Vinnare", w:3, l:0, pts:10},
+      {d:"2026-05-23", n:"Padelverket Open No.2", u:RI + "65067/padelverket-open-no-2-sanktionerad-a-b-c-d-och-mix", c:"Dam C", p:"Cassandra Ersson", b:"Vinnare", w:4, l:0, pts:10},
+      {d:"2026-04-26", n:"UNO Spring Open", u:RI + "65005/uno-spring-open-25-26-4-klasser-dam-b-c-d-herr-b-c-d-mixed", c:"Damer C", p:"Cassandra Ersson", b:"5:e", x:"KF, sen vann 5–8", w:3, l:1, pts:1.9}
+    ],
+    kian:[
+      {d:"2026-09-26", n:"Järfälla Padel Open no 11", u:RI + "66374/jarfalla-padel-open-no-11-sanktionerad-b-c-d", c:"Herrar C", p:"Andreas Mickos", b:"Omg 1", x:"plate: 8-10 i avgörandet", w:0, l:2, pts:null},
+      {d:"2026-09-13", n:"Trosa September Open", u:RI + "69553/trosa-september-open-sanktionerad-herr-dam-b-c-d-mixed-endagars", c:"Herr C", p:"Andreas Mickos", b:"Semi", x:"3:e plats", w:1, l:1, pts:3},
+      {d:"2026-08-29", n:"UNO Augusti Open", u:RI + "70393/uno-augusti-open-29-30-8-2026", c:"Herr C", p:"Andreas Mickos", b:"Grupp 4/4", w:0, l:3, pts:0.3},
+      {d:"2026-07-11", n:"Vista Padel Open Summer Edition", u:RI + "68341/vista-padel-open-summer-edition-huddinge-sanktionerad-herr-dam-b-c-d-mix-herr-dam-veteran-45-powered-by-hell-ice-coffee", c:"Herr C", p:"Andreas Mickos", b:"7:e", x:"första C-tävlingen, KF", w:1, l:2, pts:1.65},
+      {d:"2026-05-23", n:"Padelverket Open No.2", u:RI + "65067/padelverket-open-no-2-sanktionerad-a-b-c-d-och-mix", c:"Herr D", p:"Andreas Mickos", b:"KF", x:"delad 5:e", w:1, l:1, pts:0.7},
+      {d:"2026-05-01", n:"Vista Padel Spring Open", u:RI + "65183/vista-padel-spring-open-huddinge-sanktionerad-herr-dam-b-c-d-powered-by-head-vitamin-well", c:"Herr D", p:"Andreas Mickos", b:"8:e", x:"gruppspel", w:2, l:4, pts:0.64},
+      {d:"2026-04-04", n:"Good to Great Vitamin Well Open", u:RI + "63451/good-to-great-vitamin-well-open-a-b-c-d-mix-herr-dam", c:"Herr D", p:"Andreas Mickos", b:"Semi", x:"3:e plats", w:1, l:1, pts:1.2},
+      {d:"2026-01-23", n:"Golden Padel Open No1", u:RI + "61106/golden-padel-open-no1-herr-dam-b-c-d-by-vitamin-well-nordic-catering", c:"Herr D", p:"Andreas Mickos", b:"6:e", x:"KF", w:1, l:2, pts:0.9},
+      {d:"2026-01-09", n:"Vista Padel January Open", u:RI + "60766/vista-padel-2026-january-open-sanktionerad-herr-dam-b-c-d-mix", c:"Herr D", p:"Andreas Mickos", b:"7:e", x:"gruppspel", w:3, l:3, pts:0.85}
+    ]
+  };
+  var MON = ["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
+  function dayMon(iso){ var p = iso.split("-"); return +p[2] + " " + MON[+p[1] - 1]; }
+  // Thea's ongoing event, read from the (live) draw.
+  function liveTour(row){
+    var ev = THEA_EVENT, st = theaState(ev), R = ev.draws[0].rounds.length, w = 0, l = 0, lm = st.lostMain;
+    ev.draws.forEach(function(d){ d.rounds.forEach(function(rd){ rd.matches.forEach(function(mt){ if (mt.hasMe && mt.w){ if (mt.meWon) w++; else l++; } }); }); });
+    var o = {w:w, l:l, pts:null}, k;
+    for (k in row) o[k] = row[k];
+    if (st.champ){ o.b = "Vinnare"; o.x = "poäng kommer"; }
+    else if (st.next){ o.b = "Pågår"; o.x = "nästa: " + roundName(st.next).toLowerCase() + " " + st.next.mt.t; }
+    else if (lm){ o.b = lm.r === R - 1 ? "Final" : (lm.r === R - 2 ? "Semi" : (lm.r === R - 3 ? "KF" : "Omg 1")); o.x = lm.r === R - 1 ? "tvåa" : ""; }
+    else o.b = "Klar";
+    return o;
+  }
+  function badge(b){
+    var c = b === "Vinnare" ? "win" : (b === "Final" || b === "Semi" ? "hi" : (b === "Pågår" ? "now" : ""));
+    return '<span class="pb ' + c + (b.length > 7 ? " long" : "") + '">' + (c === "now" ? "<i></i>" : "") + esc(b) + '</span>';
+  }
+  function renderTours(who){
+    var list = TOURS[who].map(function(r){ return r.live ? liveTour(r) : r; });
+    var host = document.getElementById(who + "Tours"), sum = document.getElementById(who + "Sum");
+    if (!host) return;
+    host.innerHTML = list.map(function(r){
+      var pts = r.pts == null ? (r.b === "Pågår" ? "pågår" : "– p") : String(r.pts) + " p";
+      return '<div class="tr"><div>' + badge(r.b) + '<span class="dt">' + esc(dayMon(r.d)) + '</span></div>' +
+        '<div><a class="tn" href="' + esc(r.u) + '" target="_blank" rel="noopener">' + esc(r.n) + '<span>↗</span></a>' +
+        '<div class="tm">' + esc(r.c + " · med " + r.p + (r.x ? " · " + r.x : "")) + '</div></div>' +
+        '<div class="wl"><b>' + r.w + '–' + r.l + '</b><span>' + esc(pts) + '</span></div></div>';
+    }).join("");
+    var done = list.filter(function(r){ return r.b !== "Pågår"; });
+    var W = list.reduce(function(a, r){ return a + r.w; }, 0), L = list.reduce(function(a, r){ return a + r.l; }, 0);
+    if (who === "thea"){
+      var t = done.filter(function(r){ return r.b === "Vinnare"; }).length;
+      sum.innerHTML = '<b>' + t + (t === 1 ? " titel" : " titlar") + '</b><span>på ' + done.length + ' tävlingar · ' + W + '–' + L + ' i matcher</span>';
+    } else {
+      var sf = done.filter(function(r){ return r.b === "Semi" || r.b === "Final" || r.b === "Vinnare"; }).length;
+      sum.innerHTML = '<b>' + sf + (sf === 1 ? " semifinal" : " semifinaler") + '</b><span>på ' + done.length + ' tävlingar · ' + W + ' matchvinster · C-klass sedan juli</span>';
+    }
+  }
+
   renderTheaAll();
+  renderTours("kian");
   document.getElementById("kianForm").innerHTML = chips(["L","W","L","L","L","L","L","L","L","L"]);
 
   (function(){
@@ -1288,8 +1467,8 @@
   }
 
   var LIVE = [
-    {ev:THEA_EVENT, bar:document.getElementById("live-thea"), render:renderTheaAll},
-    {ev:KIAN_EVENT, bar:document.getElementById("live-kian"), render:renderKianAll}
+    {ev:THEA_EVENT, bar:document.getElementById("live-thea"), render:renderTheaAll, hash:"#thea"},
+    {ev:KIAN_EVENT, bar:document.getElementById("live-kian"), render:renderKianAll, hash:"#kian"}
   ];
   function setBar(L, state){
     var bar = L.bar;
@@ -1297,8 +1476,9 @@
     if (state === "off"){ bar.hidden = true; return; }
     bar.hidden = false;
     bar.className = "livebar" + (state === "ok" ? " on" : (state === "err" ? " stale" : " wait"));
+    var known = L.okAt || L.cachedAt;
     var txt = state === "ok" ? "<b>Live</b> · uppdaterad " + esc(hhmm(L.okAt)) :
-      state === "err" ? "Kunde inte hämta – visar senast kända" + (L.okAt ? " (" + esc(hhmm(L.okAt)) + ")" : "") :
+      state === "err" ? "Kunde inte hämta – visar senast kända" + (known ? " (" + esc(hhmm(known)) + ")" : "") :
       "<b>Live</b> · hämtar resultat";
     bar.querySelector(".ltxt").innerHTML = txt;
   }
@@ -1320,10 +1500,84 @@
       throw e;
     }
   }
+
+  /* ---- last live payload per event: kept so an evening reload still shows the final results ---- */
+  var CACHE_OFF = params.has("mock");
+  function cacheKey(L){ return "padel.live." + L.ev.live.classId; }
+  function saveCache(L, data){ if (!CACHE_OFF) store.set(cacheKey(L), JSON.stringify({at:new Date().toISOString(), data:data})); }
+  function loadCache(L){
+    if (CACHE_OFF) return;
+    var c = store.json(cacheKey(L)), ov = c && parseDraws(L.ev, c.data);
+    if (!ov) return;
+    try { apply(L, ov); L.cachedAt = new Date(c.at); } catch (e){}
+  }
+
+  /* ---- notiser: diff each successful fetch against the previous one ---- */
+  function snapshot(ev){
+    var s = {};
+    ev.draws.forEach(function(d, di){ d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt, i){
+      s[di + ":" + r + ":" + i] = {w:mt.w && mt[mt.w].pair ? mt[mt.w].pair.key : null, a:mt.a.pair ? mt.a.pair.key : null, b:mt.b.pair ? mt.b.pair.key : null};
+    }); }); });
+    return s;
+  }
+  function firstNames(p){ return p.n.map(function(n){ return n.split(" ")[0]; }).join(" och "); }
+  function roundDef(x){
+    var l = x.rd.label.toLowerCase();
+    if (/final$/.test(l)) l += "en";
+    return x.di > 0 && !/^plate/.test(l) ? "plate " + l : l;
+  }
+  function nextText(st){
+    var n = st.next;
+    if (!n) return "";
+    var op = n.mt[meSide(n.mt) === "a" ? "b" : "a"].pair;
+    return " Nästa: " + roundName(n).toLowerCase() + " " + n.mt.t + ", " + n.mt.c + (op ? " mot " + short(op) : "") + ".";
+  }
+  function diffNotify(L, before, after){
+    var ev = L.ev, cid = ev.live.classId, mine = [], others = [], st = theaState(ev), covered = {};
+    ev.draws.forEach(function(d, di){ d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt, i){
+      var k = di + ":" + r + ":" + i, was = before[k] || {}, is = after[k];
+      if (!is.w || was.w) return;
+      var x = {d:d, di:di, rd:rd, r:r, mt:mt}, wp = mt[mt.w].pair, lp = mt[mt.w === "a" ? "b" : "a"].pair;
+      var fin = r === d.rounds.length - 1, id = cid + ":" + k + ":" + is.w;
+      if (mt.hasMe){
+        var me = mt[meSide(mt)].pair, op = mt[meSide(mt) === "a" ? "b" : "a"].pair, sc = mePersp(mt) || mt.note || "";
+        var title = di === 0 && fin && mt.meWon ? firstNames(me) + " vann " + ev.cls + "!" :
+          firstNames(me) + (mt.meWon ? " vann " : " förlorade ") + roundDef(x) + (sc ? " " + sc : "");
+        var body = (op ? "Mot " + short(op) + "." : "");
+        if (mt.meWon) body += nextText(st);
+        else if (ev === THEA_EVENT && !st.next) body += " " + outCopy();
+        if (mt.meWon && st.next) covered[st.next.di + ":" + st.next.r + ":" + st.next.i] = true;
+        mine.push({id:id, title:title, body:body.trim()});
+      } else if (wp){
+        var title2 = roundName(x) + ": " + short(wp) + (fin ? (di === 0 ? " vann " + ev.cls : " vann plate") : " vidare");
+        others.push({id:id, wk:wp.key, title:title2, body:((mt.s || mt.note || "") + (lp ? " mot " + short(lp) : "")).trim() + " · " + ev.cls,
+          how:(lp ? "Vann " + roundDef(x) + " " + (mt.s || mt.note || "") + " mot " + short(lp) : "").replace(/\s+/g, " ").trim()});
+      }
+    }); }); });
+    // Next opponent just became known
+    if (st.next){
+      var n = st.next, nk = n.di + ":" + n.r + ":" + n.i, os = meSide(n.mt) === "a" ? "b" : "a", ok = after[nk] && after[nk][os];
+      if (ok && !(before[nk] && before[nk][os]) && !covered[nk]){
+        // One result, one notis: the match that decided the opponent is folded into this one.
+        var how = "";
+        others = others.filter(function(o){ if (o.wk !== ok) return true; how = o.how; return false; });
+        mine.push({id:cid + ":opp:" + nk + ":" + ok, title:firstNames(n.mt[meSide(n.mt)].pair) + " möter " + short(n.mt[os].pair),
+          body:(how ? how + ". " : "") + roundName(n) + " " + n.mt.t + " · " + n.mt.c});
+      }
+    }
+    others = others.filter(function(o){ return !notified(o.id); });
+    if (others.length > 3){
+      others.forEach(function(o){ markNotified(o.id); });
+      showNote(cid + ":batch:" + others.map(function(o){ return o.id; }).join(","), ev.cls + ": " + others.length + " nya resultat",
+        others.slice(0, 4).map(function(o){ return o.title; }).join("\n"), L.hash, "padel-" + cid + "-klass");
+    } else others.forEach(function(o){ showNote(o.id, o.title, o.body, L.hash); });
+    mine.forEach(function(o){ showNote(o.id, o.title, o.body, L.hash); });
+  }
+
   function poll(L){
     clearTimeout(L.timer); L.timer = null;
     if (!inWindow(L.ev.live)){ setBar(L, "off"); schedule(L); return; }
-    if (L.busy || document.visibilityState === "hidden") return;
+    if (L.busy || (document.visibilityState === "hidden" && !notiOn())) return;
     L.busy = true;
     if (!L.okAt && !L.failed) setBar(L, "wait");
     var ctl = typeof AbortController === "function" ? new AbortController() : null, p;
@@ -1337,6 +1591,11 @@
       apply(L, ov);
       L.okAt = now(); L.failed = false;
       setBar(L, "ok");
+      saveCache(L, data);
+      var snap = snapshot(L.ev);
+      // The first successful fetch is the baseline: results already there on load never notify.
+      if (L.snap){ try { diffNotify(L, L.snap, snap); } catch (e){ if (window.console) console.warn("Notis misslyckades:", e && e.message); } }
+      L.snap = snap;
     }).catch(function(err){
       L.failed = true;
       setBar(L, "err");
@@ -1346,19 +1605,58 @@
       schedule(L);
     });
   }
+  // Visible: every 60 s. Hidden: stop, unless notiser are on (then every 2 min, as far as the browser allows).
   function schedule(L){
-    clearTimeout(L.timer);
-    if (document.visibilityState === "hidden"){ L.timer = null; return; }
-    L.timer = setTimeout(function(){ poll(L); }, LIVE_EVERY);
+    clearTimeout(L.timer); L.timer = null;
+    var hidden = document.visibilityState === "hidden";
+    if (hidden && !notiOn()) return;
+    L.timer = setTimeout(function(){ poll(L); }, hidden ? 2 * LIVE_EVERY : LIVE_EVERY);
   }
   document.addEventListener("visibilitychange", function(){
     LIVE.forEach(function(L){
-      if (document.visibilityState === "hidden"){ clearTimeout(L.timer); L.timer = null; }
+      if (document.visibilityState === "hidden"){ if (!notiOn()){ clearTimeout(L.timer); L.timer = null; } }
       else if (!L.lastPoll || Date.now() - L.lastPoll > 5000) poll(L);
       else schedule(L);
     });
   });
-  LIVE.forEach(function(L){ try { poll(L); } catch (e){} });
+
+  /* ================= notiser ================= */
+  var NOTI_KEY = "padel.notify", SEEN_KEY = "padel.notified", seenMem = {};
+  function notiSupported(){ return "Notification" in window; }
+  function notiOn(){
+    try { return store.get(NOTI_KEY) === "1" && notiSupported() && Notification.permission === "granted"; } catch (e){ return false; }
+  }
+  function notified(id){ return !!seenMem[id] || (store.json(SEEN_KEY) || []).indexOf(id) >= 0; }
+  function markNotified(id){
+    seenMem[id] = true;
+    var list = store.json(SEEN_KEY);
+    if (!Array.isArray(list)) list = [];
+    if (list.indexOf(id) < 0){ list.push(id); store.set(SEEN_KEY, JSON.stringify(list.slice(-300))); }
+  }
+  function showNote(id, title, body, hash, tag){
+    if (!notiOn() || notified(id)) return;
+    markNotified(id);
+    var opt = {body:body, icon:"icons/icon-192.png", badge:"icons/icon-192.png", tag:tag || "padel-" + id, lang:"sv", data:{url:"./" + (hash || "")}};
+    function fallback(){
+      try {
+        var n = new Notification(title, opt);
+        n.onclick = function(){ try { window.focus(); } catch (e){} if (hash && location.hash !== hash) location.hash = hash; n.close(); };
+      } catch (e){}
+    }
+    if ("serviceWorker" in navigator){
+      var wait = new Promise(function(res){ setTimeout(function(){ res(null); }, 3000); });
+      Promise.race([navigator.serviceWorker.ready, wait]).then(function(r){
+        if (r && r.showNotification) return r.showNotification(title, opt);
+        fallback();
+      }).catch(fallback);
+    } else fallback();
+  }
+
+  LIVE.forEach(function(L){
+    loadCache(L);
+    L.snap = null;
+    try { poll(L); } catch (e){}
+  });
 
 
   /* ================= info ================= */
@@ -1422,6 +1720,73 @@
   });
   window.addEventListener("hashchange", function(){ select(fromHash()); });
   select(fromHash());
+
+  /* ================= app: notis-knapp, installera, service worker ================= */
+  var bell = document.getElementById("bell"), hintEl = document.getElementById("nHint"), hintT = null;
+  function hint(msg){
+    if (!hintEl) return;
+    hintEl.textContent = msg; hintEl.hidden = false;
+    clearTimeout(hintT); hintT = setTimeout(function(){ hintEl.hidden = true; }, 9000);
+  }
+  if (hintEl) hintEl.addEventListener("click", function(){ hintEl.hidden = true; });
+  function bellState(){ if (bell) bell.setAttribute("aria-pressed", notiOn() ? "true" : "false"); }
+  function askPermission(){
+    return new Promise(function(res){
+      try {
+        var r = Notification.requestPermission(function(x){ res(x); });
+        if (r && r.then) r.then(res, function(){ res("default"); });
+      } catch (e){ res("default"); }
+    });
+  }
+  if (bell){
+    bellState();
+    bell.addEventListener("click", function(){
+      if (IOS && !standalone()){ hint("På iPhone kommer notiser bara när sidan ligger på hemskärmen. Tryck Dela → Lägg till på hemskärmen och öppna den därifrån."); return; }
+      if (!notiSupported()){ hint("Den här webbläsaren kan inte visa notiser."); return; }
+      if (notiOn()){ store.set(NOTI_KEY, "0"); bellState(); hint("Notiser av."); return; }
+      if (Notification.permission === "denied"){ hint("Notiser är blockerade för sidan. Tillåt dem i webbläsarens inställningar."); return; }
+      askPermission().then(function(p){
+        if (p === "granted"){
+          store.set(NOTI_KEY, "1");
+          hint("Notiser på. Du får en notis när ett nytt resultat kommer in. Funkar medan appen är öppen.");
+          LIVE.forEach(function(L){ if (!L.timer && !L.busy) schedule(L); });
+        } else hint("Inga notiser. Du kan slå på dem senare.");
+        bellState();
+      });
+    });
+  }
+
+  (function(){
+    var bar = document.getElementById("appbar");
+    if (!bar) return;
+    var go = bar.querySelector(".go"), txt = bar.querySelector(".t span"), deferred = null;
+    function show(mode){
+      if (standalone() || store.get("padel.installHidden") === "1") return;
+      go.hidden = mode !== "prompt";
+      txt.textContent = mode === "ios" ? "Dela → Lägg till på hemskärmen" : "Matchdagen ett tryck bort.";
+      bar.hidden = false;
+    }
+    window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); deferred = e; show("prompt"); });
+    window.addEventListener("appinstalled", function(){ bar.hidden = true; deferred = null; });
+    go.addEventListener("click", function(){
+      var d = deferred; deferred = null; bar.hidden = true;
+      if (!d) return;
+      try {
+        d.prompt();
+        if (d.userChoice) d.userChoice.then(function(c){ if (c && c.outcome === "accepted") store.set("padel.installHidden", "1"); }, function(){});
+      } catch (e){}
+    });
+    bar.querySelector(".x").addEventListener("click", function(){ bar.hidden = true; store.set("padel.installHidden", "1"); });
+    if (IOS && !standalone() && /Safari/.test(UA) && !/FBAN|FBAV|Instagram/.test(UA)) show("ios");
+  })();
+
+  if ("serviceWorker" in navigator){
+    try {
+      window.addEventListener("load", function(){
+        try { navigator.serviceWorker.register("sw.js").catch(function(){}); } catch (e){}
+      });
+    } catch (e){}
+  }
 })();
 </script>
 </body>
