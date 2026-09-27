@@ -3,457 +3,914 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Theas matchdag</title>
-<meta name="description" content="Dagens padelmatch, motståndarnas skill/ranking, Theas utveckling samt hennes kommande och tidigare matcher.">
+<title>Padel matchdag</title>
+<meta name="description" content="Thea och Kian på banan: nästa match, spelträd, form och ranking.">
+<meta name="theme-color" content="#0A1733">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Instrument+Sans:wght@400;500;600;700&family=Chivo+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F4F5F3;
+    --bg:#EDF0F5;
     --surface:#FFFFFF;
-    --surface-2:#EEF0ED;
-    --ink:#171A19;
-    --ink-dim:#6B7370;
-    --ink-faint:#98A09C;
-    --line:#E2E5E1;
-    --court:#0E6B63;
-    --court-soft:#E3EFEC;
-    --away:#8A6B3F;
-    --away-soft:#EFEAE0;
-    --accent:#0E6B63;
-    --good:#1E8F5A;
-    --good-soft:#E5F3EA;
-    --bad:#B23A2E;
-    --bad-soft:#F7E7E3;
-    --k-accent:#3D5A80;
-    --k-soft:#E7ECF1;
-    color-scheme: light;
+    --surface-2:#E3E8F1;
+    --ink:#0A1733;
+    --dim:#4F5A74;
+    --faint:#66708A;
+    --line:#D5DBE7;
+    --accent:#1F4FCF;          /* court blue: links, path, active on light */
+    --accent-soft:#E3EBFD;
+    --racket:#8EC5FF;          /* Bullpadel light blue */
+    --ball:#FFD84A;            /* small yellow accent, on navy only */
+    --loss:#B04A40;
+    --loss-soft:#F4E4E1;
+    --navy:#0A1733;
+    --board:#060D22;
+    --board-2:#0E1C40;
+    --board-line:rgba(255,255,255,.14);
+    --board-ink:#F3F6FC;
+    --board-dim:#A6B2D2;
+    --shadow:0 18px 40px -26px rgba(6,13,34,.55);
+    --solid:#0A1733; --solid-ink:#FFFFFF; --panel:#0A1733;
+    color-scheme:light;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#14181A;
-      --surface:#1B2022;
-      --surface-2:#20272A;
-      --ink:#EDEFEC;
-      --ink-dim:#9AA3A0;
-      --ink-faint:#6E7774;
-      --line:#2B3234;
-      --court:#4FCBB8;
-      --court-soft:#1E3330;
-      --away:#D9B679;
-      --away-soft:#2E2A1E;
-      --accent:#4FCBB8;
-      --good:#4FBE86;
-      --good-soft:#1B3026;
-      --bad:#E28577;
-      --bad-soft:#33231F;
-      --k-accent:#8FB4D9;
-      --k-soft:#1E2A36;
-      color-scheme: dark;
+      --bg:#040A1B;
+      --surface:#0B1733;
+      --surface-2:#13224B;
+      --ink:#F2F5FB;
+      --dim:#A7B3D0;
+      --faint:#8795BA;
+      --line:#1E2D58;
+      --accent:#8EC5FF;
+      --accent-soft:#132B55;
+      --loss:#E79A90;
+      --loss-soft:#35202A;
+      --board:#020716;
+      --board-2:#0B1633;
+      --shadow:0 18px 40px -26px rgba(0,0,0,.8);
+      --solid:#8EC5FF; --solid-ink:#0A1733; --panel:#16295A;
+      color-scheme:dark;
     }
   }
   :root[data-theme="dark"]{
-    --bg:#14181A;
-    --surface:#1B2022;
-    --surface-2:#20272A;
-    --ink:#EDEFEC;
-    --ink-dim:#9AA3A0;
-    --ink-faint:#6E7774;
-    --line:#2B3234;
-    --court:#4FCBB8;
-    --court-soft:#1E3330;
-    --away:#D9B679;
-    --away-soft:#2E2A1E;
-    --accent:#4FCBB8;
-    --good:#4FBE86;
-    --good-soft:#1B3026;
-    --bad:#E28577;
-    --bad-soft:#33231F;
-    --k-accent:#8FB4D9;
-    --k-soft:#1E2A36;
-    color-scheme: dark;
+    --bg:#040A1B;
+    --surface:#0B1733;
+    --surface-2:#13224B;
+    --ink:#F2F5FB;
+    --dim:#A7B3D0;
+    --faint:#8795BA;
+    --line:#1E2D58;
+    --accent:#8EC5FF;
+    --accent-soft:#132B55;
+    --loss:#E79A90;
+    --loss-soft:#35202A;
+    --board:#020716;
+    --board-2:#0B1633;
+    --shadow:0 18px 40px -26px rgba(0,0,0,.8);
+    --solid:#8EC5FF; --solid-ink:#0A1733; --panel:#16295A;
+    color-scheme:dark;
   }
 
   *{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; background:var(--bg); }
   body{
-    background:var(--bg);
-    color:var(--ink);
-    font-family:"Inter", -apple-system, system-ui, sans-serif;
-    padding-inline:16px;
-    padding-block:26px 44px;
-    display:flex;
-    justify-content:center;
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.45 "Instrument Sans", -apple-system, system-ui, sans-serif;
     -webkit-font-smoothing:antialiased;
-    margin:0;
+    padding:0 16px max(32px, env(safe-area-inset-bottom));
+    overflow-x:hidden; overflow-x:clip;
   }
-  .page{ width:100%; max-width:600px; display:flex; flex-direction:column; gap:22px; }
+  .page{ max-width:640px; margin:0 auto; }
+  .mono{ font-family:"Chivo Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums; }
+  a{ color:var(--accent); text-underline-offset:3px; }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:3px; border-radius:6px; }
+  img{ display:block; }
 
-  h1,h2,h3, .num{ font-family:"Manrope","Inter",sans-serif; text-wrap:balance; }
-  .num{ font-variant-numeric: tabular-nums; }
-
-  /* header */
-  .top{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
-  .brand{ font-size:12px; color:var(--ink-dim); letter-spacing:.02em; }
-  .brand b{ color:var(--ink); font-weight:600; }
-  .clock{ font-size:12px; color:var(--ink-faint); }
-
-  h1{ font-size:23px; font-weight:800; letter-spacing:-.01em; margin:0; }
-  .lede{ color:var(--ink-dim); font-size:14px; margin-top:3px; }
-
-  .card{
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:16px;
-    padding:20px;
+  /* ---------- sticky top + tabs ---------- */
+  .top{
+    position:sticky; top:0; z-index:20; margin:0 -16px; padding:max(10px, env(safe-area-inset-top)) 16px 10px;
+    background:var(--bg);
   }
-
-  /* status + meta */
-  .meta-row{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
-  .pill{
-    display:inline-flex; align-items:center; gap:6px;
-    font-size:12px; font-weight:600; letter-spacing:.01em;
-    padding:5px 10px; border-radius:99px;
-    background:var(--surface-2); color:var(--ink-dim);
+  @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .top{ background:color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter:saturate(1.4) blur(16px); backdrop-filter:saturate(1.4) blur(16px); }
   }
-  .pill .dot{ width:6px; height:6px; border-radius:50%; background:var(--ink-faint); }
-  .pill.live{ background:var(--court-soft); color:var(--court); }
-  .pill.live .dot{ background:var(--court); animation:pulse 1.6s ease-in-out infinite; }
-  @media (prefers-reduced-motion: reduce){ .pill.live .dot{ animation:none; } }
-  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
-  .where{ font-size:12.5px; color:var(--ink-dim); }
-  .where b{ color:var(--ink); font-weight:600; }
-
-  /* matchup */
-  .vs-grid{ display:grid; grid-template-columns:1fr auto 1fr; align-items:start; gap:6px; }
-  .team{ display:flex; flex-direction:column; gap:12px; min-width:0; }
-  .team.away{ text-align:right; }
-  .team.away .player{ align-items:flex-end; }
-  .team-tag{ font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
-  .team.home .team-tag{ color:var(--court); }
-  .team.away .team-tag{ color:var(--away); }
-  .player{ display:flex; flex-direction:column; gap:1px; }
-  .player .name{ font-weight:600; font-size:14.5px; line-height:1.3; }
-  .player .stat{ font-size:12.5px; color:var(--ink-dim); }
-  .vs-mark{
-    align-self:center; font-size:11px; font-weight:700; color:var(--ink-faint);
-    letter-spacing:.06em; padding-top:2px;
+  .top-in{ max-width:640px; margin:0 auto; }
+  .brandrow{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:8px; }
+  .brand{ font:800 15px/1 "Big Shoulders Display", sans-serif; letter-spacing:.16em; text-transform:uppercase; }
+  .today{ font:500 11px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
+  .tabs{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; background:var(--surface-2); border-radius:14px; }
+  .tab{
+    appearance:none; border:0; background:transparent; color:var(--dim); cursor:pointer; text-align:left;
+    padding:8px 12px 7px; border-radius:10px; min-width:0;
   }
+  .tab b{ display:block; font:900 24px/1 "Big Shoulders Display", sans-serif; letter-spacing:.05em; text-transform:uppercase; }
+  .tab span{ display:block; font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.04em; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tab[aria-selected="true"]{ background:var(--navy); color:var(--board-ink); box-shadow:0 6px 16px -10px rgba(6,13,34,.7); }
+  .tab[aria-selected="true"] span{ color:var(--racket); }
+  [role="tabpanel"][hidden]{ display:none; }
 
-  /* skill bars */
-  .skillbars{ margin-top:20px; padding-top:18px; border-top:1px solid var(--line); }
-  .skillbars .cap{ font-size:11.5px; color:var(--ink-faint); letter-spacing:.02em; margin-bottom:12px; }
-  .barline{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-  .barline .name{ width:96px; font-size:12.5px; color:var(--ink-dim); flex-shrink:0; }
-  .barline .track{ flex:1; height:6px; border-radius:99px; background:var(--surface-2); overflow:hidden; }
-  .barline .fill{ height:100%; border-radius:99px; }
-  .barline.home .fill{ background:var(--court); }
-  .barline.away .fill{ background:var(--away); }
-  .barline .val{ width:40px; text-align:right; font-size:12.5px; font-weight:600; flex-shrink:0; }
-
-  .avg-diff{ margin-top:14px; font-size:13px; color:var(--ink-dim); line-height:1.5; }
-  .avg-diff b{ color:var(--ink); font-weight:600; }
-
-  /* section heads */
-  .section-head{ display:flex; align-items:baseline; justify-content:space-between; }
-  .section-head h2{ font-size:16px; font-weight:700; }
-  .section-head .tag{ font-size:12px; color:var(--ink-faint); }
-
-  /* dev stats */
-  .dev-top{ display:flex; gap:10px; flex-wrap:wrap; }
-  .dev-stat{ flex:1; min-width:120px; }
-  .dev-stat .k{ font-size:11.5px; color:var(--ink-faint); }
-  .dev-stat .v{ font-size:20px; font-weight:700; margin-top:4px; }
-  .dev-stat .v small{ font-size:11.5px; font-weight:500; color:var(--ink-dim); }
-
-  .chart-wrap{ margin-top:20px; padding-top:18px; border-top:1px solid var(--line); }
-  .chart-caption{ font-size:12px; color:var(--ink-faint); margin-top:8px; line-height:1.5; }
-
-  .source-note{ font-size:11.5px; color:var(--ink-faint); margin-top:16px; padding-top:14px; border-top:1px solid var(--line); line-height:1.55; }
-  .source-note a{ color:var(--court); font-weight:600; text-decoration:none; }
-
-  /* form chips */
-  .form-row{ display:flex; gap:6px; margin-top:14px; }
-  .chip{
-    width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center;
-    font-family:"Manrope",sans-serif; font-weight:700; font-size:11.5px;
+  /* ---------- photo hero ---------- */
+  .hero{
+    position:relative; margin:4px -16px 0; overflow:hidden; background:var(--board); color:var(--board-ink);
+    aspect-ratio:4/5; max-height:540px; min-height:420px;
   }
-  .chip.w{ background:var(--good-soft); color:var(--good); }
-  .chip.l{ background:var(--bad-soft); color:var(--bad); }
-
-  /* list rows: history + upcoming */
-  .rows{ display:flex; flex-direction:column; }
-  .row{
-    display:flex; align-items:center; gap:12px; padding-block:12px;
-    border-bottom:1px solid var(--line);
+  .hero > img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 0%; }
+  .hero .scrim{
+    position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(6,13,34,.30) 0%, rgba(6,13,34,0) 18%, rgba(6,13,34,0) 40%, rgba(6,13,34,.72) 64%, var(--board) 96%);
   }
-  .row:last-child{ border-bottom:none; padding-bottom:2px; }
-  .row .badge{
-    width:26px; height:26px; border-radius:7px; flex-shrink:0;
+  .hero .court{ position:absolute; left:0; right:0; bottom:0; width:100%; height:30%; opacity:.12; }
+  .hero-top{ position:absolute; top:12px; left:16px; right:16px; display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .glass{
+    display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
+    font:600 11px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase;
+    padding:7px 10px; border-radius:99px; color:#fff; text-decoration:none;
+    background:rgba(6,13,34,.42); border:1px solid rgba(255,255,255,.18);
+    -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  }
+  .glass .dot{ width:7px; height:7px; border-radius:50%; background:var(--racket); flex:none; }
+  .glass.live{ background:var(--ball); color:var(--board); border-color:var(--ball); }
+  .glass.live .dot{ background:var(--board); }
+  .glass.done .dot{ background:var(--board-dim); }
+  .hero-bot{ position:absolute; left:16px; right:16px; bottom:14px; }
+  .eyebrow{ font:600 11px/1.2 "Chivo Mono", monospace; letter-spacing:.14em; text-transform:uppercase; color:var(--board-dim); }
+  .hero-bot .eyebrow{ color:var(--racket); }
+  .timeline-big{ display:flex; align-items:flex-end; gap:14px; margin-top:6px; }
+  .bigtime{
+    font:900 clamp(96px, 31vw, 136px)/.78 "Big Shoulders Display", sans-serif; letter-spacing:-.01em;
+    font-variant-numeric:tabular-nums; color:#fff;
+  }
+  .court-no{ padding-bottom:4px; }
+  .court-no small{ display:block; font:600 11px/1 "Chivo Mono", monospace; letter-spacing:.14em; color:var(--board-dim); }
+  .court-no b{ display:block; font:900 54px/.8 "Big Shoulders Display", sans-serif; color:var(--racket); margin-top:6px; }
+
+  .board{
+    position:relative; margin:0 -16px; padding:4px 16px 16px; background:var(--board); color:var(--board-ink);
+  }
+  .countdown{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 0; border-top:1px solid var(--board-line); border-bottom:1px solid var(--board-line);
+    font:500 12.5px/1.3 "Chivo Mono", monospace; color:var(--board-ink);
+  }
+  .countdown .l{ display:flex; align-items:center; gap:9px; min-width:0; }
+  .countdown .dot{ width:8px; height:8px; border-radius:50%; background:var(--racket); flex:none; }
+  .countdown.live .dot{ background:var(--ball); }
+  .countdown a{ color:var(--board-dim); font-size:11.5px; white-space:nowrap; text-decoration:none; }
+  .countdown a:hover{ color:#fff; }
+
+  .vs{ display:grid; gap:0; }
+  .team{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; padding:13px 0; }
+  .team + .team{ border-top:1px dashed var(--board-line); }
+  .tname{ font:800 21px/1.02 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; min-width:0; overflow-wrap:anywhere; }
+  .tname small{ display:block; font:500 12px/1.35 "Instrument Sans", sans-serif; text-transform:none; letter-spacing:0; color:var(--board-dim); margin-top:3px; }
+  .team.opp .tname{ font-size:13px; font-family:"Chivo Mono", monospace; font-weight:500; letter-spacing:.08em; color:var(--board-dim); }
+  .opts{ display:grid; gap:8px; margin-top:8px; }
+  .opt{ display:flex; align-items:center; gap:10px; font:700 14.5px/1.2 "Instrument Sans", sans-serif; text-transform:none; letter-spacing:0; color:var(--board-ink); }
+  .opt i{ font-style:normal; font:500 11px/1 "Chivo Mono", monospace; color:var(--board-dim); letter-spacing:.06em; }
+  .seed{ font:600 11px/1 "Chivo Mono", monospace; padding:5px 7px; border-radius:6px; background:rgba(255,255,255,.1); color:var(--board-ink); white-space:nowrap; }
+  .team.me .seed{ background:var(--racket); color:var(--navy); }
+  .tag{ font:600 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--board-dim); text-align:right; }
+
+  /* avatars */
+  .avs{ display:flex; flex:none; }
+  .av{
+    width:var(--s, 36px); height:var(--s, 36px); border-radius:50%; flex:none; overflow:hidden; position:relative;
+    background:#13245A; color:var(--racket); box-shadow:0 0 0 2px var(--ring, var(--board));
     display:flex; align-items:center; justify-content:center;
-    font-family:"Manrope",sans-serif; font-weight:700; font-size:11.5px;
+    font:800 calc(var(--s, 36px) * .42)/1 "Big Shoulders Display", sans-serif; letter-spacing:.04em;
   }
-  .row .badge.w{ background:var(--good-soft); color:var(--good); }
-  .row .badge.l{ background:var(--bad-soft); color:var(--bad); }
-  .row .badge.up{ background:var(--court-soft); color:var(--court); font-size:10px; }
-  .row .info{ flex:1; min-width:0; }
-  .row .info .opp{ font-size:13.5px; font-weight:600; line-height:1.35; }
-  .row .info .ev{ font-size:12px; color:var(--ink-dim); margin-top:1px; }
-  .row .when{ text-align:right; flex-shrink:0; }
-  .row .when .date{ font-size:12.5px; font-weight:600; }
-  .row .when .court{ font-size:11.5px; color:var(--ink-faint); }
+  .av img{ width:100%; height:100%; object-fit:cover; }
+  .avs .av + .av{ margin-left:calc(var(--s, 36px) * -.28); }
+  .avs.sm{ --s:24px; }
+  .avs .av.ini:first-child:not(:last-child){ padding-right:calc(var(--s, 36px) * .26); }
+  .avs.md{ --s:30px; }
 
-  footer{ text-align:center; font-size:11.5px; color:var(--ink-faint); }
+  /* ---------- route ---------- */
+  .route{ list-style:none; margin:14px 0 0; padding:4px 16px; background:var(--surface); border:1px solid var(--line); border-radius:16px; }
+  .route li{ display:grid; grid-template-columns:22px 1fr auto; gap:12px; align-items:center; padding:11px 0; position:relative; }
+  .route li + li{ border-top:1px solid var(--line); }
+  .node{ width:14px; height:14px; border-radius:50%; border:2px solid var(--line); background:var(--surface); justify-self:center; position:relative; z-index:1; }
+  .route li::before{ content:""; position:absolute; left:10px; top:0; bottom:0; width:2px; background:var(--line); }
+  .route li:first-child::before{ top:50%; }
+  .route li:last-child::before{ bottom:50%; }
+  .route li.done .node{ background:var(--accent); border-color:var(--accent); }
+  .route li.done::before{ background:var(--accent); }
+  .route li.next .node{ border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft); }
+  .route .rn{ font:800 19px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.04em; }
+  .route .rm{ font:500 11.5px/1.3 "Chivo Mono", monospace; color:var(--dim); margin-top:3px; }
+  .route .rs{ font:600 11px/1.2 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); text-align:right; }
+  .route li.next .rs{ color:var(--accent); }
+  .tiles{ display:grid; grid-template-rows:auto auto; grid-auto-flow:column; gap:2px; }
+  .tiles span{ width:22px; height:22px; display:flex; align-items:center; justify-content:center; border-radius:5px; font:900 15px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; background:var(--surface-2); color:var(--faint); }
+  .tiles span.w{ background:var(--solid); color:var(--solid-ink); }
+
+  /* ---------- sections ---------- */
+  section{ margin-top:36px; scroll-margin-top:120px; }
+  .sh{ display:flex; align-items:flex-end; justify-content:space-between; gap:10px; margin-bottom:12px; border-bottom:2px solid var(--ink); padding-bottom:6px; }
+  .sh h2{ margin:0; font:900 30px/.9 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.01em; }
+  .sh .meta{ font:500 11px/1.3 "Chivo Mono", monospace; color:var(--dim); text-align:right; letter-spacing:.04em; }
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 16px; }
+  .sub{ font-size:13px; color:var(--dim); margin:10px 0 0; }
+
+  /* segmented */
+  .seg{ display:inline-grid; grid-auto-flow:column; gap:2px; padding:3px; background:var(--surface-2); border-radius:11px; margin-bottom:12px; max-width:100%; }
+  .seg button{ appearance:none; border:0; background:transparent; color:var(--dim); cursor:pointer; padding:7px 12px; border-radius:8px; font:600 13px/1.1 "Instrument Sans", sans-serif; white-space:nowrap; }
+  .seg button[aria-pressed="true"]{ background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(6,13,34,.14); }
+
+  /* ---------- bracket ---------- */
+  .bk-wrap{ position:relative; margin:0 -16px; }
+  .bk-wrap::after{
+    content:""; position:absolute; top:0; right:0; bottom:10px; width:32px; pointer-events:none;
+    background:linear-gradient(90deg, transparent, var(--bg)); opacity:0; transition:opacity .2s;
+  }
+  .bk-wrap.more::after{ opacity:1; }
+  .bk-scroll{
+    overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x mandatory; scroll-padding-inline:16px;
+    padding:0 16px 10px; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .bk-scroll::-webkit-scrollbar{ display:none; }
+  .bk{ display:flex; width:max-content; --cw:238px; --gap:24px; --slot:132px; }
+  .bk-col{ width:calc(var(--cw) + var(--gap)); flex:none; scroll-snap-align:start; }
+  .bk-col:last-child{ width:var(--cw); }
+  .bk-hd{ height:46px; }
+  .bk-hd b{ display:block; font:800 19px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.05em; }
+  .bk-hd span{ display:block; font:500 11px/1.2 "Chivo Mono", monospace; color:var(--dim); margin-top:4px; }
+  .bk-body{ display:flex; flex-direction:column; height:calc(var(--n) * var(--slot)); }
+  .slot{ flex:1; display:flex; align-items:center; position:relative; min-height:0; }
+  .slot > .in{ position:absolute; left:calc(var(--gap) / -2); width:calc(var(--gap) / 2); top:50%; border-top:1.5px solid var(--line); }
+  .slot > .out{ position:absolute; left:var(--cw); width:calc(var(--gap) / 2); top:50%; border-top:1.5px solid var(--line); }
+  .slot > .vl{ position:absolute; left:calc(var(--cw) + var(--gap) / 2 - .75px); border-left:1.5px solid var(--line); }
+  .slot.even > .vl{ top:50%; height:50%; }
+  .slot.odd > .vl{ top:0; height:calc(50% + 1px); }
+  .slot > .hot{ border-color:var(--accent); border-width:2.5px; z-index:1; }
+  .slot > .vl.hot{ border-left-width:2.5px; }
+
+  .m{ width:var(--cw); background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; position:relative; z-index:2; }
+  .m.path{ border-color:var(--accent); }
+  .m.next{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  .mh{ display:flex; justify-content:space-between; gap:8px; padding:6px 10px 5px; font:500 10.5px/1.2 "Chivo Mono", monospace; color:var(--dim); background:var(--surface-2); letter-spacing:.02em; }
+  .mh .st{ text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; }
+  .mh .st.nr{ color:var(--loss); }
+  .mh .st.nx{ color:var(--accent); font-weight:600; }
+  .e{ display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center; padding:6px 10px; min-height:40px; --ring:var(--surface); }
+  .e + .e{ border-top:1px solid var(--line); }
+  .e .n{ font:600 12.5px/1.2 "Instrument Sans", sans-serif; min-width:0; overflow-wrap:anywhere; }
+  .e .n .sd{ font:500 10px/1 "Chivo Mono", monospace; color:var(--dim); padding:2px 4px; border:1px solid var(--line); border-radius:4px; margin-left:4px; white-space:nowrap; vertical-align:1px; }
+  .e.lost .n{ color:var(--faint); font-weight:500; }
+  .e.ph .n{ color:var(--faint); font-weight:500; font-size:11.5px; }
+  .e.me{ background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent); --ring:var(--accent-soft); }
+  .e .sc{ display:flex; gap:3px; }
+  .e .sc span{ width:17px; text-align:center; font:500 13px/1 "Chivo Mono", monospace; font-variant-numeric:tabular-nums; color:var(--faint); }
+  .e.won .sc span{ color:var(--ink); font-weight:600; }
+  .e .wmark{ font:600 10px/1 "Chivo Mono", monospace; letter-spacing:.06em; color:var(--accent); }
+  .av.ph{ background:var(--surface-2); color:var(--faint); box-shadow:0 0 0 2px var(--ring, var(--surface)); }
+  .bk-note{ display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); margin-top:4px; }
+  .bk-note i{ display:inline-block; width:14px; height:0; border-top:2.5px solid var(--accent); vertical-align:3px; margin-right:6px; }
+
+  table.gt{ width:100%; border-collapse:collapse; font-size:13px; }
+  .gt th{ font:500 10.5px/1 "Chivo Mono", monospace; color:var(--dim); text-align:right; padding:6px 4px; }
+  .gt th:first-child, .gt td:first-child{ text-align:left; }
+  .gt td{ padding:8px 4px; border-top:1px solid var(--line); text-align:right; font-family:"Chivo Mono", monospace; }
+  .gt td:first-child{ font-family:"Instrument Sans", sans-serif; font-weight:600; }
+  .gt tr.me td{ background:var(--accent-soft); }
+
+  /* ---------- stats ---------- */
+  .stats{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .stat{ padding:12px 0 12px 12px; min-width:0; }
+  .stat:first-child{ padding-left:0; }
+  .stat + .stat{ border-left:1px solid var(--line); }
+  .stat .k{ font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
+  .stat .v{ font:900 clamp(34px, 11vw, 44px)/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; margin-top:6px; }
+  .stat .s{ font-size:12px; color:var(--dim); margin-top:3px; }
+  .chart{ margin-top:14px; padding:14px 12px 12px; }
+  .chart svg{ display:block; width:100%; height:auto; overflow:visible; }
+  .chart .cap{ font-size:12.5px; color:var(--dim); margin:6px 4px 0; }
+  .record{ display:grid; grid-template-columns:1fr 1fr; margin-top:14px; }
+  .record div{ padding:0 12px; }
+  .record div:first-child{ padding-left:0; }
+  .record div + div{ border-left:1px solid var(--line); }
+  .record .k{ font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
+  .record b{ display:block; font:900 30px/1 "Big Shoulders Display", sans-serif; margin-top:5px; font-variant-numeric:tabular-nums; }
+  .record span{ font-size:12px; color:var(--dim); }
+  .formrow{ margin-top:16px; }
+  .formrow .k{ display:flex; justify-content:space-between; font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin-bottom:6px; }
+  .form{ display:grid; grid-template-columns:repeat(10, minmax(0, 1fr)); gap:4px; max-width:340px; }
+  .chip{ aspect-ratio:1; border-radius:7px; display:flex; align-items:center; justify-content:center; font:800 15px/1 "Big Shoulders Display", sans-serif; }
+  .chip.w{ background:var(--solid); color:var(--solid-ink); }
+  .chip.l{ background:transparent; color:var(--faint); box-shadow:inset 0 0 0 1.5px var(--line); }
+  .kskill{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-top:14px; }
+  .kskill > div{ display:flex; flex-direction:column; justify-content:space-between; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .kskill .k{ font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .kskill b{ display:block; font:900 28px/1 "Big Shoulders Display", sans-serif; margin-top:6px; font-variant-numeric:tabular-nums; }
+  .kskill .now{ background:var(--panel); border-color:var(--panel); color:var(--board-ink); }
+  .kskill .now .k{ color:var(--racket); }
+
+  /* ---------- history ---------- */
+  .hist{ padding:2px 16px; }
+  .hrow{ display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; padding:9px 0 9px 12px; position:relative; }
+  .hrow + .hrow{ border-top:1px solid var(--line); }
+  .hrow::before{ content:""; position:absolute; left:0; top:9px; bottom:9px; width:3px; border-radius:2px; background:var(--accent); }
+  .hrow.l::before{ background:var(--loss); opacity:.7; }
+  .hrow .o{ font-weight:700; font-size:14px; line-height:1.25; overflow-wrap:anywhere; }
+  .hrow .ev{ font-size:12px; color:var(--dim); line-height:1.3; margin-top:1px; }
+  .hrow .r{ text-align:right; font:500 11.5px/1.35 "Chivo Mono", monospace; color:var(--dim); white-space:nowrap; }
+  .hrow .r b{ display:block; font-weight:600; color:var(--ink); }
+  .hrow.l .r b{ color:var(--loss); }
+  .hrow.new .o::after{ content:"Idag"; margin-left:8px; font:600 10px/1 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); vertical-align:2px; }
+
+  /* ---------- upcoming ---------- */
+  .ups{ display:grid; gap:10px; }
+  .up{ display:grid; grid-template-columns:62px 1fr; gap:14px; }
+  .date{ border-radius:12px; background:var(--panel); color:var(--board-ink); text-align:center; padding:9px 4px 8px; align-self:start; }
+  .date small{ display:block; font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.1em; text-transform:uppercase; color:var(--racket); }
+  .date b{ display:block; font:900 30px/1 "Big Shoulders Display", sans-serif; margin-top:4px; }
+  .date span{ display:block; font:500 10.5px/1 "Chivo Mono", monospace; color:var(--board-dim); margin-top:3px; text-transform:uppercase; letter-spacing:.08em; }
+  .up h3{ margin:0; font:800 21px/1.05 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; overflow-wrap:anywhere; }
+  .up h3 .cls{ display:inline-block; font:600 11px/1 "Chivo Mono", monospace; letter-spacing:.06em; padding:4px 6px; border-radius:5px; background:var(--accent); color:var(--surface); vertical-align:3px; margin-left:4px; }
+  .up .what{ font-size:13px; color:var(--dim); margin-top:4px; line-height:1.4; }
+  .up ul{ list-style:none; margin:8px 0 0; padding:0; font-size:13.5px; }
+  .up li{ padding:6px 0; border-top:1px solid var(--line); overflow-wrap:anywhere; }
+  .up li:last-child{ padding-bottom:0; }
+  .up .facts{ font-size:12.5px; line-height:1.5; color:var(--dim); margin-top:8px; }
+  .up .facts a{ font-family:"Instrument Sans", sans-serif; font-weight:600; font-size:13px; }
+
+  /* ---------- info ---------- */
+  .info{ border-top:1px solid var(--line); }
+  .info details{ border-bottom:1px solid var(--line); }
+  .info summary{ list-style:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 0; font:800 20px/1.1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.03em; }
+  .info summary::-webkit-details-marker{ display:none; }
+  .info summary .pl{ width:22px; height:22px; flex:none; position:relative; border-radius:50%; background:var(--surface-2); }
+  .info summary .pl::before, .info summary .pl::after{ content:""; position:absolute; left:6px; right:6px; top:10px; height:2px; background:var(--ink); border-radius:1px; }
+  .info summary .pl::after{ transform:rotate(90deg); }
+  .info details[open] summary .pl::after{ transform:rotate(0deg); }
+  .info .body{ padding:0 0 16px; font-size:14px; line-height:1.55; }
+  .info .body p{ margin:0 0 8px; }
+  .info .body p.me{ padding:10px 12px; border-radius:10px; background:var(--accent-soft); }
+  .info .src{ font:500 11.5px/1.6 "Chivo Mono", monospace; color:var(--dim); margin-top:6px; }
+  .info .src a{ margin-right:10px; }
+
+  /* ---------- Kian hero ---------- */
+  .khero{ margin:4px -16px 0; background:var(--board); color:var(--board-ink); padding:16px 16px 0; position:relative; overflow:hidden; }
+  .khero .court{ position:absolute; right:-40px; top:0; width:260px; height:62%; opacity:.1; }
+  .kgrid{ position:relative; display:grid; grid-template-columns:118px 1fr; gap:16px; align-items:end; }
+  .kphoto{ width:118px; aspect-ratio:118/170; border-radius:14px; overflow:hidden; background:#13245A; }
+  .kphoto img{ width:100%; height:100%; object-fit:cover; object-position:50% 50%; }
+  .kname{ font:900 58px/.82 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.01em; }
+  .kname small{ display:block; font:800 24px/1 "Big Shoulders Display", sans-serif; color:var(--board-dim); margin-top:6px; letter-spacing:.03em; }
+  .kmeta{ font:500 11.5px/1.4 "Chivo Mono", monospace; color:var(--racket); margin-top:10px; letter-spacing:.04em; }
+  .kbig{ position:relative; display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-top:18px; }
+  .kbig .bigtime{ font-size:clamp(88px, 28vw, 120px); }
+  .kbig .lab{ text-align:right; padding-bottom:4px; }
+  .kbig .lab b{ display:block; font:900 26px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; }
+  .kbig .lab span{ font:500 11.5px/1.3 "Chivo Mono", monospace; color:var(--board-dim); }
+  .knote{ position:relative; font-size:15px; line-height:1.4; margin:14px 0 0; padding:12px 0 14px; border-top:1px solid var(--board-line); }
+  .results{ display:grid; gap:10px; }
+  .res{ background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  .res .mh{ padding:8px 12px 7px; }
+  .res .e{ padding:9px 12px; }
+  .res .e .n{ font-size:14px; }
+  .res .e .sc span{ width:22px; font-size:15px; }
+  .winners{ font-size:13.5px; color:var(--dim); margin:12px 0 0; }
+  .winners b{ color:var(--ink); }
+
+  footer{ margin-top:48px; padding-top:18px; border-top:2px solid var(--ink); display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+  footer b{ font:900 22px/1 "Big Shoulders Display", sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+  footer span{ font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); }
+
+  @media (min-width:640px){
+    .hero, .khero{ margin-left:0; margin-right:0; border-radius:22px 22px 0 0; }
+    .board{ margin-left:0; margin-right:0; border-radius:0 0 22px 22px; }
+    .khero{ border-radius:22px; }
+    .bk-wrap{ margin:0; }
+    .bk-scroll{ padding-left:0; padding-right:0; scroll-padding-inline:0; }
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    [role="tabpanel"]:not([hidden]){ animation:rise .38s cubic-bezier(.2,.7,.2,1) both; }
+    @keyframes rise{ from{ opacity:0; transform:translateY(8px); } }
+    .glass.live .dot, .countdown.live .dot{ animation:pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse{ 50%{ opacity:.25; transform:scale(.8); } }
+    .draw-line{ stroke-dasharray:var(--len); stroke-dashoffset:var(--len); transition:stroke-dashoffset 1.3s cubic-bezier(.3,.6,.2,1); }
+    .drawn .draw-line{ stroke-dashoffset:0; }
+    .bk-scroll{ scroll-behavior:smooth; }
+  }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <div class="top">
-    <div class="brand"><b>Nynäs Padel Club</b> · Damer C</div>
-    <div class="clock num" id="clock"></div>
-  </div>
-
-  <div>
-    <h1>Theas match idag</h1>
-    <div class="lede">Järfälla Padel Open no 11 — Sanktionerad B, C, D</div>
-  </div>
-
-  <!-- MATCH CARD -->
-  <div class="card">
-    <div class="meta-row">
-      <span id="statusPill"><span class="pill"><span class="dot"></span>laddar…</span></span>
-      <span class="where"><b>Järfälla Padel Club</b> · Bana 2 · 10:15</span>
-    </div>
-
-    <div class="vs-grid">
-      <div class="team home">
-        <div class="team-tag">Nynäs</div>
-        <div class="player">
-          <div class="name">Thea Holmberg Löving</div>
-          <div class="stat num">Skill 15.94</div>
-        </div>
-        <div class="player">
-          <div class="name">Cassandra Ersson</div>
-          <div class="stat num">Skill 14.31</div>
-        </div>
+  <header class="top">
+    <div class="top-in">
+      <div class="brandrow">
+        <div class="brand">Nynäs Padel Club</div>
+        <div class="today" id="today">Sön 27 sep</div>
       </div>
+      <div class="tabs" role="tablist" aria-label="Spelare">
+        <button class="tab" role="tab" id="tab-thea" aria-controls="p-thea" aria-selected="true"><b>Thea</b><span id="tabSubThea">Damer C</span></button>
+        <button class="tab" role="tab" id="tab-kian" aria-controls="p-kian" aria-selected="false" tabindex="-1"><b>Kian</b><span>Herrar C · klart</span></button>
+      </div>
+    </div>
+  </header>
 
-      <div class="vs-mark">VS</div>
-
-      <div class="team away">
-        <div class="team-tag">Motstånd</div>
-        <div class="player">
-          <div class="name">Luna Levihn</div>
-          <div class="stat num">Skill 10.63</div>
-        </div>
-        <div class="player">
-          <div class="name">Molly Bondesson</div>
-          <div class="stat num">Skill 12.03</div>
+  <!-- ================= THEA ================= -->
+  <main role="tabpanel" id="p-thea" aria-labelledby="tab-thea" tabindex="-1">
+    <div class="hero">
+      <img src="img/thea.jpg" width="900" height="1017" alt="Thea Holmberg Löving i Nynäs-jackan" fetchpriority="high">
+      <div class="scrim"></div>
+      <svg class="court" viewBox="0 0 390 230" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1">
+        <path d="M20 229 L110 20 H280 L370 229 Z"/>
+        <path d="M58 140 H332"/><path d="M195 140 V229"/><path d="M92 62 H298" stroke-dasharray="3 5"/>
+      </svg>
+      <div class="hero-top">
+        <a class="glass" href="https://www.rankedin.com/en/tournament/66374/jarfalla-padel-open-no-11-sanktionerad-b-c-d" target="_blank" rel="noopener">Järfälla Padel Open no 11</a>
+        <span class="glass" id="heroPill"><span class="dot"></span><span>–</span></span>
+      </div>
+      <div class="hero-bot">
+        <div class="eyebrow" id="heroRound">Damer C</div>
+        <div class="timeline-big">
+          <div class="bigtime" id="heroTime">–</div>
+          <div class="court-no"><small>Bana</small><b id="heroCourt">–</b></div>
         </div>
       </div>
     </div>
-
-    <div class="skillbars">
-      <div class="cap">SKILLJÄMFÖRELSE — WD SVENSKA PADELFÖRBUNDET</div>
-      <div class="barline home">
-        <div class="name">Thea</div>
-        <div class="track"><div class="fill" style="width:99%"></div></div>
-        <div class="val num">15.94</div>
-      </div>
-      <div class="barline home">
-        <div class="name">Cassandra</div>
-        <div class="track"><div class="fill" style="width:89%"></div></div>
-        <div class="val num">14.31</div>
-      </div>
-      <div class="barline away">
-        <div class="name">Molly</div>
-        <div class="track"><div class="fill" style="width:75%"></div></div>
-        <div class="val num">12.03</div>
-      </div>
-      <div class="barline away">
-        <div class="name">Luna</div>
-        <div class="track"><div class="fill" style="width:66%"></div></div>
-        <div class="val num">10.63</div>
-      </div>
-      <div class="avg-diff">
-        Snittskill Nynäs <b>15.13</b> mot motståndarnas <b>11.33</b> — Thea och Cassandra går in som klara favoriter på pappret.
-      </div>
-    </div>
-  </div>
-
-  <!-- HEAD TO HEAD -->
-  <div class="section-head">
-    <h2>Tidigare möten</h2>
-    <span class="tag">mot dagens motstånd</span>
-  </div>
-  <div class="card">
-    <div class="rows">
-      <div class="row">
-        <div class="badge up">–</div>
-        <div class="info">
-          <div class="opp">Thea vs Luna Levihn / Molly Bondesson</div>
-          <div class="ev">Inga tidigare möten hittade — de finns inte bland Theas mest spelade motståndare</div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="badge l">L</div>
-        <div class="info">
-          <div class="opp">Cassandra (med Alva Sahlström Dahl) vs Molly Bondesson</div>
-          <div class="ev">Västerhaninge Padelförening open 1 · 19 sep · 6-7, 2-6</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TOURNAMENT BRACKET -->
-  <div class="section-head">
-    <h2>Kommande i turneringen</h2>
-    <span class="tag">Damer C — huvudlåda, 16 par</span>
-  </div>
-  <div class="card">
-    <div class="rows">
-      <div class="row">
-        <div class="badge up">R2</div>
-        <div class="info">
-          <div class="opp">Vid vinst: mot vinnaren av Filippa Pettersson Österberg/Astrid Ekeland — Carla Lundström/Beatriz Callero</div>
-          <div class="ev">Den matchen spelas samtidigt kl 10:15 på Bana 1</div>
-        </div>
-        <div class="when">
-          <div class="date num">11:30</div>
-          <div class="court">Bana 1 el. 2</div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="badge up">Semi</div>
-        <div class="info">
-          <div class="opp">Semifinal, om Thea går vidare två ronder</div>
-          <div class="ev">Motstånd bestäms av resten av lådan</div>
-        </div>
-        <div class="when">
-          <div class="date num">12:45</div>
-          <div class="court">Bana 1</div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="badge up">Final</div>
-        <div class="info">
-          <div class="opp">Final, Damer C</div>
-          <div class="ev">Sista matchen i klassen</div>
-        </div>
-        <div class="when">
-          <div class="date num">17:45</div>
-          <div class="court">Bana 1</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- UPCOMING -->
-  <div class="section-head">
-    <h2>Kommande turneringar</h2>
-    <span class="tag">Rankedin</span>
-  </div>
-  <div class="card">
-    <div class="rows">
-      <div class="row">
-        <div class="badge up">LAG</div>
-        <div class="info">
-          <div class="opp">Danderyd DTK Tjejer — Nynäs Padel Club</div>
-          <div class="ev">Klubbligan Öst 13–16 &amp; 16–19 år VT 26 · lagmatch, Theas parning ej satt</div>
-        </div>
-        <div class="when">
-          <div class="date num">16 maj</div>
-          <div class="court">12:00</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- DEVELOPMENT -->
-  <div class="section-head">
-    <h2>Theas utveckling</h2>
-    <span class="tag">Officiell SPF-ranking</span>
-  </div>
-
-  <div class="card">
-    <div class="dev-top">
-      <div class="dev-stat">
-        <div class="k">SPF-ranking</div>
-        <div class="v num">#150 <small>Dam Huvudlista</small></div>
-      </div>
-      <div class="dev-stat">
-        <div class="k">Rankingpoäng</div>
-        <div class="v num">68.7 <small>WD, 12 mån</small></div>
-      </div>
-      <div class="dev-stat">
-        <div class="k">Skill just nu</div>
-        <div class="v num">15.94 <small>topp 16.07</small></div>
-      </div>
+    <div class="board" aria-live="polite">
+      <div class="countdown" id="countdown"><span class="l"><span class="dot"></span><span id="cdText">–</span></span><a href="https://www.rankedin.com/en/tournament/66374/jarfalla-padel-open-no-11-sanktionerad-b-c-d" target="_blank" rel="noopener">RankedIn ↗</a></div>
+      <div class="vs" id="heroVs"></div>
     </div>
 
-    <div class="chart-wrap">
-      <svg id="trendChart" viewBox="0 0 560 190" width="100%" height="190" role="img" aria-label="Theas skill över de tio senaste matcherna, från 15.88 i juli till 15.94 i september, med en topp på 16.07"></svg>
-      <div class="chart-caption">Skill efter var och en av de 10 senaste tävlingsmatcherna (25 jul – 13 sep 2026).</div>
-      <div class="form-row" id="formRow"></div>
+    <ol class="route" id="route" aria-label="Vägen till final"></ol>
+
+    <section aria-labelledby="h-br">
+      <div class="sh"><h2 id="h-br">Spelträd</h2><div class="meta">Damer C · 16 par</div></div>
+      <div id="theaDraw"></div>
+    </section>
+
+    <section aria-labelledby="h-dev">
+      <div class="sh"><h2 id="h-dev">Utveckling</h2><div class="meta">SPF-ranking</div></div>
+      <div class="stats">
+        <div class="stat"><div class="k">Ranking</div><div class="v">#150</div><div class="s">Dam huvudlista</div></div>
+        <div class="stat"><div class="k">Poäng</div><div class="v">68.7</div><div class="s">SPF</div></div>
+        <div class="stat"><div class="k">Skill</div><div class="v">15.94</div><div class="s">topp 16.07</div></div>
+      </div>
+      <div class="card chart" id="chartCard">
+        <svg id="trend" viewBox="0 0 340 176" role="img" aria-label="Theas skill de tio senaste matcherna: 15.88 den 25 juli, topp 16.07 den 13 september, nu 15.94"></svg>
+        <div class="cap">Skill efter varje match, 25 jul – 13 sep</div>
+      </div>
+      <div class="record">
+        <div><div class="k">Säsong 2026</div><b>28–4</b><span>dubbel · 11 tävlingar</span></div>
+        <div><div class="k">Karriär</div><b>53–22</b><span>23 tävlingar</span></div>
+      </div>
+      <div class="formrow">
+        <div class="k"><span>Form, 10 senaste</span><span>äldst → senast</span></div>
+        <div class="form" id="theaForm"></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-hist">
+      <div class="sh"><h2 id="h-hist">Senaste matcher</h2><div class="meta" id="histMeta"></div></div>
+      <div class="card hist" id="theaHist"></div>
+    </section>
+
+    <section aria-labelledby="h-up">
+      <div class="sh"><h2 id="h-up">Kommande</h2><div class="meta">Okt</div></div>
+      <div class="ups" id="theaUp"></div>
+    </section>
+
+    <section aria-labelledby="h-info">
+      <div class="sh"><h2 id="h-info">Bra att veta</h2><div class="meta">Svenska Padelförbundet</div></div>
+      <div class="info" id="theaInfo"></div>
+    </section>
+  </main>
+
+  <!-- ================= KIAN ================= -->
+  <main role="tabpanel" id="p-kian" aria-labelledby="tab-kian" tabindex="-1" hidden>
+    <div class="khero">
+      <svg class="court" viewBox="0 0 260 300" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1">
+        <rect x="10" y="10" width="240" height="280"/><path d="M10 150 H250"/><path d="M10 80 H250 M10 220 H250"/><path d="M130 80 V220"/>
+      </svg>
+      <div class="kgrid">
+        <div class="kphoto"><img src="img/kian-borgstrom.jpg" width="185" height="400" alt="Kian Borgström på banan" loading="lazy"></div>
+        <div>
+          <div class="kname">Kian<small>Borgström</small></div>
+          <div class="kmeta">Herrar C<br>med Andreas Mickos</div>
+        </div>
+      </div>
+      <div class="kbig">
+        <div class="bigtime">11.56</div>
+        <div class="lab"><b>Skill</b><span>#789 SPF</span></div>
+      </div>
+      <p class="knote">Järfälla klart. Nästa: SPL med laget lör 3 okt.</p>
     </div>
 
-    <div class="source-note">
-      Ranking och skill hämtas från <a href="https://www.rankedin.com/en/player/R000266565/thea-holmberg-loving/skill" target="_blank" rel="noopener">Rankedin</a>, som är den plattform Svenska Padelförbundet officiellt använder för ranking och tävlingsresultat — förbundet har ingen egen databas vid sidan av den. Ögonblicksbild tagen 27 sep 09:40.
-    </div>
-  </div>
+    <section aria-labelledby="h-kj">
+      <div class="sh"><h2 id="h-kj">Järfälla</h2><div class="meta">Fre 26 sep · Herrar C</div></div>
+      <div class="results" id="kianRes"></div>
+      <p class="winners">Herrar C vanns av <b>Limér / Öberg</b>. Finalen mot Gavelin / Veizaga avslutades med uppgivet.</p>
+    </section>
 
-  <!-- HISTORY -->
-  <div class="section-head">
-    <h2>Tidigare matcher</h2>
-    <span class="tag">10 senaste</span>
-  </div>
-  <div class="card">
-    <div class="rows" id="historyRows"></div>
-  </div>
+    <section aria-labelledby="h-kbr">
+      <div class="sh"><h2 id="h-kbr">Spelträd</h2><div class="meta">Herrar C · 16 par</div></div>
+      <div id="kianDraw"></div>
+    </section>
 
-  <footer>Nynäs Padel Club · byggd av Claude åt Mike</footer>
+    <section aria-labelledby="h-kdev">
+      <div class="sh"><h2 id="h-kdev">Utveckling</h2><div class="meta">SPF-ranking</div></div>
+      <div class="stats" style="grid-template-columns:repeat(2, minmax(0,1fr))">
+        <div class="stat"><div class="k">Ranking</div><div class="v">#789</div><div class="s">Herrar huvudlista</div></div>
+        <div class="stat"><div class="k">Poäng</div><div class="v">11.99</div><div class="s">SPF</div></div>
+      </div>
+      <div class="kskill">
+        <div><div class="k">Topp · juli</div><b>11.98</b></div>
+        <div><div class="k">10 matcher sedan</div><b>11.86</b></div>
+        <div class="now"><div class="k">Nu</div><b>11.56</b></div>
+      </div>
+      <div class="formrow">
+        <div class="k"><span>Form, 10 senaste</span><span>äldst → senast</span></div>
+        <div class="form" id="kianForm"></div>
+      </div>
+      <p class="sub">En vinst på de tio senaste. Ny chans med laget i SPL den 3 oktober.</p>
+    </section>
+
+    <section aria-labelledby="h-kup">
+      <div class="sh"><h2 id="h-kup">Kommande</h2><div class="meta">Okt</div></div>
+      <div class="ups" id="kianUp"></div>
+    </section>
+
+    <section aria-labelledby="h-kinfo">
+      <div class="sh"><h2 id="h-kinfo">Bra att veta</h2><div class="meta">Svenska Padelförbundet</div></div>
+      <div class="info" id="kianInfo"></div>
+    </section>
+  </main>
+
+  <footer>
+    <b>Nynäs Padel Club</b>
+    <span>Data: RankedIn / Svenska Padelförbundet, uppdaterad 27&nbsp;sep</span>
+  </footer>
 </div>
 
 <script>
 (function(){
   "use strict";
 
-  var matchStart = new Date("2026-09-27T10:15:00+02:00");
-  var matchEnd   = new Date("2026-09-27T11:45:00+02:00");
+  /* ================= helpers ================= */
+  var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); };
+  var params = new URLSearchParams(location.search);
+  function now(){ var t = params.get("t"); return t ? new Date(t) : new Date(); }
+  function at(date, hhmm){ return new Date(date + "T" + hhmm + ":00+02:00"); }
 
-  function fmtClock(d){
-    try{ return d.toLocaleTimeString("sv-SE", {hour:"2-digit", minute:"2-digit"}); }
-    catch(e){ return ""; }
+  // Photos that read as a face at avatar size (others get initials)
+  var PHOTOS = {
+    "thea-holmberg-loving":{src:"thea-avatar", pos:"50% 30%"},
+    "anna-karin-andersson":{}, "carla-lundstrom":{}, "cathrin-sjogren":{}, "hanna-wallerman":{},
+    "jenny-karlsson":{}, "linda-jakobsson":{}, "malin-lundberg-aguilera":{}, "marina-bradbury":{pos:"50% 45%"},
+    "sanna-aufwerber":{}, "suarez-jessica":{}, "molly-bondesson":{pos:"50% 0%"}, "ayla-abel":{pos:"50% 30%"},
+    "kian-borgstrom":{pos:"50% 22%"}
+  };
+  function slug(n){ return n.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+  function initials(n){ var p = n.split(/\s+/); return (p[0][0] + (p.length > 1 ? p[p.length-1][0] : "")).toUpperCase(); }
+  function avatar(n){
+    var s = slug(n), ph = PHOTOS[s];
+    if (ph) return '<span class="av" title="' + esc(n) + '"><img src="img/' + (ph.src || s) + '.jpg" alt="" loading="lazy" style="object-position:' + (ph.pos || "50% 30%") + '"></span>';
+    return '<span class="av ini" title="' + esc(n) + '" aria-hidden="true">' + esc(initials(n)) + '</span>';
+  }
+  function avatars(pair, size){ return '<span class="avs ' + (size || "") + '">' + pair.n.map(avatar).join("") + '</span>'; }
+  var SHORT = {"Suarez Jessica":"Suarez"};
+  function surname(n){ if (SHORT[n]) return SHORT[n]; var p = n.split(" "); return p.length > 1 ? p.slice(1).join(" ") : n; }
+  function short(pair){ return pair.n.map(surname).join(" / "); }
+  function sets(s){ return s ? s.split(" ").map(function(x){ return x.split("-").map(Number); }) : []; }
+
+  /* ================= data (edit here) ================= */
+  // Scores are written from the winner's side. "10-8" = match tie-break.
+  var DC = {
+    moshiri:{n:["Sara Moshiri","Fredrika Berghman"], seed:"1"},
+    brunstrom:{n:["Helene Brunström","Linda Jakobsson"]},
+    suarez:{n:["Suarez Jessica","Lina Holmberg"]},
+    andersson:{n:["Anna-Karin Andersson","Jenny Karlsson"]},
+    stahl:{n:["Chloé Ståhl","Ayla Abel"]},
+    jaldeborg:{n:["Olivia Jaldeborg","Ella Olofsson"]},
+    sahlstrom:{n:["Alva Sahlström Dahl","Ellinor Ekstedt"]},
+    persson:{n:["Rebecka Persson","Marina Bradbury"], seed:"3/4"},
+    wallerman:{n:["Hanna Wallerman","Malin Lundberg Aguilera"], seed:"3/4"},
+    blomqvist:{n:["Sofia Blomqvist","Veronica arneflod"]},
+    sjogren:{n:["Cathrin Sjögren","Maria Ramsten"]},
+    aufwerber:{n:["Sanna Aufwerber","Melanie Sundell"]},
+    pettersson:{n:["Filippa Pettersson Österberg","Astrid Ekeland"]},
+    lundstrom:{n:["Carla Lundström","Beatriz Callero"]},
+    levihn:{n:["Luna Levihn","Molly Bondesson"], skill:[10.63, 12.03]},
+    thea:{n:["Thea Holmberg Löving","Cassandra Ersson"], seed:"2", me:true, skill:[15.94, 14.31]}
+  };
+  var HC = {
+    kamnelius:{n:["Hugo Kamnelius","Arvid Hjoberg"], seed:"1"},
+    kian:{n:["Kian Borgström","Andreas Mickos"], me:true},
+    magnusson:{n:["Emanuel Magnusson","Rasmus Björkqvist"]},
+    delibas:{n:["Ilyas Delibas","Gabriel Orrego"], seed:"5/8"},
+    hpersson:{n:["Hampus Persson","Ludwig Öberg"], seed:"5/8"},
+    bohlmark:{n:["Henrik Böhlmark","Erik Mossakowski"]},
+    wallen:{n:["Ludwig Wallén","Eric Norlén"]},
+    limer:{n:["Adam Limér","Linus Öberg"], seed:"3/4"},
+    zavala:{n:["Omar Zavala","Oscar P A"], seed:"3/4"},
+    tomsic:{n:["Sam Tomsic Norrbelius","Alex Danielson"]},
+    gavelin:{n:["Martin Gavelin","Nicolas Veizaga"]},
+    ronnback:{n:["Viggo Rönnbäck","Christopher Wessman"], seed:"5/8"},
+    wallin:{n:["Tim Wallin","Carl-johan Blum"], seed:"5/8"},
+    salcedo:{n:["Pablo Salcedo","Pontus Björnström"]},
+    moxness:{n:["William Moxness","Elliot Kindstrand"]},
+    hedstal:{n:["Nicklas Hedstål","Matte Dennemo"], seed:"2"}
+  };
+
+  // m(time, court, a, b, winner, score, note). a/b: pair key, null = from previous round, or {ph:"text"}.
+  function m(t, c, a, b, w, s, note){ return {t:t, c:c, a:a, b:b, w:w || null, s:s || null, note:note || null}; }
+
+  var THEA_EVENT = {
+    cls:"Damer C", date:"2026-09-27", pairs:DC, format:"knockout",
+    draws:[
+      {key:"main", label:"Lottning", rounds:[
+        {label:"Omgång 1", short:"R1", matches:[
+          m("09:00","Bana 1","moshiri","brunstrom","a","7-6 3-6 10-8"),
+          m("09:00","Bana 2","suarez","andersson","b",null,"W.O."),
+          m("09:00","Bana 3","stahl","jaldeborg","b","6-3 6-4"),
+          m("09:00","Bana 4","sahlstrom","persson","b","7-5 6-4"),
+          m("09:00","Bana 5","wallerman","blomqvist","a","6-0 6-7 10-6"),
+          m("09:00","Bana 6","sjogren","aufwerber","a","6-2 6-0"),
+          m("10:15","Bana 1","pettersson","lundstrom"),
+          m("10:15","Bana 2","levihn","thea","b","6-4 6-2")
+        ]},
+        {label:"Kvartsfinal", short:"KF", matches:[
+          m("11:30","Bana 4"), m("11:30","Bana 2"), m("11:30","Bana 3"), m("12:45","Bana 1")
+        ]},
+        {label:"Semifinal", short:"SF", matches:[ m("15:15","Bana 1"), m("15:15","Bana 2") ]},
+        {label:"Final", short:"Final", matches:[ m("17:45","Bana 1") ]}
+      ]},
+      {key:"cons", label:"Placeringslottning 9–16", rounds:[
+        {label:"Omgång 1", short:"R1", matches:[
+          m("11:30","Bana 1","brunstrom","suarez","a",null,"W.O."),
+          m("11:30","Bana 5","stahl","sahlstrom","b","6-2 6-0"),
+          m("11:30","Bana 6","blomqvist","aufwerber"),
+          m("12:45","Bana 2",{ph:"Förlorare av Pettersson Österberg / Ekeland – Lundström / Callero"},"levihn")
+        ]},
+        {label:"Omgång 2", short:"R2", matches:[ m("15:15","Bana 3"), m("15:15","Bana 4") ]},
+        {label:"Match om 9:e plats", short:"9:e", matches:[ m("17:45","Bana 3") ]}
+      ]}
+    ]
+  };
+
+  var KIAN_EVENT = {
+    cls:"Herrar C", date:"2026-09-26", pairs:HC, format:"knockout",
+    draws:[
+      {key:"main", label:"Lottning", rounds:[
+        {label:"Omgång 1", short:"R1", matches:[
+          m("09:00","Bana 1","kamnelius","kian","a","6-1 6-1"),
+          m("09:00","Bana 2","magnusson","delibas","a","7-6 7-5"),
+          m("09:00","Bana 3","hpersson","bohlmark","a","3-6 6-2 10-2"),
+          m("09:00","Bana 4","wallen","limer","b","6-2 6-2"),
+          m("09:00","Bana 5","zavala","tomsic","a","6-3 6-2"),
+          m("09:00","Bana 6","gavelin","ronnback","a","6-4 4-6 10-7"),
+          m("10:15","Bana 1","wallin","salcedo","a","6-7 7-6 10-8"),
+          m("10:15","Bana 2","moxness","hedstal","b","6-4 7-6")
+        ]},
+        {label:"Kvartsfinal", short:"KF", matches:[
+          m("11:30","Bana 1",null,null,"a","6-2 6-2"),
+          m("11:30","Bana 2",null,null,"b",null,"Uppgivet"),
+          m("11:30","Bana 3",null,null,"b","6-3 6-3"),
+          m("12:45","Bana 1",null,null,"b","6-0 6-4")
+        ]},
+        {label:"Semifinal", short:"SF", matches:[
+          m("15:15","Bana 1",null,null,"b","6-7 6-1 6-4"),
+          m("15:15","Bana 2",null,null,"a","7-5 7-5")
+        ]},
+        {label:"Final", short:"Final", matches:[ m("17:45","Bana 3",null,null,"a",null,"Uppgivet") ]}
+      ]},
+      {key:"cons", label:"Placeringslottning 9–16", rounds:[
+        {label:"Omgång 1", short:"R1", matches:[
+          m("11:30","Bana 4","kian","delibas","b","6-2 3-6 10-8"),
+          m("11:30","Bana 5","bohlmark","wallen","a","7-5 7-5"),
+          m("11:30","Bana 6","tomsic","ronnback","b","6-3 6-2"),
+          m("12:45","Bana 2","salcedo","moxness","b","6-3 6-2")
+        ]},
+        {label:"Omgång 2", short:"R2", matches:[
+          m("15:15","Bana 5",null,null,"b","3-6 6-2 10-6"),
+          m("15:15","Bana 4",null,null,"a","6-4 6-4")
+        ]},
+        {label:"Match om 9:e plats", short:"9:e", matches:[ m("17:45","Bana 2",null,null,"b","6-4 4-6 10-4") ]}
+      ]}
+    ]
+  };
+
+  /* ================= knockout model ================= */
+  // Resolve entrants: explicit keys, placeholders, or winners of the two feeding matches.
+  function resolve(ev, draw){
+    draw.rounds.forEach(function(rd, r){
+      rd.matches.forEach(function(mt, i){
+        ["a","b"].forEach(function(side, k){
+          var v = mt[side], ent;
+          if (typeof v === "string") ent = {pair:ev.pairs[v]};
+          else if (v && v.ph) ent = {ph:v.ph};
+          else if (r > 0){
+            var src = draw.rounds[r-1].matches[2*i + k];
+            if (src.w) ent = {pair:src[src.w].pair, via:true};
+            else if (src.a.pair && src.b.pair && r === 1) ent = {ph:"Vinnare av " + short(src.a.pair) + " – " + short(src.b.pair), from:[src.a.pair, src.b.pair]};
+            else {
+              var pr = draw.rounds[r-1], no = 2*i + k + 1;
+              ent = {ph:/^R\d/.test(pr.short) ? "Vinnare " + pr.label.toLowerCase() + ", match " + no : "Vinnare " + pr.short + no};
+            }
+          } else ent = {ph:"–"};
+          mt[side] = ent;
+        });
+        mt.hasMe = !!((mt.a.pair && mt.a.pair.me) || (mt.b.pair && mt.b.pair.me));
+        mt.meWon = !!(mt.w && mt[mt.w].pair && mt[mt.w].pair.me);
+      });
+    });
+  }
+  [THEA_EVENT, KIAN_EVENT].forEach(function(ev){ ev.draws.forEach(function(d){ resolve(ev, d); }); });
+
+  function matchState(ev, mt){
+    if (mt.w) return "done";
+    var t = now(), s = at(ev.date, mt.t);
+    if (t < s) return "up";
+    if (t < new Date(+s + 90 * 60000)) return "live";
+    return "nr";
   }
 
-  function renderStatus(){
-    var now = new Date();
-    var clockEl = document.getElementById("clock");
-    if (clockEl) clockEl.textContent = fmtClock(now);
-
-    var pillWrap = document.getElementById("statusPill");
-    if (!pillWrap) return;
-    var html;
-    if (now < matchStart){
-      var diffMs = matchStart - now;
-      var h = Math.floor(diffMs / 3600000);
-      var m = Math.floor((diffMs % 3600000) / 60000);
-      var txt = h > 0 ? (h + "h " + m + "min kvar") : (m + " min kvar");
-      html = '<span class="pill"><span class="dot"></span>Startar om ' + txt + '</span>';
-    } else if (now >= matchStart && now <= matchEnd){
-      html = '<span class="pill live"><span class="dot"></span>Pågår troligen nu</span>';
-    } else {
-      html = '<span class="pill"><span class="dot"></span>Bör vara klar — kolla resultat</span>';
+  /* ================= bracket renderer ================= */
+  function sideScores(mt, side){
+    if (!mt.s) return "";
+    var won = mt.w === side;
+    return sets(mt.s).map(function(p){ return "<span>" + (won ? p[0] : p[1]) + "</span>"; }).join("");
+  }
+  function entrantRow(mt, side){
+    var e = mt[side], cls = "e";
+    if (mt.w) cls += mt.w === side ? " won" : " lost";
+    if (e.ph){
+      return '<div class="' + cls + ' ph"><span class="avs sm"><span class="av ph" aria-hidden="true">?</span></span><span class="n">' + esc(e.ph) + '</span><span></span></div>';
     }
-    pillWrap.innerHTML = html;
+    var p = e.pair;
+    if (p.me) cls += " me";
+    var right = mt.s ? '<span class="sc">' + sideScores(mt, side) + '</span>' : (mt.w === side ? '<span class="wmark">' + (mt.note === "W.O." ? "W.O." : "Vidare") + '</span>' : "<span></span>");
+    return '<div class="' + cls + '">' + avatars(p, "sm") + '<span class="n" title="' + esc(p.n.join(" / ")) + '">' + esc(short(p)) + (p.seed ? '<span class="sd">' + esc(p.seed) + '</span>' : "") + '</span>' + right + '</div>';
   }
-  renderStatus();
-  setInterval(renderStatus, 30000);
+  function statusLabel(ev, mt, isNext){
+    var st = matchState(ev, mt);
+    if (st === "done") return '<span class="st">' + (mt.note ? esc(mt.note) : "Klar") + '</span>';
+    if (st === "live") return '<span class="st nx">Pågår</span>';
+    if (st === "nr") return '<span class="st nr">Ej rapporterad</span>';
+    return isNext ? '<span class="st nx">Nästa</span>' : '<span class="st"></span>';
+  }
 
-  // ---- history (newest first), reliable W/L from skill-delta chain ----
-  var history = [
+  function renderKnockout(ev, draw, host, nextMatch){
+    var n1 = draw.rounds[0].matches.length;
+    var wrap = document.createElement("div"); wrap.className = "bk-wrap";
+    var sc = document.createElement("div"); sc.className = "bk-scroll"; sc.tabIndex = 0;
+    sc.setAttribute("aria-label", "Spelträd " + draw.label + ", svep i sidled");
+    var html = '<div class="bk">';
+    draw.rounds.forEach(function(rd, r){
+      var last = r === draw.rounds.length - 1;
+      var f = rd.matches[0];
+      var times = rd.matches.map(function(x){ return x.t; }).filter(function(v, i, a){ return a.indexOf(v) === i; });
+      html += '<div class="bk-col"><div class="bk-hd"><b>' + esc(rd.label) + '</b><span>' + (r + 1) + '/' + draw.rounds.length + ' · ' + times.join(", ") + '</span></div><div class="bk-body" style="--n:' + n1 + '">';
+      rd.matches.forEach(function(mt, i){
+        var isNext = mt === nextMatch;
+        var mcls = "m" + (isNext ? " next" : (mt.hasMe ? " path" : ""));
+        html += '<div class="slot ' + (i % 2 ? "odd" : "even") + '">';
+        if (r > 0) html += '<span class="in' + (mt.hasMe && (mt.a.via || mt.b.via) ? " hot" : "") + '"></span>';
+        if (!last){ var hot = mt.meWon ? " hot" : ""; html += '<span class="out' + hot + '"></span><span class="vl' + hot + '"></span>'; }
+        html += '<div class="' + mcls + '"><div class="mh"><span>' + esc(mt.t + " · " + mt.c) + '</span>' + statusLabel(ev, mt, isNext) + '</div>' +
+          entrantRow(mt, "a") + entrantRow(mt, "b") + '</div></div>';
+      });
+      html += '</div></div>';
+    });
+    html += '</div>';
+    sc.innerHTML = html;
+    wrap.appendChild(sc);
+    host.appendChild(wrap);
+    function fade(){ wrap.classList.toggle("more", sc.scrollLeft + sc.clientWidth < sc.scrollWidth - 4); }
+    sc.addEventListener("scroll", fade, {passive:true}); window.addEventListener("resize", fade); fade();
+    return wrap;
+  }
+
+  function renderGroups(ev, draw, host){
+    (draw.groups || []).forEach(function(g){
+      var d = document.createElement("div"); d.className = "card";
+      d.innerHTML = '<h3 class="rn">' + esc(g.name) + '</h3><table class="gt"><thead><tr><th>Par</th><th>S</th><th>V</th><th>F</th><th>+/-</th></tr></thead><tbody>' +
+        g.rows.slice().sort(function(a, b){ return b.won - a.won || b.diff - a.diff; }).map(function(x){
+          var p = ev.pairs[x.pair];
+          return '<tr' + (p.me ? ' class="me"' : '') + '><td>' + esc(short(p)) + '</td><td>' + x.played + '</td><td>' + x.won + '</td><td>' + x.lost + '</td><td>' + (x.diff > 0 ? "+" : "") + x.diff + '</td></tr>';
+        }).join("") + '</tbody></table>';
+      host.appendChild(d);
+    });
+  }
+
+  function renderEvent(ev, host, nextMatch, who){
+    var seg = document.createElement("div"); seg.className = "seg"; seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Välj lottning");
+    var views = [];
+    ev.draws.forEach(function(d, i){
+      var b = document.createElement("button"); b.type = "button"; b.textContent = d.label; b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+      seg.appendChild(b);
+      var box = document.createElement("div"); box.hidden = i !== 0;
+      if ((d.format || ev.format) === "groups") renderGroups(ev, d, box); else renderKnockout(ev, d, box, nextMatch);
+      views.push(box);
+      b.addEventListener("click", function(){
+        views.forEach(function(v, k){ v.hidden = k !== i; seg.children[k].setAttribute("aria-pressed", k === i ? "true" : "false"); });
+        window.dispatchEvent(new Event("resize"));
+      });
+    });
+    host.appendChild(seg);
+    views.forEach(function(v){ host.appendChild(v); });
+    var note = document.createElement("div"); note.className = "bk-note";
+    note.innerHTML = '<span><i></i>' + esc(who) + 's väg</span><span>Svep för nästa rond →</span>';
+    host.appendChild(note);
+  }
+
+  /* ================= Thea: next match + hero ================= */
+  var main = THEA_EVENT.draws[0], nextMatch = null, nextRound = -1;
+  main.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt){ if (!nextMatch && mt.hasMe && !mt.w){ nextMatch = mt; nextRound = r; } }); });
+
+  function fmtLeft(ms){
+    var min = Math.max(1, Math.round(ms / 60000)), h = Math.floor(min / 60), mm = min % 60;
+    return h ? h + " h " + (mm ? mm + " min" : "") : mm + " min";
+  }
+  function renderHero(){
+    if (!nextMatch) return;
+    var rd = main.rounds[nextRound];
+    document.getElementById("heroRound").textContent = rd.label + " · " + THEA_EVENT.cls;
+    document.getElementById("heroTime").textContent = nextMatch.t;
+    document.getElementById("heroCourt").textContent = nextMatch.c.replace("Bana ", "");
+    var t = now(), s = at(THEA_EVENT.date, nextMatch.t), e = new Date(+s + 90 * 60000);
+    var pill = document.getElementById("heroPill"), cd = document.getElementById("countdown"), txt, ptxt, pcls = "glass", live = false;
+    var lname = rd.label.toLowerCase();
+    if (t < s){
+      var sameDay = s - t < 16 * 3600000;
+      ptxt = sameDay ? "Om " + fmtLeft(s - t) : "Sön 27 sep";
+      txt = sameDay ? rd.label + " börjar om " + fmtLeft(s - t) : rd.label + " sön 27 sep " + nextMatch.t;
+    } else if (t < e){
+      ptxt = "Pågår"; pcls += " live"; live = true;
+      txt = rd.label + "en pågår · " + nextMatch.c;
+    } else {
+      ptxt = "Klar"; pcls += " done";
+      txt = rd.label + "en är klar. Resultat på RankedIn.";
+    }
+    pill.className = pcls;
+    pill.innerHTML = '<span class="dot"></span><span>' + esc(ptxt) + '</span>';
+    cd.className = "countdown" + (live ? " live" : "");
+    document.getElementById("cdText").textContent = txt;
+    document.getElementById("tabSubThea").textContent = rd.short + " " + nextMatch.t + (live ? " · pågår" : "");
+    renderRoute();
+  }
+
+  function renderVs(){
+    var box = document.getElementById("heroVs");
+    if (!nextMatch) return;
+    var me = nextMatch.a.pair && nextMatch.a.pair.me ? nextMatch.a : nextMatch.b;
+    var op = me === nextMatch.a ? nextMatch.b : nextMatch.a;
+    var p = me.pair;
+    var h = '<div class="team me">' + avatars(p, "") + '<div class="tname">' + esc(short(p)) + '<small>Thea och Cassandra · skill ' + p.skill.join(" · ") + '</small></div><span class="seed">[' + esc(p.seed) + ']</span></div>';
+    if (op.pair){
+      h += '<div class="team opp">' + avatars(op.pair, "") + '<div class="tname" style="font:800 21px/1.02 \'Big Shoulders Display\',sans-serif;text-transform:uppercase;color:var(--board-ink);letter-spacing:.02em">' + esc(short(op.pair)) + '<small>' + esc(op.pair.n.join(" och ")) + '</small></div>' + (op.pair.seed ? '<span class="seed">[' + esc(op.pair.seed) + ']</span>' : '<span></span>') + '</div>';
+    } else if (op.from){
+      var src = main.rounds[nextRound - 1].matches.filter(function(x){ return x.a.pair === op.from[0]; })[0];
+      var st = src ? matchState(THEA_EVENT, src) : "up";
+      var tag = st === "nr" ? "Ej rapporterad" : (st === "live" ? "Pågår" : (src ? src.t + " · " + src.c : ""));
+      h += '<div class="team opp"><span></span><div class="tname">Mot vinnaren av<div class="opts">' +
+        op.from.map(function(pp, i){ return (i ? '<div class="opt"><i>eller</i></div>' : "") + '<div class="opt">' + avatars(pp, "md") + '<span>' + esc(short(pp)) + '</span></div>'; }).join("") +
+        '</div></div><span class="tag">' + esc(tag) + '</span></div>';
+    }
+    box.innerHTML = h;
+  }
+
+  function renderRoute(){
+    var ol = document.getElementById("route"), h = "";
+    main.rounds.forEach(function(rd, r){
+      var mt = rd.matches.filter(function(x){ return x.hasMe; })[0], cls = "", right = "", meta;
+      if (r === main.rounds.length - 1) meta = "17:45 · Bana 1";
+      if (mt && mt.w){
+        cls = mt.meWon ? "done" : "";
+        var side = mt.a.pair && mt.a.pair.me ? "a" : "b", ss = sets(mt.s);
+        right = '<span class="tiles" aria-label="' + esc(mt.s) + '">' + ss.map(function(p){ var mine = mt.w === side ? p[0] : p[1], th = mt.w === side ? p[1] : p[0]; return '<span class="' + (mine > th ? "w" : "") + '">' + mine + '</span><span class="' + (th > mine ? "w" : "") + '">' + th + '</span>'; }).join("") + '</span>';
+        meta = mt.t + " · " + mt.c;
+      } else if (mt){
+        cls = "next";
+        var st = matchState(THEA_EVENT, mt);
+        right = '<span class="rs">' + (st === "live" ? "Pågår" : (st === "nr" ? "Väntar på resultat" : "Nästa")) + '</span>';
+        meta = mt.t + " · " + mt.c;
+      } else {
+        right = '<span class="rs">Vid vinst</span>';
+        if (r === 2) meta = rd.matches[0].t + " · Bana 1 eller 2";
+        else meta = meta || rd.matches[0].t;
+      }
+      h += '<li class="' + cls + '"><span class="node"></span><div><div class="rn">' + esc(rd.label) + '</div><div class="rm">' + esc(meta) + '</div></div>' + right + '</li>';
+    });
+    ol.innerHTML = h;
+  }
+
+  renderVs();
+  renderHero();
+  setInterval(function(){ renderHero(); renderVs(); }, 30000);
+  renderEvent(THEA_EVENT, document.getElementById("theaDraw"), nextMatch, "Thea");
+
+  /* ================= Thea: history, form, chart ================= */
+  var hist = [
+    {r:"W", date:"27 sep", opp:"L. Levihn / M. Bondesson", ev:"Järfälla Padel Open no 11", partner:"Cassandra Ersson", s:"6-4 6-2", isNew:true},
     {r:"L", date:"13 sep", opp:"J. Albertsson / T. Albertsson", ev:"Trosa September Open", partner:"Cassandra Ersson"},
     {r:"W", date:"13 sep", opp:"M. Bradbury / J. Larsson", ev:"Trosa September Open", partner:"Cassandra Ersson"},
     {r:"W", date:"13 sep", opp:"A. Lundgren / Q. Isdoor", ev:"Trosa September Open", partner:"Cassandra Ersson"},
@@ -465,112 +922,146 @@
     {r:"W", date:"23 aug", opp:"E. Hilmersson / E. Sjöberg", ev:"Järfälla Padel Open No 10", partner:"Alva Sahlström Dahl"},
     {r:"W", date:"25 jul", opp:"C. Engberg / R. Persson", ev:"UNO July Open", partner:"Cassandra Ersson"}
   ];
-  var historyWrap = document.getElementById("historyRows");
-  history.forEach(function(m){
-    var row = document.createElement("div");
-    row.className = "row";
-    row.innerHTML =
-      '<div class="badge ' + (m.r === "W" ? "w" : "l") + '">' + m.r + '</div>' +
-      '<div class="info">' +
-        '<div class="opp">vs ' + m.opp + '</div>' +
-        '<div class="ev">' + m.ev + ' · med ' + m.partner + '</div>' +
-      '</div>' +
-      '<div class="when"><div class="date num">' + m.date + '</div></div>';
-    historyWrap.appendChild(row);
-  });
+  var isToday = Math.abs(now() - at("2026-09-27", "12:00")) < 12 * 3600000;
+  document.getElementById("theaHist").innerHTML = hist.map(function(x){
+    return '<div class="hrow ' + (x.r === "W" ? "w" : "l") + (x.isNew && isToday ? " new" : "") + '"><div><div class="o">' + esc(x.opp) + '</div><div class="ev">' + esc(x.ev) + ' · med ' + esc(x.partner) + '</div></div>' +
+      '<div class="r"><b>' + (x.r === "W" ? "Vinst" : "Förlust") + (x.s ? " " + esc(x.s) : "") + '</b>' + esc(x.date) + '</div></div>';
+  }).join("");
+  document.getElementById("histMeta").textContent = hist.length + " matcher";
 
-  // ---- form chips, oldest -> newest (mirrors history above, reversed) ----
-  var form = history.slice().reverse().map(function(m){ return m.r; });
-  var formRow = document.getElementById("formRow");
-  form.forEach(function(r){
-    var d = document.createElement("div");
-    d.className = "chip " + (r === "W" ? "w" : "l");
-    d.textContent = r;
-    formRow.appendChild(d);
-  });
+  function chips(list){ return list.map(function(r){ return '<div class="chip ' + (r === "W" ? "w" : "l") + '" title="' + (r === "W" ? "Vinst" : "Förlust") + '">' + (r === "W" ? "V" : "F") + '</div>'; }).join(""); }
+  document.getElementById("theaForm").innerHTML = chips(hist.slice(0, 10).reverse().map(function(x){ return x.r; }));
+  document.getElementById("kianForm").innerHTML = chips(["L","W","L","L","L","L","L","L","L","L"]);
 
-  // ---- skill trend chart ----
-  var points = [
-    {d:"25/7", v:15.88},
-    {d:"23/8", v:15.91},
-    {d:"23/8", v:15.74},
-    {d:"30/8", v:15.81},
-    {d:"30/8", v:15.85},
-    {d:"30/8", v:15.92},
-    {d:"30/8", v:16.00},
-    {d:"13/9", v:16.02},
-    {d:"13/9", v:16.07},
-    {d:"13/9", v:15.94}
-  ];
+  (function(){
+    var pts = [15.88, 15.91, 15.74, 15.81, 15.85, 15.92, 16.00, 16.02, 16.07, 15.94];
+    var lab = ["25/7","23/8","23/8","30/8","30/8","30/8","30/8","13/9","13/9","13/9"];
+    var svg = document.getElementById("trend"), ns = "http://www.w3.org/2000/svg";
+    var W = 340, H = 176, L = 30, R = 16, T = 30, B = 26, lo = 15.65, hi = 16.15;
+    function x(i){ return L + (W - L - R) * i / (pts.length - 1); }
+    function y(v){ return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); }
+    function el(t, a, txt){ var e = document.createElementNS(ns, t); for (var k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; svg.appendChild(e); return e; }
+    var mono = "Chivo Mono, monospace";
+    var defs = el("defs", {}); var g = document.createElementNS(ns, "linearGradient"); g.id = "fillg"; g.setAttribute("x1", 0); g.setAttribute("x2", 0); g.setAttribute("y1", 0); g.setAttribute("y2", 1);
+    [["0", ".22"], ["1", "0"]].forEach(function(s){ var st = document.createElementNS(ns, "stop"); st.setAttribute("offset", s[0]); st.setAttribute("stop-color", "var(--accent)"); st.setAttribute("stop-opacity", s[1]); g.appendChild(st); });
+    defs.appendChild(g);
+    [15.7, 15.9, 16.1].forEach(function(v){
+      el("line", {x1:L, x2:W - R, y1:y(v), y2:y(v), stroke:"var(--line)", "stroke-width":1});
+      el("text", {x:0, y:y(v) + 3.5, "font-size":10, fill:"var(--faint)", "font-family":mono}, v.toFixed(1));
+    });
+    var line = pts.map(function(v, i){ return (i ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1); }).join(" ");
+    el("path", {d:line + " L" + x(pts.length - 1) + " " + (H - B) + " L" + x(0) + " " + (H - B) + " Z", fill:"url(#fillg)"});
+    var p = el("path", {d:line, fill:"none", stroke:"var(--accent)", "stroke-width":2.5, "stroke-linejoin":"round", "stroke-linecap":"round", "class":"draw-line"});
+    var peak = pts.indexOf(Math.max.apply(null, pts)), last = pts.length - 1;
+    pts.forEach(function(v, i){
+      if (i === last) return;
+      el("circle", {cx:x(i), cy:y(v), r:i === peak ? 4 : 2.6, fill:i === peak ? "var(--accent)" : "var(--surface)", stroke:"var(--accent)", "stroke-width":1.5});
+    });
+    el("circle", {cx:x(last), cy:y(pts[last]), r:6, fill:"#FFD84A", stroke:"#0A1733", "stroke-width":2});
+    // peak pill
+    var px = x(peak), py = y(pts[peak]) - 22, pw = 74;
+    el("rect", {x:px - pw + 10, y:py - 9, width:pw, height:18, rx:9, fill:"var(--panel)"});
+    el("text", {x:px - pw / 2 + 10, y:py + 3.5, "text-anchor":"middle", "font-size":10.5, "font-weight":600, fill:"#8EC5FF", "font-family":mono}, "topp 16.07");
+    el("text", {x:x(last), y:y(pts[last]) + 22, "text-anchor":"end", "font-size":12, "font-weight":600, fill:"var(--ink)", "font-family":mono}, "15.94");
+    var groups = {};
+    lab.forEach(function(l, i){ (groups[l] = groups[l] || []).push(i); });
+    Object.keys(groups).forEach(function(l){ var g = groups[l], c = (g[0] + g[g.length - 1]) / 2; el("text", {x:c === 0 ? x(0) - 4 : x(c), y:H - 6, "text-anchor":c === 0 ? "start" : "middle", "font-size":10, fill:"var(--faint)", "font-family":mono}, l); });
+    var len = Math.ceil(p.getTotalLength ? p.getTotalLength() : 600);
+    p.style.setProperty("--len", len);
+    var card = document.getElementById("chartCard");
+    if ("IntersectionObserver" in window){
+      var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting){ card.classList.add("drawn"); io.disconnect(); } }); }, {threshold:.4});
+      io.observe(card);
+    } else card.classList.add("drawn");
+  })();
 
-  var svg = document.getElementById("trendChart");
-  var W = 560, H = 190;
-  var padL = 34, padR = 12, padT = 22, padB = 26;
-  var plotW = W - padL - padR, plotH = H - padT - padB;
-
-  var vMin = Math.min.apply(null, points.map(function(p){return p.v;})) - 0.12;
-  var vMax = Math.max.apply(null, points.map(function(p){return p.v;})) + 0.12;
-
-  function xAt(i){ return padL + (plotW * i) / (points.length - 1); }
-  function yAt(v){ return padT + plotH * (1 - (v - vMin) / (vMax - vMin)); }
-
-  var css = getComputedStyle(document.documentElement);
-  function tok(name){ return css.getPropertyValue(name).trim(); }
-  var cLine = tok("--line"), cInk = tok("--ink-faint"), cCourt = tok("--court"), cSurface2 = tok("--surface-2");
-
-  var svgns = "http://www.w3.org/2000/svg";
-  function el(tag, attrs){
-    var e = document.createElementNS(svgns, tag);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    return e;
+  /* ================= upcoming ================= */
+  function upCard(o){
+    return '<article class="card up"><div class="date"><small>' + esc(o.dow) + '</small><b>' + esc(o.day) + '</b><span>' + esc(o.mon) + '</span></div><div>' +
+      '<h3>' + esc(o.title) + (o.cls ? '<span class="cls">' + esc(o.cls) + '</span>' : "") + '</h3><div class="what">' + o.what + '</div>' +
+      (o.list ? '<ul>' + o.list.map(function(l){ return "<li>" + l + "</li>"; }).join("") + '</ul>' : "") +
+      '<div class="facts">' + o.facts + '</div></div></article>';
   }
+  document.getElementById("theaUp").innerHTML =
+    upCard({dow:"Sön", day:"4", mon:"okt", title:"SPL Damer", what:"Swedish Padel League 2026-27 · Nynäs Damlag · Div 3 Öst - Södra. Lagserie, inte SPT.",
+      list:["Team TK x Rejoice – Nynäs Damlag","Nynäs Damlag – CC Academy UNO Nacka 2"],
+      facts:"Tid och plats inte klart<br>Laget: Cassandra Ersson (kapten), Thea Holmberg Löving, Lisa Brinklöv, Sanna Årsjö, Rebecca Levander, Nathalie Hällegard<br>Nästa omgångar: 8 nov, 13 dec, 17 jan, 14 feb<br><a href=\"https://rankedin.com/en/teamleague/947/spl-swedish-padel-league-damer-2026-27\" target=\"_blank\" rel=\"noopener\">Serien på RankedIn ↗</a>"}) +
+    upCard({dow:"Fre–sön", day:"9–11", mon:"okt", title:"Vista Padel Autumn Smash Open", cls:"Dam B", what:"Med Nathalie Hällegard · Vista Padel, Novavägen 36, Huddinge",
+      facts:"Start fre 9 okt 17:00 · anmälan stänger 6 okt<br>5 par anmälda i Dam B (27 sep) · 450 kr<br><a href=\"https://rankedin.com/en/tournament/73554/vista-padel-autumn-smash-open-sanktionerad-dam-herr-b-c-d-powered-by-head\" target=\"_blank\" rel=\"noopener\">Turneringen på RankedIn ↗</a>"});
+  document.getElementById("kianUp").innerHTML =
+    upCard({dow:"Lör", day:"3", mon:"okt", title:"SPL Herrar", what:"Swedish Padel League 2026-27 · Nynäs Padel Club 2 · Div 4 Öst-mitt. Lagserie, inte SPT.",
+      list:["UNO – Nynäs Padel Club 2 <span class=\"mono\" style=\"color:var(--dim);font-size:11.5px\">· Vista</span>","Nynäs Padel Club 2 – Vista Padel Club Herr Lag5"],
+      facts:"Starttider inte klara<br>Laget: Anton Svedman (kapten), Kian Borgström, Andreas Mickos, Oliver Lind, Svante Svedberg, Jones Elmourid, Javier Castilla<br>Nästa omgångar: 7 nov, 12 dec, 16 jan, 13 feb<br><a href=\"https://rankedin.com/en/teamleague/946/spl-swedish-padel-league-herrar-2026-27\" target=\"_blank\" rel=\"noopener\">Serien på RankedIn ↗</a>"});
 
-  var gridVals = [vMin + (vMax-vMin)*0.15, vMin + (vMax-vMin)*0.5, vMin + (vMax-vMin)*0.85];
-  gridVals.forEach(function(v){
-    var y = yAt(v);
-    svg.appendChild(el("line", {x1:padL, x2:W-padR, y1:y, y2:y, stroke:cLine, "stroke-width":1}));
-    var t = el("text", {x: 0, y: y+4, "font-size":10, fill:cInk, "font-family":"Inter,sans-serif"});
-    t.textContent = v.toFixed(1);
-    svg.appendChild(t);
+  /* ================= Kian results ================= */
+  var kc = KIAN_EVENT.draws[0].rounds[0].matches[0], kp = KIAN_EVENT.draws[1].rounds[0].matches[0];
+  function resCard(label, mt){
+    return '<div class="res"><div class="mh"><span>' + esc(label + " · " + mt.t + " · " + mt.c) + '</span><span class="st">Förlust</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
+  }
+  document.getElementById("kianRes").innerHTML = resCard("Omgång 1", kc) + resCard("Placering 9–16", kp);
+  renderEvent(KIAN_EVENT, document.getElementById("kianDraw"), null, "Kian");
+
+  /* ================= info ================= */
+  var SRC = {
+    spt:'<a href="https://svenskpadel.se/spt-senior/" target="_blank" rel="noopener">svenskpadel.se/spt-senior</a><a href="https://www.rankedin.com/sv/tournament/73351/swedish-padel-tour-spt-6-360-levins-optik-spt-future-18-arsklasser-samt-sanktionerade-ovriga-klasser" target="_blank" rel="noopener">SPT 6 på RankedIn</a>',
+    cls:'<a href="https://svenskpadel.se/tavling/spelare/tavlingsklasser/" target="_blank" rel="noopener">Tävlingsklasser</a><a href="https://svenskpadel.se/tavling/spelare/tavlingsbestammelser/" target="_blank" rel="noopener">Tävlingsbestämmelser</a>',
+    rank:'<a href="https://svenskpadel.se/tavling/spelare/ranking/" target="_blank" rel="noopener">Så funkar rankingen</a><a href="https://rankedin.com/se/ranking/1917" target="_blank" rel="noopener">Rankinglistan</a>'
+  };
+  function info(items){
+    return items.map(function(it, i){
+      return '<details' + (i === 0 ? "" : "") + '><summary>' + esc(it.t) + '<span class="pl" aria-hidden="true"></span></summary><div class="body">' + it.b + '<div class="src">' + it.s + '</div></div></details>';
+    }).join("");
+  }
+  var sptItem = {t:"Vad är SPT?", s:SRC.spt, b:
+    "<p>SPT (Swedish Padel Tour) är förbundets elittour. Sex deltävlingar per år och en avslutande Masters. 16 par per klass: 12 in på poäng, 4 via kval på fredagen.</p>" +
+    "<p>SPT 300 ger 300 rankingpoäng till vinnaren, SPT 360 ger 360 och Masters 400. Challenger ger 100.</p>" +
+    "<p>Nästa SPT är SPT 6 i Västerås 23–25 oktober. Där spelas även Future 18-årsklassen.</p>"};
+  var rankBase = "<p>Rankingen räknar dina 12 bästa tävlingar de senaste 12 månaderna. Poängen faller bort efter ett år. Listan uppdateras varje natt mellan söndag och måndag.</p>";
+  var rankKian = {t:"Så funkar rankingen", s:SRC.rank, b:rankBase};
+  var rankItem = {t:"Så funkar rankingen", s:SRC.rank, b:rankBase +
+    "<p>Som 17-åring spelar du i 18-årsklassen och får även spela seniorklasser. Du har både junior- och seniorranking. När du blir senior följer 25 procent av poängen med.</p>"};
+  document.getElementById("theaInfo").innerHTML = info([
+    sptItem,
+    {t:"Klass C → B", s:SRC.cls, b:
+      "<p>Din klass styrs av din rankingplacering. Damer 51–160 är B-klass, 161–700 är C-klass. Vid anmälan räknas parets sammanlagda poäng. Ni får alltid spela en högre klass, aldrig en lägre.</p>" +
+      "<p class=\"me\">Thea ligger på plats 150 och är B-spelare. C-klass går bara om partnern har högst cirka 63 poäng (vecka 39).</p>"},
+    rankItem
+  ]);
+  document.getElementById("kianInfo").innerHTML = info([
+    sptItem,
+    {t:"Klasser", s:SRC.cls, b:
+      "<p>Din klass styrs av din rankingplacering. Herrar 61–200 är B-klass, 201–1200 är C-klass. Vid anmälan räknas parets sammanlagda poäng. Ni får alltid spela en högre klass, aldrig en lägre.</p>" +
+      "<p class=\"me\">Kian ligger på plats 789 och är C-spelare.</p>"},
+    rankKian
+  ]);
+
+  /* ================= tabs (hash) ================= */
+  var tabs = [document.getElementById("tab-thea"), document.getElementById("tab-kian")];
+  function select(id, focus){
+    tabs.forEach(function(t){
+      var on = t.id === "tab-" + id;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+      if (on && focus) t.focus();
+    });
+    window.dispatchEvent(new Event("resize"));
+  }
+  function fromHash(){ return location.hash === "#kian" ? "kian" : "thea"; }
+  tabs.forEach(function(t, i){
+    t.addEventListener("click", function(){
+      var id = t.id.slice(4);
+      if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
+      select(id);
+    });
+    t.addEventListener("keydown", function(e){
+      var k = e.key, j = k === "ArrowRight" || k === "ArrowLeft" ? (i + 1) % 2 : (k === "Home" ? 0 : (k === "End" ? 1 : -1));
+      if (j < 0) return;
+      e.preventDefault(); tabs[j].click(); tabs[j].focus();
+    });
   });
-
-  var areaPath = "M " + xAt(0) + " " + yAt(points[0].v);
-  points.forEach(function(p,i){ areaPath += " L " + xAt(i) + " " + yAt(p.v); });
-  areaPath += " L " + xAt(points.length-1) + " " + (H-padB) + " L " + xAt(0) + " " + (H-padB) + " Z";
-  var grad = el("linearGradient", {id:"trendGrad", x1:"0", y1:"0", x2:"0", y2:"1"});
-  grad.appendChild(el("stop", {offset:"0%", "stop-color":cCourt, "stop-opacity":"0.22"}));
-  grad.appendChild(el("stop", {offset:"100%", "stop-color":cCourt, "stop-opacity":"0"}));
-  var defs = el("defs", {}); defs.appendChild(grad); svg.appendChild(defs);
-  svg.appendChild(el("path", {d:areaPath, fill:"url(#trendGrad)", stroke:"none"}));
-
-  var linePath = "M " + xAt(0) + " " + yAt(points[0].v);
-  points.forEach(function(p,i){ if(i>0) linePath += " L " + xAt(i) + " " + yAt(p.v); });
-  svg.appendChild(el("path", {d:linePath, fill:"none", stroke:cCourt, "stroke-width":2, "stroke-linecap":"round", "stroke-linejoin":"round"}));
-
-  var peakIdx = points.reduce(function(best,p,i,arr){ return p.v > arr[best].v ? i : best; }, 0);
-  points.forEach(function(p,i){
-    var isLast = i === points.length - 1;
-    var isPeak = i === peakIdx;
-    var r = isLast ? 4.5 : (isPeak ? 3.6 : 2.2);
-    var fill = isLast || isPeak ? cCourt : cSurface2;
-    var stroke = isLast || isPeak ? cCourt : cLine;
-    svg.appendChild(el("circle", {cx:xAt(i), cy:yAt(p.v), r:r, fill:fill, stroke:stroke, "stroke-width": 1.2}));
-    if (i===0 || isLast || isPeak){
-      var t = el("text", {x:xAt(i), y:H-8, "font-size":10, fill:cInk, "font-family":"Inter,sans-serif", "text-anchor": isLast ? "end" : (i===0 ? "start" : "middle")});
-      t.textContent = p.d;
-      svg.appendChild(t);
-    }
-  });
-
-  var peakLabel = el("text", {x:xAt(peakIdx), y:yAt(points[peakIdx].v)-9, "font-size":10.5, fill:cCourt, "font-family":"Manrope,sans-serif", "font-weight":"700", "text-anchor":"middle"});
-  peakLabel.textContent = points[peakIdx].v.toFixed(2);
-  svg.appendChild(peakLabel);
-
-  var lastP = points[points.length-1];
-  var curLabel = el("text", {x:xAt(points.length-1)-3, y:yAt(lastP.v)-9, "font-size":10.5, fill:cCourt, "font-family":"Manrope,sans-serif", "font-weight":"700", "text-anchor":"end"});
-  curLabel.textContent = lastP.v.toFixed(2);
-  svg.appendChild(curLabel);
-
+  window.addEventListener("hashchange", function(){ select(fromHash()); });
+  select(fromHash());
 })();
 </script>
 </body>
