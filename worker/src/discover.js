@@ -7,7 +7,8 @@ import { localToDate, isoLocal, dayOf, isoDay } from "./tz.js";
 import ROSTER from "./players.js";
 
 // who = route key on the page ("#thea"), me = full name as RankedIn writes it
-export const PLAYERS = ROSTER.map(p => ({ who: p.key, pid: p.pid, me: p.name, name: p.short, team: p.team, teamId: p.teamId, league: p.league, division: p.division }));
+export const PLAYERS = ROSTER.map(p => ({ who: p.key, pid: p.pid, me: p.name, name: p.short, gender: p.gender, rt: p.rt, ag: p.ag,
+  team: p.team, teamId: p.teamId, league: p.league, division: p.division }));
 export const BY_PID = new Map(PLAYERS.map(p => [p.pid, p]));
 // Thea and Kian were the first two players: old push subscriptions ({thea, kian}) and links refer to them.
 export const LEGACY = { thea: 1675246, kian: 1680004 };

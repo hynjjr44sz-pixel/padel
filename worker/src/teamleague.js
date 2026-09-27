@@ -53,48 +53,74 @@ export function snapshotTie(rubbers) {
 }
 const unpack = v => { const p = String(v || "").split(","); return { a: p[0] || "", b: p[1] || "", w: p[2] || "" }; };
 
-// Home team = challenger. If the player is in a rubber, that settles it.
+// Home team = challenger. If one of our players is in a rubber, that settles it.
 export function ourSide(tie, rubbers, pid) {
-  for (const r of rubbers) for (const sd of ["a", "b"]) if (r[sd] && r[sd].ids.map(String).includes(String(pid))) return sd;
+  const want = (Array.isArray(pid) ? pid : [pid]).map(String);
+  for (const r of rubbers) for (const sd of ["a", "b"]) if (r[sd] && r[sd].ids.map(String).some(x => want.includes(x))) return sd;
   return tie.home === false ? "b" : "a";
 }
-// ev: team league play day ({who, pid, team, name, round}); tie: {id, home, opp, time, venue}.
+// Challenger-side score -> the given side's view
+const sideScore = (r, sd) => { const s = r.s ? (sd === "a" ? r.s : flipScore(r.s)) : ""; return s || r.note || ""; };
+const rosterOf = ev => (ev.roster && ev.roster.length ? ev.roster : [{ who: ev.who, pid: ev.pid }]).map(p => ({ who: p.who, pid: Number(p.pid) }));
+
+// ev: team league play day ({who, pid, team, name, round, roster?}); tie: {id, home, opp, time, venue}.
+// roster: the club's players in the team ([{who, pid}], default: ev.who/ev.pid alone). Each notis carries
+// pids: the players it is about. A rubber goes to its own pair's players only; the tie result goes to
+// every team player (one variant per pair that played, same tag; the worker merges them per device).
 export function tieNotes(ev, tie, rubbers, before) {
-  const pid = String(ev.pid), isMe = p => !!p && p.ids.map(String).includes(pid);
-  const us = ourSide(tie, rubbers, pid), them = us === "a" ? "b" : "a", cid = "tm" + tie.id;
-  const score = r => { const s = r.s ? (us === "a" ? r.s : flipScore(r.s)) : ""; return s || r.note || ""; };
+  const roster = rosterOf(ev), all = roster.map(p => String(p.pid));
+  const pidsOf = x => x ? roster.filter(p => x.ids.map(String).includes(String(p.pid))).map(p => p.pid) : [];
+  const isMe = x => pidsOf(x).length > 0, whoOf = pids => (roster.find(p => p.pid === pids[0]) || roster[0]).who;
+  const us = ourSide(tie, rubbers, all), them = us === "a" ? "b" : "a", cid = "tm" + tie.id;
   let W = 0, L = 0;
   rubbers.forEach(r => { if (r.w) { if (r.w === us) W++; else L++; } });
   const tieScore = ev.team + " " + W + "–" + L + " " + tie.opp;
-  const mine = [], others = [];
+  const mine = [];
   rubbers.forEach(r => {
     const was = unpack(before[r.id]);
-    if (!r.w || was.w) return;
-    const ours = r[us], theirs = r[them], won = r.w === us, sc = score(r), id = cid + ":r" + r.id;
-    if (isMe(ours)) {
-      mine.push({ id, mid: r.id, title: firstNames(ours) + (won ? " vann sin match " : " förlorade sin match ") + sc,
-        body: ("Mot " + short(theirs) + ". Ställning: " + tieScore + ".").trim() });
-    } else {
-      others.push({ id, title: ev.team + ": " + short(ours) + (won ? " vann " : " förlorade ") + sc,
-        body: "Mot " + short(theirs) + " · " + tieScore });
-    }
+    if (!r.w || was.w || !isMe(r[us])) return;   // teammates outside the roster: page only
+    const ours = r[us], theirs = r[them], won = r.w === us;
+    mine.push({ id: cid + ":r" + r.id, mid: r.id, pids: pidsOf(ours), title: firstNames(ours) + (won ? " vann sin match " : " förlorade sin match ") + sideScore(r, us),
+      body: ("Mot " + short(theirs) + ". Ställning: " + tieScore + ".").trim() });
   });
-  // My pair's opponents just became known (lineups published)
+  // A pair's opponents just became known (lineups published)
   rubbers.forEach(r => {
     if (r.w || !isMe(r[us]) || !r[them]) return;
     if (unpack(before[r.id])[them]) return;
-    mine.push({ id: cid + ":opp:r" + r.id + ":" + r[them].id, mid: r.id, title: firstNames(r[us]) + " möter " + short(r[them]),
+    mine.push({ id: cid + ":opp:r" + r.id + ":" + r[them].id, mid: r.id, pids: pidsOf(r[us]), title: firstNames(r[us]) + " möter " + short(r[them]),
       body: [ev.name, ev.team + " mot " + tie.opp, tie.time, tie.venue].filter(Boolean).join(" · ") });
   });
-  const out = [];
-  // Only Thea's/Kian's own rubbers (and the tie result) are pushed; teammates' rubbers stay on the page.
-  mine.forEach(o => out.push({ title: o.title, body: o.body, tag: "padel-" + o.id, url: linkTo(ev.who, o.mid) }));
+  const out = mine.map(o => ({ title: o.title, body: o.body, tag: "padel-" + o.id, url: linkTo(whoOf(o.pids), o.mid), pids: o.pids }));
   const done = rubbers.length && rubbers.every(r => r.w), wasDone = before._done || (rubbers.length && rubbers.every(r => unpack(before[r.id]).w));
   if (done && !wasDone) {
     const t = W > L ? ev.team + " vann mot " + tie.opp + " " + W + "–" + L : W < L ? ev.team + " förlorade mot " + tie.opp + " " + W + "–" + L : ev.team + " och " + tie.opp + " delade " + W + "–" + L;
-    const myR = rubbers.find(r => isMe(r[us]));
-    const body = [ev.name + (ev.round ? " omgång " + ev.round : ""), myR ? firstNames(myR[us]) + (myR.w === us ? " vann sin match " : " förlorade sin match ") + score(myR) : ""].filter(Boolean).join(". ") + ".";
-    out.push({ title: t, body, tag: "padel-" + cid + ":klar", url: linkTo(ev.who, myR && myR.id) });
+    const head = ev.name + (ev.round ? " omgång " + ev.round : ""), tag = "padel-" + cid + ":klar", played = [];
+    rubbers.filter(r => isMe(r[us])).forEach(r => {
+      const pids = pidsOf(r[us]);
+      played.push(...pids);
+      out.push({ title: t, body: head + ". " + firstNames(r[us]) + (r.w === us ? " vann sin match " : " förlorade sin match ") + sideScore(r, us) + ".", tag, url: linkTo(whoOf(pids), r.id), pids });
+    });
+    const rest = roster.map(p => p.pid).filter(p => !played.includes(p));
+    if (rest.length) out.push({ title: t, body: head + ".", tag, url: linkTo(whoOf(rest)), pids: rest });
   }
   return out;
+}
+
+// Compact state of a tie for the page's home view ({res, nx, sc}); see summary() in rankedin.js.
+export function tieSummary(ev, tie, rubbers) {
+  const roster = rosterOf(ev), all = roster.map(p => String(p.pid));
+  const pidsOf = x => x ? roster.filter(p => x.ids.map(String).includes(String(p.pid))).map(p => p.pid) : [];
+  const us = ourSide(tie, rubbers, all), them = us === "a" ? "b" : "a", res = [], nx = {};
+  let W = 0, L = 0;
+  rubbers.forEach(r => {
+    const pids = pidsOf(r[us]);
+    if (r.w) { if (r.w === us) W++; else L++; }
+    if (!pids.length) return;
+    const who = (roster.find(p => p.pid === pids[0]) || roster[0]).who, lab = "Match " + r.k + (r.kind ? " · " + r.kind : "");
+    if (r.w) {
+      const lose = r.w === "a" ? "b" : "a";
+      res.push({ mid: r.id, lab, d: r.date || "", win: short(r[r.w]), lose: r[lose] ? short(r[lose]) : "", s: sideScore(r, r.w), pids, won: r.w === us ? pids : [], who });
+    } else pids.forEach(pid => { nx[pid] = { st: "next", mid: r.id, lab, t: tie.time || "", opp: r[them] ? short(r[them]) : null, vs: tie.opp, who }; });
+  });
+  return { res: res.reverse().slice(0, 4), nx, sc: W + "–" + L, opp: tie.opp };
 }

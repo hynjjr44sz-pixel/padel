@@ -220,13 +220,13 @@ export function notes(ev, matches, before) {
     mine.push({ id: cid + ":grupp:" + slug(pl.label), title: firstNames(rows[mi]) + " slutade " + (ORD[place - 1] || place + ":a") + " i " + where,
       body: rows.slice(0, 5).map((r, i) => (r.standing || i + 1) + ". " + short(r) + " " + r.wins + "–" + r.losses).join("\n"), mid: lastMine && lastMine.id });
   });
-  // Only Thea's/Kian's own matches (and their next opponent) are pushed; other results in the class stay on the page.
+  // Only the player's own matches (and the next opponent) are pushed; other results in the class stay on the page.
   const out = [];
   mine.forEach(o => out.push({ title: o.title, body: o.body, tag: "padel-" + (o.tag || o.id), url: linkTo(ev.who, o.mid) }));
   return out;
 }
 
-// The draw of a class Thea/Kian plays was just published: one notis with the first match (or the group).
+// The draw of a class a club player plays was just published: one notis with the first match (or the group).
 // ev: {who, me, classId, cls, name}. Same wording, tag and url as drawNote() in index.html.
 export function drawNote(ev, matches) {
   const me = slug(ev.me), isMe = p => !!p && p.n.some(n => slug(n) === me);
@@ -252,4 +252,31 @@ export function drawNote(ev, matches) {
     body = (when ? when.charAt(0).toUpperCase() + when.slice(1) + ". " : "") + where + (where ? "." : "");
   }
   return { title, body: body.trim(), tag, url: linkTo(ev.who, first.id) };
+}
+
+// Compact state of a class for the page's home view, kept in the class's KV record (so it costs no extra
+// write): res = the latest finished matches with a club player, nx = each club player's next match (or that
+// the day is over). roster: Map(slug(name) -> {pid, who}).
+export function summary(matches, roster) {
+  const pidsOf = p => p ? p.n.map(n => roster.get(slug(n))).filter(Boolean) : [];
+  const cmp = (x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0) || x.di - y.di || x.r - y.r;
+  const lab = m => m.kind === "rr" || m.di === 0 ? m.label : m.dlabel + " · " + m.label;
+  const res = [], nx = {};
+  matches.slice().sort(cmp).forEach(m => {
+    const pa = pidsOf(m.a), pb = pidsOf(m.b);
+    if (!pa.length && !pb.length) return;
+    if (m.w) {
+      const wp = m[m.w], lp = m[m.w === "a" ? "b" : "a"], won = m.w === "a" ? pa : pb;
+      res.push({ mid: m.id, lab: lab(m), d: m.date || "", win: short(wp), lose: lp ? short(lp) : "", s: m.s || m.note || "",
+        pids: pa.concat(pb).map(x => x.pid), won: won.map(x => x.pid), who: pa.concat(pb)[0].who });
+      pa.concat(pb).forEach(x => { if (!nx[x.pid] || nx[x.pid].st === "done") nx[x.pid] = { st: "done", won: won.includes(x), lab: lab(m), who: x.who,
+        champ: won.includes(x) && m.kind === "ko" && m.di === 0 && m.r === m.R - 1 }; });
+    }
+  });
+  matches.filter(m => !m.w).sort(cmp).forEach(m => ["a", "b"].forEach(sd => pidsOf(m[sd]).forEach(x => {
+    if (nx[x.pid] && nx[x.pid].st === "next") return;
+    const op = m[sd === "a" ? "b" : "a"];
+    nx[x.pid] = { st: "next", mid: m.id, lab: lab(m), d: m.date || "", t: m.t || "", c: courtName(m.c), opp: op ? short(op) : null, who: x.who };
+  })));
+  return { res: res.reverse().slice(0, 4), nx };
 }
