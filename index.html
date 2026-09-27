@@ -704,7 +704,7 @@
   "use strict";
   // Web Push server (Cloudflare Worker in worker/). Empty = only local notiser while the app is open.
   // worker/deploy.sh fills this in.
-  var PUSH_API = "";
+  var PUSH_API = "https://padel-push.holmberg-padel.workers.dev";
 
   /* ================= helpers ================= */
   var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); };

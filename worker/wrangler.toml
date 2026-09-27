@@ -6,7 +6,7 @@ workers_dev = true
 # deploy.sh fills in the id (creates the namespace "padel-push" if missing)
 [[kv_namespaces]]
 binding = "PUSH"
-id = "REPLACE_WITH_KV_ID"
+id = "eedc18b48ae24d419ec6826a87069430"
 
 [triggers]
 crons = ["* * * * *"]
