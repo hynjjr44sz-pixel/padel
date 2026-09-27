@@ -19,7 +19,11 @@ export function route(path, over = {}) {
   const u = new URL("https://x" + path), q = k => u.searchParams.get(k), p = u.pathname.toLowerCase();
   if (over[path] !== undefined) return over[path];
   for (const k of Object.keys(over)) if (k.endsWith("*") && path.startsWith(k.slice(0, -1))) return over[k];
-  if (p.endsWith("/player/participatedeventsasync")) return q("playerId") === "1675246" ? A("pe_thea") : A("pe_kian");
+  // Thea and Cassandra (same pair in Damer C, same SPL team), Kian and Andreas (Herrar C, SPL team); others: nothing.
+  if (p.endsWith("/player/participatedeventsasync")) {
+    const pid = q("playerId");
+    return pid === "1675246" || pid === "1849853" ? A("pe_thea") : pid === "1680004" || pid === "2073852" ? A("pe_kian") : { Payload: [], TotalCount: 0 };
+  }
   if (p.endsWith("/tournament/getinfoasync")) return q("id") === "73554" ? A("t73554_info") : q("id") === "66374" ? JARFALLA_INFO : null;
   if (p.endsWith("/tournament/getplayersforclassasync")) {
     const c = q("tournamentClassId");
