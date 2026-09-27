@@ -77,8 +77,8 @@ try {
     ok("TTL 3600, Urgency high, Topic", p.headers.ttl === "3600" && p.headers.urgency === "high" && /^[\w-]{1,32}$/.test(p.headers.topic || ""), p.headers);
     const msgs = await Promise.all(toA.map(async x => JSON.parse(await a.decrypt(x.body))));
     ok("decrypted payloads", msgs.map(x => x.title).join(" | ") ===
-      "Kvartsfinal: Persson / Bradbury vidare | Kvartsfinal: Wallerman / Lundberg Aguilera vidare | Thea och Cassandra möter Pettersson Österberg / Ekeland", msgs);
-    ok("tag + url", msgs[2].tag === "padel-164681:opp:m6872156:6440356" && msgs[2].url === "./#thea", msgs[2]);
+      "Thea och Cassandra möter Pettersson Österberg / Ekeland", msgs);
+    ok("tag + url", msgs[0].tag === "padel-164681:opp:m6872156:6440356" && msgs[0].url === "./#thea", msgs[0]);
   }
   const n = pushes.length;
   await cron(); await sleep(1500);

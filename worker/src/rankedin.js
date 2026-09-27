@@ -176,10 +176,8 @@ export function notes(ev, matches, before) {
         body: (how ? how + ". " : "") + [roundName(next), when(next).join(" · ")].filter(Boolean).join(" ") });
     }
   }
+  // Only Thea's/Kian's own matches (and their next opponent) are pushed; other results in the class stay on the page.
   const out = [];
-  if (others.length > 3) {
-    out.push({ title: cls + ": " + others.length + " nya resultat", body: others.slice(0, 4).map(o => o.title).join("\n"), tag: "padel-" + cid + "-klass", url });
-  } else others.forEach(o => out.push({ title: o.title, body: o.body, tag: "padel-" + o.id, url }));
   mine.forEach(o => out.push({ title: o.title, body: o.body, tag: "padel-" + o.id, url }));
   return out;
 }

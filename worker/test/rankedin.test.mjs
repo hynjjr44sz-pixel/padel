@@ -23,14 +23,10 @@ test("no change -> no notiser", () => {
 
 test("opponent known: deciding match folded into one notis", () => {
   const n = step(DC, "dc_1031.json", "dc_1112.json");
-  assert.deepEqual(n.map(x => x.title), [
-    "Kvartsfinal: Persson / Bradbury vidare",
-    "Kvartsfinal: Wallerman / Lundberg Aguilera vidare",
-    "Thea och Cassandra möter Pettersson Österberg / Ekeland"
-  ]);
-  assert.equal(n[2].body, "Vann omgång 1 7-6 7-6 mot Lundström / Callero. Kvartsfinal 12:45 · Bana 1");
-  assert.equal(n[2].tag, "padel-164681:opp:m6872156:6440356");
-  assert.equal(n[0].tag, "padel-164681:m6872158");
+  // Only Thea's own news is pushed; other results in the class are not.
+  assert.deepEqual(n.map(x => x.title), ["Thea och Cassandra möter Pettersson Österberg / Ekeland"]);
+  assert.equal(n[0].body, "Vann omgång 1 7-6 7-6 mot Lundström / Callero. Kvartsfinal 12:45 · Bana 1");
+  assert.equal(n[0].tag, "padel-164681:opp:m6872156:6440356");
   assert.equal(n[0].url, "./#thea");
 });
 
@@ -45,12 +41,9 @@ test("Thea wins, loses, wins the class", () => {
   assert.deepEqual(c.map(x => x.title), ["Thea och Cassandra vann Damer C!"]);
 });
 
-test("more than three other results -> one summary", () => {
+test("other results in the class are never pushed", () => {
   const n = step(DC, "dc_1031.json", "dc_wins_qf.json");
-  const sum = n.find(x => x.tag === "padel-164681-klass");
-  assert.ok(sum, JSON.stringify(n, null, 1));
-  assert.match(sum.title, /^Damer C: \d+ nya resultat$/);
-  assert.ok(sum.body.split("\n").length <= 4);
+  assert.ok(n.length > 0 && n.every(x => /^Thea och Cassandra /.test(x.title)), JSON.stringify(n, null, 1));
 });
 
 test("round robin pool: row-side scores, one entry per match", () => {

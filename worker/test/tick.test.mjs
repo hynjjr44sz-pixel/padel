@@ -64,13 +64,10 @@ test("baseline, no-change and change ticks; KV written only on change; 410 remov
   r = await tick(env, EV);
   assert.equal(r.writes, 1);
   assert.equal(r.removed, 1);
-  assert.equal(r.sent, 3);
+  assert.equal(r.sent, 1);
   const toA = pushes.filter(p => p.url === a.sub.endpoint);
   const msgs = await Promise.all(toA.map(async p => JSON.parse(await a.decrypt(p.init.body))));
-  assert.deepEqual(msgs.map(m => m.title), [
-    "Kvartsfinal: Persson / Bradbury vidare",
-    "Kvartsfinal: Wallerman / Lundberg Aguilera vidare",
-    "Thea och Cassandra möter Pettersson Österberg / Ekeland"]);
+  assert.deepEqual(msgs.map(m => m.title), ["Thea och Cassandra möter Pettersson Österberg / Ekeland"]);
   assert.equal(pushes.filter(p => p.url === gone.sub.endpoint).length, 1, "stops after the 410");
   assert.equal([...PUSH.m.keys()].filter(k => k.startsWith("sub:")).length, 1);
 
@@ -99,7 +96,7 @@ test("HTTP API: CORS, vapid, unsubscribe", async () => {
   assert.equal((await call("/nope")).status, 404);
 });
 
-test("free-plan subrequest budget: many devices -> one folded notis each, never more than 45 fetches", async () => {
+test("free-plan subrequest budget: many devices, never more than 45 fetches", async () => {
   const v = await makeVapid(), PUSH = kv();
   const env = { PUSH, ...v, VAPID_SUBJECT: "https://padel.holmberg.st", ORIGIN: "https://padel.holmberg.st", NOW: "2026-09-27T12:00:00+02:00" };
   const state = { fixture: "dc_1031.json", rankedin: 0, status: {} }, pushes = net(state);
@@ -112,8 +109,7 @@ test("free-plan subrequest budget: many devices -> one folded notis each, never 
   assert.equal(pushes.length, 44);
   const first = devs.find(d => d.sub.endpoint === pushes[0].url);
   const m = JSON.parse(await first.decrypt(pushes[0].init.body));
-  assert.equal(m.title, "3 nya resultat");
-  assert.match(m.body, /möter Pettersson/);
+  assert.equal(m.title, "Thea och Cassandra möter Pettersson Österberg / Ekeland");
   assert.equal(r.sent, 44);
 });
 

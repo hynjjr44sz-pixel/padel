@@ -1606,12 +1606,7 @@
           body:(how ? how + ". " : "") + roundName(n) + " " + n.mt.t + " · " + n.mt.c});
       }
     }
-    others = others.filter(function(o){ return !notified(o.id); });
-    if (others.length > 3){
-      others.forEach(function(o){ markNotified(o.id); });
-      showNote(cid + ":batch:" + others.map(function(o){ return o.id; }).join(","), ev.cls + ": " + others.length + " nya resultat",
-        others.slice(0, 4).map(function(o){ return o.title; }).join("\n"), L.hash, "padel-" + cid + "-klass");
-    } else others.forEach(function(o){ showNote(o.id, o.title, o.body, L.hash); });
+    // Only Thea's/Kian's own matches notify; other results in the class are shown on the page only.
     mine.forEach(function(o){ showNote(o.id, o.title, o.body, L.hash); });
   }
 
