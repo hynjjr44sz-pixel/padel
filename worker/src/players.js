@@ -12,5 +12,9 @@ export default [
   {"key":"oliver","pid":1683035,"name":"Oliver Lind","short":"Oliver","gender":"M","rt":3,"ag":82,"rid":64,"team":"Nynäs Padel Club 2","teamId":3383536,"league":946,"division":"Div 4 Öst-mitt"},
   {"key":"svante","pid":1678964,"name":"Svante Svedberg","short":"Svante","gender":"M","rt":3,"ag":82,"rid":64,"team":"Nynäs Padel Club 2","teamId":3383536,"league":946,"division":"Div 4 Öst-mitt"},
   {"key":"jones","pid":3288010,"name":"Jones Elmourid","short":"Jones","gender":"M","rt":3,"ag":82,"rid":64,"team":"Nynäs Padel Club 2","teamId":3383536,"league":946,"division":"Div 4 Öst-mitt"},
-  {"key":"javier","pid":2110046,"name":"Javier Castilla","short":"Javier","gender":"M","rt":3,"ag":82,"rid":64,"team":"Nynäs Padel Club 2","teamId":3383536,"league":946,"division":"Div 4 Öst-mitt"}
+  {"key":"javier","pid":2110046,"name":"Javier Castilla","short":"Javier","gender":"M","rt":3,"ag":82,"rid":64,"team":"Nynäs Padel Club 2","teamId":3383536,"league":946,"division":"Div 4 Öst-mitt"},
+  {"key":"tobias","pid":55520,"name":"Tobias Myhre","short":"Tobias","gender":"M","rt":3,"ag":82,"rid":64,"team":"Nynäs Padel Club","teamId":3203508,"league":946,"division":"Div 2 Öst-södra"},
+  {"key":"viktor","pid":302677,"name":"Viktor Daneli","short":"Viktor","gender":"M","rt":3,"ag":82,"rid":64,"team":"Nynäs Padel Club","teamId":3203508,"league":946,"division":"Div 2 Öst-södra"},
+  {"key":"magnus","pid":58626,"name":"Magnus Olsson","short":"Magnus","gender":"M","rt":3,"ag":82,"rid":64,"team":"Nynäs Padel Club","teamId":3203508,"league":946,"division":"Div 2 Öst-södra"},
+  {"key":"victor","pid":264384,"name":"Victor Lindberg","short":"Victor","gender":"M","rt":3,"ag":82,"rid":64,"team":"Nynäs Padel Club","teamId":3203508,"league":946,"division":"Div 2 Öst-södra"}
 ];

@@ -124,8 +124,9 @@ try {
   const agenda = await page.$$eval("#agenda .arow", a => a.map(x => x.textContent.replace(/\s+/g, " ")));
   const spl = agenda.filter(x => /SPL Damer/.test(x));
   ok("home: Kommande has SPL per team (no duplicates per player) and Vista", spl.length >= 1 && new Set(spl).size === spl.length && agenda.some(x => /Vista/.test(x)) && agenda.some(x => /SPL Herrar/.test(x)), agenda);
-  ok("home: two team cards with roster avatars", (await page.$$eval("#teams .tcard", c => c.map(x => x.querySelectorAll(".troster li").length))).join() === "6,7");
-  ok("home: player list with all 13", (await page.$$("#plist li")).length === 13);
+  { const n = (await page.$$eval("#teams .tcard", c => c.map(x => x.querySelectorAll(".troster li").length))).sort().join();
+    ok("home: three team cards with roster avatars", n === "4,6,7", n); }
+  ok("home: player list with all 17", (await page.$$("#plist li")).length === 17);
   await page.fill("#q", "sved");
   ok("home: search filters (sved -> Anton Svedman, Svante Svedberg)", (await page.$$eval("#plist b", b => b.map(x => x.textContent))).sort().join() === "Anton Svedman,Svante Svedberg");
   await page.fill("#q", "");
