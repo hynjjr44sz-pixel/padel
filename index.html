@@ -1747,10 +1747,14 @@
     {ev:THEA_EVENT, bar:document.getElementById("live-thea"), render:renderTheaAll, hash:"#thea"},
     {ev:KIAN_EVENT, bar:document.getElementById("live-kian"), render:renderKianAll, hash:"#kian"}
   ];
+  // Every match in the class played (final done): the result hero says it all, so no live bar or strip.
+  function classDone(ev){
+    return !!(ev && ev.draws && ev.draws.length) && ev.draws.every(function(d){ return (d.rounds || []).every(function(r){ return r.matches.every(function(m){ return !!m.w; }); }); });
+  }
   function setBar(L, state){
     var bar = L.bar;
     if (!bar) return;
-    if (state === "off"){ bar.hidden = true; return; }
+    if (state === "off" || classDone(L.ev)){ bar.hidden = true; return; }
     bar.hidden = false;
     bar.className = "livebar" + (state === "ok" ? " on" : (state === "err" ? " stale" : " wait"));
     var known = L.okAt || L.cachedAt;
@@ -2915,7 +2919,7 @@
   function renderStaticRecent(who){
     var box = document.getElementById("recent-" + who), ev = who === "thea" ? THEA_EVENT : KIAN_EVENT;
     if (!box) return;
-    var dyn = document.getElementById("dyn-" + who), on = inWindow(ev.live) && !(dyn && !dyn.hidden);
+    var dyn = document.getElementById("dyn-" + who), on = inWindow(ev.live) && !(dyn && !dyn.hidden) && !classDone(ev);
     var html = on ? recentHtml(who, tourFinished(ev, function(t){ return at(ev.date, t); })) : "";
     box.hidden = !html; box.innerHTML = html;
   }
