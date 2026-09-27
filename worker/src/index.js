@@ -3,11 +3,11 @@
 // the player(s) concerned. Events come from discover.js (every event the club's players in players.json
 // enter on RankedIn, a few players per run) merged with events.js.
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
-import { parse, snapshot, notes, drawNote, summary, classResult, flip } from "./rankedin.js";
+import { parse, snapshot, unpack, notes, drawNote, summary, classResult, flip } from "./rankedin.js";
 import { discover, drawPath, rubbersPath, namesPath, drawsOf, API, PLAYERS, BY_PID, LEGACY } from "./discover.js";
 import { parseTie, snapshotTie, tieNotes, tieSummary } from "./teamleague.js";
 import { b64u, vapidKey, send } from "./webpush.js";
-import { dayOf } from "./tz.js";
+import { dayOf, localToDate, offsetAt } from "./tz.js";
 
 // Push services we are willing to POST to (no open relay). PUSH_HOST_ANY=1 is for local tests only.
 const PUSH_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(fcm\.googleapis\.com|android\.googleapis\.com|push\.services\.mozilla\.com|push\.apple\.com|notify\.windows\.com)(:\d+)?\//;
@@ -23,16 +23,25 @@ async function subKey(endpoint) {
   const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(endpoint)));
   return "sub:" + [...h.slice(0, 16)].map(b => b.toString(16).padStart(2, "0")).join("");
 }
-function validSub(s, env) {
+async function validSub(s, env) {
   try {
     if (!s || typeof s.endpoint !== "string" || s.endpoint.length > 1024 || !s.keys) return false;
     if (!(env.PUSH_HOST_ANY === "1" ? /^https?:\/\//.test(s.endpoint) : PUSH_HOSTS.test(s.endpoint))) return false;
     const p = b64u.dec(s.keys.p256dh), a = b64u.dec(s.keys.auth);
-    return p.length === 65 && p[0] === 4 && a.length === 16;
+    if (!(p.length === 65 && p[0] === 4 && a.length === 16)) return false;
+    // A point that is not on the curve would make every encryption for this device throw.
+    await crypto.subtle.importKey("raw", p, { name: "ECDH", namedCurve: "P-256" }, false, []);
+    return true;
   } catch (e) {
     return false;
   }
 }
+// Rate limits (bindings in wrangler.toml; missing in unit tests): per client IP.
+async function limited(rl, req) {
+  if (!rl) return false;
+  try { return !(await rl.limit({ key: req.headers.get("CF-Connecting-IP") || "local" })).success; } catch (e) { return false; }
+}
+const MAX_SUBS = 500;
 async function readBody(req) {
   if (Number(req.headers.get("Content-Length") || 0) > 4096) throw new Error("too large");
   const t = await req.text();
@@ -48,8 +57,10 @@ async function handle(req, env) {
     if (!env.ADMIN_KEY || req.headers.get("X-Admin-Key") !== env.ADMIN_KEY) return json({ error: "forbidden" }, 403, {});
     return json(await testPush(env), 200, {});
   }
-  // Writes only from the site (or localhost): keeps drive-by pages from filling KV (1000 writes/day).
+  // Writes only from the site (or localhost). The Origin header is only CSRF protection (any script can send it):
+  // the per-IP rate limits and the cap on subscriptions are what keep KV (1000 writes, 100k reads a day) safe.
   if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
+  if (await limited(req.method === "POST" ? env.SUB_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
   const route = req.method + " " + url.pathname;
   if (route === "GET /health") {
     const rec = await loadRecord(env);
@@ -69,11 +80,12 @@ async function handle(req, env) {
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
     const s = b && b.subscription;
-    if (!validSub(s, env)) return json({ error: "bad subscription" }, 400, h);
+    if (!(await validSub(s, env))) return json({ error: "bad subscription" }, 400, h);
     const rec = JSON.stringify({ sub: { endpoint: s.endpoint, keys: { p256dh: s.keys.p256dh, auth: s.keys.auth } },
       prefs: { follow: followOf((b && b.prefs) || {}) } });
-    const key = await subKey(s.endpoint);
-    if ((await env.PUSH.get(key)) !== rec) await env.PUSH.put(key, rec);   // no write when nothing changed
+    const key = await subKey(s.endpoint), was = await env.PUSH.get(key);
+    if (was === null && (await env.PUSH.list({ prefix: "sub:", limit: MAX_SUBS })).keys.length >= MAX_SUBS) return json({ error: "full" }, 503, h);
+    if (was !== rec) await env.PUSH.put(key, rec);   // no write when nothing changed
     return json({ ok: true }, 200, h);
   }
   if (route === "POST /unsubscribe") {
@@ -95,7 +107,7 @@ export function followOf(p) {
   return [p.thea !== false && LEGACY.thea, p.kian !== false && LEGACY.kian].filter(Boolean).sort((a, b) => a - b);
 }
 const now = env => env.NOW ? new Date(env.NOW) : new Date();   // NOW: local tests only
-const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45;
+const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8;
 
 /* ---- discovered events: KV "disc" = {at, events, ended, partial}. Read at most every 5 min per isolate. ---- */
 let MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 };
@@ -162,42 +174,65 @@ export function pastOf(rec, events, t) {
     .sort((a, b) => String(b.windowTo).localeCompare(String(a.windowTo)) || a.key.localeCompare(b.key)).slice(0, 30);
 }
 
-// Draw published? Once an hour (minute 37) for every tournament class a club player plays that starts within
-// 7 days (or is on now). KV "pub:<classId>": "0" = seen without a draw, "1" = draw seen. The first look is the
-// baseline (no notis); "0" -> published gives one notis. KV is written only when the state changes.
-const PUB_MINUTE = 37;   // not exported: workerd only accepts functions and handlers as module exports
+// Draw published? Once an hour (minute 35) for every tournament class a club player plays that starts within
+// 7 days (or is on now). KV "pub:<classId>": "0" = seen without a draw, otherwise the published draws as JSON
+// ([[stage, strength], ...]; "1" in old records). The first look is the baseline (no notis); "0" -> published gives
+// one notis. KV is written only when the state changes (a new stage, e.g. the playoffs, is a change: the live
+// polling reads its draws from here).
+const PUB_MINUTE = 35;   // not exported: workerd only accepts functions and handlers as module exports
 // Draws are often published the evening before or the same morning: within 48 h of the start the check also
-// runs every 15 min (minutes 7, 22, 37, 52), limited to those classes.
-// New SPF ranking (published in the night to Monday): a look every hour at minute 52 (2 RankedIn calls),
-// KV "rank:<pid>" written only when RankedIn's ranking date/standing/points change; a new ranking date
-// gives one notis per player. The first look is the baseline.
+// runs every 15 min (minutes 5, 20, 35, 50: never a discovery minute), limited to those classes.
+// New SPF ranking (published in the night to Monday): a look every hour at minute 52. One RankedIn call per list
+// (women's, men's) while its ranking date is the one in KV "rankdate:<rt>:<ag>"; a new date: every player of that
+// list, KV "rank:<pid>" written only when the ranking date/standing/points change; a new ranking date gives one
+// notis per player. The first look is the baseline.
 const RANK_MINUTE = 52;
 const RANKED = PLAYERS.map(p => ({ who: p.who, pid: p.pid, name: p.name, q: p.me, rt: p.rt, ag: p.ag, list: p.gender === "F" ? "Dam huvudlista" : "Herrar huvudlista" }));
-// Up to 20 players per hour (rotating when the roster is larger), one RankedIn call each.
+// Up to 20 players per hour (rotating when the roster is larger), one RankedIn call each while a list is new.
 export async function rankingChecks(env, t, budget, log, players = RANKED, cap = 20) {
   const get = getter(env, budget), msgs = [], n = Math.min(cap, players.length), start = (Math.floor(+t / H) * n) % Math.max(1, players.length);
+  const lists = new Map();
   for (let i = 0; i < n; i++) {
-    const p = players[(start + i) % players.length];
-    let x;
-    const q = "/Ranking/SearchRankingPlayersAsync?rankingId=1917&rankingType=" + p.rt + "&ageGroup=" + p.ag +
-      "&weekFromNow=0&language=en&searchTerm=" + encodeURIComponent(p.q) + "&skip=0&take=20&rankingDate=" + dayOf(t);
-    try { x = await get(q); } catch (e) { if (e.budget) break; console.warn("ranking", p.who, e.message); continue; }
-    const me = ((x && x.Payload) || []).find(r => r && r.Participant && r.Participant.NewParticipantId === p.pid && r.ParticipantPoints);
-    if (!me) continue;
-    const pp = me.ParticipantPoints, cur = { d: String(pp.RankingDate).slice(0, 10), s: pp.Standing, p: pp.Points };
-    const key = "rank:" + p.pid, raw = await env.PUSH.get(key), prev = raw ? JSON.parse(raw) : null;
-    if (prev && prev.d === cur.d && prev.s === cur.s && prev.p === cur.p) continue;
-    await env.PUSH.put(key, JSON.stringify(cur));
-    log.writes = (log.writes || 0) + 1;
-    if (!prev || prev.d >= cur.d) continue;   // baseline or a correction of the same list: no notis
-    const up = prev.s - cur.s, dp = cur.p - prev.p, f = v => v.toFixed(v >= 20 ? 1 : 2);
-    msgs.push({ pids: [p.pid], m: {
-      title: "Ny ranking: " + p.name + " #" + cur.s + (up ? (up > 0 ? " \u25B2\uFE0E " : " \u25BC\uFE0E ") + Math.abs(up) + (Math.abs(up) === 1 ? " plats" : " platser") : " (oförändrad)"),
-      body: f(cur.p) + " p" + (dp ? " (" + (dp > 0 ? "+" : "\u2212") + Math.abs(dp).toFixed(1) + ")" : "") + " · " + p.list,
-      tag: "padel-rank-" + p.pid, url: "./#" + p.who } });
+    const p = players[(start + i) % players.length], k = p.rt + ":" + p.ag;
+    if (!lists.has(k)) lists.set(k, []);
+    lists.get(k).push(p);
+  }
+  let out = false;
+  for (const [lk, ps] of lists) {
+    if (out) break;
+    let known, date = null, all = n >= players.length;
+    for (const p of ps) {
+      let x;
+      const q = "/Ranking/SearchRankingPlayersAsync?rankingId=1917&rankingType=" + p.rt + "&ageGroup=" + p.ag +
+        "&weekFromNow=0&language=en&searchTerm=" + encodeURIComponent(p.q) + "&skip=0&take=20&rankingDate=" + dayOf(t);
+      try { x = await get(q); } catch (e) { all = false; if (e.budget) { out = true; break; } console.warn("ranking", p.who, e.message); continue; }
+      const me = ((x && x.Payload) || []).find(r => r && r.Participant && r.Participant.NewParticipantId === p.pid && r.ParticipantPoints);
+      if (!me) continue;
+      const pp = me.ParticipantPoints, cur = { d: String(pp.RankingDate).slice(0, 10), s: pp.Standing, p: pp.Points };
+      if (known === undefined) { known = await env.PUSH.get("rankdate:" + lk); date = cur.d; }
+      const same = known === cur.d;   // the list has not changed since its last full round: this one call is enough
+      await rankOne(env, p, cur, msgs, log);
+      if (same) { all = false; break; }
+    }
+    if (all && date && known !== date) {   // every player of a new list looked at: canary mode until the next list
+      await env.PUSH.put("rankdate:" + lk, date);
+      log.writes = (log.writes || 0) + 1;
+    }
   }
   if (msgs.length) log.ranked = msgs.length;
   return msgs;
+}
+async function rankOne(env, p, cur, msgs, log) {
+  const key = "rank:" + p.pid, raw = await env.PUSH.get(key), prev = raw ? JSON.parse(raw) : null;
+  if (prev && prev.d === cur.d && prev.s === cur.s && prev.p === cur.p) return;
+  await env.PUSH.put(key, JSON.stringify(cur));
+  log.writes = (log.writes || 0) + 1;
+  if (!prev || prev.d >= cur.d) return;   // baseline or a correction of the same list: no notis
+  const up = prev.s - cur.s, dp = cur.p - prev.p, f = v => v.toFixed(v >= 20 ? 1 : 2);
+  msgs.push({ pids: [p.pid], m: {
+    title: "Ny ranking: " + p.name + " #" + cur.s + (up ? (up > 0 ? " \u25B2\uFE0E " : " \u25BC\uFE0E ") + Math.abs(up) + (Math.abs(up) === 1 ? " plats" : " platser") : " (oförändrad)"),
+    body: f(cur.p) + " p" + (dp ? " (" + (dp > 0 ? "+" : "\u2212") + Math.abs(dp).toFixed(1) + ")" : "") + " · " + p.list,
+    tag: "padel-rank-" + p.pid, url: "./#" + p.who } });
 }
 
 export async function drawChecks(env, t, list, budget, log, within = 7 * DAY) {
@@ -212,7 +247,7 @@ export async function drawChecks(env, t, list, budget, log, within = 7 * DAY) {
       let names;
       try { names = await get(namesPath(tid)); } catch (e) { if (e.budget) break; console.warn("draw check", tid, e.message); continue; }
       for (const cid of [...new Set(evs.map(e => e.classId))]) {
-        const draws = drawsOf(names, cid), key = "pub:" + cid, state = draws ? "1" : "0";
+        const draws = drawsOf(names, cid), key = "pub:" + cid, state = draws ? JSON.stringify(draws) : "0";
         const was = await env.PUSH.get(key);
         if (was === state) continue;
         if (was === "0" && draws) {
@@ -392,9 +427,10 @@ export async function tick(env, events) {
   else {
     rec = await loadRecord(env);
     if (discoveryDue(rec, t)) {
-      // While something is live, discovery leaves room for the live polling.
+      // While something is live, discovery leaves room for the live polling; the first run (any minute) leaves
+      // room for the draw checks too.
       const busy = rec && activeEvents(t, merge(rec.events)).length > 0;
-      try { rec = await runDiscovery(env, t, budget, rec, log, busy ? 15 : 35); } catch (e) { console.warn("discovery", e.message); }
+      try { rec = await runDiscovery(env, t, budget, rec, log, busy ? 15 : rec ? 35 : 30); } catch (e) { console.warn("discovery", e.message); }
     }
     list = merge(rec ? rec.events : []);
   }
@@ -431,6 +467,7 @@ export async function tick(env, events) {
   const legacy = Object.values(LEGACY);
   units.forEach(u => {
     if (u.kind !== "t") return;
+    u.known = !!u.draws;
     u.draws = u.draws || [[0, 0], [1, 0]]; u.cost = u.draws.length;
     u.evs.sort((a, b) => (legacy.includes(b.pid) ? 1 : 0) - (legacy.includes(a.pid) ? 1 : 0));   // links: Thea/Kian as before
   });
@@ -440,14 +477,26 @@ export async function tick(env, events) {
   const get = getter(env, budget);
   let msgs = pubMsgs.slice();
   let fetches = 0;
-  const wins = [];
+  const wins = [], pending = [];
+  // Nights (23-07 local) are between events even inside a multi-day window; off-minutes only for the hot units.
+  const lh = new Date(+t + offsetAt(+t) * H).getUTCHours(), night = lh >= 23 || lh < 7, quiet = mm % 10 !== 0;
   log.units = arr.length; log.polled = 0;
-  for (let i = 0; i < arr.length; i++) {
+  for (let i = 0; i < arr.length && !night; i++) {
     const u = arr[(start + i) % arr.length];
     if (fetches + u.cost > cap) continue;
     let prev = null;
     try { prev = JSON.parse((await env.PUSH.get(u.key)) || "null"); } catch (e) { prev = null; }
-    if (prev && prev._done && t.getUTCMinutes() % 10) continue;   // finished: a look every 10 min is enough
+    if (!prev) {
+      if (quiet && (u.kind === "tl" || !u.known)) continue;   // no lineup / draw seen yet: drawChecks and a look every 10 min
+    } else if (prev._done) {   // finished: a look every 10 min for 2 hours (corrections), then stop
+      if (prev._doneAt && +t - Date.parse(prev._doneAt) > 2 * H) continue;
+      if (quiet) continue;
+    } else if (quiet && !hot(prev, u, t)) continue;
+    if (u.kind === "t") {   // the draws drawChecks saw last (a playoff stage added during the event)
+      const pub = await env.PUSH.get("pub:" + u.classId);
+      if (pub && pub[0] === "[") { try { u.draws = JSON.parse(pub); u.cost = u.draws.length; } catch (e) {} }
+      if (fetches + u.cost > cap) continue;
+    }
     fetches += u.cost; log.polled++;
     let after;
     try {
@@ -455,7 +504,8 @@ export async function tick(env, events) {
         const matches = parse(await Promise.all(u.draws.map(([st, sg]) => fetchDraw(env, get, u.classId, st, sg))));
         if (!matches.length) continue;
         after = snapshot(matches);
-        const fmt = u.evs[0].format;
+        // "groups" from an older look at the draws: with a later stage it is not a groups-only class.
+        const fmt = u.evs[0].format === "groups" && u.draws.some(d => d[0] > 0) ? null : u.evs[0].format;
         if (matches.every(m => m.w) && (fmt === "groups" || matches.some(m => m.kind === "ko" && m.di === 0 && m.r === m.R - 1))) after._done = 1;
         // First look at an event is the baseline: results already there never notify (same as the page).
         if (prev) u.evs.forEach(ev => notes(ev, matches, prev).forEach(m => msgs.push({ pids: pidsOfEv(ev), m })));
@@ -474,26 +524,52 @@ export async function tick(env, events) {
       console.warn("fetch", u.key, e.message);
       continue;
     }
+    if (after._done) after._doneAt = (prev && prev._done && prev._doneAt) || t.toISOString();
     const next = JSON.stringify(after);
-    if (JSON.stringify(prev) !== next) { await env.PUSH.put(u.key, next); log.writes++; }   // free KV: 1000 writes/day
+    if (JSON.stringify(prev) !== next) pending.push([u.key, next]);   // free KV: 1000 writes/day
   }
   if (wins.length) try { await addWins(env, t, wins, log); } catch (e) { console.warn("wins", e.message); }
   msgs = dedupe(msgs);
-  if (!msgs.length) return log;
-  await fanOut(env, msgs, budget, log);
+  if (msgs.length) {
+    // The new state is written after the pushes: if the invocation dies on the way, the next tick sends them again.
+    try { await fanOut(env, msgs, budget, log); } catch (e) { console.warn("push", e.message); log.pushFailed = 1; return log; }
+  }
+  for (const [k, v] of pending) { await env.PUSH.put(k, v); log.writes++; }
   return log;
+}
+
+// Every minute only around the matches of the day: an undecided match today that starts within 30 min or has
+// started (running late included). Undecided matches without a time: every minute, as before. Else every 10 min.
+function hot(prev, u, t) {
+  if (u.kind === "tl") {
+    const at = u.tie.time && u.ev.date && localToDate(u.ev.date + "T" + u.tie.time);
+    return !at || +t >= +at - 30 * 60e3;
+  }
+  const today = dayOf(t), times = [];
+  let open = 0;
+  for (const k of Object.keys(prev)) {
+    if (k[0] === "_") continue;
+    const x = unpack(prev[k]);
+    if (x.w) continue;
+    open++;
+    const d = String(x.tc || "").slice(0, 16);
+    if (/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(d) && !d.endsWith("T00:00")) times.push(d);
+  }
+  if (!open) return false;   // everything decided, next stage not drawn yet
+  if (!times.length) return true;
+  return times.some(d => d.slice(0, 10) === today && +t >= +localToDate(d) - 30 * 60e3);
 }
 
 // Push: every device gets the messages about the players it follows (prefs.follow), nothing else.
 async function fanOut(env, msgs, budget, log) {
-  const key = await vapidKey(env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY);
   const names = [];
   let cursor;
-  do {
+  do {   // at most MAX_SUBS: one KV read each, well inside the per-invocation limits
     const page = await env.PUSH.list({ prefix: "sub:", cursor });
     names.push(...page.keys.map(k => k.name));
     cursor = page.list_complete ? null : page.cursor;
-  } while (cursor);
+  } while (cursor && names.length < MAX_SUBS);
+  names.length = Math.min(names.length, MAX_SUBS);
   const devs = (await Promise.all(names.map(async name => {
     let rec = null;
     try { rec = JSON.parse((await env.PUSH.get(name)) || "null"); } catch (e) { rec = null; }
@@ -502,10 +578,11 @@ async function fanOut(env, msgs, budget, log) {
     const out = mergeForDevice(msgs.filter(x => x.pids.some(p => f.has(Number(p)))).map(x => x.m));
     return out.length ? { name, rec, out } : null;
   }))).filter(Boolean);
-  // Fold into one notis per device when needed, and cap the number of devices.
+  // Fold into one notis per device when needed (subrequests, and CPU: about 1 ms per encrypted push), and cap
+  // the number of devices.
   const pushBudget = Math.max(0, budget.left);
   let total = devs.reduce((n, d) => n + d.out.length, 0);
-  if (total > pushBudget) {
+  if (total > Math.min(pushBudget, FOLD_OVER)) {
     devs.forEach(d => {
       if (d.out.length < 2) return;
       d.out = [{ title: d.out.length + " nya resultat", body: d.out.map(m => m.title).join("\n"), tag: "padel-sammanfattning", url: d.out[d.out.length - 1].url }];
@@ -517,11 +594,13 @@ async function fanOut(env, msgs, budget, log) {
     devs.length = pushBudget;
   }
   log.devices = devs.length;
-  const jwts = {};   // one VAPID JWT per push service per tick (CPU time on the free plan is 10 ms)
+  if (!devs.length) return;
+  const key = await vapidKey(env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY), jwts = {};   // one VAPID JWT per push service per tick (CPU time on the free plan is 10 ms)
   await Promise.all(devs.map(async ({ name, rec, out }) => {
     for (const m of out) {
       const st = await send(rec.sub, m, env, key, jwts);
-      if (st === 404 || st === 410) { await env.PUSH.delete(name); log.removed++; return; }
+      // 404/410: gone; -1: its keys cannot be used (encryption failed), it would fail every time
+      if (st === 404 || st === 410 || st === -1) { await env.PUSH.delete(name); log.removed++; return; }
       if (st >= 200 && st < 300) log.sent++;
       else console.warn("push", st, new URL(rec.sub.endpoint).host);
     }
@@ -532,10 +611,14 @@ async function testPush(env) {
   const key = await vapidKey(env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY), jwts = {}, res = [];   // every device, whatever it follows
   const names = (await env.PUSH.list({ prefix: "sub:" })).keys.map(k => k.name).slice(0, 20);
   for (const name of names) {
-    const rec = JSON.parse((await env.PUSH.get(name)) || "null");
-    if (!rec) continue;
-    const st = await send(rec.sub, { title: "Testnotis från Nynäs Padel", body: "Push fungerar. Nästa resultat kommer hit.", tag: "padel-test", url: "./#thea" }, env, key, jwts);
-    res.push({ host: new URL(rec.sub.endpoint).host, status: st });
+    try {
+      const rec = JSON.parse((await env.PUSH.get(name)) || "null");
+      if (!rec || !rec.sub) continue;
+      const st = await send(rec.sub, { title: "Testnotis från Nynäs Padel", body: "Push fungerar. Nästa resultat kommer hit.", tag: "padel-test", url: "./#thea" }, env, key, jwts);
+      res.push({ host: new URL(rec.sub.endpoint).host, status: st });
+    } catch (e) {
+      res.push({ key: name, error: e.message });
+    }
   }
   return { sent: res };
 }

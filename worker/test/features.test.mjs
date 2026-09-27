@@ -99,9 +99,9 @@ const VISTA = { key: "t173729-thea", kind: "tournament", who: "thea", me: "Thea 
   cls: "Dam B", name: "Vista Padel Autumn Smash Open", windowFrom: "2026-10-09T07:00:00+02:00", windowTo: "2026-10-11T23:00:00+02:00", cover: ["173729"] };
 const published = () => A("t73554_classnames_draws").map(x => x.Id === 173729 ? { ...x, TournamentDraws: [{ Id: 1, Name: "Dam B", Stage: 0, Strength: 0 }] } : x);
 
-test("draw published (worker): baseline at minute 37, one push when it appears, then quiet; other minutes do nothing", async () => {
+test("draw published (worker): baseline at minute 35, one push when it appears, then quiet; other minutes do nothing", async () => {
   const st = install({}), v = await makeVapid(), PUSH = kv();
-  const env = { PUSH, ...v, VAPID_SUBJECT: "https://padel.holmberg.st", ORIGIN: "https://padel.holmberg.st", NOW: "2026-10-05T16:37:00Z" };
+  const env = { PUSH, ...v, VAPID_SUBJECT: "https://padel.holmberg.st", ORIGIN: "https://padel.holmberg.st", NOW: "2026-10-05T16:35:00Z" };
   const a = await makeSubscription("https://fcm.googleapis.com/fcm/send/a");
   await worker.fetch(new Request("https://w/subscribe", { method: "POST", headers: { Origin: "https://padel.holmberg.st" }, body: JSON.stringify({ subscription: a.sub }) }), env);
   st.over = { "/tournament/GetDrawsForStageAndStrengthAsync*": F("vista_rr_new.json") };
@@ -109,25 +109,25 @@ test("draw published (worker): baseline at minute 37, one push when it appears, 
   assert.equal(PUSH.m.get("pub:173729"), "0", "first look: not published, remembered");
   assert.equal(st.pushes.length, 0);
   const puts = PUSH.ops.put;
-  r = await tick({ ...env, NOW: "2026-10-05T17:37:00Z" }, [VISTA]);
+  r = await tick({ ...env, NOW: "2026-10-05T17:35:00Z" }, [VISTA]);
   assert.equal(PUSH.ops.put, puts, "no change, no write");
   st.calls.length = 0;
   st.over["/tournament/GetClassesAndDrawNamesAsync/?tournamentId=73554"] = published();
-  await tick({ ...env, NOW: "2026-10-05T17:38:00Z" }, [VISTA]);
-  assert.equal(st.calls.length, 0, "only at minute 37");
-  r = await tick({ ...env, NOW: "2026-10-05T18:37:00Z" }, [VISTA]);
+  await tick({ ...env, NOW: "2026-10-05T17:36:00Z" }, [VISTA]);
+  assert.equal(st.calls.length, 0, "only at minute 35");
+  r = await tick({ ...env, NOW: "2026-10-05T18:35:00Z" }, [VISTA]);
   assert.equal(r.drawn, 1);
-  assert.equal(PUSH.m.get("pub:173729"), "1");
+  assert.equal(PUSH.m.get("pub:173729"), "[[0,0]]");
   assert.equal(st.pushes.length, 1);
   const msg = JSON.parse(await a.decrypt(st.pushes[0].init.body));
   assert.equal(msg.title, "Lottningen klar: Thea och Nathalie i gruppen");
   assert.equal(msg.url, "./#thea/m6773468");
   assert.equal(msg.tag, "padel-173729:lottning");
-  r = await tick({ ...env, NOW: "2026-10-05T19:37:00Z" }, [VISTA]);
+  r = await tick({ ...env, NOW: "2026-10-05T19:35:00Z" }, [VISTA]);
   assert.equal(st.pushes.length, 1, "told once");
   // More than 7 days ahead: not checked at all
   st.calls.length = 0;
-  await tick({ ...env, NOW: "2026-09-30T16:37:00Z" }, [{ ...VISTA, classId: 999, key: "x" }]);
+  await tick({ ...env, NOW: "2026-09-30T16:35:00Z" }, [{ ...VISTA, classId: 999, key: "x" }]);
   assert.equal(st.calls.length, 0);
 });
 
@@ -135,16 +135,16 @@ test("draw published: already there at the first look = baseline (no push); Kian
   const st = install({}), PUSH = kv(), log = {};
   st.over = { "/tournament/GetClassesAndDrawNamesAsync/?tournamentId=73554": published(), "/tournament/GetDrawsForStageAndStrengthAsync*": F("vista_rr_new.json") };
   const budget = { left: 45 };
-  const msgs = await drawChecks({ PUSH }, new Date("2026-10-05T16:37:00Z"), [VISTA], budget, log);
+  const msgs = await drawChecks({ PUSH }, new Date("2026-10-05T16:35:00Z"), [VISTA], budget, log);
   assert.deepEqual(msgs, []);
-  assert.equal(PUSH.m.get("pub:173729"), "1");
+  assert.equal(PUSH.m.get("pub:173729"), "[[0,0]]");
   assert.equal(45 - budget.left, 1, "one RankedIn call: the class list");
 });
 
-test("draw checks stay inside the subrequest budget together with discovery (first run at minute 37)", async () => {
+test("draw checks stay inside the subrequest budget together with discovery (first run at minute 35)", async () => {
   const st = install({}), PUSH = kv();
   st.over = { "/tournament/GetClassesAndDrawNamesAsync/?tournamentId=73554": A("t73554_classnames_draws") };
-  const r = await tick({ PUSH, NOW: "2026-10-05T16:37:00Z", ORIGIN: "https://padel.holmberg.st" });
+  const r = await tick({ PUSH, NOW: "2026-10-05T16:35:00Z", ORIGIN: "https://padel.holmberg.st" });
   assert.ok(r.discovered > 0);
   assert.ok(st.calls.length <= 45, "calls " + st.calls.length);
   assert.equal(PUSH.m.get("pub:173729"), "0");
@@ -245,9 +245,14 @@ test("ranking: baseline silent, new Monday list -> one notis per player, unchang
   try {
     const t = new Date("2026-09-27T20:52:00+02:00");
     assert.deepEqual(await rankingChecks(env, t, { left: 45 }, {}, P), []);
-    assert.equal(puts.length, 1);
-    assert.deepEqual(await rankingChecks(env, t, { left: 45 }, {}, P), []);
-    assert.equal(puts.length, 1, "unchanged: no KV write");
+    assert.deepEqual(puts, ["rank:1675246", "rankdate:4:83"]);
+    let calls = 0;
+    const counted = globalThis.fetch;
+    globalThis.fetch = async (...a) => { calls++; return counted(...a); };
+    assert.deepEqual(await rankingChecks(env, t, { left: 45 }, {}, P.concat({ ...P[0], who: "x", pid: 7, q: "X" })), []);
+    assert.equal(puts.length, 2, "unchanged: no KV write");
+    assert.equal(calls, 1, "list date unchanged: one call for the whole list");
+    globalThis.fetch = counted;
     list = { d: "2026-09-28T00:00:00", s: 142, p: 78.695 };
     const n = await rankingChecks(env, new Date("2026-09-28T03:52:00+02:00"), { left: 45 }, {}, P);
     assert.equal(n.length, 1);

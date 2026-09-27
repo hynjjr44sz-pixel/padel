@@ -16,3 +16,14 @@ ORIGIN = "https://padel.holmberg.st"
 VAPID_SUBJECT = "https://padel.holmberg.st"
 
 # Secrets (set by deploy.sh with `wrangler secret put`): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
+
+# Per-IP rate limits (free plan): subscribe/unsubscribe, and the public GET routes (each costs KV reads).
+[[ratelimits]]
+name = "SUB_RL"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }
+
+[[ratelimits]]
+name = "API_RL"
+namespace_id = "1002"
+simple = { limit = 60, period = 60 }

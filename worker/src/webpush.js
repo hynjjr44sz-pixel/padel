@@ -66,22 +66,29 @@ async function topic(tag) {
   return b64u.enc((await crypto.subtle.digest("SHA-256", te.encode(tag))).slice(0, 24));
 }
 
-// Sends one message. Returns the push service's HTTP status (0 on network error).
-// jwts: optional cache {aud: jwt} shared by the sends of one tick.
+// Sends one message. Returns the push service's HTTP status (0 on network error, -1 when the subscription's keys
+// cannot be used: encryption failed). jwts: optional cache {aud: jwt, "#tag": topic} shared by the sends of one tick.
 export async function send(sub, msg, env, key, jwts = {}) {
   const aud = new URL(sub.endpoint).origin;
   const jwt = await (jwts[aud] = jwts[aud] || vapidJwt(aud, env.VAPID_SUBJECT, key));
   // One aes128gcm record holds 3993 bytes of plaintext; keep well inside it.
   let text = JSON.stringify(msg);
   if (te.encode(text).length > 3000) text = JSON.stringify({ ...msg, body: String(msg.body || "").slice(0, 600) + "…" });
-  const body = await encrypt(text, sub.keys.p256dh, sub.keys.auth);
+  let body, tp;
+  try {
+    body = await encrypt(text, sub.keys.p256dh, sub.keys.auth);
+    const tk = "#" + (msg.tag || "padel");
+    tp = await (jwts[tk] = jwts[tk] || topic(msg.tag || "padel"));
+  } catch (e) {
+    return -1;
+  }
   try {
     const res = await fetch(sub.endpoint, {
       method: "POST", body,
       headers: {
         "Authorization": "vapid t=" + jwt + ", k=" + env.VAPID_PUBLIC_KEY,
         "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream",
-        "TTL": "3600", "Urgency": "high", "Topic": await topic(msg.tag || "padel")
+        "TTL": "3600", "Urgency": "high", "Topic": tp
       }
     });
     return res.status;

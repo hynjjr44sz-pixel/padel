@@ -1,8 +1,10 @@
 /* Nynäs Padel service worker.
-   index.html and players.json (the roster): network first (updates arrive at once), cache as offline fallback.
-   img/ and icons/: cache first. Other origins (api.rankedin.com, fonts) are never touched. */
-var VERSION = "padel-v4";
-var PRECACHE = ["./", "index.html", "players.json", "manifest.webmanifest", "icons/icon-192.png"];
+   index.html and players.json (the roster): network first with revalidation (an unchanged file is a 304), the
+   cached copy after 3 s on a slow network or at once offline. Other pages (integritet.html): network first, cached
+   under their own URL. img/ and icons/: the cached copy at once, refreshed in the background (a replaced photo
+   shows on the next view, a removed one leaves the cache). Other origins (api.rankedin.com, fonts) are never touched. */
+var VERSION = "padel-v5";
+var PRECACHE = ["index.html", "players.json", "manifest.webmanifest", "icons/icon-192.png"];
 
 self.addEventListener("install", function(e){
   e.waitUntil(caches.open(VERSION).then(function(c){ return c.addAll(PRECACHE); }).catch(function(){}));
@@ -15,6 +17,21 @@ self.addEventListener("activate", function(e){
   }).then(function(){ return self.clients.claim(); }));
 });
 
+function networkFirst(e, key, wait){
+  var net = fetch(e.request, {cache:"no-cache"});
+  e.waitUntil(net.then(function(res){   // attached first: the copy is taken before the page reads the body
+    if (res && res.ok && !res.redirected){ var copy = res.clone(); return caches.open(VERSION).then(function(c){ return c.put(key, copy); }); }
+  }).catch(function(){}));
+  e.respondWith(new Promise(function(resolve){
+    var done = false, timer = null;
+    function fallback(err){
+      return caches.match(key).then(function(r){ if (!done && (r || err)){ done = true; clearTimeout(timer); resolve(r || Response.error()); } });
+    }
+    if (wait) timer = setTimeout(function(){ fallback(false); }, wait);
+    net.then(function(res){ if (!done){ done = true; clearTimeout(timer); resolve(res); } }, function(){ fallback(true); });
+  }));
+}
+
 self.addEventListener("fetch", function(e){
   var req = e.request;
   if (req.method !== "GET") return;
@@ -23,26 +40,26 @@ self.addEventListener("fetch", function(e){
   var scopePath = new URL(self.registration.scope).pathname;
   var rel = url.pathname.indexOf(scopePath) === 0 ? url.pathname.slice(scopePath.length) : url.pathname;
 
-  if (req.mode === "navigate" || rel === "" || rel === "index.html" || rel === "players.json"){
-    var key = rel === "players.json" ? "players.json" : "index.html";
-    e.respondWith(
-      fetch(req, {cache:"no-store"}).then(function(res){
-        if (res && res.ok){ var copy = res.clone(); caches.open(VERSION).then(function(c){ c.put(key, copy); }); }
-        return res;
-      }).catch(function(){
-        return caches.match(key).then(function(r){ return r || (key === "index.html" ? caches.match("./") : null); }).then(function(r){ return r || Response.error(); });
-      })
-    );
+  // The app shell is keyed on its path, never on req.mode: another page must not overwrite it.
+  if (rel === "" || rel === "index.html" || rel === "players.json"){
+    networkFirst(e, rel === "players.json" ? "players.json" : "index.html", 3000);
+    return;
+  }
+  if (req.mode === "navigate"){
+    networkFirst(e, req, 0);
     return;
   }
 
   if (/^(img|icons)\//.test(rel)){
-    e.respondWith(caches.match(req).then(function(hit){
-      return hit || fetch(req).then(function(res){
-        if (res && res.ok){ var copy = res.clone(); caches.open(VERSION).then(function(c){ c.put(req, copy); }); }
+    var fresh = fetch(req).then(function(res){
+      return caches.open(VERSION).then(function(c){
+        if (res.ok) return c.put(req, res.clone()).then(function(){ return res; });
+        if (res.status === 404 || res.status === 410) return c.delete(req).then(function(){ return res; });
         return res;
       });
-    }));
+    });
+    e.waitUntil(fresh.catch(function(){}));
+    e.respondWith(caches.match(req).then(function(hit){ return hit || fresh; }));
   }
 });
 

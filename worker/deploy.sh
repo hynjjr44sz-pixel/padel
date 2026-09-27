@@ -11,7 +11,9 @@ export CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID WRANGLER_SEND_METRICS=false
 cd "$(dirname "$0")"
 ROOT="$(cd .. && pwd)"
 API="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID"
-cf() { curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" "$@"; }
+# The token goes to curl through a file descriptor (printf is a builtin): never in curl's argv, which other local
+# users can read with ps. Needs curl 7.55+.
+cf() { curl -fsS -H @<(printf 'Authorization: Bearer %s\n' "$CLOUDFLARE_API_TOKEN") -H "Content-Type: application/json" "$@"; }
 js() { node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const r=JSON.parse(s);$1})"; }
 
 echo "1/6 wrangler (pinned in package.json)"
@@ -40,9 +42,15 @@ node sync-players.mjs
 
 echo "4/6 VAPID keys"
 # The private key goes straight from gen-vapid.mjs into a wrangler secret (stdin), never to disk or screen.
-SECRETS="$("${WR[@]}" secret list 2>/dev/null || true)"
-if [ -s vapid-public.txt ] && grep -q VAPID_PRIVATE_KEY <<<"$SECRETS"; then
+# A new key pair breaks every existing subscription: only when there is none yet, or with ROTATE_VAPID=1.
+SECRETS="$("${WR[@]}" secret list)" || { echo "Cannot list the worker's secrets (network, or token permissions): stopping, nothing rotated." >&2; exit 1; }
+HAS_KEY=0; grep -q VAPID_PRIVATE_KEY <<<"$SECRETS" && HAS_KEY=1
+if [ "${ROTATE_VAPID:-0}" != "1" ] && [ -s vapid-public.txt ] && [ "$HAS_KEY" = 1 ]; then
   echo "    already set (vapid-public.txt + secret) - keeping them"
+elif [ "${ROTATE_VAPID:-0}" != "1" ] && { [ -s vapid-public.txt ] || [ "$HAS_KEY" = 1 ]; }; then
+  echo "Only half of the VAPID key pair is there (vapid-public.txt: $([ -s vapid-public.txt ] && echo yes || echo no), secret: $([ "$HAS_KEY" = 1 ] && echo yes || echo no))." >&2
+  echo "A new pair would break every subscription. Run again with ROTATE_VAPID=1 to make one anyway." >&2
+  exit 1
 else
   node gen-vapid.mjs vapid-public.tmp | "${WR[@]}" secret put VAPID_PRIVATE_KEY >/dev/null
   tr -d '\n' < vapid-public.tmp | "${WR[@]}" secret put VAPID_PUBLIC_KEY >/dev/null
@@ -61,9 +69,10 @@ if [ "$KEY" != "$(tr -d '\n' < vapid-public.txt)" ]; then
 fi
 echo "    $URL"
 
-echo "6/6 index.html -> PUSH_API"
-sed -i.bak -E "s#^(  var PUSH_API = )\"[^\"]*\";#\1\"$URL\";#" "$ROOT/index.html" && rm -f "$ROOT/index.html.bak"
+echo "6/6 index.html -> PUSH_API (+ preconnect and CSP connect-src, then the CSP script hash)"
+sed -i.bak -E "s#^(  var PUSH_API = )\"[^\"]*\";#\1\"$URL\";#; s#https://padel-push\.[a-z0-9-]+\.workers\.dev#$URL#g" "$ROOT/index.html" && rm -f "$ROOT/index.html.bak"
 grep -q "var PUSH_API = \"$URL\";" "$ROOT/index.html" || { echo "Could not set PUSH_API in index.html" >&2; exit 1; }
+node csp.mjs
 
 echo
 echo "Done. Worker: $URL"

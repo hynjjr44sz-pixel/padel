@@ -61,8 +61,12 @@ async function tournament(p, e, get, ctx) {
   const noneKey = e.Id + ":" + p.who + ":" + ctx.today;
   if (!found.length && ctx.none.has(noneKey)) return [];   // looked today, not in any class (withdrawn, reserve)
   if (!found.length || ctx.now - new Date(old[0].scanned || 0) > DAY) {
+    // Ongoing or starting within 48 h (the classes are settled): only the known classes are checked, one call
+    // each, instead of every class of the tournament (which would not fit the live-time discovery budget).
+    const near = found.length && localToDate(info.StartDate || e.StartDate) - ctx.now < 2 * DAY;
+    const classes = near ? found.map(f => ({ Id: f.classId, Name: f.cls })) : info.Classes || [];
     found = [];
-    for (const c of info.Classes || []) {
+    for (const c of classes) {
       const pl = await get("/tournament/GetPlayersForClassAsync?tournamentId=" + e.Id + "&tournamentClassId=" + c.Id + "&language=en");
       const parts = (pl && pl.Participants) || [];
       for (const x of parts) {
@@ -105,6 +109,10 @@ async function teamleague(p, e, get, ctx) {
   if ((h.EndDate && String(h.EndDate).slice(0, 10) < ctx.today) || [2, 4].includes(h.EventState)) { ctx.ended.add("l" + e.Id); return []; }
   // The roster knows the team of its own league: no lookup needed.
   let t = p.league === e.Id && p.teamId ? { teamId: p.teamId, teamName: p.team, divisionName: p.division } : null;
+  // A roster team is refreshed when its first roster player is looked up (every 40-50 min, like a player), not for
+  // every team mate in a batch; the others keep its entries. Unknown so far: whoever comes first.
+  if (t && ctx.prev.some(x => x.kind === "teamleague" && x.leagueId === e.Id && x.teamId === t.teamId) &&
+    (PLAYERS.find(x => x.league === e.Id && x.teamId === t.teamId) || p).pid !== p.pid) return [];
   if (!t) {
     const teams = await get("/teamleague/GetTeamLeagueTeamDetailsAsync?language=en&teamLeagueId=" + e.Id + "&participantId=" + p.pid);
     t = Array.isArray(teams) && teams[0];
@@ -171,8 +179,7 @@ export async function discover(get, now, prev, players = PLAYERS) {
         mine.push(...await (e.Type === 4 ? tournament : teamleague)(p, e, get, ctx));
       }
     } catch (err) {
-      partial = true;   // this player keeps the previous entries; out of budget: stop here
-      if (err && err.budget) break;
+      partial = true;   // this player keeps the previous entries; out of budget: the next ones may still fit (memoized calls)
       continue;
     }
     refreshed.add(p.who);

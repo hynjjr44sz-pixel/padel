@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import worker, { tick } from "../src/index.js";
 import { makeSubscription, makeVapid } from "./helpers.mjs";
+import { b64u } from "../src/webpush.js";
 
 const F = n => readFileSync(new URL("./fixtures/" + n, import.meta.url), "utf8");
 const EV = [{ who: "thea", me: "Thea Holmberg Löving", cls: "Damer C", classId: 164681,
@@ -147,4 +148,56 @@ test("events.js: windows valid, offsets match Europe/Stockholm (CEST/CET) at tha
   assert.deepEqual(activeEvents(new Date("2026-09-27T05:59:59Z")).map(e => e.cls), []);        // 07:59:59 CEST
   assert.deepEqual(activeEvents(new Date("2026-09-27T06:00:00Z")).map(e => e.cls), ["Damer C"]);  // 08:00 CEST
   assert.deepEqual(activeEvents(new Date("2026-10-11T21:00:01Z")).map(e => e.cls), []);        // 23:00:01 CEST
+});
+
+test("a p256dh that is not on the curve is refused; a stored one is dropped at the first push, the others still get theirs", async () => {
+  const v = await makeVapid(), PUSH = kv();
+  const env = { PUSH, ...v, VAPID_SUBJECT: "https://padel.holmberg.st", ORIGIN: "https://padel.holmberg.st", NOW: "2026-09-27T12:00:00+02:00" };
+  const a = await makeSubscription("https://fcm.googleapis.com/fcm/send/a"), bad = await makeSubscription("https://fcm.googleapis.com/fcm/send/bad");
+  const off = new Uint8Array(65); off[0] = 4; off[1] = 1;
+  bad.sub.keys.p256dh = b64u.enc(off);
+  assert.equal((await subscribe(env, bad.sub)).status, 400, "not on the curve");
+  assert.equal((await subscribe(env, a.sub)).status, 200);
+  PUSH.m.set("sub:poisoned", JSON.stringify({ sub: bad.sub, prefs: { follow: [1675246] } }));   // stored before the check existed
+  const state = { fixture: "dc_1031.json", rankedin: 0, status: {} }, pushes = net(state);
+  await tick(env, EV);
+  state.fixture = "dc_1112.json";
+  const r = await tick(env, EV);
+  assert.deepEqual([r.sent, r.removed], [1, 1]);
+  assert.ok(!PUSH.m.has("sub:poisoned"));
+  assert.deepEqual(pushes.map(p => p.url), [a.sub.endpoint]);
+});
+
+test("schedule: nights, days without the class's matches, no draw yet, finished classes", async () => {
+  const PUSH = kv(), state = { fixture: "dc_1031.json", rankedin: 0, status: {} };
+  net(state);
+  const WEEKEND = [{ key: "t164681-thea", kind: "tournament", who: "thea", me: "Thea Holmberg Löving", pid: 1675246, classId: 164681, cls: "Damer C",
+    draws: [[0, 0]], windowFrom: "2026-09-26T07:00:00+02:00", windowTo: "2026-09-28T23:00:00+02:00" }];
+  const at = async (when, evs = WEEKEND) => { const n = state.rankedin; await tick({ PUSH, NOW: when }, evs); return state.rankedin - n; };
+  assert.equal(await at("2026-09-27T02:00:00+02:00"), 0, "night inside a multi-day window");
+  assert.equal(await at("2026-09-27T12:03:00+02:00"), 1, "first look (draw known)");
+  assert.equal(await at("2026-09-27T12:04:00+02:00"), 1, "matches of the day on: every minute");
+  assert.equal(await at("2026-09-28T12:03:00+02:00"), 0, "the class has no matches today: every 10 min");
+  assert.equal(await at("2026-09-28T12:10:00+02:00"), 1);
+  // No draw seen yet (discovery: not published): every 10 min, drawChecks watches the publication
+  const NODRAW = [{ ...WEEKEND[0], key: "t999-thea", classId: 999, draws: null }];
+  assert.equal(await at("2026-09-27T12:03:00+02:00", NODRAW), 0);
+  assert.equal(await at("2026-09-27T12:10:00+02:00", NODRAW), 2);
+  // Finished: every 10 min for 2 hours, then nothing
+  state.fixture = "dc_final.json";
+  assert.equal(await at("2026-09-27T16:00:00+02:00"), 1);
+  assert.ok(JSON.parse(PUSH.m.get("st:164681"))._doneAt);
+  assert.equal(await at("2026-09-27T16:05:00+02:00"), 0);
+  assert.equal(await at("2026-09-27T17:50:00+02:00"), 1);
+  assert.equal(await at("2026-09-27T18:10:00+02:00"), 0, "done for more than 2 h");
+});
+
+test("a playoff stage published during the event (pub:<classId>) is polled and keeps a groups class open", async () => {
+  const PUSH = kv(), state = { fixture: "dc_1031.json", rankedin: 0, status: {} }, seen = [];
+  net(state);
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url, init) => { seen.push(String(url)); return orig(url, init); };
+  PUSH.m.set("pub:164681", "[[0,0],[1,0]]");
+  await tick({ PUSH, NOW: "2026-09-27T12:00:00+02:00" }, [{ ...EV[0], format: "groups" }]);
+  assert.equal(seen.filter(u => u.includes("drawStage=1")).length, 1);
 });

@@ -2,6 +2,8 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
+<!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-PiDSE6lETnoHMNmx1I6CgLbsz1Jb/KAY9czBayZQ+p8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -19,7 +21,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Instrument+Sans:wght@400;500;600;700&family=Chivo+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://padel-push.holmberg-padel.workers.dev" crossorigin>
+<!-- media="print": not render- or script-blocking; the script switches it to "all" at once (display=swap) -->
+<link id="fonts" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Instrument+Sans:wght@400;500;600;700&family=Chivo+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print">
 <style>
   :root{
     --bg:#EDF0F5;
@@ -844,6 +848,10 @@
   // Web Push server (Cloudflare Worker in worker/). Empty = only local notiser while the app is open.
   // worker/deploy.sh fills this in.
   var PUSH_API = "https://padel-push.holmberg-padel.workers.dev";
+  try { var fonts = document.getElementById("fonts"); if (fonts) fonts.media = "all"; } catch (e){}
+  // GET /events starts now, next to players.json (loadEvents takes this request the first time).
+  var EARLY_EVENTS = null;
+  try { if (PUSH_API && window.fetch){ EARLY_EVENTS = fetch(PUSH_API + "/events", {credentials:"omit"}); EARLY_EVENTS.catch(function(){}); } } catch (e){ EARLY_EVENTS = null; }
 
   /* ================= helpers ================= */
   // Shared constants (also used before the discovery code further down runs)
@@ -865,7 +873,8 @@
     catch (e){ return false; }
   }
 
-  // Opponents' photos that read as a face at avatar size (club players: players.json; others get initials)
+  // Opponents' photos that read as a face at avatar size (club players: players.json; others get initials).
+  // pos: the crop of img/av/<slug>.jpg (python3 worker/avatars.py img/<slug>.jpg <pos>)
   var PHOTOS = {
     "anna-karin-andersson":{}, "carla-lundstrom":{}, "cathrin-sjogren":{}, "hanna-wallerman":{},
     "jenny-karlsson":{}, "linda-jakobsson":{}, "malin-lundberg-aguilera":{}, "marina-bradbury":{pos:"50% 45%"},
@@ -875,9 +884,10 @@
   function initials(n){ var p = n.split(/\s+/); return (p[0][0] + (p.length > 1 ? p[p.length-1][0] : "")).toUpperCase(); }
   function avatar(n){
     var s = slug(n), me = BYNAME[s], ph = PHOTOS[s];
-    if (me) return me.avatar ? '<span class="av" title="' + esc(n) + '"><img src="' + esc(me.avatar) + '" alt="" loading="lazy" style="object-position:50% 30%"></span>' :
+    if (me) return me.avatar ? '<span class="av" title="' + esc(n) + '"><img src="' + esc(me.avatar) + '" alt="" loading="lazy" decoding="async" width="36" height="36" style="object-position:50% 30%"></span>' :
       '<span class="av ini" title="' + esc(n) + '" aria-hidden="true">' + esc(initials(n)) + '</span>';
-    if (ph) return '<span class="av" title="' + esc(n) + '"><img src="img/' + (ph.src || s) + '.jpg" alt="" loading="lazy" style="object-position:' + (ph.pos || "50% 30%") + '"></span>';
+    // img/av/: 150 px squares already cropped at pos (worker/avatars.py)
+    if (ph) return '<span class="av" title="' + esc(n) + '"><img src="img/av/' + (ph.src || s) + '.jpg" alt="" loading="lazy" decoding="async" width="36" height="36"></span>';
     return '<span class="av ini" title="' + esc(n) + '" aria-hidden="true">' + esc(initials(n)) + '</span>';
   }
   function avatars(pair, size){ return '<span class="avs ' + (size || "") + '">' + pair.n.map(avatar).join("") + '</span>'; }
@@ -1121,6 +1131,7 @@
 
   var REG = null;
   function onResize(fn){ window.addEventListener("resize", fn); if (REG) REG.push(fn); }
+  function dropResize(host){ if (host && host._rs){ host._rs.forEach(function(fn){ window.removeEventListener("resize", fn); }); host._rs = []; } }
   function renderEvent(ev, host, nextMatch, who, sel){
     sel = sel && sel < ev.draws.length ? sel : 0;
     REG = host._rs = [];
@@ -1357,6 +1368,7 @@
   function ordinal(n){ return n + (n === 1 || n === 2 ? ":a" : ":e"); }
   function renderTourBox(who, r, det, box){
     var ev = det.ev, st = tourState(ev), W = WHO[who], sm = det.sum;
+    wantSkills(Object.keys(ev.pairs).map(function(x){ return ev.pairs[x]; }));   // only for a draw on screen
     var place = det.place ? (det.place === 1 ? "<b>Vinnare</b>" : "Placering <b>" + esc(ordinal(det.place)) + "</b>") : "Resultat <b>" + esc(sm.label) + "</b>";
     var h = '<div class="tx-top"><span>' + place + (det.pts != null ? " · <b>" + esc(String(det.pts)) + "</b> poäng" : "") + " · " + sm.w + "–" + sm.l + ' i matcher</span>' +
       '<a href="' + esc(r.u || RI_WEB) + '" target="_blank" rel="noopener">RankedIn ↗︎</a></div>';
@@ -1591,12 +1603,21 @@
   /* ---- RankedIn ---- */
   function drawPath(cid, st, sg){ return "/tournament/GetDrawsForStageAndStrengthAsync?tournamentClassId=" + cid + "&drawStrength=" + (sg || 0) + "&drawStage=" + st + "&isReadonly=true&language=en"; }
   function rubbersPath(id){ return "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=" + id + "&language=en"; }
+  // The same path within 30 s (two followed players in one class, the page and a watch, history and the fallback):
+  // one request. A failed one is forgotten at once.
+  var RIMEM = {};
   function riGet(path, ms){
-    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var c = RIMEM[path], t = Date.now();
+    if (c && t - c.t < 30000) return c.p;
+    var ctl = typeof AbortController === "function" ? new AbortController() : null, p;
     try {
-      return withTimeout(fetch(RI_API + path, {cache:"no-store", credentials:"omit", signal:ctl ? ctl.signal : undefined})
+      p = withTimeout(fetch(RI_API + path, {cache:"no-store", credentials:"omit", signal:ctl ? ctl.signal : undefined})
         .then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), ms || LIVE_TIMEOUT, ctl);
     } catch (e){ return Promise.reject(e); }
+    Object.keys(RIMEM).forEach(function(k){ if (t - RIMEM[k].t >= 30000) delete RIMEM[k]; });
+    RIMEM[path] = {t:t, p:p};
+    p.catch(function(){ if (RIMEM[path] && RIMEM[path].p === p) delete RIMEM[path]; });
+    return p;
   }
   function ratingFor(cls){
     cls = String(cls || "");
@@ -1613,20 +1634,20 @@
       .replace(/\s+(powered|pwr) by.*$/i, "").replace(/\s+/g, " ").trim() || n;
   }
 
-  /* ---- skill for any player: SPF rating by player id (WD 65, MD 64, XD 66), cached 20 min ---- */
-  var SKV_KEY = "padel-skill-v2", SKT = {}, skWant = {}, skTimer = null;
+  /* ---- skill for any player: SPF rating by player id (WD 65, MD 64, XD 66), cached 2 h (kept 7 days) ---- */
+  var SKV_KEY = "padel-skill-v2", SKT = {}, skWant = {}, skBusy = {}, skTimer = null, SK_TTL = 2 * HOUR;
   (function(){ var c = store.json(SKV_KEY); if (c && c.v){ for (var k in c.v) SKV[k] = c.v[k]; SKT = c.t || {}; } })();
   function wantSkills(pairs){
     pairs.forEach(function(p){
       if (!p || !p.ids || !p.rid) return;
-      p.ids.forEach(function(id){ if (id && !(SKT[id] && Date.now() - SKT[id] < 20 * 60000 && SKV[id + ":" + p.rid] != null)) skWant[id] = true; });
+      p.ids.forEach(function(id){ if (id && !skBusy[id] && !(SKT[id] && Date.now() - SKT[id] < SK_TTL && SKV[id + ":" + p.rid] != null)) skWant[id] = true; });
     });
     if (!skTimer && Object.keys(skWant).length) skTimer = setTimeout(fetchSkills, 400);
   }
   function fetchSkills(){
     skTimer = null;
     var ids = Object.keys(skWant).slice(0, 40), changed = false, left = ids.length;
-    ids.forEach(function(id){ delete skWant[id]; });
+    ids.forEach(function(id){ delete skWant[id]; skBusy[id] = 1; });
     if (!left || !window.fetch) return;
     function one(){
       var id = ids.shift();
@@ -1636,9 +1657,13 @@
           if ([64, 65, 66].indexOf(r.RatingId) >= 0 && typeof r.RatingValue === "number" && SKV[id + ":" + r.RatingId] !== r.RatingValue){ SKV[id + ":" + r.RatingId] = r.RatingValue; changed = true; }
         });
       }).catch(function(){}).then(function(){
-        SKT[id] = Date.now();   // also after an error: next try in 20 min
+        SKT[id] = Date.now();   // also after an error: next try in 2 h
+        delete skBusy[id];
         if (--left > 0) return one();
-        store.set(SKV_KEY, JSON.stringify({v:SKV, t:SKT}));
+        var old = Date.now() - 7 * 864e5, sv = {}, st = {};   // players not looked up for a week leave the stored copy
+        Object.keys(SKT).forEach(function(k){ if (SKT[k] >= old) st[k] = SKT[k]; });
+        Object.keys(SKV).forEach(function(k){ if (st[k.split(":")[0]]) sv[k] = SKV[k]; });
+        store.set(SKV_KEY, JSON.stringify({v:sv, t:st}));
         if (changed) Object.keys(DYN).forEach(function(w){ if (DYN[w]) try { dynRender(DYN[w]); } catch (e){} });
         if (Object.keys(skWant).length) skTimer = setTimeout(fetchSkills, 400);
       });
@@ -2006,7 +2031,6 @@
     var m = TD_MEM[k] || (CACHE_OFF ? null : store.json(TD_PRE + k));
     function done(rec){
       var e = {cls:row.c, me:W.me, pid:W.pid, rating:ratingFor(row.c)}, ev = buildTour(e, rec.datas);
-      wantSkills(Object.keys(ev.pairs).map(function(x){ return ev.pairs[x]; }));
       var st = tourState(ev), sum = tourSummary(ev, st, rec.res);
       return {ev:ev, st:st, sum:sum, place:rec.res && rec.res.place || null, pts:rec.res ? rec.res.pts : null};
     }
@@ -2313,12 +2337,15 @@
   function renderTourDraw(D, ev, st){
     var host = D.el.draw, W = WHO[D.who], x = st.next || st.last;
     if (!ev.draws.length){
+      dropResize(host); host._model = null;
       host.innerHTML = '<p class="empty">Lottningen är inte publicerad än. Den dyker upp här när arrangören lägger ut den.</p>';
       return;
     }
-    var nm = st.next && st.next.mt, sel = 0;
+    var nm = st.next && st.next.mt, sel = 0, has = !!host.querySelector(".seg");
+    if (has && host._model === ev) return;   // same model (the 30 s refresh): the draw on screen is current
+    host._model = ev;
     if (x) sel = x.di;
-    if (!host.querySelector(".seg")){ host.innerHTML = ""; renderEvent(ev, host, nm, W.name, sel); }
+    if (!has){ dropResize(host); host.innerHTML = ""; renderEvent(ev, host, nm, W.name, sel); }
     else rerenderEvent(ev, host, nm, W.name);
   }
   function dynRouteHtml(ev, st){
@@ -2397,17 +2424,21 @@
     tlTableInto(D.el.draw, e);
   }
   /* ---- team league: division table (RankedIn pools -> standings), own team highlighted ---- */
-  var TBL = {};
+  // Kept 6 h (10 min on a play day) in memory and in localStorage: standings change after a play day.
+  var TBL = {}, TBL_PRE = "padel.tbl.";
   function tlNorm(x){ return String(x || "").toLowerCase().replace(/[\s\u2013\u2014-]+/g, " ").trim(); }
   function tlTable(e){
-    var lid = e.leagueId || e.id, k = lid + ":" + e.division, c = TBL[k];
-    if (c && Date.now() - c.t < 10 * 60000) return c.p;
+    var lid = e.leagueId || e.id, k = lid + ":" + e.division, c = TBL[k], ttl = inWin(e) ? 10 * 60000 : 6 * HOUR;
+    if (c && Date.now() - c.t < ttl) return c.p;
+    var sv = CACHE_OFF ? null : store.json(TBL_PRE + k);
+    if (sv && sv.rows && Date.now() - sv.t < ttl){ TBL[k] = {t:sv.t, p:Promise.resolve({pool:sv.pool, rows:sv.rows})}; return TBL[k].p; }
     var p = riGet("/teamleague/GetPoolsInfoAsync?id=" + lid + "&language=en").then(function(x){
       var want = tlNorm(e.division), pool = ((x && x.pools) || []).filter(function(pl){ var n = tlNorm(pl.name); return want && (n === want || n.slice(-want.length - 3).indexOf(" " + want) >= 0 || n.lastIndexOf(want) === n.length - want.length); })[0];
       if (!pool) throw new Error("pool");
       return riGet("/teamleague/GetTeamStandingsAsync?poolId=" + pool.id + "&language=en").then(function(y){ return {pool:pool, rows:(y && y.scoresViewModels) || []}; });
     });
     TBL[k] = {t:Date.now(), p:p};
+    p.then(function(d){ if (!CACHE_OFF) store.set(TBL_PRE + k, JSON.stringify({t:Date.now(), pool:{id:d.pool.id, name:d.pool.name}, rows:d.rows})); }, function(){});
     p.catch(function(){ delete TBL[k]; });
     return p;
   }
@@ -2443,7 +2474,7 @@
     if (D.mode === "between") renderBetween(D);
     else if (D.e.kind === "teamleague") renderDynTL(D); else renderDynTour(D);
   }
-  function dynBuild(D){ if (!D.e) return; D.model = D.e.kind === "teamleague" ? buildTL(D.e, D.datas) : buildTour(D.e, D.datas); }
+  function dynBuild(D){ if (!D.e) return; D.eSig = JSON.stringify(D.e); D.model = D.e.kind === "teamleague" ? buildTL(D.e, D.datas) : buildTour(D.e, D.datas); }
 
   /* ---- "Senaste resultat": the last finished matches in the class, under the live bar ---- */
   function recentHtml(who, items){
@@ -2672,12 +2703,35 @@
       showNote(o.id, o.title, o.body, (o.url || "./#" + D.who).slice(2), o.tag);
     });
   }
-  function dynCacheKey(D){ return "padel.dyn." + D.e.key; }
+  // Last live data per class / tie (shared by every club player in it; tournaments pruned to what the model reads):
+  // at most 6, gone 2 days after the event, written only when the data changed.
+  var DYN_IDX = "padel.dyn.idx", DYN_SAVED = {};
+  function dynCacheKey(D){ var e = D.e; return "padel.dyn." + (e.kind === "teamleague" ? "l" + (e.ties || []).map(function(x){ return x.id; }).join("-") : "c" + e.classId); }
+  function dynSave(D, datas){
+    if (CACHE_OFF) return;
+    var k = dynCacheKey(D), v = D.e.kind === "teamleague" ? datas : prune(datas), sv = JSON.stringify(v), keep = {};
+    if (DYN_SAVED[k] === sv) return;
+    var idx = (store.json(DYN_IDX) || []).filter(function(x){ return x && x.k && x.k !== k && now() - new Date(x.to) < 2 * 864e5; });
+    idx.push({k:k, to:D.e.windowTo});
+    while (idx.length > 6) idx.shift();
+    idx.forEach(function(x){ keep[x.k] = 1; });
+    try {   // everything else goes, the old per-player copies too
+      for (var i = localStorage.length - 1; i >= 0; i--){ var lk = localStorage.key(i); if (lk && lk.indexOf("padel.dyn.") === 0 && lk !== DYN_IDX && !keep[lk]) localStorage.removeItem(lk); }
+    } catch (e){}
+    store.set(k, JSON.stringify({at:new Date().toISOString(), datas:v}));
+    store.set(DYN_IDX, JSON.stringify(idx));
+    DYN_SAVED[k] = sv;
+  }
   function dynPoll(D){
     clearTimeout(D.timer); D.timer = null;
     if (D.dead || !D.e) return;
     var live = inWin(D.e);
-    if (!live){ setBar(D, "off"); if (D.okAt && Date.now() - D.fetchedAt < 30 * 60000) return; }
+    if (!live){   // between events: the next one's draw / lineups, every 30 min within 48 h of it, else every 6 h
+      setBar(D, "off");
+      var last = D.fetchedAt || (D.cachedAt ? +D.cachedAt : 0), soon = new Date(D.e.windowFrom) - now() < 48 * HOUR;
+      if (D.e.kind === "tournament" && !(D.e.draws && D.e.draws.length)) return;   // no draw published yet: nothing to fetch
+      if (last && Date.now() - last < (soon ? 30 * 60000 : 6 * HOUR)) return;
+    }
     if (D.busy || (document.visibilityState === "hidden" && !(live && dynLocal(D)))) return;
     D.busy = true;
     if (live && !D.okAt && !D.failed) setBar(D, "wait");
@@ -2689,14 +2743,14 @@
         (D.model.mainIdx < 0 || D.model.flat.some(function(m){ return m.kind === "ko" && m.di === 0 && m.r === m.R - 1; }))) DONE[D.e.classId] = true;
       dynRender(D);
       if (live) setBar(D, "ok");
-      if (!CACHE_OFF) store.set(dynCacheKey(D), JSON.stringify({at:new Date().toISOString(), datas:datas}));
+      dynSave(D, datas);
       var snap = dynSnap(D);
       // First successful fetch = baseline: results already there never notify (same as the worker)
       if (D.snap && live){ try { dynNotify(D, D.snap); } catch (e){ if (window.console) console.warn("Notis misslyckades:", e && e.message); } }
       D.snap = snap;
       if (D.e.kind === "tournament") try { pubSeen(D.e, D.model.flat.length > 0, D.model.flat); } catch (e){}
     }).catch(function(err){
-      D.failed = true;
+      D.failed = true; D.fetchedAt = Date.now();   // between events: the next try after the same pause
       if (live) setBar(D, "err");
       if (window.console) console.warn("Hämtning misslyckades:", err && err.message);
     }).then(function(){ D.busy = false; D.lastPoll = Date.now(); dynSchedule(D); });
@@ -2740,12 +2794,12 @@
     if (!box || !pk) return;
     if (D && D.key === pk.key){
       D.e = e; D.recent = pk.recent || null;
-      if (D.datas) dynBuild(D);
+      if (D.datas && JSON.stringify(e) !== D.eSig) dynBuild(D);   // new data rebuilds in dynPoll
       dynRender(D);
       if (e && !D.busy && !D.timer) dynPoll(D);
       return;
     }
-    if (D){ D.dead = true; clearTimeout(D.timer); }
+    if (D){ D.dead = true; clearTimeout(D.timer); dropResize(D.el.draw); }
     D = DYN[who] = {who:who, e:e || null, mode:pk.mode, recent:pk.recent || null, key:pk.key, box:box, el:{}};
     box.innerHTML = dynShell(who);
     [].forEach.call(box.querySelectorAll("[data-r]"), function(x){ D.el[x.getAttribute("data-r")] = x; });
@@ -2753,7 +2807,7 @@
     box.hidden = false;
     if (e){
       var c = CACHE_OFF ? null : store.json(dynCacheKey(D));
-      if (c && Array.isArray(c.datas)){ D.datas = c.datas; D.cachedAt = new Date(c.at); }
+      if (c && Array.isArray(c.datas)){ D.datas = c.datas; D.cachedAt = new Date(c.at); DYN_SAVED[dynCacheKey(D)] = JSON.stringify(c.datas); }
       try { dynBuild(D); } catch (err){ D.datas = null; dynBuild(D); }
     }
     dynRender(D);
@@ -2915,12 +2969,14 @@
       applyDisc(d);
     }).catch(function(err){ warn("Tävlingar från RankedIn", err); });
   }
-  var discBusy = false;
+  var discBusy = false, eventsAt = 0;
   function loadEvents(){
     if (discBusy) return;
-    discBusy = true;
+    discBusy = true; eventsAt = Date.now();
     var cached = store.json(EV_KEY);
-    var fromWorker = PUSH_API ? withTimeout(fetch(PUSH_API + "/events", {credentials:"omit"}).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), 8000)
+    var req = EARLY_EVENTS || (PUSH_API ? fetch(PUSH_API + "/events", {credentials:"omit"}) : null);
+    EARLY_EVENTS = null;
+    var fromWorker = req ? withTimeout(req.then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), 8000)
       : Promise.reject(new Error("no worker"));
     fromWorker.then(function(b){
       if (!b || !b.at || !Array.isArray(b.events)) throw new Error("no discovery yet");
@@ -3227,8 +3283,10 @@
       '<section aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">Kommande</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div></section>' +
       '<section aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">Bra att veta</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>';
   }
+  var WATCHING = false;   // panel built by ensureWatch (hidden): its photo waits until the page is shown
   function heroMedia(P){
-    if (P.img) return '<img src="' + esc(P.img) + '" width="' + (P.imgW || 800) + '" height="' + (P.imgH || 1000) + '" alt="' + esc(P.o.alt || P.name) + '">';
+    if (P.img) return '<img src="' + esc(P.img) + '" width="' + (P.imgW || 800) + '" height="' + (P.imgH || 1000) + '" alt="' + esc(P.o.alt || P.name) + '"' +
+      (WATCHING ? ' loading="lazy"' : ' fetchpriority="high"') + '>';
     return '<div class="ini-big" aria-hidden="true">' + esc(initials(P.name)) + '</div>';
   }
   function panel(P){
@@ -3259,11 +3317,12 @@
     if (!DISC) return;
     followedPlayers().forEach(function(P){
       if (!watchWanted(P) || DYN[P.key]) return;
-      panel(P);
+      WATCHING = true;
+      try { panel(P); } finally { WATCHING = false; }
       try { setMode(P.key, pickHero(P.key)); } catch (e){}
     });
   }
-  function stopDyn(who){ var D = DYN[who]; if (D){ D.dead = true; clearTimeout(D.timer); DYN[who] = null; } }
+  function stopDyn(who){ var D = DYN[who]; if (D){ D.dead = true; clearTimeout(D.timer); dropResize(D.el && D.el.draw); DYN[who] = null; } }
 
   /* ================= Utveckling: ranking, points, skill, form (per player, cached) ================= */
   // [now, previous]. Seeded from players.json; refreshed from RankedIn when the player page opens.
@@ -3456,14 +3515,17 @@
     HIST_BUSY[P.key] = true;
     var seeded = {};
     (TOURS[P.key] || []).forEach(function(r){ var m = /tournament\/(\d+)/.exec(r.u || ""); if (m) seeded[m[1]] = 1; });
+    // The worker's past events (and those seen on this device) already carry the class: no lookup for them.
+    try { pastEvents(P.key).forEach(function(e){ if (e.kind === "tournament" && e.tournamentId && e.classId) seeded[e.tournamentId] = 1; }); } catch (e){}
     riGet("/player/ParticipatedEventsAsync?playerId=" + P.pid + "&language=en&skip=0&take=100").then(function(pe){
       var t = now(), res = store.json(HRES_KEY) || {}, rows = [], todo = [];
       ((pe && pe.Payload) || []).filter(function(e){ var s = riDate(e.StartDate); return e.Type === 4 && e.State === 4 && s && t - s < 365 * 864e5; })
         .sort(function(a, b){ return String(b.StartDate).localeCompare(String(a.StartDate)); }).slice(0, 8).forEach(function(e){
           if (seeded[e.Id]) return;
-          var r = res[e.Id + ":" + P.pid];
+          // Not found: another look after a day while RankedIn may still post the result, then after 30 days.
+          var r = res[e.Id + ":" + P.pid], s = riDate(e.StartDate), wait = t - s > 14 * 864e5 ? 30 * 864e5 : 864e5;
           if (r && r.cid) rows.push(r);
-          else if (!(r && r.none && Date.now() - r.at < 864e5)) todo.push(e);
+          else if (!(r && r.none && Date.now() - r.at < wait)) todo.push(e);
         });
       HIST[P.key] = {t:Date.now(), rows:rows};
       function one(){
@@ -3758,12 +3820,20 @@
     try { var cachedDisc = store.json(EV_KEY); if (cachedDisc) applyDisc(cachedDisc); } catch (e){}
     handleHash();
     try { loadEvents(); } catch (e){}
-    setInterval(function(){ try { loadEvents(); } catch (e){} }, 30 * 60000);
+    setInterval(function(){ if (document.visibilityState !== "hidden") try { loadEvents(); } catch (e){} }, 30 * 60000);
+    document.addEventListener("visibilitychange", function(){
+      if (document.visibilityState !== "hidden" && Date.now() - eventsAt > 5 * 60000) try { loadEvents(); } catch (e){}
+    });
     // Re-pick the open player's event now and then (a window opens or closes) and keep the countdowns fresh.
+    // Hidden: only a change of event (a window opens: the watch starts polling), no redraws.
     setInterval(function(){
       if (!DISC) return;
-      if (VIEW.name === "home") try { renderNow(); } catch (e){}
-      Object.keys(PANELS).forEach(function(w){ if (!PANELS[w].hidden || DYN[w]) try { setMode(w, pickHero(w)); } catch (err){} });
+      var hidden = document.visibilityState === "hidden";
+      if (VIEW.name === "home" && !hidden) try { renderNow(); } catch (e){}
+      Object.keys(PANELS).forEach(function(w){
+        if (PANELS[w].hidden && !DYN[w]) return;
+        try { var pk = pickHero(w); if (!(hidden && DYN[w] && DYN[w].key === pk.key)) setMode(w, pk); } catch (err){}
+      });
       ensureWatch();
     }, 30000);
     // Keep this device's push subscription in sync (renewed, the server was redeployed, follows changed).
