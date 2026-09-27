@@ -134,6 +134,8 @@
   .glass.live{ background:var(--ball); color:var(--board); border-color:var(--ball); }
   .glass.live .dot{ background:var(--board); }
   .glass.done .dot{ background:var(--board-dim); }
+  .hero-top > .glass{ flex:none; }
+  .hero-top > a.glass{ display:block; flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; }
   .hero-bot{ position:absolute; left:16px; right:16px; bottom:14px; }
   .eyebrow{ font:600 11px/1.2 "Chivo Mono", monospace; letter-spacing:.14em; text-transform:uppercase; color:var(--board-dim); }
   .hero-bot .eyebrow{ color:var(--racket); }
@@ -673,7 +675,7 @@
   var THEA_EVENT = {
     cls:"Damer C", date:"2026-09-27", pairs:DC, format:"knockout", meName:"Thea Holmberg Löving",
     // Live results from RankedIn: polled while now() is inside the window and the tab is visible.
-    live:{tournamentId:66374, classId:164681, activeFrom:"2026-09-27T08:00:00+02:00", activeTo:"2026-09-27T20:00:00+02:00"},
+    live:{tournamentId:66374, classId:164681, activeFrom:"2026-09-27T08:00:00+02:00", activeTo:"2026-09-27T22:00:00+02:00"},
     draws:[
       {key:"main", label:"Lottning", places:1, rounds:[
         {label:"Omgång 1", short:"R1", matches:[
@@ -707,7 +709,7 @@
 
   var KIAN_EVENT = {
     cls:"Herrar C", date:"2026-09-26", pairs:HC, format:"knockout", meName:"Kian Borgström",
-    live:{tournamentId:66374, classId:164677, activeFrom:"2026-09-26T08:00:00+02:00", activeTo:"2026-09-26T20:00:00+02:00"},
+    live:{tournamentId:66374, classId:164677, activeFrom:"2026-09-26T08:00:00+02:00", activeTo:"2026-09-26T22:00:00+02:00"},
     draws:[
       {key:"main", label:"Lottning", places:1, rounds:[
         {label:"Omgång 1", short:"R1", matches:[
