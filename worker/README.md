@@ -1,7 +1,8 @@
 # padel-push
 
 Riktiga pushnotiser för padel.holmberg.st. En Cloudflare Worker (gratisplanen) kollar RankedIn varje minut
-medan en tävling pågår och skickar Web Push till alla som slagit på Notiser – även när appen är stängd.
+medan en tävling pågår och skickar Web Push till dem som följer spelaren och slagit på Notiser, även när
+appen är stängd.
 
 ## Första gången
 
@@ -21,24 +22,40 @@ medan en tävling pågår och skickar Web Push till alla som slagit på Notiser 
 Den privata nyckeln finns bara som hemlighet hos Cloudflare. Tappar du den: ta bort `vapid-public.txt`
 och kör skriptet igen (alla får då slå på Notiser på nytt).
 
+## Spelarna: players.json
+
+Truppen står i `players.json` i repots rot (en rad per spelare: `key` = adressen på sidan, `#thea`,
+`pid` = RankedIn-id, lag, bild). Sidan läser filen direkt. Workern får en kopia, `src/players.js`, som
+`node sync-players.mjs` skriver (körs av `npm test` och `deploy.sh`; ett test larmar om de glider isär).
+Ny spelare: lägg till en rad i `players.json`, kör testerna och deploya.
+
 ## Tävlingar hittas automatiskt
 
-Workern letar själv upp allt Thea och Kian anmäler sig till på RankedIn (`src/discover.js`):
-turneringar (klass, partner, lottning, gruppspel eller slutspel) och lagserier som SPL (lagets
-matcher, en post per speldag). Listan uppdateras en gång i timmen (minut 7) och sparas i KV under
-`disc`. Den skrivs bara om när något ändrats, eller var sjätte timme.
+Workern letar själv upp allt spelarna anmäler sig till på RankedIn (`src/discover.js`): turneringar
+(en post per spelare och klass: partner, lottning, gruppspel eller slutspel) och lagserier som SPL (en post
+per lag och speldag, med lagets spelare i `pids`). Var tionde minut (minut 7, 17, ...) kollas fyra spelare,
+i tur och ordning, så varje spelare kollas minst var 40:e-50:e minut. Max 35 anrop till RankedIn per körning
+(15 medan något pågår), och det som delas (turneringsinfo, lagets matcher) hämtas en gång per körning.
+Listan sparas i KV under `disc` och skrivs bara om när något ändrats, eller var sjätte timme.
 
-- `GET /events` ger listan (sidan läser den var 30:e minut).
-- Under speldagen (07:00–23:00 svensk tid, från första till sista dagen) kollas lottningen eller
-  lagmatchen varje minut. Nya resultat blir push till alla som slagit på Notiser.
-- Max 30 anrop till RankedIn per minut. Pågår flera tävlingar samtidigt turas de om.
+- `GET /events` ger listan (sidan läser den var 30:e minut), `past` (tävlingar som tagit slut de senaste
+  60 dagarna), `latest` (senaste resultaten för klubbens spelare) och `live` (per spelare: nästa match eller
+  hur dagen slutade). `latest` och `live` kommer från bevakningen nedan och kostar inga extra KV-skrivningar.
+- Under speldagen (07:00–23:00 svensk tid) kollas varje klass och lagmatch varje minut, en gång för alla
+  klubbens spelare i den. Max 30 anrop till RankedIn per minut. Pågår mer samtidigt turas de om.
 - Lottning: en gång i timmen (minut 37) kollas varje turneringsklass som börjar inom 7 dagar. När lottningen
   dyker upp kommer en notis ("Lottningen klar: ..."). KV `pub:<klass>` = "0"/"1", skrivs bara vid ändring.
-  Första titten är utgångsläge (ingen notis).
-- Ny tid eller bana för Theas/Kians nästa match under speldagen ger en notis ("Ny tid: ...").
-- Notisernas länk går direkt till matchen: `./#thea/m<MatchId>`. Sidan byter flik och visar matchen.
-- `GET /events` har också `past`: tävlingar som tagit slut de senaste 60 dagarna.
+- Ny tid eller bana för spelarens nästa match under speldagen ger en notis ("Ny tid: ...").
+- Ranking: minut 52 varje timme, en fråga per spelare (max 20 per timme). Ny SPF-lista ger en notis.
+- Notisernas länk går direkt till matchen: `./#thea/m<MatchId>`.
 - Workern får bara exportera funktioner (workerd vägrar starta annars), se test i `features.test.mjs`.
+
+## Följa och notiser
+
+Sidan skickar `prefs: {follow: [pid, ...]}` med prenumerationen, och igen när man ändrar vilka man följer.
+Varje enhet får bara notiser om spelarna den följer: spelarens egna matcher, lottning, tider och ranking
+(aldrig lagkamraters eller andras matcher). Två följda spelare i samma match eller lagmatch ger en notis,
+inte två. Gamla prenumerationer med `{thea, kian}` betyder Thea (1675246) och Kian (1680004).
 
 `src/events.js` finns kvar som reserv: en rad där läggs till i listan (samma klass + spelare vinner
 det som hittats automatiskt). Normalt behöver du inte röra den.
@@ -48,6 +65,9 @@ det som hittats automatiskt). Normalt behöver du inte röra den.
 ```sh
 cd worker
 npm install
-npm test                 # kryptering (RFC 8291/8292), notistexter, KV-logik, automatisk sökning, lagserier
-E2E_PORT=18951 node test/e2e-dev.mjs    # wrangler dev lokalt: prenumerera, kör cron, ta emot och dekryptera en push
+npm test                 # kryptering (RFC 8291/8292), notistexter, KV-logik, automatisk sökning, lagserier, följa
+E2E_PORT=19011 node test/e2e-dev.mjs    # wrangler dev lokalt: prenumerera, kör cron, ta emot och dekryptera en push
+# sidan i Chromium (Playwright), RankedIn och workern mockade:
+(cd .. && python3 -m http.server 19021 --bind 127.0.0.1) &
+NODE_PATH=$(npm root -g) node test/page-e2e.mjs
 ```

@@ -120,7 +120,14 @@ export function tieSummary(ev, tie, rubbers) {
     if (r.w) {
       const lose = r.w === "a" ? "b" : "a";
       res.push({ mid: r.id, lab, d: r.date || "", win: short(r[r.w]), lose: r[lose] ? short(r[lose]) : "", s: sideScore(r, r.w), pids, won: r.w === us ? pids : [], who });
-    } else pids.forEach(pid => { nx[pid] = { st: "next", mid: r.id, lab, t: tie.time || "", opp: r[them] ? short(r[them]) : null, vs: tie.opp, who }; });
+      pids.forEach(pid => { if (!nx[pid] || nx[pid].st === "done") nx[pid] = { st: "done", won: r.w === us, lab, who }; });
+    }
+  });
+  rubbers.forEach(r => {   // a match still to play wins over one already played
+    if (r.w) return;
+    const pids = pidsOf(r[us]);
+    pids.forEach(pid => { nx[pid] = { st: "next", mid: r.id, lab: "Match " + r.k + (r.kind ? " · " + r.kind : ""), t: tie.time || "", opp: r[them] ? short(r[them]) : null, vs: tie.opp,
+      who: (roster.find(p => p.pid === pid) || roster[0]).who }; });
   });
   return { res: res.reverse().slice(0, 4), nx, sc: W + "–" + L, opp: tie.opp };
 }
