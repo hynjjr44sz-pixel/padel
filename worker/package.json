@@ -3,8 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "pretest": "node sync-players.mjs",
     "test": "node --test test/*.test.mjs",
-    "dev": "wrangler dev --test-scheduled"
+    "dev": "node sync-players.mjs && wrangler dev --test-scheduled"
   },
   "devDependencies": {
     "wrangler": "4.141.0"
