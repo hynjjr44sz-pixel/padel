@@ -3,7 +3,7 @@
 // the player(s) concerned. Events come from discover.js (every event the club's players in players.json
 // enter on RankedIn, a few players per run) merged with events.js.
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
-import { parse, snapshot, notes, drawNote, summary } from "./rankedin.js";
+import { parse, snapshot, notes, drawNote, summary, classResult, flip } from "./rankedin.js";
 import { discover, drawPath, rubbersPath, namesPath, drawsOf, API, PLAYERS, BY_PID, LEGACY } from "./discover.js";
 import { parseTie, snapshotTie, tieNotes, tieSummary } from "./teamleague.js";
 import { b64u, vapidKey, send } from "./webpush.js";
@@ -61,8 +61,9 @@ async function handle(req, env) {
     const events = merge(rec ? rec.events : []).filter(e => new Date(e.windowTo) > +t - 36 * 3600e3);
     // past: events that ended in the last 60 days (for "Senaste tävlingar" and the result hero)
     // latest/live: from the live monitoring (home view: "Senaste resultat", "Spelar nu")
-    const past = (rec && rec.past) || [], lv = await liveView(env, t, events.concat(past));
-    return json({ at: rec ? rec.at : null, src: "worker", events, past, latest: lv.latest, live: lv.live }, 200, { ...h, "Cache-Control": "public, max-age=120" });
+    // wins: club players who won a class (place 1) or lost its final (place 2) in the last 30 days ("Veckans vinnare")
+    const past = (rec && rec.past) || [], lv = await liveView(env, t, events.concat(past)), wins = recentWins(await loadWins(env), t);
+    return json({ at: rec ? rec.at : null, src: "worker", events, past, latest: lv.latest, live: lv.live, wins }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
   if (route === "POST /subscribe") {
     let b;
@@ -97,8 +98,8 @@ const now = env => env.NOW ? new Date(env.NOW) : new Date();   // NOW: local tes
 const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45;
 
 /* ---- discovered events: KV "disc" = {at, events, ended, partial}. Read at most every 5 min per isolate. ---- */
-let MEM = { rec: undefined, readAt: 0, tryAt: 0 };
-export function _resetMemory() { MEM = { rec: undefined, readAt: 0, tryAt: 0 }; LV = { at: 0, v: null }; }
+let MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 };
+export function _resetMemory() { MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 }; LV = { at: 0, v: null }; }
 async function loadRecord(env) {
   if (MEM.rec !== undefined && Date.now() - MEM.readAt < 5 * 60e3) return MEM.rec;
   let rec = null;
@@ -287,6 +288,70 @@ function mergeForDevice(list) {
 }
 export function _internals() { return { dedupe, mergeForDevice, pidsOfEv, teamRoster }; }
 
+/* ---- class winners ("Veckans vinnare"): KV "wins" = {at, list}, written only when an entry is added or corrected ---- */
+// Entry per class and place: 1 = a roster player's pair won the class, 2 = lost the final. Kept 30 days (max 40).
+// {id: "<classId>:<place>", place, classId, tournamentId, name, cls, url, date (last match day), d, pids (roster players
+//  in the pair), pair (full names), opp (the other pair, short), s (score from the pair's side; group: wins–losses), rr?}
+const WINS_MINUTE = 44, WIN_KEEP = 30 * DAY;
+const winAge = (x, t) => +t - Date.parse(x.date + "T12:00:00Z");
+export function recentWins(list, t) { return (list || []).filter(x => x && x.date && winAge(x, t) < WIN_KEEP && winAge(x, t) > -DAY); }
+export function winEntries(ev, fin, t) {
+  if (!fin) return [];
+  const base = { classId: ev.classId, tournamentId: ev.tournamentId || null, name: ev.name || null, cls: ev.cls || "", url: ev.url || null,
+    date: String(fin.d || "").slice(0, 10) || dayOf(t), d: fin.d || "" };
+  const out = [];
+  if ((fin.w || []).length) out.push({ id: ev.classId + ":1", place: 1, ...base, pids: fin.w, pair: fin.win, opp: fin.opp || "", s: fin.s || "", ...(fin.rr ? { rr: 1 } : {}) });
+  if ((fin.l || []).length && !fin.rr) out.push({ id: ev.classId + ":2", place: 2, ...base, pids: fin.l, pair: fin.lose, opp: fin.wopp || "", s: flip(fin.s || "") });
+  return out;
+}
+// Class records written before "fin" existed: the final from the summary's latest results (the pairs' full names
+// from the class's events: the player and the partner).
+export function finFromSum(sm, evs) {
+  const r = ((sm && sm.res) || []).find(x => x && x.lab === "Final");
+  if (!r) return null;
+  const won = (r.won || []).map(Number), lost = (r.pids || []).map(Number).filter(p => !won.includes(p));
+  const pairOf = pids => { const e = evs.find(x => pids.includes(Number(x.pid)) || pids.includes(Number(x.partnerId))); return e ? [e.me, e.partner].filter(Boolean) : []; };
+  return { d: String(r.d || "").slice(0, 16), s: r.s || "", w: won, l: lost, win: pairOf(won), lose: pairOf(lost), wopp: r.win || "", opp: r.lose || "" };
+}
+async function loadWins(env) {
+  if (MEM.wins !== undefined && Date.now() - MEM.winsAt < 5 * 60e3 && !env.NOW) return MEM.wins;
+  let rec = null;
+  try { rec = JSON.parse((await env.PUSH.get("wins")) || "null"); } catch (e) { rec = null; }
+  MEM.wins = (rec && Array.isArray(rec.list)) ? rec.list : []; MEM.winsAt = Date.now();
+  return MEM.wins;
+}
+export async function addWins(env, t, entries, log) {
+  entries = recentWins(entries, t);
+  if (!entries.length) return 0;
+  let rec = null;
+  try { rec = JSON.parse((await env.PUSH.get("wins")) || "null"); } catch (e) { rec = null; }
+  const list = (rec && Array.isArray(rec.list)) ? rec.list : [], sig = x => JSON.stringify([x.s, x.pids, x.pair, x.opp, x.date, x.name]);
+  const fresh = entries.filter((e, i) => entries.findIndex(y => y.id === e.id) === i && !list.some(x => x.id === e.id && sig(x) === sig(e)));
+  if (!fresh.length) { MEM.wins = list; MEM.winsAt = Date.now(); return 0; }
+  const next = recentWins(list.filter(x => !fresh.some(e => e.id === x.id)).concat(fresh), t)
+    .sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)).slice(0, 40);
+  await env.PUSH.put("wins", JSON.stringify({ at: t.toISOString(), list: next }));
+  log.writes = (log.writes || 0) + 1; log.wins = (log.wins || 0) + fresh.length;
+  MEM.wins = next; MEM.winsAt = Date.now();
+  return fresh.length;
+}
+// Once an hour (minute 44): classes of the last 9 days whose KV record shows a decided final (e.g. a class that
+// ended before this code was deployed, or whose last look was missed). KV reads only; a write only for a new entry.
+export async function winsBackfill(env, t, list, log, max = 20) {
+  const by = new Map();
+  list.filter(e => e && e.kind === "tournament" && e.classId && new Date(e.windowFrom) <= t && +t - new Date(e.windowTo) < 9 * DAY)
+    .forEach(e => { const k = String(e.classId); if (!by.has(k)) by.set(k, []); by.get(k).push(e); });
+  const found = [];
+  for (const [cid, evs] of [...by].slice(0, max)) {
+    let st = null;
+    try { st = JSON.parse((await env.PUSH.get("st:" + cid)) || "null"); } catch (e) { st = null; }
+    const sm = st && st._sum;
+    if (!sm) continue;
+    found.push(...winEntries(evs[0], sm.fin || finFromSum(sm, evs), t));
+  }
+  return addWins(env, t, found, log);
+}
+
 /* ---- home view: latest results and who is playing now, from the units' KV records (read at most every minute) ---- */
 let LV = { at: 0, v: null };
 async function liveView(env, t, events) {
@@ -321,10 +386,10 @@ async function liveView(env, t, events) {
 // One cron tick. events: explicit list (tests); otherwise discovered + static. Returns what happened.
 export async function tick(env, events) {
   const t = now(env), budget = { left: SUBREQUESTS }, log = { writes: 0, sent: 0, removed: 0 };
-  let list;
+  let list, rec = null;
   if (events) list = events.map(normalize);
   else {
-    let rec = await loadRecord(env);
+    rec = await loadRecord(env);
     if (discoveryDue(rec, t)) {
       // While something is live, discovery leaves room for the live polling.
       const busy = rec && activeEvents(t, merge(rec.events)).length > 0;
@@ -339,6 +404,9 @@ export async function tick(env, events) {
   }
   if (!events && env.RANK_OFF !== "1" && mm === RANK_MINUTE) {   // RANK_OFF: local tests only
     try { pubMsgs.push(...await rankingChecks(env, t, budget, log)); } catch (e) { console.warn("ranking checks", e.message); }
+  }
+  if (mm === (env.WINS_MINUTE != null ? +env.WINS_MINUTE : WINS_MINUTE)) {   // WINS_MINUTE: local tests only
+    try { await winsBackfill(env, t, list.concat((rec && rec.past) || []), log); } catch (e) { console.warn("wins backfill", e.message); }
   }
   const evs = activeEvents(t, list);
   if (!evs.length && !pubMsgs.length) {
@@ -371,6 +439,7 @@ export async function tick(env, events) {
   const get = getter(env, budget);
   let msgs = pubMsgs.slice();
   let fetches = 0;
+  const wins = [];
   log.units = arr.length; log.polled = 0;
   for (let i = 0; i < arr.length; i++) {
     const u = arr[(start + i) % arr.length];
@@ -390,6 +459,9 @@ export async function tick(env, events) {
         // First look at an event is the baseline: results already there never notify (same as the page).
         if (prev) u.evs.forEach(ev => notes(ev, matches, prev).forEach(m => msgs.push({ pids: pidsOfEv(ev), m })));
         after._sum = summary(matches, ROSTER_BY_NAME);
+        // Class decided with a club player in the final: kept in the class record and added to "wins".
+        const fin = classResult(matches, ROSTER_BY_NAME, fmt);
+        if (fin && (fin.w.length || fin.l.length)) { after._sum.fin = fin; wins.push(...winEntries(u.evs[0], fin, t)); }
       } else {
         const rubbers = parseTie(await get(rubbersPath(u.tie.id)));
         if (!rubbers.length) continue;
@@ -404,6 +476,7 @@ export async function tick(env, events) {
     const next = JSON.stringify(after);
     if (JSON.stringify(prev) !== next) { await env.PUSH.put(u.key, next); log.writes++; }   // free KV: 1000 writes/day
   }
+  if (wins.length) try { await addWins(env, t, wins, log); } catch (e) { console.warn("wins", e.message); }
   msgs = dedupe(msgs);
   if (!msgs.length) return log;
   await fanOut(env, msgs, budget, log);

@@ -11,7 +11,7 @@ const SHORT = { "Suarez Jessica": "Suarez" };
 const surname = n => SHORT[n] || (n.split(" ").length > 1 ? n.split(" ").slice(1).join(" ") : n);
 export const short = p => p.n.map(surname).join(" / ");
 const firstNames = p => p.n.map(n => n.split(" ")[0]).join(" och ");
-const flip = s => s ? s.split(" ").map(x => /^\d+-\d+$/.test(x) ? x.split("-").reverse().join("-") : x).join(" ") : s;
+export const flip = s => s ? s.split(" ").map(x => /^\d+-\d+$/.test(x) ? x.split("-").reverse().join("-") : x).join(" ") : s;
 
 function cancelNote(mv) {
   const cs = String(mv.CancellationStatus || "").trim();
@@ -279,4 +279,31 @@ export function summary(matches, roster) {
     nx[x.pid] = { st: "next", mid: m.id, lab: lab(m), d: m.date || "", t: m.t || "", c: courtName(m.c), opp: op ? short(op) : null, who: x.who };
   })));
   return { res: res.reverse().slice(0, 4), nx };
+}
+
+// Winner (and finalist) of a class once it is decided: the main draw's final, or for a groups-only class
+// (fmt "groups", one group, every match played) the group winner. roster: Map(slug(name) -> {pid, who}).
+// -> {d: "2026-09-27T17:45", s: winner-side score (group: wins–losses), win/lose: [names], w/l: [pids], opp/wopp: short names
+//     of the losing/winning pair, rr: 1 for a group}
+// w/l: roster players in the winning/losing pair. null while undecided.
+export function classResult(matches, roster, fmt) {
+  const pidsOf = n => (n || []).map(x => roster.get(slug(x))).filter(Boolean).map(x => x.pid);
+  const last = matches.reduce((d, m) => (m.date || "") > d ? m.date : d, "").slice(0, 16);
+  const fin = matches.find(m => m.kind === "ko" && m.di === 0 && m.r === m.R - 1);
+  if (fin) {
+    if (!fin.w || !fin.a || !fin.b) return null;
+    const wp = fin[fin.w], lp = fin[fin.w === "a" ? "b" : "a"];
+    return { d: String(fin.date || "").slice(0, 16) || last, s: fin.s || fin.note || "", win: wp.n, lose: lp.n, w: pidsOf(wp.n), l: pidsOf(lp.n), opp: short(lp), wopp: short(wp) };
+  }
+  const pools = matches.pools || [];
+  if (fmt !== "groups" || pools.length !== 1 || !matches.length || matches.some(m => m.kind !== "rr" || !m.w)) return null;
+  let rows = pools[0].rows.slice().sort((x, y) => (x.standing || 99) - (y.standing || 99));
+  if (!rows.length || !rows[0].standing || rows.reduce((a, r) => a + r.wins + r.losses, 0) !== 2 * matches.length) {   // standings missing or stale
+    const t = {};
+    matches.forEach(m => ["a", "b"].forEach(sd => { if (!m[sd]) return; const r = t[m[sd].id] = t[m[sd].id] || { n: m[sd].n, wins: 0, losses: 0 }; if (m.w === sd) r.wins++; else r.losses++; }));
+    rows = Object.values(t).sort((x, y) => y.wins - x.wins);
+    if (rows.length > 1 && rows[0].wins === rows[1].wins) return null;   // tie on wins: leave it to RankedIn's standings
+  }
+  const top = rows[0];
+  return top ? { d: last, s: top.wins + "–" + top.losses, win: top.n, lose: [], w: pidsOf(top.n), l: [], opp: "", wopp: short(top), rr: 1 } : null;
 }
