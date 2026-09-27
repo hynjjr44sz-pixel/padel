@@ -219,6 +219,11 @@
   .seg button{ appearance:none; border:0; background:transparent; color:var(--dim); cursor:pointer; padding:7px 12px; border-radius:8px; font:600 13px/1.1 "Instrument Sans", sans-serif; white-space:nowrap; }
   .seg button[aria-pressed="true"]{ background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(6,13,34,.14); }
 
+  .bk-nav{ display:none; gap:6px; }
+  .bk-nav button{ width:34px; height:30px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 15px/1 system-ui, sans-serif; cursor:pointer; }
+  .bk-nav button:hover:not(:disabled){ border-color:var(--ink); }
+  .bk-nav button:disabled{ opacity:.35; cursor:default; }
+  @media (hover:hover) and (pointer:fine){ .bk-nav{ display:inline-flex; } .bk-note .swipe{ display:none; } }
   /* ---------- bracket ---------- */
   .bk-wrap{ position:relative; margin:0 -16px; }
   .bk-wrap::after{
@@ -266,7 +271,7 @@
   .e.won .sc span{ color:var(--ink); font-weight:600; }
   .e .wmark{ font:600 10px/1 "Chivo Mono", monospace; letter-spacing:.06em; color:var(--accent); }
   .av.ph{ background:var(--surface-2); color:var(--faint); box-shadow:0 0 0 2px var(--ring, var(--surface)); }
-  .bk-note{ display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); margin-top:4px; }
+  .bk-note{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); margin-top:4px; }
   .bk-note i{ display:inline-block; width:14px; height:0; border-top:2.5px solid var(--accent); vertical-align:3px; margin-right:6px; }
 
   table.gt{ width:100%; border-collapse:collapse; font-size:13px; }
@@ -366,7 +371,7 @@
   .kbig .lab b{ display:block; font:900 26px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; }
   .kbig .lab span{ font:500 11.5px/1.3 "Chivo Mono", monospace; color:var(--board-dim); }
   .knote{ position:relative; font-size:15px; line-height:1.4; margin:14px 0 0; padding:12px 0 14px; border-top:1px solid var(--board-line); }
-  .khero2 > img{ object-position:50% 12%; }
+  .khero2 > img{ object-position:50% 0%; }
   .khero2 .court-no b{ font-size:clamp(28px, 8vw, 40px); }
   .khero2 .bigtime{ font-size:clamp(84px, 26vw, 136px); }
   .khero2 .timeline-big{ gap:10px; }
@@ -382,6 +387,23 @@
   .res .e .sc span{ width:22px; font-size:15px; }
   .winners{ font-size:13.5px; color:var(--dim); margin:12px 0 0; }
   .winners b{ color:var(--ink); }
+
+  /* ---------- live ---------- */
+  .livebar{ display:flex; align-items:center; gap:8px; margin:2px 0 8px; min-width:0; font:500 11px/1.3 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .livebar[hidden]{ display:none; }
+  .livebar .ldot{ width:8px; height:8px; border-radius:50%; background:var(--accent); flex:none; }
+  .livebar b{ color:var(--ink); font-weight:600; }
+  .livebar.stale{ text-transform:none; letter-spacing:.02em; }
+  .livebar.stale .ldot{ background:var(--faint); }
+  .livebar.wait .ldot{ background:var(--faint); }
+  .lastres{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:10px 0; border-bottom:1px solid var(--board-line); font:500 12px/1.35 "Chivo Mono", monospace; color:var(--board-dim); }
+  .lastres[hidden]{ display:none; }
+  .lastres b{ color:var(--board-ink); font-weight:600; }
+  .lastres .sc{ color:var(--board-ink); white-space:nowrap; }
+  .team .tag b{ display:block; color:var(--board-ink); font-size:13px; letter-spacing:.02em; margin-top:3px; white-space:nowrap; }
+  .e .sc span.x{ width:auto; padding:0 1px; }
+  .route li.lost .node{ border-color:var(--loss); background:var(--loss-soft); }
+  .route li.out{ opacity:.5; }
 
   footer{ margin-top:48px; padding-top:18px; border-top:2px solid var(--ink); display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
   footer b{ font:900 22px/1 "Big Shoulders Display", sans-serif; letter-spacing:.12em; text-transform:uppercase; }
@@ -401,7 +423,7 @@
   @media (prefers-reduced-motion: no-preference){
     [role="tabpanel"]:not([hidden]){ animation:rise .38s cubic-bezier(.2,.7,.2,1) both; }
     @keyframes rise{ from{ opacity:0; transform:translateY(8px); } }
-    .glass.live .dot, .countdown.live .dot{ animation:pulse 1.4s ease-in-out infinite; }
+    .glass.live .dot, .countdown.live .dot, .livebar.on .ldot{ animation:pulse 1.4s ease-in-out infinite; }
     @keyframes pulse{ 50%{ opacity:.25; transform:scale(.8); } }
     .draw-line{ stroke-dasharray:var(--len); stroke-dashoffset:var(--len); transition:stroke-dashoffset 1.3s cubic-bezier(.3,.6,.2,1); }
     .drawn .draw-line{ stroke-dashoffset:0; }
@@ -427,6 +449,7 @@
 
   <!-- ================= THEA ================= -->
   <main role="tabpanel" id="p-thea" aria-labelledby="tab-thea" tabindex="-1">
+    <div class="livebar" id="live-thea" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div>
     <div class="hero">
       <img src="img/thea.jpg" width="900" height="1017" alt="Thea Holmberg Löving i Nynäs-jackan" fetchpriority="high">
       <div class="scrim"></div>
@@ -448,6 +471,7 @@
     </div>
     <div class="board" aria-live="polite">
       <div class="countdown" id="countdown"><span class="l"><span class="dot"></span><span id="cdText">–</span></span><a href="https://www.rankedin.com/en/tournament/66374/jarfalla-padel-open-no-11-sanktionerad-b-c-d" target="_blank" rel="noopener">RankedIn ↗</a></div>
+      <div class="lastres" id="heroLast" hidden></div>
       <div class="vs" id="heroVs"></div>
     </div>
 
@@ -497,8 +521,9 @@
 
   <!-- ================= KIAN ================= -->
   <main role="tabpanel" id="p-kian" aria-labelledby="tab-kian" tabindex="-1" hidden>
+    <div class="livebar" id="live-kian" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div>
     <div class="hero khero2">
-      <img src="img/kian.jpg" width="800" height="1060" alt="Kian Borgström på banan" loading="lazy">
+      <img src="img/kian.jpg" width="831" height="1038" alt="Kian Borgström med racket" loading="lazy">
       <div class="scrim"></div>
       <svg class="court" viewBox="0 0 390 230" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1">
         <path d="M20 229 L110 20 H280 L370 229 Z"/>
@@ -586,7 +611,7 @@
     "anna-karin-andersson":{}, "carla-lundstrom":{}, "cathrin-sjogren":{}, "hanna-wallerman":{},
     "jenny-karlsson":{}, "linda-jakobsson":{}, "malin-lundberg-aguilera":{}, "marina-bradbury":{pos:"50% 45%"},
     "sanna-aufwerber":{}, "suarez-jessica":{}, "molly-bondesson":{pos:"50% 0%"}, "ayla-abel":{pos:"50% 30%"},
-    "kian-borgstrom":{pos:"50% 22%"}
+    "kian-borgstrom":{src:"kian-avatar", pos:"50% 30%"}
   };
   function slug(n){ return n.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
   function initials(n){ var p = n.split(/\s+/); return (p[0][0] + (p.length > 1 ? p[p.length-1][0] : "")).toUpperCase(); }
@@ -599,7 +624,9 @@
   var SHORT = {"Suarez Jessica":"Suarez"};
   function surname(n){ if (SHORT[n]) return SHORT[n]; var p = n.split(" "); return p.length > 1 ? p.slice(1).join(" ") : n; }
   function short(pair){ return pair.n.map(surname).join(" / "); }
-  function sets(s){ return s ? s.split(" ").map(function(x){ return x.split("-").map(Number); }) : []; }
+  function sets(s){ return s ? s.split(" ").map(function(x){ return /^\d+-\d+$/.test(x) ? x.split("-").map(Number) : [x, "–"]; }) : []; }
+  // Flip a winner-side score ("6-4 6-3") to the loser's view ("4-6 3-6").
+  function flip(s){ return s ? s.split(" ").map(function(x){ return /^\d+-\d+$/.test(x) ? x.split("-").reverse().join("-") : x; }).join(" ") : s; }
 
   /* ================= data (edit here) ================= */
   // Scores are written from the winner's side. "10-8" = match tie-break.
@@ -644,9 +671,11 @@
   function m(t, c, a, b, w, s, note){ return {t:t, c:c, a:a, b:b, w:w || null, s:s || null, note:note || null}; }
 
   var THEA_EVENT = {
-    cls:"Damer C", date:"2026-09-27", pairs:DC, format:"knockout",
+    cls:"Damer C", date:"2026-09-27", pairs:DC, format:"knockout", meName:"Thea Holmberg Löving",
+    // Live results from RankedIn: polled while now() is inside the window and the tab is visible.
+    live:{tournamentId:66374, classId:164681, activeFrom:"2026-09-27T08:00:00+02:00", activeTo:"2026-09-27T20:00:00+02:00"},
     draws:[
-      {key:"main", label:"Lottning", rounds:[
+      {key:"main", label:"Lottning", places:1, rounds:[
         {label:"Omgång 1", short:"R1", matches:[
           m("09:00","Bana 1","moshiri","brunstrom","a","7-6 3-6 10-8"),
           m("09:00","Bana 2","suarez","andersson","b",null,"W.O."),
@@ -663,7 +692,7 @@
         {label:"Semifinal", short:"SF", matches:[ m("15:15","Bana 1"), m("15:15","Bana 2") ]},
         {label:"Final", short:"Final", matches:[ m("17:45","Bana 1") ]}
       ]},
-      {key:"cons", label:"Plate 9–16", rounds:[
+      {key:"cons", label:"Plate 9–16", places:9, rounds:[
         {label:"Omgång 1", short:"R1", matches:[
           m("11:30","Bana 1","brunstrom","suarez","a",null,"W.O."),
           m("11:30","Bana 5","stahl","sahlstrom","b","6-2 6-0"),
@@ -677,9 +706,10 @@
   };
 
   var KIAN_EVENT = {
-    cls:"Herrar C", date:"2026-09-26", pairs:HC, format:"knockout",
+    cls:"Herrar C", date:"2026-09-26", pairs:HC, format:"knockout", meName:"Kian Borgström",
+    live:{tournamentId:66374, classId:164677, activeFrom:"2026-09-26T08:00:00+02:00", activeTo:"2026-09-26T20:00:00+02:00"},
     draws:[
-      {key:"main", label:"Lottning", rounds:[
+      {key:"main", label:"Lottning", places:1, rounds:[
         {label:"Omgång 1", short:"R1", matches:[
           m("09:00","Bana 1","kamnelius","kian","a","6-1 6-1"),
           m("09:00","Bana 2","magnusson","delibas","a","7-6 7-5"),
@@ -702,7 +732,7 @@
         ]},
         {label:"Final", short:"Final", matches:[ m("17:45","Bana 3",null,null,"a",null,"Uppgivet") ]}
       ]},
-      {key:"cons", label:"Plate 9–16", rounds:[
+      {key:"cons", label:"Plate 9–16", places:9, rounds:[
         {label:"Omgång 1", short:"R1", matches:[
           m("11:30","Bana 4","kian","delibas","b","6-2 3-6 10-8"),
           m("11:30","Bana 5","bohlmark","wallen","a","7-5 7-5"),
@@ -720,17 +750,19 @@
 
   /* ================= knockout model ================= */
   // Resolve entrants: explicit keys, placeholders, or winners of the two feeding matches.
+  // Live data (mt.live, from RankedIn) wins over the static entries when present.
   function resolve(ev, draw){
     draw.rounds.forEach(function(rd, r){
       rd.matches.forEach(function(mt, i){
         ["a","b"].forEach(function(side, k){
-          var v = mt[side], ent;
-          if (typeof v === "string") ent = {pair:ev.pairs[v]};
+          var v = mt[side], lk = mt.live && mt.live[side], ent;
+          if (lk && ev.pairs[lk]) ent = {pair:ev.pairs[lk], via:r > 0 && v == null};
+          else if (typeof v === "string") ent = {pair:ev.pairs[v]};
           else if (v && v.ph) ent = {ph:v.ph};
           else if (r > 0){
             var src = draw.rounds[r-1].matches[2*i + k];
             if (src.w) ent = {pair:src[src.w].pair, via:true};
-            else if (src.a.pair && src.b.pair && r === 1) ent = {ph:"Vinnare av " + short(src.a.pair) + " – " + short(src.b.pair), from:[src.a.pair, src.b.pair]};
+            else if (src.a.pair && src.b.pair) ent = {ph:"Vinnare av " + short(src.a.pair) + " – " + short(src.b.pair), from:[src.a.pair, src.b.pair]};
             else {
               var pr = draw.rounds[r-1], no = 2*i + k + 1;
               ent = {ph:/^R\d/.test(pr.short) ? "Vinnare " + pr.label.toLowerCase() + ", match " + no : "Vinnare " + pr.short + no};
@@ -738,12 +770,37 @@
           } else ent = {ph:"–"};
           mt[side] = ent;
         });
+        if (mt.live && mt.live.wKey){
+          var wp = ev.pairs[mt.live.wKey];
+          mt.w = mt.a.pair === wp ? "a" : (mt.b.pair === wp ? "b" : mt.w);
+        }
         mt.hasMe = !!((mt.a.pair && mt.a.pair.me) || (mt.b.pair && mt.b.pair.me));
         mt.meWon = !!(mt.w && mt[mt.w].pair && mt[mt.w].pair.me);
       });
     });
   }
-  [THEA_EVENT, KIAN_EVENT].forEach(function(ev){ ev.draws.forEach(function(d){ resolve(ev, d); }); });
+  function pairSig(names){ return names.filter(Boolean).map(slug).sort().join("+"); }
+  // Rebuild ev.draws from the static spec plus the live overlay ("draw:round:match" -> fields).
+  function build(ev){
+    var draws = JSON.parse(ev.spec);
+    draws.forEach(function(d, di){ d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt, i){
+      var o = ev.overlay && ev.overlay[di + ":" + r + ":" + i];
+      if (!o) return;
+      mt.live = o;
+      if (o.t) mt.t = o.t;
+      if (o.c) mt.c = o.c;
+      if (o.wKey){ mt.s = o.s || (o.note ? null : mt.s); mt.note = o.note || null; }
+    }); }); });
+    draws.forEach(function(d){ resolve(ev, d); });
+    ev.draws = draws;
+  }
+  [THEA_EVENT, KIAN_EVENT].forEach(function(ev){
+    ev.sigMap = {}; ev.idMap = {}; ev.overlay = null;
+    Object.keys(ev.pairs).forEach(function(k){ ev.pairs[k].key = k; ev.sigMap[pairSig(ev.pairs[k].n)] = k; });
+    ev.spec = JSON.stringify(ev.draws);
+    ev.specObj = JSON.parse(ev.spec);
+    build(ev);
+  });
 
   function matchState(ev, mt){
     if (mt.w) return "done";
@@ -757,7 +814,7 @@
   function sideScores(mt, side){
     if (!mt.s) return "";
     var won = mt.w === side;
-    return sets(mt.s).map(function(p){ return "<span>" + (won ? p[0] : p[1]) + "</span>"; }).join("");
+    return sets(mt.s).map(function(p){ var v = String(won ? p[0] : p[1]); return "<span" + (v.length > 2 ? ' class="x"' : "") + ">" + esc(v) + "</span>"; }).join("");
   }
   function entrantRow(mt, side){
     var e = mt[side], cls = "e";
@@ -805,7 +862,7 @@
     wrap.appendChild(sc);
     host.appendChild(wrap);
     function fade(){ wrap.classList.toggle("more", sc.scrollLeft + sc.clientWidth < sc.scrollWidth - 4); }
-    sc.addEventListener("scroll", fade, {passive:true}); window.addEventListener("resize", fade); fade();
+    sc.addEventListener("scroll", fade, {passive:true}); onResize(fade); fade();
     return wrap;
   }
 
@@ -821,13 +878,17 @@
     });
   }
 
-  function renderEvent(ev, host, nextMatch, who){
+  var REG = null;
+  function onResize(fn){ window.addEventListener("resize", fn); if (REG) REG.push(fn); }
+  function renderEvent(ev, host, nextMatch, who, sel){
+    sel = sel && sel < ev.draws.length ? sel : 0;
+    REG = host._rs = [];
     var seg = document.createElement("div"); seg.className = "seg"; seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Välj lottning");
     var views = [];
     ev.draws.forEach(function(d, i){
-      var b = document.createElement("button"); b.type = "button"; b.textContent = d.label; b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+      var b = document.createElement("button"); b.type = "button"; b.textContent = d.label; b.setAttribute("aria-pressed", i === sel ? "true" : "false");
       seg.appendChild(b);
-      var box = document.createElement("div"); box.hidden = i !== 0;
+      var box = document.createElement("div"); box.hidden = i !== sel;
       if ((d.format || ev.format) === "groups") renderGroups(ev, d, box); else renderKnockout(ev, d, box, nextMatch);
       views.push(box);
       b.addEventListener("click", function(){
@@ -838,95 +899,183 @@
     host.appendChild(seg);
     views.forEach(function(v){ host.appendChild(v); });
     var note = document.createElement("div"); note.className = "bk-note";
-    note.innerHTML = '<span><i></i>' + esc(who) + 's väg</span><span>Svep för nästa rond →</span>';
+    note.innerHTML = '<span><i></i>' + esc(who) + 's väg</span><span class="swipe">Svep för nästa rond →</span>' +
+      '<span class="bk-nav"><button type="button" aria-label="Föregående rond">←</button><button type="button" aria-label="Nästa rond">→</button></span>';
     host.appendChild(note);
+    var nav = note.querySelectorAll(".bk-nav button");
+    function cur(){ for (var k = 0; k < views.length; k++) if (!views[k].hidden) return views[k].querySelector(".bk-scroll"); return null; }
+    function upd(){ var sc = cur(); if (!sc) return; nav[0].disabled = sc.scrollLeft < 4; nav[1].disabled = sc.scrollLeft + sc.clientWidth >= sc.scrollWidth - 4; }
+    [-1, 1].forEach(function(dir, k){
+      nav[k].addEventListener("click", function(){
+        var sc = cur(); if (!sc) return;
+        var col = sc.querySelector(".bk-col"), step = col ? col.getBoundingClientRect().width : 260;
+        sc.scrollBy({left: dir * step, behavior: "smooth"});
+      });
+    });
+    views.forEach(function(v){ var sc = v.querySelector(".bk-scroll"); if (sc) sc.addEventListener("scroll", upd, {passive:true}); });
+    onResize(upd); setTimeout(upd, 0);
+    REG = null;
+  }
+  // Re-render a draw after a live update, keeping the selected draw and scroll position.
+  function rerenderEvent(ev, host, nextMatch, who){
+    var sel = 0, scrolls = [];
+    var seg = host.querySelector(".seg");
+    if (seg) [].forEach.call(seg.children, function(b, k){ if (b.getAttribute("aria-pressed") === "true") sel = k; });
+    [].forEach.call(host.querySelectorAll(".bk-scroll"), function(x){ scrolls.push(x.scrollLeft); });
+    (host._rs || []).forEach(function(fn){ window.removeEventListener("resize", fn); });
+    host.innerHTML = "";
+    renderEvent(ev, host, nextMatch, who, sel);
+    [].forEach.call(host.querySelectorAll(".bk-scroll"), function(x, k){
+      if (!scrolls[k]) return;
+      x.style.scrollBehavior = "auto"; x.scrollLeft = scrolls[k]; x.style.scrollBehavior = "";
+    });
+    window.dispatchEvent(new Event("resize"));
   }
 
   /* ================= Thea: next match + hero ================= */
-  var main = THEA_EVENT.draws[0], nextMatch = null, nextRound = -1;
-  main.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt){ if (!nextMatch && mt.hasMe && !mt.w){ nextMatch = mt; nextRound = r; } }); });
+  // Where is Thea in the tournament? Recomputed after every live update.
+  var TS = {};
+  function meSide(mt){ return mt.a.pair && mt.a.pair.me ? "a" : "b"; }
+  function mePersp(mt){ return mt.s ? (mt.w === meSide(mt) ? mt.s : flip(mt.s)) : ""; }
+  function roundName(x){ return x.di === 0 ? x.rd.label : x.d.label.replace(/\s*\d.*$/, "") + " · " + x.rd.label; }
+  function defForm(label){ return /final$/i.test(label) ? label + "en" : label; }
+  function theaState(){
+    var ev = THEA_EVENT, played = [], pending = [];
+    ev.draws.forEach(function(d, di){ d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt, i){
+      if (mt.hasMe) (mt.w ? played : pending).push({mt:mt, d:d, di:di, rd:rd, r:r, i:i});
+    }); }); });
+    function cmp(a, b){ return (+at(ev.date, a.mt.t)) - (+at(ev.date, b.mt.t)) || a.di - b.di || a.r - b.r; }
+    played.sort(cmp); pending.sort(cmp);
+    var main = ev.draws[0], last = played[played.length - 1] || null;
+    return {
+      next:pending[0] || null, last:last,
+      lostMain:played.filter(function(x){ return x.di === 0 && !x.mt.meWon; })[0] || null,
+      champ:!!(last && last.di === 0 && last.r === main.rounds.length - 1 && last.mt.meWon)
+    };
+  }
 
   function fmtLeft(ms){
     var min = Math.max(1, Math.round(ms / 60000)), h = Math.floor(min / 60), mm = min % 60;
     return h ? h + " h " + (mm ? mm + " min" : "") : mm + " min";
   }
+  function outCopy(){
+    var R = THEA_EVENT.draws[0].rounds.length, x = TS.lostMain;
+    if (TS.champ) return "Thea och Cassandra vann Damer C. Grattis!";
+    if (TS.last && TS.last.di !== 0) return "Dagen är slut. Bra kämpat, Thea och Cassandra.";
+    if (!x) return "Dagen är slut.";
+    if (x.r === R - 1) return "Tvåa i Damer C. Silver efter en stark dag.";
+    if (x.r === R - 2) return "Semifinalen blev slutstation. Topp fyra, starkt jobbat.";
+    if (x.r === R - 3) return "Kvartsfinalen blev slutstation. Topp åtta, bra kämpat.";
+    return "Dagen är slut. Bra kämpat, Thea och Cassandra.";
+  }
   function renderHero(){
-    if (!nextMatch) return;
-    var rd = main.rounds[nextRound];
-    document.getElementById("heroRound").textContent = rd.label + " · " + THEA_EVENT.cls;
-    document.getElementById("heroTime").textContent = nextMatch.t;
-    document.getElementById("heroCourt").textContent = nextMatch.c.replace("Bana ", "");
-    var t = now(), s = at(THEA_EVENT.date, nextMatch.t), e = new Date(+s + 90 * 60000);
-    var pill = document.getElementById("heroPill"), cd = document.getElementById("countdown"), txt, ptxt, pcls = "glass", live = false;
-    var lname = rd.label.toLowerCase();
-    if (t < s){
-      var sameDay = s - t < 16 * 3600000;
-      ptxt = sameDay ? "Om " + fmtLeft(s - t) : "Sön 27 sep";
-      txt = sameDay ? rd.label + " börjar om " + fmtLeft(s - t) : rd.label + " sön 27 sep " + nextMatch.t;
-    } else if (t < e){
-      ptxt = "Pågår"; pcls += " live"; live = true;
-      txt = rd.label + "en pågår · " + nextMatch.c;
+    var x = TS.next || TS.last;
+    if (!x) return;
+    var mt = x.mt, rl = roundName(x);
+    document.getElementById("heroRound").textContent = rl + " · " + THEA_EVENT.cls;
+    document.getElementById("heroTime").textContent = mt.t;
+    document.getElementById("heroCourt").textContent = mt.c.replace(/^Bana\s*/, "");
+    var pill = document.getElementById("heroPill"), cd = document.getElementById("countdown"), txt, ptxt, pcls = "glass", live = false, sub;
+    if (TS.next){
+      var t = now(), s = at(THEA_EVENT.date, mt.t), e = new Date(+s + 90 * 60000);
+      if (t < s){
+        var sameDay = s - t < 16 * 3600000;
+        ptxt = sameDay ? "Om " + fmtLeft(s - t) : "Sön 27 sep";
+        txt = sameDay ? rl + " börjar om " + fmtLeft(s - t) : rl + " sön 27 sep " + mt.t;
+      } else if (t < e){
+        ptxt = "Pågår"; pcls += " live"; live = true;
+        txt = defForm(rl) + " pågår · " + mt.c;
+      } else {
+        ptxt = "Väntar"; pcls += " done";
+        txt = defForm(rl) + " är slut. Väntar på resultat från RankedIn.";
+      }
+      sub = x.rd.short + " " + mt.t + (live ? " · pågår" : "");
     } else {
-      ptxt = "Klar"; pcls += " done";
-      txt = rd.label + "en är klar. Resultat på RankedIn.";
+      ptxt = TS.champ ? "Vinnare" : "Klar"; pcls += TS.champ ? " live" : " done";
+      txt = outCopy();
+      sub = TS.champ ? "Vann Damer C" : "Klart för dagen";
     }
     pill.className = pcls;
     pill.innerHTML = '<span class="dot"></span><span>' + esc(ptxt) + '</span>';
     cd.className = "countdown" + (live ? " live" : "");
     document.getElementById("cdText").textContent = txt;
-    document.getElementById("tabSubThea").textContent = rd.short + " " + nextMatch.t + (live ? " · pågår" : "");
+    document.getElementById("tabSubThea").textContent = sub;
     renderRoute();
   }
 
-  function renderVs(){
-    var box = document.getElementById("heroVs");
-    if (!nextMatch) return;
-    var me = nextMatch.a.pair && nextMatch.a.pair.me ? nextMatch.a : nextMatch.b;
-    var op = me === nextMatch.a ? nextMatch.b : nextMatch.a;
-    var p = me.pair;
-    var h = '<div class="team me">' + avatars(p, "") + '<div class="tname">' + esc(short(p)) + '<small>Thea och Cassandra · skill ' + p.skill.join(" · ") + '</small></div><span class="seed">[' + esc(p.seed) + ']</span></div>';
+  function oppTeam(op, drawObj, r, right){
     if (op.pair){
-      h += '<div class="team opp">' + avatars(op.pair, "") + '<div class="tname" style="font:800 21px/1.02 \'Big Shoulders Display\',sans-serif;text-transform:uppercase;color:var(--board-ink);letter-spacing:.02em">' + esc(short(op.pair)) + '<small>' + esc(op.pair.n.join(" och ")) + '</small></div>' + (op.pair.seed ? '<span class="seed">[' + esc(op.pair.seed) + ']</span>' : '<span></span>') + '</div>';
-    } else if (op.from){
-      var src = main.rounds[nextRound - 1].matches.filter(function(x){ return x.a.pair === op.from[0]; })[0];
+      return '<div class="team opp">' + avatars(op.pair, "") + '<div class="tname" style="font:800 21px/1.02 \'Big Shoulders Display\',sans-serif;text-transform:uppercase;color:var(--board-ink);letter-spacing:.02em">' + esc(short(op.pair)) + '<small>' + esc(op.pair.n.join(" och ")) + '</small></div>' +
+        (right || (op.pair.seed ? '<span class="seed">[' + esc(op.pair.seed) + ']</span>' : '<span></span>')) + '</div>';
+    }
+    if (op.from){
+      var src = r > 0 ? drawObj.rounds[r - 1].matches.filter(function(x){ return x.a.pair === op.from[0]; })[0] : null;
       var st = src ? matchState(THEA_EVENT, src) : "up";
       var tag = st === "nr" ? "Ej rapporterad" : (st === "live" ? "Pågår" : (src ? src.t + " · " + src.c : ""));
-      h += '<div class="team opp"><span></span><div class="tname">Mot vinnaren av<div class="opts">' +
+      return '<div class="team opp"><span></span><div class="tname">Mot vinnaren av<div class="opts">' +
         op.from.map(function(pp, i){ return (i ? '<div class="opt"><i>eller</i></div>' : "") + '<div class="opt">' + avatars(pp, "md") + '<span>' + esc(short(pp)) + '</span></div>'; }).join("") +
         '</div></div><span class="tag">' + esc(tag) + '</span></div>';
     }
+    return '<div class="team opp"><span></span><div class="tname">' + esc(op.ph || "Motståndare klar senare") + '</div><span></span></div>';
+  }
+  function renderVs(){
+    var box = document.getElementById("heroVs"), lastBox = document.getElementById("heroLast");
+    var x = TS.next || TS.last;
+    if (!x) return;
+    var mt = x.mt, ms = meSide(mt), me = mt[ms], op = mt[ms === "a" ? "b" : "a"], p = me.pair;
+    var info = p.skill ? "Thea och Cassandra · skill " + p.skill.join(" · ") : p.n.join(" och ");
+    var h = '<div class="team me">' + avatars(p, "") + '<div class="tname">' + esc(short(p)) + '<small>' + esc(info) + '</small></div>' + (p.seed ? '<span class="seed">[' + esc(p.seed) + ']</span>' : '<span></span>') + '</div>';
+    var right = null;
+    if (!TS.next && mt.w){
+      right = '<span class="tag">' + (mt.meWon ? "Vinst" : "Förlust") + '<b>' + esc(mePersp(mt) || mt.note || "") + '</b></span>';
+    }
+    h += oppTeam(op, x.d, x.r, right);
     box.innerHTML = h;
+    // Latest result above the next match
+    var L = TS.next && TS.last;
+    lastBox.hidden = !L;
+    if (L){
+      var lop = L.mt[meSide(L.mt) === "a" ? "b" : "a"];
+      lastBox.innerHTML = '<span>' + esc(L.rd.label) + ': <b>' + (L.mt.meWon ? "vinst" : "förlust") + '</b> mot ' + esc(lop.pair ? short(lop.pair) : "–") + '</span><span class="sc">' + esc(mePersp(L.mt) || L.mt.note || "") + '</span>';
+    }
   }
 
   function renderRoute(){
-    var ol = document.getElementById("route"), h = "";
+    var ol = document.getElementById("route"), h = "", main = THEA_EVENT.draws[0], i0 = 0, out = !!(TS.lostMain || TS.champ);
+    main.rounds[0].matches.forEach(function(x, i){ if (x.hasMe) i0 = i; });
     main.rounds.forEach(function(rd, r){
-      var mt = rd.matches.filter(function(x){ return x.hasMe; })[0], cls = "", right = "", meta;
-      if (r === main.rounds.length - 1) meta = "17:45 · Bana 1";
+      var mt = rd.matches.filter(function(x){ return x.hasMe; })[0], slot = rd.matches[i0 >> r] || rd.matches[0], cls = "", right = "", meta = slot.t + " · " + slot.c;
       if (mt && mt.w){
-        cls = mt.meWon ? "done" : "";
-        var side = mt.a.pair && mt.a.pair.me ? "a" : "b", ss = sets(mt.s);
-        right = '<span class="tiles" aria-label="' + esc(mt.s) + '">' + ss.map(function(p){ var mine = mt.w === side ? p[0] : p[1], th = mt.w === side ? p[1] : p[0]; return '<span class="' + (mine > th ? "w" : "") + '">' + mine + '</span><span class="' + (th > mine ? "w" : "") + '">' + th + '</span>'; }).join("") + '</span>';
+        cls = mt.meWon ? "done" : "lost";
+        var side = meSide(mt), ss = sets(mt.s);
+        right = ss.length ? '<span class="tiles" aria-label="' + esc(mePersp(mt)) + '">' + ss.map(function(p){
+          var mine = mt.w === side ? p[0] : p[1], th = mt.w === side ? p[1] : p[0];
+          var mw = typeof mine === "number" ? mine > th : mt.w === side, tw = typeof th === "number" ? th > mine : mt.w !== side;
+          return '<span class="' + (mw ? "w" : "") + '">' + esc(mine) + '</span><span class="' + (tw ? "w" : "") + '">' + esc(th) + '</span>';
+        }).join("") + '</span>' : '<span class="rs">' + esc(mt.note || (mt.meWon ? "Vinst" : "Förlust")) + '</span>';
         meta = mt.t + " · " + mt.c;
       } else if (mt){
         cls = "next";
         var st = matchState(THEA_EVENT, mt);
         right = '<span class="rs">' + (st === "live" ? "Pågår" : (st === "nr" ? "Väntar på resultat" : "Nästa")) + '</span>';
-        meta = mt.t + " · " + mt.c;
+      } else if (out){
+        cls = "out"; right = '<span class="rs"></span>';
       } else {
         right = '<span class="rs">Vid vinst</span>';
-        if (r === 2) meta = rd.matches[0].t + " · Bana 1 eller 2";
-        else meta = meta || rd.matches[0].t;
       }
       h += '<li class="' + cls + '"><span class="node"></span><div><div class="rn">' + esc(rd.label) + '</div><div class="rm">' + esc(meta) + '</div></div>' + right + '</li>';
     });
     ol.innerHTML = h;
   }
 
-  renderVs();
-  renderHero();
+  function renderTheaAll(){
+    TS = theaState();
+    renderVs();
+    renderHero();
+    rerenderEvent(THEA_EVENT, document.getElementById("theaDraw"), TS.next && TS.next.mt, "Thea");
+    renderHist();
+  }
   setInterval(function(){ renderHero(); renderVs(); }, 30000);
-  renderEvent(THEA_EVENT, document.getElementById("theaDraw"), nextMatch, "Thea");
 
   /* ================= Thea: history, form, chart ================= */
   var hist = [
@@ -942,15 +1091,30 @@
     {r:"W", date:"23 aug", opp:"E. Hilmersson / E. Sjöberg", ev:"Järfälla Padel Open No 10", partner:"Alva Sahlström Dahl"},
     {r:"W", date:"25 jul", opp:"C. Engberg / R. Persson", ev:"UNO July Open", partner:"Cassandra Ersson"}
   ];
-  var isToday = Math.abs(now() - at("2026-09-27", "12:00")) < 12 * 3600000;
-  document.getElementById("theaHist").innerHTML = hist.map(function(x){
-    return '<div class="hrow ' + (x.r === "W" ? "w" : "l") + (x.isNew && isToday ? " new" : "") + '"><div><div class="o">' + esc(x.opp) + '</div><div class="ev">' + esc(x.ev) + ' · med ' + esc(x.partner) + '</div></div>' +
-      '<div class="r"><b>' + (x.r === "W" ? "Vinst" : "Förlust") + (x.s ? " " + esc(x.s) : "") + '</b>' + esc(x.date) + '</div></div>';
-  }).join("");
-  document.getElementById("histMeta").textContent = hist.length + " matcher";
-
+  // Today's matches come from the (live) draw; older ones are static.
+  var HIST_EV = "Järfälla Padel Open no 11";
+  var histOld = hist.filter(function(x){ return x.ev !== HIST_EV; });
+  function abbr(n){ if (SHORT[n]) return SHORT[n]; var p = n.split(" "); return p.length > 1 ? p[0][0] + ". " + p.slice(1).join(" ") : n; }
+  function renderHist(){
+    var ev = THEA_EVENT, today = [], d = new Date(ev.date + "T12:00:00+02:00");
+    var dl = d.getDate() + " " + ["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"][d.getMonth()];
+    ev.draws.forEach(function(dr){ dr.rounds.forEach(function(rd){ rd.matches.forEach(function(mt){ if (mt.hasMe && mt.w) today.push(mt); }); }); });
+    today.sort(function(a, b){ return b.t < a.t ? -1 : (b.t > a.t ? 1 : 0); });
+    var rows = today.map(function(mt){
+      var ms = meSide(mt), op = mt[ms === "a" ? "b" : "a"].pair, mp = mt[ms].pair;
+      return {r:mt.meWon ? "W" : "L", date:dl, opp:op ? op.n.map(abbr).join(" / ") : "–", ev:HIST_EV,
+        partner:mp.n.filter(function(n){ return slug(n) !== slug(ev.meName); }).join(" / "), s:mePersp(mt) || mt.note || "", isNew:true};
+    });
+    var all = rows.concat(histOld), isToday = Math.abs(now() - at(ev.date, "12:00")) < 12 * 3600000;
+    document.getElementById("theaHist").innerHTML = all.map(function(x){
+      return '<div class="hrow ' + (x.r === "W" ? "w" : "l") + (x.isNew && isToday ? " new" : "") + '"><div><div class="o">' + esc(x.opp) + '</div><div class="ev">' + esc(x.ev) + ' · med ' + esc(x.partner) + '</div></div>' +
+        '<div class="r"><b>' + (x.r === "W" ? "Vinst" : "Förlust") + (x.s ? " " + esc(x.s) : "") + '</b>' + esc(x.date) + '</div></div>';
+    }).join("");
+    document.getElementById("histMeta").textContent = all.length + " matcher";
+    document.getElementById("theaForm").innerHTML = chips(all.slice(0, 10).reverse().map(function(x){ return x.r; }));
+  }
   function chips(list){ return list.map(function(r){ return '<div class="chip ' + (r === "W" ? "w" : "l") + '" title="' + (r === "W" ? "Vinst" : "Förlust") + '">' + (r === "W" ? "V" : "F") + '</div>'; }).join(""); }
-  document.getElementById("theaForm").innerHTML = chips(hist.slice(0, 10).reverse().map(function(x){ return x.r; }));
+  renderTheaAll();
   document.getElementById("kianForm").innerHTML = chips(["L","W","L","L","L","L","L","L","L","L"]);
 
   (function(){
