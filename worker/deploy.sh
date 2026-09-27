@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Deploys the padel-push worker to Cloudflare (free plan) and points index.html at it.
-# Idempotent: safe to run again after changing src/events.js or anything else.
+# Idempotent: safe to run again after changing players.json, src/events.js or anything else.
 #   CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... ./worker/deploy.sh
 set -euo pipefail
 
@@ -34,7 +34,8 @@ if [ -z "$KV_ID" ]; then
 fi
 sed -i.bak -E "s/^id = \"[^\"]*\"/id = \"$KV_ID\"/" wrangler.toml && rm -f wrangler.toml.bak
 
-echo "3/6 deploy"
+echo "3/6 deploy (roster: players.json -> src/players.js)"
+node sync-players.mjs
 "${WR[@]}" deploy
 
 echo "4/6 VAPID keys"

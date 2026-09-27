@@ -63,9 +63,11 @@ try {
   ok("vapid key served", vk.key === v.VAPID_PUBLIC_KEY, vk);
 
   const a = await makeSubscription("http://127.0.0.1:" + P + "/push/a"), gone = await makeSubscription("http://127.0.0.1:" + P + "/push/gone");
-  for (const s of [a, gone]) {
+  // cas follows Cassandra (Thea's partner in Damer C): same news; kian follows Kian only: nothing from Damer C
+  const cas = await makeSubscription("http://127.0.0.1:" + P + "/push/cas"), kian = await makeSubscription("http://127.0.0.1:" + P + "/push/kian");
+  for (const [s, prefs] of [[a, { thea: true, kian: true }], [gone, { thea: true, kian: true }], [cas, { follow: [1849853] }], [kian, { follow: [1680004] }]]) {
     const r = await fetch(base + "/subscribe", { method: "POST", headers: { "Content-Type": "application/json", Origin: "http://localhost:8765" },
-      body: JSON.stringify({ subscription: s.sub, prefs: { thea: true, kian: true } }) });
+      body: JSON.stringify({ subscription: s.sub, prefs }) });
     ok("subscribe " + s.sub.endpoint.split("/").pop(), r.status === 200 && r.headers.get("access-control-allow-origin") === "http://localhost:8765", r.status);
   }
 
@@ -75,12 +77,19 @@ try {
   ok("first tick ran discovery against the (fake) RankedIn API", apiHits.some(x => /ParticipatedEventsAsync/.test(x)) && apiHits.length <= 45, apiHits.length);
   const evs = await (await fetch(base + "/events", { headers: { Origin: "http://localhost:8765" } })).json();
   ok("GET /events: discovered tournaments and SPL play days (+ past list)", evs.src === "worker" && Array.isArray(evs.past) && evs.events.some(e => e.key === "t173729-thea") && evs.events.some(e => e.kind === "teamleague" && e.who === "kian"), evs.events.map(e => e.key));
+  ok("GET /events: roster players (Cassandra in Damer C), one SPL entry per team day, live view", evs.events.some(e => e.key === "t164681-cassandra") &&
+    new Set(evs.events.map(e => e.key)).size === evs.events.length && evs.live && evs.live["1675246"] && evs.live["1675246"].st === "next", { keys: evs.events.map(e => e.key), live: evs.live });
   fixture = "dc_1112.json";
   delete over["/tournament/GetClassesAndDrawNamesAsync/?tournamentId=66374"];   // the draw is out
   await cron();
-  for (let i = 0; i < 40 && pushes.length < 3; i++) await sleep(250);
+  for (let i = 0; i < 40 && pushes.length < 5; i++) await sleep(250);
+  for (let i = 0; i < 20 && pushes.length < 5; i++) await sleep(250);
   const toA = pushes.filter(p => p.path === "/push/a"), toGone = pushes.filter(p => p.path === "/push/gone");
   ok("2 pushes to the live subscription (draw published + next opponent)", toA.length === 2, pushes.map(p => p.path));
+  const toCas = pushes.filter(p => p.path === "/push/cas");
+  const casMsgs = await Promise.all(toCas.map(async x => JSON.parse(await cas.decrypt(x.body)).title));
+  ok("follow Cassandra: the same 2 notiser (her pair), once each", casMsgs.length === 2 && casMsgs[1] === "Thea och Cassandra möter Pettersson Österberg / Ekeland", casMsgs);
+  ok("follow Kian only: nothing from Damer C", !pushes.some(p => p.path === "/push/kian"), pushes.map(p => p.path));
   ok("1 push to the 410 subscription, then dropped", toGone.length === 1, toGone.length);
   const p = toA[0];
   if (p) {
@@ -105,8 +114,8 @@ try {
   fixture = moved;
   const n0 = pushes.length;
   await cron();
-  for (let i = 0; i < 40 && pushes.length < n0 + 1; i++) await sleep(250);
-  const tm = pushes.slice(n0);
+  for (let i = 0; i < 40 && pushes.length < n0 + 2; i++) await sleep(250);
+  const tm = pushes.slice(n0).filter(x => x.path === "/push/a");
   const tmsg = tm.length ? JSON.parse(await a.decrypt(tm[0].body)) : {};
   ok("time change pushed once", tm.length === 1 && tmsg.title === "Ny tid: Thea och Cassandra spelar kvartsfinalen 13:15, Bana 2" && tmsg.url === "./#thea/m6872156" && tmsg.tag === "padel-164681:tid:m6872156", tmsg);
   const n = pushes.length;
@@ -114,10 +123,11 @@ try {
   ok("same data again: no pushes", pushes.length === n, pushes.length - n);
   fixture = "dc_wins_qf.json";
   await cron();
-  for (let i = 0; i < 40 && pushes.length < n + 2; i++) await sleep(250);
+  for (let i = 0; i < 40 && pushes.length < n + 3; i++) await sleep(250);
   const later = pushes.slice(n);
-  ok("dropped subscription gets nothing", later.every(x => x.path === "/push/a") && later.length >= 1, later.map(x => x.path));
-  const last = later.length ? JSON.parse(await a.decrypt(later.at(-1).body)) : {};
+  const laterA = later.filter(x => x.path === "/push/a");
+  ok("dropped subscription gets nothing", later.every(x => x.path !== "/push/gone") && later.some(x => x.path === "/push/a"), later.map(x => x.path));
+  const last = laterA.length ? JSON.parse(await a.decrypt(laterA.at(-1).body)) : {};
   ok("Thea's QF win pushed", last.title === "Thea och Cassandra vann kvartsfinalen 6-2 7-5", last);
 } catch (e) {
   results.push("FAIL exception " + e.stack);

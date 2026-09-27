@@ -164,16 +164,15 @@ test("past events: an event that leaves the list after its last day is kept (60 
   assert.deepEqual(body.past.map(p => p.key), ["t164681-thea", "t9"]);
 });
 
-test("discovery run the day after Järfälla: the finished classes move to past (one KV write)", async () => {
+test("discovery rounds the day after Järfälla: the finished classes move to past as each player is looked up", async () => {
   const st = install({}), PUSH = kv();
   let r = await tick({ PUSH, NOW: "2026-09-27T11:07:00Z", ORIGIN: "x" });
   assert.ok(JSON.parse(PUSH.m.get("disc")).events.some(e => e.key === "t164681-thea"));
-  _resetMemory();
   st.over = { "/tournament/GetInfoAsync?id=66374&language=en": { TournamentSidebarModel: { EventState: 4, StartDate: "2026-09-25T17:00:00", EndDate: "2026-09-27T23:00:00" } } };
-  r = await tick({ PUSH, NOW: "2026-09-28T09:07:00Z", ORIGIN: "x" });
+  for (const m of ["09:07", "09:17", "09:27", "09:37"]) { _resetMemory(); r = await tick({ PUSH, NOW: "2026-09-28T" + m + ":00Z", ORIGIN: "x" }); }
   const rec = JSON.parse(PUSH.m.get("disc"));
-  assert.ok(!rec.events.some(e => e.key === "t164681-thea"));
-  assert.deepEqual(rec.past.map(p => p.key).sort(), ["t164677-kian", "t164681-thea"]);
+  assert.ok(!rec.events.some(e => /^t16468[1]|^t164677/.test(e.key)), rec.events.map(e => e.key).join(" "));
+  assert.deepEqual(rec.past.map(p => p.key).sort(), ["t164677-andreas", "t164677-kian", "t164681-cassandra", "t164681-thea"]);
   assert.equal(rec.past.find(p => p.key === "t164681-thea").name, "Järfälla Padel Open no 11");
 });
 

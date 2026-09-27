@@ -139,8 +139,8 @@ export async function runDiscovery(env, t, budget, rec, log = {}, max = 35) {
   const mine = { left: Math.min(max, budget.left) }, start = mine.left;
   const res = await discover(getter(env, mine), t, rec, rec ? discoveryBatch(t) : PLAYERS);
   budget.left -= start - mine.left;
-  const next = { at: t.toISOString(), events: res.events, ended: res.ended, past: pastOf(rec, res.events, t) };
-  const sig = r => JSON.stringify([r.events, r.ended, r.past || []]);
+  const next = { at: t.toISOString(), events: res.events, ended: res.ended, none: res.none, past: pastOf(rec, res.events, t) };
+  const sig = r => JSON.stringify([r.events, r.ended, r.none || [], r.past || []]);
   log.discovered = res.events.length;
   log.refreshed = res.refreshed.length;
   if (!rec || sig(rec) !== sig(next) || +t - new Date(rec.at) > 6 * H) {
@@ -220,7 +220,9 @@ export async function drawChecks(env, t, list, budget, log, within = 7 * DAY) {
           try { matches = parse(await Promise.all(draws.map(([st, sg]) => fetchDraw(env, get, cid, st, sg)))); }
           catch (e) { console.warn("draw fetch", cid, e.message); continue; }
           if (!matches.length) continue;   // listed but still empty
-          evs.filter(e => e.classId === cid).forEach(ev => msgs.push({ pids: pidsOfEv(ev), m: drawNote(ev, matches) }));
+          const legacy = Object.values(LEGACY);
+          evs.filter(e => e.classId === cid).sort((a, b) => (legacy.includes(b.pid) ? 1 : 0) - (legacy.includes(a.pid) ? 1 : 0))
+            .forEach(ev => msgs.push({ pids: pidsOfEv(ev), m: drawNote(ev, matches) }));
         }
         await env.PUSH.put(key, state);
         log.writes = (log.writes || 0) + 1;
@@ -230,7 +232,7 @@ export async function drawChecks(env, t, list, budget, log, within = 7 * DAY) {
     budget.left -= start - mine.left;
   }
   if (msgs.length) log.drawn = msgs.length;
-  return msgs;
+  return dedupe(msgs);
 }
 
 async function fetchDraw(env, get, classId, stage, strength) {
@@ -304,9 +306,11 @@ async function liveView(env, t, events) {
     const e = u.e, where = e.kind === "teamleague" ? { name: e.name, team: e.team, opp: u.tie.opp, sc: sm.sc } : { name: e.name, cls: e.cls };
     (sm.res || []).forEach(r => latest.push({ ...r, ...where, key: e.key, d: r.d || (e.date ? e.date + "T" + (u.tie.time || "12:00") : "") }));
     if (new Date(e.windowTo) < t) return;
+    const own = pid => e.kind === "teamleague" ? (e.pids || [e.pid]).map(Number).includes(+pid) : +e.pid === +pid || +e.partnerId === +pid;
+    const rank = (x, o) => (o ? 2 : 0) + (x.st === "next" ? 1 : 0);   // the player's own entry first, then a match still to play
     Object.keys(sm.nx || {}).forEach(pid => {
-      const x = sm.nx[pid];
-      if (!live[pid] || (live[pid].st === "done" && x.st === "next")) live[pid] = { ...x, ...where, key: e.key };
+      const x = { ...sm.nx[pid], ...where, key: e.key, own: own(pid) };
+      if (!live[pid] || rank(x, x.own) > rank(live[pid], live[pid].own)) live[pid] = x;
     });
   }));
   latest.sort((a, b) => String(b.d).localeCompare(String(a.d)) || String(b.mid).localeCompare(String(a.mid)));
@@ -349,11 +353,18 @@ export async function tick(env, events) {
     if (ev.kind === "teamleague") {
       (ev.ties || []).forEach(tie => { if (!tie.canceled) units.set("tm" + tie.id, { key: "st:tm" + tie.id, kind: "tl", tie, ev: { ...ev, roster: teamRoster(ev) }, cost: 1 }); });
     } else if (ev.classId) {
-      const k = "c" + ev.classId, u = units.get(k) || { key: "st:" + ev.classId, kind: "t", classId: ev.classId, draws: ev.draws || [[0, 0], [1, 0]], evs: [] };
-      u.evs.push(ev); u.cost = u.draws.length;
+      const k = "c" + ev.classId, u = units.get(k) || { key: "st:" + ev.classId, kind: "t", classId: ev.classId, draws: null, evs: [] };
+      u.evs.push(ev);
+      if (!u.draws && ev.draws) u.draws = ev.draws;   // any player's entry that knows the stages
       units.set(k, u);
     }
   }
+  const legacy = Object.values(LEGACY);
+  units.forEach(u => {
+    if (u.kind !== "t") return;
+    u.draws = u.draws || [[0, 0], [1, 0]]; u.cost = u.draws.length;
+    u.evs.sort((a, b) => (legacy.includes(b.pid) ? 1 : 0) - (legacy.includes(a.pid) ? 1 : 0));   // links: Thea/Kian as before
+  });
   // Free plan: 50 subrequests per invocation. RankedIn gets at most 30 (rotating when there is more),
   // pushes get the rest.
   const arr = [...units.values()], cap = Math.min(30, budget.left - 5), start = t.getUTCMinutes() % Math.max(1, arr.length);

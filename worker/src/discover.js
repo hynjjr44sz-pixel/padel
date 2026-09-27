@@ -58,6 +58,8 @@ async function tournament(p, e, get, ctx) {
   // Which class(es) is the player in? Cached from the last run; re-checked once a day.
   const old = ctx.prev.filter(x => x.kind === "tournament" && x.who === p.who && x.tournamentId === e.Id && x.classId);
   let found = old.map(x => ({ classId: x.classId, cls: x.cls, partner: x.partner, partnerId: x.partnerId || null, pairs: x.pairs, seed: x.seed, scanned: x.scanned }));
+  const noneKey = e.Id + ":" + p.who + ":" + ctx.today;
+  if (!found.length && ctx.none.has(noneKey)) return [];   // looked today, not in any class (withdrawn, reserve)
   if (!found.length || ctx.now - new Date(old[0].scanned || 0) > DAY) {
     found = [];
     for (const c of info.Classes || []) {
@@ -71,7 +73,7 @@ async function tournament(p, e, get, ctx) {
       }
     }
   }
-  if (!found.length) return [];
+  if (!found.length) { ctx.none.add(noneKey); return []; }
   const names = await get(namesPath(e.Id));
   const where = venueOf(info), out = [];
   for (const f of found) {
@@ -152,7 +154,8 @@ export async function discover(get, now, prev, players = PLAYERS) {
   // Several players in the same tournament or team: fetch its info, class lists and team matches once per run.
   const seen = new Map(), raw = get;
   get = path => { if (!seen.has(path)) seen.set(path, raw(path)); return seen.get(path); };
-  const ctx = { now, today: dayOf(now), prev: (prev && prev.events) || [], ended: new Set((prev && prev.ended) || []), teams: new Set() };
+  const ctx = { now, today: dayOf(now), prev: (prev && prev.events) || [], ended: new Set((prev && prev.ended) || []), teams: new Set(),
+    none: new Set(((prev && prev.none) || []).filter(k => k.endsWith(":" + dayOf(now)))) };
   const fresh = [], refreshed = new Set(), teams = new Set();
   let partial = false;
   for (const p of players) {
@@ -186,5 +189,5 @@ export async function discover(get, now, prev, players = PLAYERS) {
   }
   out.push(...byKey.values());
   out.sort((a, b) => a.windowFrom.localeCompare(b.windowFrom) || a.key.localeCompare(b.key));
-  return { events: out, ended: [...ctx.ended].slice(-300), refreshed: [...refreshed], partial };
+  return { events: out, ended: [...ctx.ended].slice(-300), none: [...ctx.none].slice(-100), refreshed: [...refreshed], partial };
 }
