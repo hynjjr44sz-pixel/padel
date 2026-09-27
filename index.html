@@ -1642,12 +1642,7 @@
           body:(how ? how + ". " : "") + roundName(n) + " " + n.mt.t + " · " + n.mt.c});
       }
     }
-    others = others.filter(function(o){ return !notified(o.id); });
-    if (others.length > 3){
-      others.forEach(function(o){ markNotified(o.id); });
-      showNote(cid + ":batch:" + others.map(function(o){ return o.id; }).join(","), ev.cls + ": " + others.length + " nya resultat",
-        others.slice(0, 4).map(function(o){ return o.title; }).join("\n"), L.hash, "padel-" + cid + "-klass");
-    } else others.forEach(function(o){ showNote(o.id, o.title, o.body, L.hash); });
+    // Only Thea's/Kian's own matches notify; other results in the class are shown on the page only.
     mine.forEach(function(o){ showNote(o.id, o.title, o.body, L.hash); });
   }
 
@@ -2027,9 +2022,7 @@
         body:rows.slice(0, 5).map(function(r, i){ return (r.standing || i + 1) + ". " + short(r) + " " + r.wins + "–" + r.losses; }).join("\n")});
     });
     var out = [];
-    if (others.length > 3) out.push({id:cid + ":batch:" + others.map(function(o){ return o.id; }).join(","), title:cls + ": " + others.length + " nya resultat",
-      body:others.slice(0, 4).map(function(o){ return o.title; }).join("\n"), tag:"padel-" + cid + "-klass", batch:others.map(function(o){ return o.id; })});
-    else others.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + o.id}); });
+    // Only Thea's/Kian's own matches notify; everything else is shown on the page only.
     mine.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + o.id}); });
     return out;
   }
@@ -2247,9 +2240,7 @@
         body:[ev.name, ev.team + " mot " + tie.opp, tie.time, tie.venue].filter(Boolean).join(" · ")});
     });
     var out = [];
-    if (others.length > 3) out.push({id:cid + ":batch:" + others.map(function(o){ return o.id; }).join(","), title:ev.team + ": " + others.length + " nya resultat",
-      body:others.slice(0, 4).map(function(o){ return o.title; }).join("\n"), tag:"padel-" + cid + "-lag", batch:others.map(function(o){ return o.id; })});
-    else others.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + o.id}); });
+    // Only Thea's/Kian's own matches notify; everything else is shown on the page only.
     mine.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + o.id}); });
     var done = rubbers.length && rubbers.every(function(r){ return r.w; });
     var wasDone = before._done || (rubbers.length && rubbers.every(function(r){ return unpackSnap(before[r.id]).w; }));

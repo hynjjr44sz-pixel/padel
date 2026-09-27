@@ -87,8 +87,7 @@ export function tieNotes(ev, tie, rubbers, before) {
       body: [ev.name, ev.team + " mot " + tie.opp, tie.time, tie.venue].filter(Boolean).join(" · ") });
   });
   const out = [];
-  if (others.length > 3) out.push({ title: ev.team + ": " + others.length + " nya resultat", body: others.slice(0, 4).map(o => o.title).join("\n"), tag: "padel-" + cid + "-lag", url });
-  else others.forEach(o => out.push({ title: o.title, body: o.body, tag: "padel-" + o.id, url }));
+  // Only Thea's/Kian's own rubbers (and the tie result) are pushed; teammates' rubbers stay on the page.
   mine.forEach(o => out.push({ title: o.title, body: o.body, tag: "padel-" + o.id, url }));
   const done = rubbers.length && rubbers.every(r => r.w), wasDone = before._done || (rubbers.length && rubbers.every(r => unpack(before[r.id]).w));
   if (done && !wasDone) {

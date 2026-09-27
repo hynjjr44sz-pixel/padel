@@ -35,13 +35,12 @@ test("tie notiser: own rubber highlighted, team rubbers, tie result; nothing twi
   assert.equal(n[1].url, "./#thea");
   assert.deepEqual(tieNotes(THEA, TIE, all, full), []);
 
-  // Another rubber (not Thea's) finishes first: team wording from Nynäs' side
+  // A teammate's rubber finishing is not pushed on its own; only the tie result (now complete) is.
   const b2 = clone(full);
   b2["5433849"] = b2["5433849"].replace(/,b$/, ",");
   delete b2._done;
   const n2 = tieNotes(THEA, TIE, all, b2);
-  assert.equal(n2[0].title, "Nynäs Damlag: Ersson / Hildemyhr förlorade 5-7 1-6");
-  assert.equal(n2[0].body, "Mot Villnow / Jansson · Nynäs Damlag 1–2 Padelverket Damlag");
+  assert.deepEqual(n2.map(x => x.title), ["Nynäs Damlag förlorade mot Padelverket Damlag 1–2"]);
 });
 
 test("tie notiser: away team scores are flipped to our side", () => {
