@@ -557,7 +557,7 @@
       </div>
     </div>
     <div class="board" aria-live="polite">
-      <div class="countdown" id="countdown"><span class="l"><span class="dot"></span><span id="cdText">–</span></span><a href="https://www.rankedin.com/en/tournament/66374/jarfalla-padel-open-no-11-sanktionerad-b-c-d" target="_blank" rel="noopener">RankedIn ↗</a></div>
+      <div class="countdown" id="countdown"><span class="l"><span class="dot"></span><span id="cdText">–</span></span><a href="https://www.rankedin.com/en/tournament/66374/jarfalla-padel-open-no-11-sanktionerad-b-c-d" target="_blank" rel="noopener">RankedIn ↗︎</a></div>
       <div class="lastres" id="heroLast" hidden></div>
       <div class="vs" id="heroVs"></div>
     </div>
@@ -635,7 +635,7 @@
       </div>
     </div>
     <div class="board">
-      <div class="countdown"><div class="l"><span class="dot"></span><span>Nästa: SPL med laget lör 3 okt</span></div><a href="https://www.rankedin.com/en/player/R000266815/kian-borgstrom" target="_blank" rel="noopener">RankedIn ↗</a></div>
+      <div class="countdown"><div class="l"><span class="dot"></span><span>Nästa: SPL med laget lör 3 okt</span></div><a href="https://www.rankedin.com/en/player/R000266815/kian-borgstrom" target="_blank" rel="noopener">RankedIn ↗︎</a></div>
       <div class="kid">
         <div class="kname">Kian <span>Borgström</span></div>
         <div class="kmeta">Herrar C · med Andreas Mickos · Nynäs Padel Club</div>
@@ -1279,7 +1279,7 @@
     host.innerHTML = list.map(function(r){
       var pts = r.pts == null ? (r.b === "Pågår" ? "pågår" : "– p") : String(r.pts) + " p";
       return '<div class="tr"><div>' + badge(r.b) + '<span class="dt">' + esc(dayMon(r.d)) + '</span></div>' +
-        '<div><a class="tn" href="' + esc(r.u) + '" target="_blank" rel="noopener">' + esc(r.n) + '<span>↗</span></a>' +
+        '<div><a class="tn" href="' + esc(r.u) + '" target="_blank" rel="noopener">' + esc(r.n) + '<span>↗︎</span></a>' +
         '<div class="tm">' + esc(r.c + " · med " + r.p + (r.x ? " · " + r.x : "")) + '</div></div>' +
         '<div class="wl"><b>' + r.w + '–' + r.l + '</b><span>' + esc(pts) + '</span></div></div>';
     }).join("");
@@ -1350,13 +1350,13 @@
   document.getElementById("theaUp").innerHTML =
     upCard({dow:"Sön", day:"4", mon:"okt", title:"SPL Damer", what:"Swedish Padel League 2026-27 · Nynäs Damlag · Div 3 Öst - Södra. Lagserie, inte SPT.",
       list:["Team TK x Rejoice – Nynäs Damlag","Nynäs Damlag – CC Academy UNO Nacka 2"],
-      facts:"Tid och plats inte klart<br>Laget: Cassandra Ersson (kapten), Thea Holmberg Löving, Lisa Brinklöv, Sanna Årsjö, Rebecca Levander, Nathalie Hällegard<br>Nästa omgångar: 8 nov, 13 dec, 17 jan, 14 feb<br><a href=\"https://rankedin.com/en/teamleague/947/spl-swedish-padel-league-damer-2026-27\" target=\"_blank\" rel=\"noopener\">Serien på RankedIn ↗</a>"}) +
+      facts:"Tid och plats inte klart<br>Laget: Cassandra Ersson (kapten), Thea Holmberg Löving, Lisa Brinklöv, Sanna Årsjö, Rebecca Levander, Nathalie Hällegard<br>Nästa omgångar: 8 nov, 13 dec, 17 jan, 14 feb<br><a href=\"https://rankedin.com/en/teamleague/947/spl-swedish-padel-league-damer-2026-27\" target=\"_blank\" rel=\"noopener\">Serien på RankedIn ↗︎</a>"}) +
     upCard({dow:"Fre–sön", day:"9–11", mon:"okt", title:"Vista Padel Autumn Smash Open", cls:"Dam B", what:"Med Nathalie Hällegard · Vista Padel, Novavägen 36, Huddinge",
-      facts:"Start fre 9 okt 17:00 · anmälan stänger 6 okt<br>5 par anmälda i Dam B (27 sep) · 450 kr<br><a href=\"https://rankedin.com/en/tournament/73554/vista-padel-autumn-smash-open-sanktionerad-dam-herr-b-c-d-powered-by-head\" target=\"_blank\" rel=\"noopener\">Turneringen på RankedIn ↗</a>"});
+      facts:"Start fre 9 okt 17:00 · anmälan stänger 6 okt<br>5 par anmälda i Dam B (27 sep) · 450 kr<br><a href=\"https://rankedin.com/en/tournament/73554/vista-padel-autumn-smash-open-sanktionerad-dam-herr-b-c-d-powered-by-head\" target=\"_blank\" rel=\"noopener\">Turneringen på RankedIn ↗︎</a>"});
   document.getElementById("kianUp").innerHTML =
     upCard({dow:"Lör", day:"3", mon:"okt", title:"SPL Herrar", what:"Swedish Padel League 2026-27 · Nynäs Padel Club 2 · Div 4 Öst-mitt. Lagserie, inte SPT.",
       list:["UNO – Nynäs Padel Club 2 <span class=\"mono\" style=\"color:var(--dim);font-size:11.5px\">· Vista</span>","Nynäs Padel Club 2 – Vista Padel Club Herr Lag5"],
-      facts:"Starttider inte klara<br>Laget: Anton Svedman (kapten), Kian Borgström, Andreas Mickos, Oliver Lind, Svante Svedberg, Jones Elmourid, Javier Castilla<br>Nästa omgångar: 7 nov, 12 dec, 16 jan, 13 feb<br><a href=\"https://rankedin.com/en/teamleague/946/spl-swedish-padel-league-herrar-2026-27\" target=\"_blank\" rel=\"noopener\">Serien på RankedIn ↗</a>"});
+      facts:"Starttider inte klara<br>Laget: Anton Svedman (kapten), Kian Borgström, Andreas Mickos, Oliver Lind, Svante Svedberg, Jones Elmourid, Javier Castilla<br>Nästa omgångar: 7 nov, 12 dec, 16 jan, 13 feb<br><a href=\"https://rankedin.com/en/teamleague/946/spl-swedish-padel-league-herrar-2026-27\" target=\"_blank\" rel=\"noopener\">Serien på RankedIn ↗︎</a>"});
 
   /* ================= Kian results ================= */
   function resCard(label, mt){
