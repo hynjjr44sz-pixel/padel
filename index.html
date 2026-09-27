@@ -1895,7 +1895,9 @@
     clearTimeout(L.timer); L.timer = null;
     var hidden = document.visibilityState === "hidden";
     if (hidden && !localNoti(L)) return;
-    L.timer = setTimeout(function(){ poll(L); }, hidden ? 2 * LIVE_EVERY : LIVE_EVERY);
+    // Every match in the class played: a look every 10 min is enough (late corrections), like the push server.
+    var done = L.ev && L.ev.draws && L.ev.draws.length && L.ev.draws.every(function(d){ return (d.rounds || []).every(function(r){ return r.matches.every(function(m){ return !!m.w; }); }); });
+    L.timer = setTimeout(function(){ poll(L); }, done ? 10 * 60000 : hidden ? 2 * LIVE_EVERY : LIVE_EVERY);
   }
   document.addEventListener("visibilitychange", function(){
     LIVE.forEach(function(L){
