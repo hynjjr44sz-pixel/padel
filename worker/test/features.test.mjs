@@ -216,3 +216,21 @@ test("module exports are functions or the handler object (workerd refuses anythi
   const mod = await import("../src/index.js");
   for (const [k, v] of Object.entries(mod)) assert.ok(typeof v === "function" || (k === "default" && typeof v.fetch === "function" && typeof v.scheduled === "function"), k);
 });
+
+test("draw check: every 15 min within 48 h of the start, hourly up to 7 days", async () => {
+  const { drawChecks } = await import("../src/index.js");
+  const seen = [];
+  const env = { PUSH: { get: async () => "0", put: async () => {} }, API_BASE: "http://x" };
+  const t = new Date("2026-10-08T10:22:00+02:00");
+  const near = { kind: "tournament", who: "thea", tournamentId: 1, classId: 11, windowFrom: "2026-10-09T07:00:00+02:00", windowTo: "2026-10-11T23:00:00+02:00" };
+  const far = { ...near, tournamentId: 2, classId: 22, windowFrom: "2026-10-13T07:00:00+02:00", windowTo: "2026-10-13T23:00:00+02:00" };
+  const orig = globalThis.fetch;
+  globalThis.fetch = async u => { seen.push(String(u)); return new Response("[]", { status: 200 }); };
+  try {
+    await drawChecks(env, t, [near, far], { left: 45 }, {}, 2 * 24 * 3600e3);
+    assert.equal(seen.length, 1, seen.join(" "));
+    seen.length = 0;
+    await drawChecks(env, t, [near, far], { left: 45 }, {});
+    assert.equal(seen.length, 2, seen.join(" "));
+  } finally { globalThis.fetch = orig; }
+});

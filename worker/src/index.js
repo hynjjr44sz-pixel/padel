@@ -147,9 +147,11 @@ export function pastOf(rec, events, t) {
 // 7 days (or is on now). KV "pub:<classId>": "0" = seen without a draw, "1" = draw seen. The first look is the
 // baseline (no notis); "0" -> published gives one notis. KV is written only when the state changes.
 const PUB_MINUTE = 37;   // not exported: workerd only accepts functions and handlers as module exports
-export async function drawChecks(env, t, list, budget, log) {
+// Draws are often published the evening before or the same morning: within 48 h of the start the check also
+// runs every 15 min (minutes 7, 22, 37, 52), limited to those classes.
+export async function drawChecks(env, t, list, budget, log, within = 7 * DAY) {
   const soon = list.filter(e => e.kind === "tournament" && e.tournamentId && e.classId &&
-    new Date(e.windowTo) > t && new Date(e.windowFrom) - t <= 7 * DAY);
+    new Date(e.windowTo) > t && new Date(e.windowFrom) - t <= within);
   const msgs = [], byT = new Map(), mine = { left: Math.min(10, budget.left - 10) }, start = mine.left;
   soon.forEach(e => { if (!byT.has(e.tournamentId)) byT.set(e.tournamentId, []); byT.get(e.tournamentId).push(e); });
   const get = getter(env, mine);
@@ -202,8 +204,9 @@ export async function tick(env, events) {
     list = merge(rec ? rec.events : []);
   }
   let pubMsgs = [];
-  if (t.getUTCMinutes() === (env.PUB_MINUTE != null ? +env.PUB_MINUTE : PUB_MINUTE)) {   // PUB_MINUTE: local tests only
-    try { pubMsgs = await drawChecks(env, t, list, budget, log); } catch (e) { console.warn("draw checks", e.message); }
+  const mm = t.getUTCMinutes(), full = mm === (env.PUB_MINUTE != null ? +env.PUB_MINUTE : PUB_MINUTE);   // PUB_MINUTE: local tests only
+  if (full || (env.PUB_MINUTE == null && mm % 15 === PUB_MINUTE % 15)) {
+    try { pubMsgs = await drawChecks(env, t, list, budget, log, full ? 7 * DAY : 2 * DAY); } catch (e) { console.warn("draw checks", e.message); }
   }
   const evs = activeEvents(t, list);
   if (!evs.length && !pubMsgs.length) {
