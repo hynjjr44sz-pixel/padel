@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Theas matchdag</title>
+<meta name="description" content="Dagens padelmatch, motståndarnas skill/ranking, Theas utveckling samt hennes kommande och tidigare matcher.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#F4F5F3;
+    --surface:#FFFFFF;
+    --surface-2:#EEF0ED;
+    --ink:#171A19;
+    --ink-dim:#6B7370;
+    --ink-faint:#98A09C;
+    --line:#E2E5E1;
+    --court:#0E6B63;
+    --court-soft:#E3EFEC;
+    --away:#8A6B3F;
+    --away-soft:#EFEAE0;
+    --accent:#0E6B63;
+    --good:#1E8F5A;
+    --good-soft:#E5F3EA;
+    --bad:#B23A2E;
+    --bad-soft:#F7E7E3;
+    --k-accent:#3D5A80;
+    --k-soft:#E7ECF1;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14181A;
+      --surface:#1B2022;
+      --surface-2:#20272A;
+      --ink:#EDEFEC;
+      --ink-dim:#9AA3A0;
+      --ink-faint:#6E7774;
+      --line:#2B3234;
+      --court:#4FCBB8;
+      --court-soft:#1E3330;
+      --away:#D9B679;
+      --away-soft:#2E2A1E;
+      --accent:#4FCBB8;
+      --good:#4FBE86;
+      --good-soft:#1B3026;
+      --bad:#E28577;
+      --bad-soft:#33231F;
+      --k-accent:#8FB4D9;
+      --k-soft:#1E2A36;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14181A;
+    --surface:#1B2022;
+    --surface-2:#20272A;
+    --ink:#EDEFEC;
+    --ink-dim:#9AA3A0;
+    --ink-faint:#6E7774;
+    --line:#2B3234;
+    --court:#4FCBB8;
+    --court-soft:#1E3330;
+    --away:#D9B679;
+    --away-soft:#2E2A1E;
+    --accent:#4FCBB8;
+    --good:#4FBE86;
+    --good-soft:#1B3026;
+    --bad:#E28577;
+    --bad-soft:#33231F;
+    --k-accent:#8FB4D9;
+    --k-soft:#1E2A36;
+    color-scheme: dark;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Inter", -apple-system, system-ui, sans-serif;
+    padding-inline:16px;
+    padding-block:26px 44px;
+    display:flex;
+    justify-content:center;
+    -webkit-font-smoothing:antialiased;
+    margin:0;
+  }
+  .page{ width:100%; max-width:600px; display:flex; flex-direction:column; gap:22px; }
+
+  h1,h2,h3, .num{ font-family:"Manrope","Inter",sans-serif; text-wrap:balance; }
+  .num{ font-variant-numeric: tabular-nums; }
+
+  /* header */
+  .top{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .brand{ font-size:12px; color:var(--ink-dim); letter-spacing:.02em; }
+  .brand b{ color:var(--ink); font-weight:600; }
+  .clock{ font-size:12px; color:var(--ink-faint); }
+
+  h1{ font-size:23px; font-weight:800; letter-spacing:-.01em; margin:0; }
+  .lede{ color:var(--ink-dim); font-size:14px; margin-top:3px; }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:20px;
+  }
+
+  /* status + meta */
+  .meta-row{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:600; letter-spacing:.01em;
+    padding:5px 10px; border-radius:99px;
+    background:var(--surface-2); color:var(--ink-dim);
+  }
+  .pill .dot{ width:6px; height:6px; border-radius:50%; background:var(--ink-faint); }
+  .pill.live{ background:var(--court-soft); color:var(--court); }
+  .pill.live .dot{ background:var(--court); animation:pulse 1.6s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce){ .pill.live .dot{ animation:none; } }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
+  .where{ font-size:12.5px; color:var(--ink-dim); }
+  .where b{ color:var(--ink); font-weight:600; }
+
+  /* matchup */
+  .vs-grid{ display:grid; grid-template-columns:1fr auto 1fr; align-items:start; gap:6px; }
+  .team{ display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .team.away{ text-align:right; }
+  .team.away .player{ align-items:flex-end; }
+  .team-tag{ font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
+  .team.home .team-tag{ color:var(--court); }
+  .team.away .team-tag{ color:var(--away); }
+  .player{ display:flex; flex-direction:column; gap:1px; }
+  .player .name{ font-weight:600; font-size:14.5px; line-height:1.3; }
+  .player .stat{ font-size:12.5px; color:var(--ink-dim); }
+  .vs-mark{
+    align-self:center; font-size:11px; font-weight:700; color:var(--ink-faint);
+    letter-spacing:.06em; padding-top:2px;
+  }
+
+  /* skill bars */
+  .skillbars{ margin-top:20px; padding-top:18px; border-top:1px solid var(--line); }
+  .skillbars .cap{ font-size:11.5px; color:var(--ink-faint); letter-spacing:.02em; margin-bottom:12px; }
+  .barline{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .barline .name{ width:96px; font-size:12.5px; color:var(--ink-dim); flex-shrink:0; }
+  .barline .track{ flex:1; height:6px; border-radius:99px; background:var(--surface-2); overflow:hidden; }
+  .barline .fill{ height:100%; border-radius:99px; }
+  .barline.home .fill{ background:var(--court); }
+  .barline.away .fill{ background:var(--away); }
+  .barline .val{ width:40px; text-align:right; font-size:12.5px; font-weight:600; flex-shrink:0; }
+
+  .avg-diff{ margin-top:14px; font-size:13px; color:var(--ink-dim); line-height:1.5; }
+  .avg-diff b{ color:var(--ink); font-weight:600; }
+
+  /* section heads */
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; }
+  .section-head h2{ font-size:16px; font-weight:700; }
+  .section-head .tag{ font-size:12px; color:var(--ink-faint); }
+
+  /* dev stats */
+  .dev-top{ display:flex; gap:10px; flex-wrap:wrap; }
+  .dev-stat{ flex:1; min-width:120px; }
+  .dev-stat .k{ font-size:11.5px; color:var(--ink-faint); }
+  .dev-stat .v{ font-size:20px; font-weight:700; margin-top:4px; }
+  .dev-stat .v small{ font-size:11.5px; font-weight:500; color:var(--ink-dim); }
+
+  .chart-wrap{ margin-top:20px; padding-top:18px; border-top:1px solid var(--line); }
+  .chart-caption{ font-size:12px; color:var(--ink-faint); margin-top:8px; line-height:1.5; }
+
+  .source-note{ font-size:11.5px; color:var(--ink-faint); margin-top:16px; padding-top:14px; border-top:1px solid var(--line); line-height:1.55; }
+  .source-note a{ color:var(--court); font-weight:600; text-decoration:none; }
+
+  /* form chips */
+  .form-row{ display:flex; gap:6px; margin-top:14px; }
+  .chip{
+    width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center;
+    font-family:"Manrope",sans-serif; font-weight:700; font-size:11.5px;
+  }
+  .chip.w{ background:var(--good-soft); color:var(--good); }
+  .chip.l{ background:var(--bad-soft); color:var(--bad); }
+
+  /* list rows: history + upcoming */
+  .rows{ display:flex; flex-direction:column; }
+  .row{
+    display:flex; align-items:center; gap:12px; padding-block:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .row:last-child{ border-bottom:none; padding-bottom:2px; }
+  .row .badge{
+    width:26px; height:26px; border-radius:7px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:"Manrope",sans-serif; font-weight:700; font-size:11.5px;
+  }
+  .row .badge.w{ background:var(--good-soft); color:var(--good); }
+  .row .badge.l{ background:var(--bad-soft); color:var(--bad); }
+  .row .badge.up{ background:var(--court-soft); color:var(--court); font-size:10px; }
+  .row .info{ flex:1; min-width:0; }
+  .row .info .opp{ font-size:13.5px; font-weight:600; line-height:1.35; }
+  .row .info .ev{ font-size:12px; color:var(--ink-dim); margin-top:1px; }
+  .row .when{ text-align:right; flex-shrink:0; }
+  .row .when .date{ font-size:12.5px; font-weight:600; }
+  .row .when .court{ font-size:11.5px; color:var(--ink-faint); }
+
+  footer{ text-align:center; font-size:11.5px; color:var(--ink-faint); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="top">
+    <div class="brand"><b>Nynäs Padel Club</b> · Damer C</div>
+    <div class="clock num" id="clock"></div>
+  </div>
+
+  <div>
+    <h1>Theas match idag</h1>
+    <div class="lede">Järfälla Padel Open no 11 — Sanktionerad B, C, D</div>
+  </div>
+
+  <!-- MATCH CARD -->
+  <div class="card">
+    <div class="meta-row">
+      <span id="statusPill"><span class="pill"><span class="dot"></span>laddar…</span></span>
+      <span class="where"><b>Järfälla Padel Club</b> · Bana 2 · 10:15</span>
+    </div>
+
+    <div class="vs-grid">
+      <div class="team home">
+        <div class="team-tag">Nynäs</div>
+        <div class="player">
+          <div class="name">Thea Holmberg Löving</div>
+          <div class="stat num">Skill 15.94</div>
+        </div>
+        <div class="player">
+          <div class="name">Cassandra Ersson</div>
+          <div class="stat num">Skill 14.31</div>
+        </div>
+      </div>
+
+      <div class="vs-mark">VS</div>
+
+      <div class="team away">
+        <div class="team-tag">Motstånd</div>
+        <div class="player">
+          <div class="name">Luna Levihn</div>
+          <div class="stat num">Skill 10.63</div>
+        </div>
+        <div class="player">
+          <div class="name">Molly Bondesson</div>
+          <div class="stat num">Skill 12.03</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="skillbars">
+      <div class="cap">SKILLJÄMFÖRELSE — WD SVENSKA PADELFÖRBUNDET</div>
+      <div class="barline home">
+        <div class="name">Thea</div>
+        <div class="track"><div class="fill" style="width:99%"></div></div>
+        <div class="val num">15.94</div>
+      </div>
+      <div class="barline home">
+        <div class="name">Cassandra</div>
+        <div class="track"><div class="fill" style="width:89%"></div></div>
+        <div class="val num">14.31</div>
+      </div>
+      <div class="barline away">
+        <div class="name">Molly</div>
+        <div class="track"><div class="fill" style="width:75%"></div></div>
+        <div class="val num">12.03</div>
+      </div>
+      <div class="barline away">
+        <div class="name">Luna</div>
+        <div class="track"><div class="fill" style="width:66%"></div></div>
+        <div class="val num">10.63</div>
+      </div>
+      <div class="avg-diff">
+        Snittskill Nynäs <b>15.13</b> mot motståndarnas <b>11.33</b> — Thea och Cassandra går in som klara favoriter på pappret.
+      </div>
+    </div>
+  </div>
+
+  <!-- HEAD TO HEAD -->
+  <div class="section-head">
+    <h2>Tidigare möten</h2>
+    <span class="tag">mot dagens motstånd</span>
+  </div>
+  <div class="card">
+    <div class="rows">
+      <div class="row">
+        <div class="badge up">–</div>
+        <div class="info">
+          <div class="opp">Thea vs Luna Levihn / Molly Bondesson</div>
+          <div class="ev">Inga tidigare möten hittade — de finns inte bland Theas mest spelade motståndare</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="badge l">L</div>
+        <div class="info">
+          <div class="opp">Cassandra (med Alva Sahlström Dahl) vs Molly Bondesson</div>
+          <div class="ev">Västerhaninge Padelförening open 1 · 19 sep · 6-7, 2-6</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOURNAMENT BRACKET -->
+  <div class="section-head">
+    <h2>Kommande i turneringen</h2>
+    <span class="tag">Damer C — huvudlåda, 16 par</span>
+  </div>
+  <div class="card">
+    <div class="rows">
+      <div class="row">
+        <div class="badge up">R2</div>
+        <div class="info">
+          <div class="opp">Vid vinst: mot vinnaren av Filippa Pettersson Österberg/Astrid Ekeland — Carla Lundström/Beatriz Callero</div>
+          <div class="ev">Den matchen spelas samtidigt kl 10:15 på Bana 1</div>
+        </div>
+        <div class="when">
+          <div class="date num">11:30</div>
+          <div class="court">Bana 1 el. 2</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="badge up">Semi</div>
+        <div class="info">
+          <div class="opp">Semifinal, om Thea går vidare två ronder</div>
+          <div class="ev">Motstånd bestäms av resten av lådan</div>
+        </div>
+        <div class="when">
+          <div class="date num">12:45</div>
+          <div class="court">Bana 1</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="badge up">Final</div>
+        <div class="info">
+          <div class="opp">Final, Damer C</div>
+          <div class="ev">Sista matchen i klassen</div>
+        </div>
+        <div class="when">
+          <div class="date num">17:45</div>
+          <div class="court">Bana 1</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPCOMING -->
+  <div class="section-head">
+    <h2>Kommande turneringar</h2>
+    <span class="tag">Rankedin</span>
+  </div>
+  <div class="card">
+    <div class="rows">
+      <div class="row">
+        <div class="badge up">LAG</div>
+        <div class="info">
+          <div class="opp">Danderyd DTK Tjejer — Nynäs Padel Club</div>
+          <div class="ev">Klubbligan Öst 13–16 &amp; 16–19 år VT 26 · lagmatch, Theas parning ej satt</div>
+        </div>
+        <div class="when">
+          <div class="date num">16 maj</div>
+          <div class="court">12:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEVELOPMENT -->
+  <div class="section-head">
+    <h2>Theas utveckling</h2>
+    <span class="tag">Officiell SPF-ranking</span>
+  </div>
+
+  <div class="card">
+    <div class="dev-top">
+      <div class="dev-stat">
+        <div class="k">SPF-ranking</div>
+        <div class="v num">#150 <small>Dam Huvudlista</small></div>
+      </div>
+      <div class="dev-stat">
+        <div class="k">Rankingpoäng</div>
+        <div class="v num">68.7 <small>WD, 12 mån</small></div>
+      </div>
+      <div class="dev-stat">
+        <div class="k">Skill just nu</div>
+        <div class="v num">15.94 <small>topp 16.07</small></div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <svg id="trendChart" viewBox="0 0 560 190" width="100%" height="190" role="img" aria-label="Theas skill över de tio senaste matcherna, från 15.88 i juli till 15.94 i september, med en topp på 16.07"></svg>
+      <div class="chart-caption">Skill efter var och en av de 10 senaste tävlingsmatcherna (25 jul – 13 sep 2026).</div>
+      <div class="form-row" id="formRow"></div>
+    </div>
+
+    <div class="source-note">
+      Ranking och skill hämtas från <a href="https://www.rankedin.com/en/player/R000266565/thea-holmberg-loving/skill" target="_blank" rel="noopener">Rankedin</a>, som är den plattform Svenska Padelförbundet officiellt använder för ranking och tävlingsresultat — förbundet har ingen egen databas vid sidan av den. Ögonblicksbild tagen 27 sep 09:40.
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="section-head">
+    <h2>Tidigare matcher</h2>
+    <span class="tag">10 senaste</span>
+  </div>
+  <div class="card">
+    <div class="rows" id="historyRows"></div>
+  </div>
+
+  <footer>Nynäs Padel Club · byggd av Claude åt Mike</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var matchStart = new Date("2026-09-27T10:15:00+02:00");
+  var matchEnd   = new Date("2026-09-27T11:45:00+02:00");
+
+  function fmtClock(d){
+    try{ return d.toLocaleTimeString("sv-SE", {hour:"2-digit", minute:"2-digit"}); }
+    catch(e){ return ""; }
+  }
+
+  function renderStatus(){
+    var now = new Date();
+    var clockEl = document.getElementById("clock");
+    if (clockEl) clockEl.textContent = fmtClock(now);
+
+    var pillWrap = document.getElementById("statusPill");
+    if (!pillWrap) return;
+    var html;
+    if (now < matchStart){
+      var diffMs = matchStart - now;
+      var h = Math.floor(diffMs / 3600000);
+      var m = Math.floor((diffMs % 3600000) / 60000);
+      var txt = h > 0 ? (h + "h " + m + "min kvar") : (m + " min kvar");
+      html = '<span class="pill"><span class="dot"></span>Startar om ' + txt + '</span>';
+    } else if (now >= matchStart && now <= matchEnd){
+      html = '<span class="pill live"><span class="dot"></span>Pågår troligen nu</span>';
+    } else {
+      html = '<span class="pill"><span class="dot"></span>Bör vara klar — kolla resultat</span>';
+    }
+    pillWrap.innerHTML = html;
+  }
+  renderStatus();
+  setInterval(renderStatus, 30000);
+
+  // ---- history (newest first), reliable W/L from skill-delta chain ----
+  var history = [
+    {r:"L", date:"13 sep", opp:"J. Albertsson / T. Albertsson", ev:"Trosa September Open", partner:"Cassandra Ersson"},
+    {r:"W", date:"13 sep", opp:"M. Bradbury / J. Larsson", ev:"Trosa September Open", partner:"Cassandra Ersson"},
+    {r:"W", date:"13 sep", opp:"A. Lundgren / Q. Isdoor", ev:"Trosa September Open", partner:"Cassandra Ersson"},
+    {r:"W", date:"30 aug", opp:"H. Wallerman / M. Lundberg Aguilera", ev:"UNO Augusti Open", partner:"Nathalie Hällegard"},
+    {r:"W", date:"30 aug", opp:"G. Blomberg / L. Rydelius", ev:"UNO Augusti Open", partner:"Nathalie Hällegard"},
+    {r:"W", date:"30 aug", opp:"S. Aufwerber / S. Spong", ev:"UNO Augusti Open", partner:"Nathalie Hällegard"},
+    {r:"W", date:"30 aug", opp:"C. Storholm / H. Owe", ev:"UNO Augusti Open", partner:"Nathalie Hällegard"},
+    {r:"L", date:"23 aug", opp:"B. Callero / S. Moshiri", ev:"Järfälla Padel Open No 10", partner:"Alva Sahlström Dahl"},
+    {r:"W", date:"23 aug", opp:"E. Hilmersson / E. Sjöberg", ev:"Järfälla Padel Open No 10", partner:"Alva Sahlström Dahl"},
+    {r:"W", date:"25 jul", opp:"C. Engberg / R. Persson", ev:"UNO July Open", partner:"Cassandra Ersson"}
+  ];
+  var historyWrap = document.getElementById("historyRows");
+  history.forEach(function(m){
+    var row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML =
+      '<div class="badge ' + (m.r === "W" ? "w" : "l") + '">' + m.r + '</div>' +
+      '<div class="info">' +
+        '<div class="opp">vs ' + m.opp + '</div>' +
+        '<div class="ev">' + m.ev + ' · med ' + m.partner + '</div>' +
+      '</div>' +
+      '<div class="when"><div class="date num">' + m.date + '</div></div>';
+    historyWrap.appendChild(row);
+  });
+
+  // ---- form chips, oldest -> newest (mirrors history above, reversed) ----
+  var form = history.slice().reverse().map(function(m){ return m.r; });
+  var formRow = document.getElementById("formRow");
+  form.forEach(function(r){
+    var d = document.createElement("div");
+    d.className = "chip " + (r === "W" ? "w" : "l");
+    d.textContent = r;
+    formRow.appendChild(d);
+  });
+
+  // ---- skill trend chart ----
+  var points = [
+    {d:"25/7", v:15.88},
+    {d:"23/8", v:15.91},
+    {d:"23/8", v:15.74},
+    {d:"30/8", v:15.81},
+    {d:"30/8", v:15.85},
+    {d:"30/8", v:15.92},
+    {d:"30/8", v:16.00},
+    {d:"13/9", v:16.02},
+    {d:"13/9", v:16.07},
+    {d:"13/9", v:15.94}
+  ];
+
+  var svg = document.getElementById("trendChart");
+  var W = 560, H = 190;
+  var padL = 34, padR = 12, padT = 22, padB = 26;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+
+  var vMin = Math.min.apply(null, points.map(function(p){return p.v;})) - 0.12;
+  var vMax = Math.max.apply(null, points.map(function(p){return p.v;})) + 0.12;
+
+  function xAt(i){ return padL + (plotW * i) / (points.length - 1); }
+  function yAt(v){ return padT + plotH * (1 - (v - vMin) / (vMax - vMin)); }
+
+  var css = getComputedStyle(document.documentElement);
+  function tok(name){ return css.getPropertyValue(name).trim(); }
+  var cLine = tok("--line"), cInk = tok("--ink-faint"), cCourt = tok("--court"), cSurface2 = tok("--surface-2");
+
+  var svgns = "http://www.w3.org/2000/svg";
+  function el(tag, attrs){
+    var e = document.createElementNS(svgns, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  var gridVals = [vMin + (vMax-vMin)*0.15, vMin + (vMax-vMin)*0.5, vMin + (vMax-vMin)*0.85];
+  gridVals.forEach(function(v){
+    var y = yAt(v);
+    svg.appendChild(el("line", {x1:padL, x2:W-padR, y1:y, y2:y, stroke:cLine, "stroke-width":1}));
+    var t = el("text", {x: 0, y: y+4, "font-size":10, fill:cInk, "font-family":"Inter,sans-serif"});
+    t.textContent = v.toFixed(1);
+    svg.appendChild(t);
+  });
+
+  var areaPath = "M " + xAt(0) + " " + yAt(points[0].v);
+  points.forEach(function(p,i){ areaPath += " L " + xAt(i) + " " + yAt(p.v); });
+  areaPath += " L " + xAt(points.length-1) + " " + (H-padB) + " L " + xAt(0) + " " + (H-padB) + " Z";
+  var grad = el("linearGradient", {id:"trendGrad", x1:"0", y1:"0", x2:"0", y2:"1"});
+  grad.appendChild(el("stop", {offset:"0%", "stop-color":cCourt, "stop-opacity":"0.22"}));
+  grad.appendChild(el("stop", {offset:"100%", "stop-color":cCourt, "stop-opacity":"0"}));
+  var defs = el("defs", {}); defs.appendChild(grad); svg.appendChild(defs);
+  svg.appendChild(el("path", {d:areaPath, fill:"url(#trendGrad)", stroke:"none"}));
+
+  var linePath = "M " + xAt(0) + " " + yAt(points[0].v);
+  points.forEach(function(p,i){ if(i>0) linePath += " L " + xAt(i) + " " + yAt(p.v); });
+  svg.appendChild(el("path", {d:linePath, fill:"none", stroke:cCourt, "stroke-width":2, "stroke-linecap":"round", "stroke-linejoin":"round"}));
+
+  var peakIdx = points.reduce(function(best,p,i,arr){ return p.v > arr[best].v ? i : best; }, 0);
+  points.forEach(function(p,i){
+    var isLast = i === points.length - 1;
+    var isPeak = i === peakIdx;
+    var r = isLast ? 4.5 : (isPeak ? 3.6 : 2.2);
+    var fill = isLast || isPeak ? cCourt : cSurface2;
+    var stroke = isLast || isPeak ? cCourt : cLine;
+    svg.appendChild(el("circle", {cx:xAt(i), cy:yAt(p.v), r:r, fill:fill, stroke:stroke, "stroke-width": 1.2}));
+    if (i===0 || isLast || isPeak){
+      var t = el("text", {x:xAt(i), y:H-8, "font-size":10, fill:cInk, "font-family":"Inter,sans-serif", "text-anchor": isLast ? "end" : (i===0 ? "start" : "middle")});
+      t.textContent = p.d;
+      svg.appendChild(t);
+    }
+  });
+
+  var peakLabel = el("text", {x:xAt(peakIdx), y:yAt(points[peakIdx].v)-9, "font-size":10.5, fill:cCourt, "font-family":"Manrope,sans-serif", "font-weight":"700", "text-anchor":"middle"});
+  peakLabel.textContent = points[peakIdx].v.toFixed(2);
+  svg.appendChild(peakLabel);
+
+  var lastP = points[points.length-1];
+  var curLabel = el("text", {x:xAt(points.length-1)-3, y:yAt(lastP.v)-9, "font-size":10.5, fill:cCourt, "font-family":"Manrope,sans-serif", "font-weight":"700", "text-anchor":"end"});
+  curLabel.textContent = lastP.v.toFixed(2);
+  svg.appendChild(curLabel);
+
+})();
+</script>
+</body>
+</html>
