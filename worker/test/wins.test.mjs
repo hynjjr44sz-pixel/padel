@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import worker, { tick, _resetMemory, winsBackfill, recentWins } from "../src/index.js";
 import { parse, summary, classResult } from "../src/rankedin.js";
 import ROSTER from "../src/players.js";
+import { makeVapid } from "./helpers.mjs";
 
 const F = n => readFileSync(new URL("./fixtures/" + n, import.meta.url), "utf8");
 const slug = n => String(n).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -54,7 +55,7 @@ test("classResult: groups-only class -> the group winner; not for a mixed class 
 
 test("tick: the final decided -> one 'wins' entry (one KV write), served by GET /events; no write on later looks", async () => {
   _resetMemory();
-  const PUSH = kv(), env = { PUSH, NOW: "2026-09-27T20:00:00+02:00", ORIGIN: "x" };
+  const PUSH = kv(), env = { PUSH, ...(await makeVapid()), NOW: "2026-09-27T20:00:00+02:00", ORIGIN: "x" };
   net("dc_in_final.json");
   await tick(env, [JC]);
   assert.equal(PUSH.m.get("wins"), undefined, "no winner yet");

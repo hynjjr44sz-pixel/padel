@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import worker, { tick, _resetMemory } from "../src/index.js";
 import { install, route } from "./fake-rankedin.mjs";
+import { makeVapid } from "./helpers.mjs";
 import { readFileSync } from "node:fs";
 
 const require = createRequire(import.meta.url);
@@ -27,7 +28,19 @@ await tick({ PUSH, NOW: "2026-09-27T11:07:00Z", ORIGIN: "x" });
 _resetMemory();
 await tick({ PUSH, NOW: "2026-09-27T11:52:00Z", ORIGIN: "x", RANK_OFF: "1" });
 const EVENTS = await (await worker.fetch(new Request("https://w/events"), { PUSH, NOW: "2026-09-27T11:52:00Z", ORIGIN: "x" })).json();
+// The week after (Veckans vinnare): the real final (Thea and Cassandra 6-1 6-4) seen by the live tick, then a full
+// round of discovery on Tuesday (Järfälla moves to "past"), GET /events on Tuesday.
+const FINAL = { "/tournament/GetDrawsForStageAndStrengthAsync?tournamentClassId=164681&drawStrength=0&drawStage=0&isReadonly=true&language=en": JSON.parse(readFileSync(new URL("./fixtures/dc_final.json", import.meta.url), "utf8")) };
+install({ over: { ...FINAL, "/tournament/GetDrawsForStageAndStrengthAsync?tournamentClassId=164677&drawStrength=0&drawStage=0&isReadonly=true&language=en": [] } });
+_resetMemory();
+await tick({ PUSH, ...(await makeVapid()), NOW: "2026-09-27T16:10:00Z", ORIGIN: "x", RANK_OFF: "1" });   // notiser: no subscribers here
+for (const m of ["08:07", "08:17", "08:27", "08:37", "08:47"]) { _resetMemory(); await tick({ PUSH, NOW: "2026-09-29T" + m + ":00Z", ORIGIN: "x", RANK_OFF: "1" }); }
+_resetMemory();
+const EVENTS_WEEK = await (await worker.fetch(new Request("https://w/events"), { PUSH, NOW: "2026-09-29T10:00:00Z", ORIGIN: "x" })).json();
 globalThis.fetch = realFetch;
+assert.deepEqual(EVENTS.wins, [], "no winner during the day");
+assert.deepEqual(EVENTS_WEEK.wins.map(w => w.id + " " + w.s), ["164681:1 6-1 6-4"], "worker wins the week after");
+assert.ok(EVENTS_WEEK.past.some(e => e.classId === 164681) && !EVENTS_WEEK.events.some(e => e.classId === 164681), "Järfälla in past");
 assert.ok(EVENTS.live["1675246"], "worker live view for Thea");
 
 // What the page reads besides the discovery (ranking, skill, profile, SPL table): made up from players.json.
@@ -77,7 +90,7 @@ async function newPage(opts = {}) {
   await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route(PUSH_API + "/**", r => {
     const u = new URL(r.request().url()), h = { "Access-Control-Allow-Origin": "*" };
-    if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(EVENTS), headers: h });
+    if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
     if (u.pathname === "/vapid") return r.fulfill({ contentType: "application/json", body: JSON.stringify({ key: "BOr5MaD1vP9w2uH0Pqzv8pH5v2cXf8j8e7Rrx6Qv0yq2mS9d2w8g5k2WnYQx1S0x0gJ5v8wV0z9Q2v5cXf8j8e7R", classes: [164681] }), headers: h });
     if (u.pathname === "/subscribe" || u.pathname === "/unsubscribe") { api.posts.push({ path: u.pathname, body: JSON.parse(r.request().postData() || "{}") }); return r.fulfill({ contentType: "application/json", body: "{\"ok\":true}", headers: h }); }
     return r.fulfill({ status: 404, body: "{}", headers: h });
@@ -97,7 +110,7 @@ async function newPage(opts = {}) {
   });
   return { page, ctx, errors, api };
 }
-const url = (h, extra = "") => BASE + "?t=" + encodeURIComponent(T) + extra + h;
+const url = (h, extra = "", t = T) => BASE + "?t=" + encodeURIComponent(t) + extra + h;
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: SHOTS + "/" + name + ".png", fullPage: true }); };
 const noHScroll = page => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
 
@@ -132,6 +145,7 @@ try {
   await page.fill("#q", "");
   ok("home: no horizontal scroll at 390", await noHScroll(page));
   ok("home: at most a handful of RankedIn calls on load", api.ri <= 2, api.ri);
+  ok("home: no Veckans vinnare on the day (worker has no wins yet)", await page.$eval("#secWin", s => s.hidden));
   await shot(page, "home");
 
   // ---- player with photo (Thea): live view, deep link ----
@@ -213,6 +227,54 @@ try {
   ok("360 dark: no horizontal scroll (Nathalie)", await noHScroll(page));
   await shot(page, "nathalie-dark-360");
   ok("no console errors", errors.concat(errors2).length === 0, errors.concat(errors2));
+  await ctx.close();
+
+  // ---- Veckans vinnare: the week after Järfälla (worker "wins") ----
+  for (const dark of [false, true]) {
+    ({ page, ctx, errors, api } = await newPage({ events: EVENTS_WEEK, over: FINAL, dark }));
+    await page.goto(url("", "", "2026-09-29T10:00:00+02:00"));
+    await page.waitForSelector("#secWin:not([hidden]) .wcard");
+    const card = (await page.textContent("#winList .wcard")).replace(/\s+/g, " ");
+    if (!dark) {
+      ok("week after (tis 29 sep): Veckans vinnare shows Thea & Cassandra's Damer C win", /THEA & CASSANDRA|Thea & Cassandra/i.test(card) && /Damer C/.test(card) && /Järfälla Padel Open no 11/.test(card) && /6-1 6-4/.test(card) && /Persson \/ Bradbury/.test(card) && /sön 27 sep/.test(card), card);
+      ok("week after: card links to Thea, one card, two avatars", await page.getAttribute("#winList .wcard", "href") === "#thea" && (await page.$$("#winList .wcard")).length === 1 && (await page.$$("#winList .wcard .av")).length === 2);
+      ok("week after: section sits after Spelar nu, before Senaste resultat", await page.evaluate(() => { const ids = [...document.querySelectorAll("#home section")].map(x => x.id); return ids.indexOf("secWin") === ids.indexOf("secNow") + 1; }));
+      ok("week after: home makes no extra RankedIn calls for it", api.ri <= 2, api.ri);
+    }
+    ok("week after " + (dark ? "dark" : "light") + ": no horizontal scroll at 390", await noHScroll(page));
+    const el = await page.$("#secWin");
+    await el.screenshot({ path: "/tmp/claude-0/-home-user-padel/e0bacc1b-df2c-5dc3-aa35-2abf1c7370b5/scratchpad/wins-" + (dark ? "dark" : "light") + ".png" }).catch(() => {});
+    if (SHOTS) await el.screenshot({ path: SHOTS + "/wins-" + (dark ? "dark" : "light") + ".png" });
+    ok("week after " + (dark ? "dark" : "light") + ": no console errors", errors.length === 0, errors);
+    await ctx.close();
+  }
+  ({ page, ctx, errors, api } = await newPage({ events: EVENTS_WEEK, over: FINAL, width: 360 }));
+  await page.goto(url("", "", "2026-10-05T09:00:00+02:00"));
+  await page.waitForSelector("#nowList .nowrow, #nowList .empty");
+  await page.waitForTimeout(300);
+  ok("mån 5 okt: still in Veckans vinnare", !(await page.$eval("#secWin", s => s.hidden)) && /Thea/i.test(await page.textContent("#winList")));
+  ok("mån 5 okt 360: no horizontal scroll", await noHScroll(page));
+  await page.goto(url("#thea", "", "2026-10-05T12:00:00+02:00"));
+  await page.waitForFunction(() => /Vinnare/i.test(document.querySelector("#dyn-thea [data-r=time]")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+  const heroT = await page.$eval("#dyn-thea", d => ({ time: d.querySelector("[data-r=time]").textContent, pill: d.querySelector("[data-r=pill]").textContent, link: d.querySelector("[data-r=link]").textContent }));
+  ok("mån 5 okt 12:00: Thea's hero still shows VINNARE (Järfälla)", /vinnare/i.test(heroT.time) && /vinnare/i.test(heroT.pill) && /Järfälla/.test(heroT.link), heroT);
+  await page.goto(url("#kian", "", "2026-10-05T12:00:00+02:00"));
+  await page.waitForSelector("#p-kian:not([hidden]) #dyn-kian [data-r=link]");
+  await page.waitForTimeout(500);
+  const heroK = await page.$eval("#dyn-kian", d => d.querySelector("[data-r=link]").textContent + " | " + d.querySelector("[data-r=round]").textContent);
+  ok("mån 5 okt: Kian (no win) no longer shows his Järfälla result", !/Järfälla|Herrar C/.test(heroK), heroK);
+  ok("mån 5 okt: no console errors", errors.length === 0, errors);
+  await ctx.close();
+  ({ page, ctx, errors, api } = await newPage({ events: EVENTS_WEEK, over: FINAL }));
+  await page.goto(url("", "", "2026-10-06T00:00:00+02:00"));
+  await page.waitForSelector("#nowList .nowrow, #nowList .empty");
+  await page.waitForTimeout(300);
+  ok("tis 6 okt 00:00: Veckans vinnare gone", await page.$eval("#secWin", s => s.hidden));
+  await page.goto(url("#thea", "", "2026-10-06T00:00:00+02:00"));
+  await page.waitForSelector("#p-thea:not([hidden]) #dyn-thea [data-r=link]");
+  await page.waitForTimeout(500);
+  const heroT2 = await page.$eval("#dyn-thea", d => d.querySelector("[data-r=link]").textContent + " | " + d.querySelector("[data-r=time]").textContent);
+  ok("tis 6 okt: Thea's hero moved on from Järfälla", !/Järfälla/.test(heroT2), heroT2);
   await ctx.close();
 
   // ---- worker down: client discovery only for the opened player ----

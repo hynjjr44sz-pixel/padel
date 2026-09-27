@@ -694,6 +694,26 @@
   .nowrow b{ display:block; font:800 20px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.03em; }
   .nowrow .ne{ display:block; font-size:12.5px; line-height:1.3; color:var(--dim); margin-top:3px; overflow-wrap:anywhere; }
   .nowrow .ns{ display:block; font:500 11.5px/1.35 "Chivo Mono", monospace; color:var(--ink); margin-top:3px; overflow-wrap:anywhere; }
+  .winlist{ display:grid; gap:8px; }
+  .wcard{
+    --s:50px; --ring:var(--board);
+    position:relative; overflow:hidden; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; padding:12px 14px 13px;
+    background:var(--board); color:var(--board-ink); border-radius:14px; text-decoration:none; box-shadow:inset 3px 0 0 var(--ball);
+  }
+  .wcard .court{ position:absolute; right:-40px; top:0; width:220px; height:100%; opacity:.08; pointer-events:none; }
+  .wcard > span{ position:relative; min-width:0; }
+  .wcard .wh{ display:flex; align-items:center; gap:8px; font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--board-dim); }
+  .wcard .pb{ display:inline-flex; height:22px; padding:0 7px; border-radius:6px; font-size:13px; }
+  .wcard b{ display:block; margin-top:7px; font:900 26px/.95 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; overflow-wrap:anywhere; }
+  .wcard .we{ display:block; font-size:12.5px; line-height:1.3; color:var(--board-dim); margin-top:4px; overflow-wrap:anywhere; }
+  .wcard .ws{ display:block; font:600 12px/1.35 "Chivo Mono", monospace; color:var(--ball); margin-top:4px; overflow-wrap:anywhere; }
+  .wcard .ws span{ font-weight:500; color:var(--board-ink); }
+  .winfin{ list-style:none; margin:0; padding:2px 12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; }
+  .winfin li + li{ border-top:1px solid var(--line); }
+  .winfin a{ --s:26px; --ring:var(--surface); display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:10px; align-items:center; padding:9px 0; color:var(--ink); text-decoration:none; }
+  .winfin .pb{ height:24px; padding:0 7px; font-size:13px; }
+  .winfin b{ font-weight:700; font-size:13.5px; }
+  .winfin .wm{ display:block; font:500 11px/1.35 "Chivo Mono", monospace; color:var(--dim); margin-top:2px; overflow-wrap:anywhere; }
   .homerec .rv{ font:500 10.5px/1.3 "Chivo Mono", monospace; color:var(--faint); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .agenda{ display:grid; gap:14px; }
   .aday h3{ margin:0 0 6px; font:600 11px/1.2 "Chivo Mono", monospace; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); }
@@ -776,6 +796,11 @@
     <section aria-labelledby="h-now" id="secNow">
       <div class="sh"><h2 id="h-now">Spelar nu</h2><div class="meta" id="nowMeta"></div></div>
       <div class="nowlist" id="nowList"><p class="empty">Hämtar …</p></div>
+    </section>
+
+    <section aria-labelledby="h-win" id="secWin" hidden>
+      <div class="sh"><h2 id="h-win">Veckans vinnare</h2><div class="meta" id="winMeta"></div></div>
+      <div class="winlist" id="winList"></div>
     </section>
 
     <section aria-labelledby="h-res" id="secRes" hidden>
@@ -2554,6 +2579,8 @@
         if (sum.w != null){ o.court = sum.w + "–" + sum.l; o.clab = sum.clab || "Matcher"; }
         o.txt = sum.text;
         o.sub = (rc.kind === "teamleague" ? rc.name : rc.cls) + " · " + (sum.b || "klart");
+      } else if (rc.kind === "tournament" && wonClass(BYKEY[who], rc)){   // known from the worker before the draw is loaded
+        o.pill = "Vinnare"; o.pcls = "live"; o.big = "Vinnare"; o.word = true; o.txt = "Hämtar resultatet …"; o.sub = rc.cls + " · vinnare";
       } else {
         o.pill = "Klart"; o.pcls = "done"; o.big = dayMonD(end); o.txt = "Hämtar resultatet …"; o.sub = (rc.cls || rc.name || "") + " · klart";
       }
@@ -2702,7 +2729,10 @@
       return {mode:"live", e:e0, key:"live:" + e0.key};
     }
     var next = list.filter(function(e){ return new Date(e.windowFrom) > t; }).sort(function(a, b){ return String(a.windowFrom).localeCompare(String(b.windowFrom)); })[0] || null;
-    var recent = pastEvents(who).filter(function(e){ return +t - new Date(e.windowTo) < 48 * HOUR; })[0] || null;
+    // the event that just ended: 48 h; a class the player won stays through the week after (Veckans vinnare) and
+    // comes before a later event (e.g. Sunday's SPL day after Saturday's win; that result is in the lists below)
+    var past = pastEvents(who), won = past.filter(function(e){ return e.kind === "tournament" && wonClass(P, e); });
+    var recent = won[0] || past.filter(function(e){ return +t - new Date(e.windowTo) < 48 * HOUR; })[0] || null;
     return {mode:"between", e:next, recent:recent, key:"btw:" + (next ? next.key : "-") + ":" + (recent ? recent.key : "-")};
   }
   function setMode(who, pk){
@@ -2879,7 +2909,7 @@
     CLIENT_AT[P.key] = Date.now();
     clientDiscover(DISC, [P]).then(function(r){
       var keep = (DISC.events || []).filter(function(e){ return !(e.kind === "tournament" && (e.who === P.key || e.pid === P.pid)) && !(e.kind === "teamleague" && r.events.some(function(x){ return x.key === e.key; })); });
-      var d = {at:r.at, src:"client", events:keep.concat(r.events).sort(function(a, b){ return String(a.windowFrom).localeCompare(String(b.windowFrom)); }), past:DISC.past || [], latest:DISC.latest || [], live:DISC.live || {}};
+      var d = {at:r.at, src:"client", events:keep.concat(r.events).sort(function(a, b){ return String(a.windowFrom).localeCompare(String(b.windowFrom)); }), past:DISC.past || [], latest:DISC.latest || [], live:DISC.live || {}, wins:DISC.wins || []};
       d.savedAt = DISC.savedAt || Date.now();
       store.set(EV_KEY, JSON.stringify(d));
       applyDisc(d);
@@ -2950,6 +2980,7 @@
   function renderHome(){
     if (!ROSTER.length) return;
     try { renderNow(); } catch (e){ warn("Spelar nu", e); }
+    try { renderWins(); } catch (e){ warn("Veckans vinnare", e); }
     try { renderLatest(); } catch (e){ warn("Senaste resultat", e); }
     try { renderAgenda(); } catch (e){ warn("Kommande", e); }
     try { renderTeams(); } catch (e){ warn("Lagen", e); }
@@ -3017,6 +3048,55 @@
       return '<li><a href="#' + esc(who) + '/m' + esc(x.mid) + '"' + (mine ? ' class="mine"' : "") + '><div class="rh"><b>' + esc(x.lab || "") + '</b><span>' + esc(whenOf(x.d)) + '</span></div>' +
         '<div class="rw">' + esc(x.win) + '</div><div class="rl">' + esc(((x.s ? x.s + " " : "") + (x.lose ? "mot " + x.lose : "")).trim()) + '</div><div class="rv">' + esc(ev) + '</div></a></li>';
     }).join("") + '</ol>';
+  }
+  // Veckans vinnare: club players who won a class (worker "wins", place 1) the week after, finals lost (place 2)
+  // as smaller rows under them. Shown from the day of the final through the 8th day after it (the week after,
+  // Monday to Monday). Only from the worker: no RankedIn calls here.
+  var WIN_DAYS = 8;
+  function addDays(iso, n){ var d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function weekWins(place){
+    var today = dayOf(now());
+    return ((DISC && DISC.wins) || []).filter(function(w){
+      return w && /^\d{4}-\d\d-\d\d$/.test(w.date || "") && (w.place || 1) === place && w.date <= today && today <= addDays(w.date, WIN_DAYS);
+    });
+  }
+  function wonClass(P, e){
+    return !!P && !!e && weekWins(1).some(function(w){ return String(w.classId) === String(e.classId) && (w.pids || []).map(Number).indexOf(P.pid) >= 0; });
+  }
+  // "Thea & Cassandra": club players by first name, a partner outside the club by surname
+  function pairLabel(w){
+    var n = (w.pair || []).map(function(x){ var p = BYNAME[slug(x)]; return p ? p.short : surname(x); });
+    if (!n.length) n = (w.pids || []).map(function(pid){ return (BYPID[pid] || {}).short; }).filter(Boolean);
+    return n.join(" & ");
+  }
+  function winPlayers(w){ return (w.pids || []).map(function(pid){ return BYPID[pid]; }).filter(Boolean); }
+  function winAvatars(w, size){
+    var n = (w.pair || []).length ? w.pair : winPlayers(w).map(function(p){ return p.name; });
+    return '<span class="avs ' + (size || "") + '">' + n.map(avatar).join("") + '</span>';
+  }
+  function renderWins(){
+    var sec = document.getElementById("secWin"), host = document.getElementById("winList"), meta = document.getElementById("winMeta");
+    if (!sec || !host) return;
+    var f = follows(), fol = function(w){ return (w.pids || []).some(function(p){ return f.indexOf(Number(p)) >= 0; }) ? 1 : 0; };
+    var order = function(a, b){ return String(b.date).localeCompare(String(a.date)) || fol(b) - fol(a) || String(a.id).localeCompare(String(b.id)); };
+    var wins = weekWins(1).sort(order), fins = weekWins(2).sort(order);
+    sec.hidden = !wins.length;
+    if (!wins.length){ host.innerHTML = ""; if (meta) meta.textContent = ""; return; }
+    if (meta) meta.textContent = wins.length === 1 ? "1 klass" : wins.length + " klasser";
+    host.innerHTML = wins.map(function(w){
+      var P = winPlayers(w)[0], day = riDate(w.date + "T12:00"), res = w.rr ? "Vann gruppen " + (w.s || "") : (w.s || "");
+      return '<a class="wcard" href="#' + esc(P ? P.key : "") + '" aria-label="' + esc(pairLabel(w) + " vann " + (w.cls || "klassen") + (w.name ? " i " + w.name : "")) + '">' +
+        '<svg class="court" viewBox="0 0 390 230" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1.4"><path d="M20 229 L110 20 H280 L370 229 Z"/><path d="M58 140 H332"/><path d="M195 140 V229"/></svg>' +
+        '<span><span class="wh"><span class="pb win">Vinnare</span>' + esc(day ? dayLabel(day) : "") + '</span>' +
+        '<b>' + esc(pairLabel(w)) + '</b>' +
+        '<span class="we">' + esc([w.cls, w.name].filter(Boolean).join(" · ")) + '</span>' +
+        (res.trim() || w.opp ? '<span class="ws">' + esc(res.trim()) + (w.opp && !w.rr ? ' <span>mot ' + esc(w.opp) + '</span>' : "") + '</span>' : "") + '</span>' +
+        winAvatars(w) + '</a>';
+    }).join("") + (fins.length ? '<ul class="winfin" aria-label="Finaler">' + fins.map(function(w){
+      var P = winPlayers(w)[0];
+      return '<li><a href="#' + esc(P ? P.key : "") + '"><span class="pb hi">Final</span><span><b>' + esc(pairLabel(w)) + '</b>' +
+        '<span class="wm">' + esc([w.cls, w.name].filter(Boolean).join(" · ") + (w.s ? " · " + w.s : "") + (w.opp ? " mot " + w.opp : "")) + '</span></span>' + winAvatars(w, "sm") + '</a></li>';
+    }).join("") + '</ul>' : "");
   }
   // Upcoming: one row per class (all club players in it) and per team play day (not per player)
   function upcomingRows(){

@@ -41,6 +41,13 @@ Listan sparas i KV under `disc` och skrivs bara om när något ändrats, eller v
 - `GET /events` ger listan (sidan läser den var 30:e minut), `past` (tävlingar som tagit slut de senaste
   60 dagarna), `latest` (senaste resultaten för klubbens spelare) och `live` (per spelare: nästa match eller
   hur dagen slutade). `latest` och `live` kommer från bevakningen nedan och kostar inga extra KV-skrivningar.
+- `wins` (Veckans vinnare): klasser som en klubbspelare vunnit (`place: 1`, finalen i huvudlottningen eller ensam grupp
+  i en ren gruppspelsklass) eller förlorat finalen i (`place: 2`), de senaste 30 dagarna: klass, turnering, datum,
+  `pids`, paret, motståndarna, resultat och länk. Workern ser det när finalen fått en vinnare (sparas då också i
+  klassens `st:<klass>`) och lägger till det i KV `wins`, som bara skrivs när något nytt kommer till. En gång i timmen
+  (minut 44) kollas också klassernas sparade läge för tävlingar de senaste 9 dagarna (bara KV-läsningar), så en vinst
+  som missades eller hände innan koden fanns kommer med ändå. Sidan visar vinsten på "Nynäs idag" och i spelarens
+  toppruta från finaldagen till och med 8:e dagen efter.
 - Under speldagen (07:00–23:00 svensk tid) kollas varje klass och lagmatch varje minut, en gång för alla
   klubbens spelare i den. Max 30 anrop till RankedIn per minut. Pågår mer samtidigt turas de om.
 - Lottning: en gång i timmen (minut 37) kollas varje turneringsklass som börjar inom 7 dagar. När lottningen

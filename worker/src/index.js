@@ -310,7 +310,7 @@ export function finFromSum(sm, evs) {
   const r = ((sm && sm.res) || []).find(x => x && x.lab === "Final");
   if (!r) return null;
   const won = (r.won || []).map(Number), lost = (r.pids || []).map(Number).filter(p => !won.includes(p));
-  const pairOf = pids => { const e = evs.find(x => pids.includes(Number(x.pid)) || pids.includes(Number(x.partnerId))); return e ? [e.me, e.partner].filter(Boolean) : []; };
+  const pairOf = pids => { const e = evs.find(x => x.partner && pids.includes(Number(x.pid))) || evs.find(x => pids.includes(Number(x.pid))); return e ? [e.me, e.partner].filter(Boolean) : []; };
   return { d: String(r.d || "").slice(0, 16), s: r.s || "", w: won, l: lost, win: pairOf(won), lose: pairOf(lost), wopp: r.win || "", opp: r.lose || "" };
 }
 async function loadWins(env) {
@@ -347,6 +347,7 @@ export async function winsBackfill(env, t, list, log, max = 20) {
     try { st = JSON.parse((await env.PUSH.get("st:" + cid)) || "null"); } catch (e) { st = null; }
     const sm = st && st._sum;
     if (!sm) continue;
+    evs.sort((a, b) => (a.static ? 1 : 0) - (b.static ? 1 : 0));   // discovered entries (name, url) before events.js
     found.push(...winEntries(evs[0], sm.fin || finFromSum(sm, evs), t));
   }
   return addWins(env, t, found, log);
