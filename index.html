@@ -275,6 +275,8 @@
   .bk-nav button:hover:not(:disabled){ border-color:var(--ink); }
   .bk-nav button:disabled{ opacity:.35; cursor:default; }
   @media (hover:hover) and (pointer:fine){ .bk-nav{ display:inline-flex; } .bk-note .swipe{ display:none; } }
+  .e .n .sk{ display:block; font:500 10.5px/1.3 "Chivo Mono", monospace; color:var(--dim); letter-spacing:.02em; margin-top:1px; }
+  .opt .osk{ display:block; font:500 10.5px/1.3 "Chivo Mono", monospace; color:var(--board-dim); margin-top:2px; }
   /* ---------- bracket ---------- */
   .bk-wrap{ position:relative; margin:0 -16px; }
   .bk-wrap::after{
@@ -287,7 +289,7 @@
     padding:0 16px 10px; -webkit-overflow-scrolling:touch; scrollbar-width:none;
   }
   .bk-scroll::-webkit-scrollbar{ display:none; }
-  .bk{ display:flex; width:max-content; --cw:238px; --gap:24px; --slot:132px; }
+  .bk{ display:flex; width:max-content; --cw:238px; --gap:24px; --slot:158px; }
   .bk-col{ width:calc(var(--cw) + var(--gap)); flex:none; scroll-snap-align:start; }
   .bk-col:last-child{ width:var(--cw); }
   .bk-hd{ height:46px; }
@@ -744,6 +746,36 @@
 
   /* ================= data (edit here) ================= */
   // Scores are written from the winner's side. "10-8" = match tie-break.
+  // Skill (Svenska Padelförbundet, WD=65 / MD=64) per spelare: namn -> [RankedIn-id, skill, ratingId]. Uppdateras live från RankedIn.
+  var PLAYERS = {"Sara Moshiri":[135851,13.84,65],"Fredrika Berghman":[186998,13.26,65],"Helene Brunström":[122533,14.68,65],"Linda Jakobsson":[158501,14.98,65],"Cathrin Sjögren":[500979,12.6,65],"Maria Ramsten":[498648,13.41,65],"Sanna Aufwerber":[639823,12.52,65],"Melanie Sundell":[392512,12.47,65],"Hanna Wallerman":[250594,14.47,65],"Malin Lundberg Aguilera":[676951,15.01,65],"Sofia Blomqvist":[155393,12.38,65],"Veronica arneflod":[662597,13.33,65],"Rebecka Persson":[72553,13.47,65],"Marina Bradbury":[259696,14.04,65],"Alva Sahlström Dahl":[962013,11.71,65],"Ellinor Ekstedt":[1865740,12.96,65],"Olivia Jaldeborg":[2720500,13.63,65],"Ella Olofsson":[602770,11.92,65],"Chloé Ståhl":[1584329,13.17,65],"Ayla Abel":[1833027,13.01,65],"Anna-Karin Andersson":[782664,12.14,65],"Jenny Karlsson":[85952,12.89,65],"Suarez Jessica":[160762,13.08,65],"Lina Holmberg":[736738,14.04,65],"Thea Holmberg Löving":[1675246,15.94,65],"Cassandra Ersson":[1849853,13.89,65],"Luna Levihn":[1643823,10.63,65],"Molly Bondesson":[1632036,12.03,65],"Filippa Pettersson Österberg":[675332,13.26,65],"Astrid Ekeland":[1873186,12.68,65],"Carla Lundström":[1640174,13.18,65],"Beatriz Callero":[1773002,14.62,65],"Hugo Kamnelius":[1855094,14.47,64],"Arvid Hjoberg":[54257,15.17,64],"Kian Borgström":[1680004,11.56,64],"Andreas Mickos":[2073852,11.7,64],"Martin Gavelin":[58662,16.47,64],"Nicolas Veizaga":[160512,14.93,64],"Viggo Rönnbäck":[2514030,13.1,64],"Christopher Wessman":[371964,16.05,64],"Omar Zavala":[2284041,14.41,64],"Oscar P A":[2645536,14.61,64],"Sam Tomsic Norrbelius":[643986,11.37,64],"Alex Danielson":[1058034,10.53,64],"Adam Limér":[229290,16.71,64],"Linus Öberg":[739240,13.58,64],"Ludwig Wallén":[966896,12.47,64],"Eric Norlén":[1098091,12.39,64],"Hampus Persson":[812142,13.58,64],"Ludwig Öberg":[151351,14.57,64],"Henrik Böhlmark":[123989,14.13,64],"Erik Mossakowski":[1866515,14.13,64],"Emanuel Magnusson":[3445224,14.59,64],"Rasmus Björkqvist":[1519257,13.09,64],"Ilyas Delibas":[1731982,14.04,64],"Gabriel Orrego":[2214512,13.33,64],"Nicklas Hedstål":[39338,15.31,64],"Matte Dennemo":[154962,15.72,64],"William Moxness":[1885112,11.96,64],"Elliot Kindstrand":[331400,14.12,64],"Tim Wallin":[749144,14.55,64],"Carl-johan Blum":[251588,14.33,64],"Pablo Salcedo":[102864,13.47,64],"Pontus Björnström":[891369,13.06,64]};
+  function pskill(p){
+    if (!p || !p.n) return null;
+    var v = p.n.map(function(n){ var x = PLAYERS[n]; return x && x[1] != null ? x[1] : null; });
+    return v.some(function(x){ return x != null; }) ? v : (p.skill || null);
+  }
+  function fmtSkill(v){ return v ? v.map(function(x){ return x == null ? "–" : x.toFixed(2); }).join(" · ") : ""; }
+  var SKILL_KEY = "padel-skill-v1";
+  function applySkillCache(){
+    try{ var c = JSON.parse(localStorage.getItem(SKILL_KEY) || "null"); if (c && c.v) Object.keys(c.v).forEach(function(n){ if (PLAYERS[n]) PLAYERS[n][1] = c.v[n]; }); return c; }catch(e){ return null; }
+  }
+  function refreshSkills(done){
+    var c = applySkillCache();
+    if (c && c.t && Date.now() - c.t < 20 * 60000) return;
+    if (!window.fetch) return;
+    var names = Object.keys(PLAYERS), out = {}, left = names.length;
+    names.forEach(function(n){
+      var x = PLAYERS[n], ctl = window.AbortController ? new AbortController() : null;
+      if (ctl) setTimeout(function(){ ctl.abort(); }, 10000);
+      fetch("https://api.rankedin.com/v1/rating/GetPlayerRatingAsync?id=" + x[0], ctl ? {signal:ctl.signal} : {})
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(a){ (a || []).forEach(function(r){ if (r.RatingId === x[2] && typeof r.RatingValue === "number"){ x[1] = r.RatingValue; out[n] = r.RatingValue; } }); })
+        .catch(function(){})
+        .then(function(){ if (--left === 0){ try{ localStorage.setItem(SKILL_KEY, JSON.stringify({t:Date.now(), v:out})); }catch(e){} if (done) done(); } });
+    });
+  }
+
+  applySkillCache();
+
   var DC = {
     moshiri:{n:["Sara Moshiri","Fredrika Berghman"], seed:"1"},
     brunstrom:{n:["Helene Brunström","Linda Jakobsson"]},
@@ -759,8 +791,8 @@
     aufwerber:{n:["Sanna Aufwerber","Melanie Sundell"]},
     pettersson:{n:["Filippa Pettersson Österberg","Astrid Ekeland"]},
     lundstrom:{n:["Carla Lundström","Beatriz Callero"]},
-    levihn:{n:["Luna Levihn","Molly Bondesson"], skill:[10.63, 12.03]},
-    thea:{n:["Thea Holmberg Löving","Cassandra Ersson"], seed:"2", me:true, skill:[15.94, 14.31]}
+    levihn:{n:["Luna Levihn","Molly Bondesson"]},
+    thea:{n:["Thea Holmberg Löving","Cassandra Ersson"], seed:"2", me:true}
   };
   var HC = {
     kamnelius:{n:["Hugo Kamnelius","Arvid Hjoberg"], seed:"1"},
@@ -939,7 +971,7 @@
     var p = e.pair;
     if (p.me) cls += " me";
     var right = mt.s ? '<span class="sc">' + sideScores(mt, side) + '</span>' : (mt.w === side ? '<span class="wmark">' + (mt.note === "W.O." ? "W.O." : "Vidare") + '</span>' : "<span></span>");
-    return '<div class="' + cls + '">' + avatars(p, "sm") + '<span class="n" title="' + esc(p.n.join(" / ")) + '">' + esc(short(p)) + (p.seed ? '<span class="sd">' + esc(p.seed) + '</span>' : "") + '</span>' + right + '</div>';
+    return '<div class="' + cls + '">' + avatars(p, "sm") + '<span class="n" title="' + esc(p.n.join(" / ")) + '">' + esc(short(p)) + (p.seed ? '<span class="sd">' + esc(p.seed) + '</span>' : "") + (pskill(p) ? '<small class="sk">' + fmtSkill(pskill(p)) + '</small>' : "") + '</span>' + right + '</div>';
   }
   function statusLabel(ev, mt, isNext){
     var st = matchState(ev, mt);
@@ -1120,7 +1152,7 @@
 
   function oppTeam(op, drawObj, r, right){
     if (op.pair){
-      return '<div class="team opp">' + avatars(op.pair, "") + '<div class="tname" style="font:800 21px/1.02 \'Big Shoulders Display\',sans-serif;text-transform:uppercase;color:var(--board-ink);letter-spacing:.02em">' + esc(short(op.pair)) + '<small>' + esc(op.pair.n.join(" och ")) + '</small></div>' +
+      return '<div class="team opp">' + avatars(op.pair, "") + '<div class="tname" style="font:800 21px/1.02 \'Big Shoulders Display\',sans-serif;text-transform:uppercase;color:var(--board-ink);letter-spacing:.02em">' + esc(short(op.pair)) + '<small>' + esc(op.pair.n.map(function(n){ return n.split(" ")[0]; }).join(" och ") + (pskill(op.pair) ? " · skill " + fmtSkill(pskill(op.pair)) : "")) + '</small></div>' +
         (right || (op.pair.seed ? '<span class="seed">[' + esc(op.pair.seed) + ']</span>' : '<span></span>')) + '</div>';
     }
     if (op.from){
@@ -1128,7 +1160,7 @@
       var st = src ? matchState(THEA_EVENT, src) : "up";
       var tag = st === "nr" ? "Ej rapporterad" : (st === "live" ? "Pågår" : (src ? src.t + " · " + src.c : ""));
       return '<div class="team opp"><span></span><div class="tname">Mot vinnaren av<div class="opts">' +
-        op.from.map(function(pp, i){ return (i ? '<div class="opt"><i>eller</i></div>' : "") + '<div class="opt">' + avatars(pp, "md") + '<span>' + esc(short(pp)) + '</span></div>'; }).join("") +
+        op.from.map(function(pp, i){ return (i ? '<div class="opt"><i>eller</i></div>' : "") + '<div class="opt">' + avatars(pp, "md") + '<span>' + esc(short(pp)) + (pskill(pp) ? '<small class="osk">skill ' + fmtSkill(pskill(pp)) + '</small>' : '') + '</span></div>'; }).join("") +
         '</div></div><span class="tag">' + esc(tag) + '</span></div>';
     }
     return '<div class="team opp"><span></span><div class="tname">' + esc(op.ph || "Motståndare klar senare") + '</div><span></span></div>';
@@ -1138,7 +1170,7 @@
     var x = TS.next || TS.last;
     if (!x) return;
     var mt = x.mt, ms = meSide(mt), me = mt[ms], op = mt[ms === "a" ? "b" : "a"], p = me.pair;
-    var info = p.skill ? "Thea och Cassandra · skill " + p.skill.join(" · ") : p.n.join(" och ");
+    var sv = pskill(p), info = p.n.map(function(n){ return n.split(" ")[0]; }).join(" och ") + (sv ? " · skill " + fmtSkill(sv) : "");
     var h = '<div class="team me">' + avatars(p, "") + '<div class="tname">' + esc(short(p)) + '<small>' + esc(info) + '</small></div>' + (p.seed ? '<span class="seed">[' + esc(p.seed) + ']</span>' : '<span></span>') + '</div>';
     var right = null;
     if (!TS.next && mt.w){
@@ -1790,6 +1822,8 @@
       });
     } catch (e){}
   }
+  // Hämta färsk skill (max var 20:e minut) och rita om
+  try{ refreshSkills(function(){ try{ renderTheaAll(); rerenderEvent(KIAN_EVENT, document.getElementById("kianDraw"), null, "Kian"); }catch(e){} }); }catch(e){}
 })();
 </script>
 </body>
