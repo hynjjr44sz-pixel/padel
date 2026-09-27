@@ -38,6 +38,11 @@ async function readBody(req) {
 async function handle(req, env) {
   const url = new URL(req.url), h = cors(req, env);
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: h });
+  // Admin test push: POST /test with X-Admin-Key = secret ADMIN_KEY (set with wrangler secret put). Off without the secret.
+  if (req.method === "POST" && url.pathname === "/test") {
+    if (!env.ADMIN_KEY || req.headers.get("X-Admin-Key") !== env.ADMIN_KEY) return json({ error: "forbidden" }, 403, {});
+    return json(await testPush(env), 200, {});
+  }
   // Writes only from the site (or localhost): keeps drive-by pages from filling KV (1000 writes/day).
   if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
   const route = req.method + " " + url.pathname;
@@ -135,6 +140,18 @@ export async function tick(env, events = EVENTS) {
     }
   }));
   return log;
+}
+
+async function testPush(env) {
+  const key = await vapidKey(env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY), jwts = {}, res = [];
+  const names = (await env.PUSH.list({ prefix: "sub:" })).keys.map(k => k.name).slice(0, 20);
+  for (const name of names) {
+    const rec = JSON.parse((await env.PUSH.get(name)) || "null");
+    if (!rec) continue;
+    const st = await send(rec.sub, { title: "Testnotis från Nynäs Padel", body: "Push fungerar. Nästa resultat kommer hit.", tag: "padel-test", url: "./#thea" }, env, key, jwts);
+    res.push({ host: new URL(rec.sub.endpoint).host, status: st });
+  }
+  return { sent: res };
 }
 
 export default {
