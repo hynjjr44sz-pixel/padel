@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 const root = new URL("../players.json", import.meta.url), out = new URL("./src/players.js", import.meta.url);
-const FIELDS = ["key", "pid", "name", "short", "gender", "rt", "ag", "rid", "team", "teamId", "league", "division"];
+const FIELDS = ["key", "pid", "name", "short", "gender", "rt", "ag", "rid", "team", "teamId", "league", "division", "rankedinId"];
 export function render(list) {
   const rows = list.map(p => "  " + JSON.stringify(Object.fromEntries(FIELDS.map(k => [k, p[k] ?? null]))));
   return "// Generated from players.json by sync-players.mjs. Do not edit by hand.\nexport default [\n" + rows.join(",\n") + "\n];\n";

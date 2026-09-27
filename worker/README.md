@@ -79,6 +79,12 @@ Varje enhet får bara notiser om spelarna den följer: spelarens egna matcher, l
 inte två. Gamla prenumerationer med `{thea, kian}` betyder Thea (1675246) och Kian (1680004).
 
 Bilder: små runda (`.av`) ligger i `img/av/` (150 px, beskurna): `python3 worker/avatars.py img/<namn>.jpg [x% y%]`.
+Spelare utan egen bild (`img`/`avatar` i `players.json`) får sin profilbild från RankedIn: workern läser profilen
+(`playerprofileinfoasync`, ett anrop per spelare efter spelarnas tävlingar, inom samma budget) när spelaren kollas,
+alltså minst var 40:e-50:e minut, och lägger `{url, thumb, placeholder}` per pid i `disc` (skrivs bara om när något
+ändrats) och som `photos` i `GET /events`. RankedIns standardlogga (`placeholder`) visas aldrig; en bild som inte
+laddar blir initialer. Egna bilder i `img/` går alltid före. Bilderna kommer från cdn.rankedin.com och RankedIns
+Azure-CDN (CSP `img-src`) och cachas av webbläsaren (ny bild = ny adress), inte av service workern.
 Service workern visar sparade bilder direkt och hämtar om dem i bakgrunden, så en utbytt bild syns vid nästa visning.
 
 `src/events.js` finns kvar som reserv: en rad där läggs till i listan (samma klass + spelare vinner

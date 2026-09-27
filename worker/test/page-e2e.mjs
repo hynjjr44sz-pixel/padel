@@ -25,6 +25,8 @@ const kvm = new Map(), PUSH = { async get(k) { return kvm.has(k) ? kvm.get(k) : 
   async list({ prefix }) { return { keys: [...kvm.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })), list_complete: true }; } };
 install({ over: { "/tournament/GetDrawsForStageAndStrengthAsync?tournamentClassId=164677&drawStrength=0&drawStage=0&isReadonly=true&language=en": [] } });
 await tick({ PUSH, NOW: "2026-09-27T11:07:00Z", ORIGIN: "x" });
+// Discovery rounds of 4 players (during the live day): each looks at its players' RankedIn profile photos too.
+for (const m of ["11:17", "11:27", "11:37", "11:47"]) { _resetMemory(); await tick({ PUSH, NOW: "2026-09-27T" + m + ":00Z", ORIGIN: "x", RANK_OFF: "1" }); }
 _resetMemory();
 await tick({ PUSH, NOW: "2026-09-27T11:52:00Z", ORIGIN: "x", RANK_OFF: "1" });
 const EVENTS = await (await worker.fetch(new Request("https://w/events"), { PUSH, NOW: "2026-09-27T11:52:00Z", ORIGIN: "x" })).json();
@@ -42,6 +44,7 @@ assert.deepEqual(EVENTS.wins, [], "no winner during the day");
 assert.deepEqual(EVENTS_WEEK.wins.map(w => w.id + " " + w.s), ["164681:1 6-1 6-4"], "worker wins the week after");
 assert.ok(EVENTS_WEEK.past.some(e => e.classId === 164681) && !EVENTS_WEEK.events.some(e => e.classId === 164681), "Järfälla in past");
 assert.ok(EVENTS.live["1675246"], "worker live view for Thea");
+assert.equal(EVENTS.photos["1055851"].placeholder, false, "worker photos: Sanna has a RankedIn photo");
 
 // What the page reads besides the discovery (ranking, skill, profile, SPL table): made up from players.json.
 const ROSTER = JSON.parse(readFileSync(new URL("../../players.json", import.meta.url), "utf8"));
@@ -69,6 +72,8 @@ function pageApi(path, over) {
   return body;
 }
 
+const STANDIN = readFileSync(new URL("../../img/beatriz-callero.jpg", import.meta.url));
+const CDN_RE = /^https:\/\/(cdn\.rankedin\.com|rankedin-prod-cdn-adavg8d3dwfegkbd\.z01\.azurefd\.net)\//;
 const results = [];
 const ok = (name, cond, info) => { results.push((cond ? "PASS " : "FAIL ") + name + (cond ? "" : "  -> " + JSON.stringify(info))); };
 
@@ -78,14 +83,21 @@ async function newPage(opts = {}) {
     colorScheme: opts.dark ? "dark" : "light", serviceWorkers: "block" });
   await ctx.grantPermissions(["notifications"], { origin: new URL(BASE).origin });
   const page = await ctx.newPage();
-  const errors = [], api = { ri: 0, posts: [] };
-  page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
+  const errors = [], api = { ri: 0, posts: [], img: [] };
+  // The one expected load error: Oliver's gone RankedIn photo (the page shows initials instead).
+  page.on("console", m => { if (m.type() === "error" && !/\/900002/.test((m.location() || {}).url || "")) errors.push(m.text()); });
   page.on("pageerror", e => errors.push(String(e)));
   await page.route("https://api.rankedin.com/**", r => {
     api.ri++;
     const u = r.request().url(), body = pageApi(u.slice("https://api.rankedin.com/v1".length), opts.over || {});
     if (process.env.DEBUG) (globalThis.RI_LOG = globalThis.RI_LOG || []).push((body == null ? "404 " : "200 ") + u.slice(27).split("&language")[0]);
     return r.fulfill({ status: body == null ? 404 : 200, contentType: "application/json", body: JSON.stringify(body ?? {}), headers: { "Access-Control-Allow-Origin": "*" } });
+  });
+  // RankedIn's image CDN (profile photos): a stand-in portrait; Oliver's file (900002) is gone.
+  await page.route(/^https:\/\/(cdn\.rankedin\.com|rankedin-prod-cdn-adavg8d3dwfegkbd\.z01\.azurefd\.net)\//, r => {
+    const u = r.request().url();
+    api.img.push(u);
+    return /\/900002/.test(u) ? r.fulfill({ status: 404, body: "" }) : r.fulfill({ status: 200, contentType: "image/jpeg", body: STANDIN });
   });
   await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route(PUSH_API + "/**", r => {
@@ -98,6 +110,8 @@ async function newPage(opts = {}) {
   // Push without a push service: a fake subscription, so the page's /subscribe calls can be checked.
   await page.addInitScript(() => {
     window.__notes = [];
+    window.__csp = [];
+    document.addEventListener("securitypolicyviolation", e => window.__csp.push(e.violatedDirective + " " + e.blockedURI));
     window.Notification = function (t, o) { window.__notes.push([t, o && o.body]); return { close() {} }; };
     window.Notification.permission = "granted";
     window.Notification.requestPermission = () => Promise.resolve("granted");
@@ -167,6 +181,35 @@ try {
   ok("no broken images", broken.length === 0, broken);
   ok("Lisa: no horizontal scroll", await noHScroll(page));
   await shot(page, "lisa");
+
+  // ---- RankedIn profile photos (worker "photos"), only for players without a photo in players.json ----
+  await page.goto(url(""));
+  await page.waitForSelector('#plist a[href="#sanna"] .av img');
+  for (const k of ["sanna", "oliver"]) await page.$eval('#plist a[href="#' + k + '"]', e => e.scrollIntoView({ block: "center" }));   // lazy images
+  await page.waitForFunction(() => [...document.querySelectorAll('#plist a[href="#sanna"] img, #plist a[href="#oliver"] img')].every(i => i.complete && i.naturalWidth), null, { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  const av = await page.$$eval("#plist a", a => Object.fromEntries(a.map(x => { const i = x.querySelector(".av img"); return [x.getAttribute("href").slice(1), i ? i.getAttribute("src") + (i.naturalWidth ? "" : " (not loaded)") : "ini:" + x.querySelector(".av").textContent]; })));
+  ok("photos: Sanna (no own photo) gets her RankedIn thumbnail in the player list", /^https:\/\/rankedin-prod-cdn-adavg8d3dwfegkbd\.z01\.azurefd\.net\/images\/upload\/player\/900001thumb\.png$/.test(av.sanna), av.sanna);
+  ok("photos: Lisa (RankedIn placeholder) keeps initials", av.lisa === "ini:LB", av.lisa);
+  ok("photos: Kian's own avatar wins over his RankedIn photo", av.kian === "img/av/kian-avatar.jpg", av.kian);
+  ok("photos: Oliver's broken RankedIn photo falls back to initials", av.oliver === "ini:OL" && await page.$eval('#plist a[href="#oliver"] .av', e => e.classList.contains("ini")), av.oliver);
+  ok("photos: the rest keep initials", ["svante", "tobias", "anton"].every(k => /^ini:/.test(av[k])), av);
+  await shot(page, "photos-home");
+  await page.goto(url("#sanna"));
+  await page.waitForSelector("#p-sanna .hero.rin > img");
+  await page.waitForFunction(() => document.querySelector("#p-sanna .hero > img").complete);
+  const sh = await page.$eval("#p-sanna .hero > img", i => ({ src: i.getAttribute("src"), w: i.naturalWidth, pos: getComputedStyle(i).objectPosition, fit: getComputedStyle(i).objectFit }));
+  ok("photos: Sanna's hero is her full RankedIn photo, cover, 50% 20%", sh.src.endsWith("/player/900001.png") && sh.w > 0 && sh.fit === "cover" && sh.pos === "50% 20%" && !(await page.$("#p-sanna .ini-big")), sh);
+  ok("photos: Sanna no horizontal scroll", await noHScroll(page));
+  await shot(page, "photos-sanna");
+  await page.goto(url("#oliver"));
+  await page.waitForSelector("#p-oliver .hero.noimg .ini-big");
+  ok("photos: Oliver's hero falls back to initials (OL), no img", (await page.textContent("#p-oliver .hero .ini-big")) === "OL" && !(await page.$("#p-oliver .hero > img")));
+  await page.goto(url("#kian"));
+  await page.waitForSelector("#p-kian:not([hidden]) .hero > img");
+  ok("photos: Kian's hero stays img/kian.jpg", await page.$eval("#p-kian .hero > img", i => i.getAttribute("src")) === "img/kian.jpg");
+  ok("photos: only roster photos are requested from the CDN (no placeholder logo)", api.img.length > 0 && api.img.every(u => CDN_RE.test(u) && !/rin_logo|121978/.test(u)), api.img);
+  ok("photos: no CSP violations", (await page.evaluate(() => window.__csp)).length === 0, await page.evaluate(() => window.__csp));
 
   // ---- Cassandra (photo, no avatar): her own Damer C entry from the worker ----
   await page.goto(url("#cassandra"));

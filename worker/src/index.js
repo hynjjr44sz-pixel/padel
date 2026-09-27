@@ -74,7 +74,8 @@ async function handle(req, env) {
     // latest/live: from the live monitoring (home view: "Senaste resultat", "Spelar nu")
     // wins: club players who won a class (place 1) or lost its final (place 2) in the last 30 days ("Veckans vinnare")
     const past = (rec && rec.past) || [], lv = await liveView(env, t, events.concat(past)), wins = recentWins(await loadWins(env), t);
-    return json({ at: rec ? rec.at : null, src: "worker", events, past, latest: lv.latest, live: lv.live, wins }, 200, { ...h, "Cache-Control": "public, max-age=120" });
+    // photos: roster players' RankedIn profile photos {pid: {url, thumb, placeholder}} (the page: only without own photo)
+    return json({ at: rec ? rec.at : null, src: "worker", events, past, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {} }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
   if (route === "POST /subscribe") {
     let b;
@@ -109,7 +110,7 @@ export function followOf(p) {
 const now = env => env.NOW ? new Date(env.NOW) : new Date();   // NOW: local tests only
 const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8;
 
-/* ---- discovered events: KV "disc" = {at, events, ended, partial}. Read at most every 5 min per isolate. ---- */
+/* ---- discovered events: KV "disc" = {at, events, ended, none, past, photos}. Read at most every 5 min per isolate. ---- */
 let MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 };
 export function _resetMemory() { MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 }; LV = { at: 0, v: null }; }
 async function loadRecord(env) {
@@ -152,8 +153,8 @@ export async function runDiscovery(env, t, budget, rec, log = {}, max = 35) {
   const mine = { left: Math.min(max, budget.left) }, start = mine.left;
   const res = await discover(getter(env, mine), t, rec, rec ? discoveryBatch(t) : PLAYERS);
   budget.left -= start - mine.left;
-  const next = { at: t.toISOString(), events: res.events, ended: res.ended, none: res.none, past: pastOf(rec, res.events, t) };
-  const sig = r => JSON.stringify([r.events, r.ended, r.none || [], r.past || []]);
+  const next = { at: t.toISOString(), events: res.events, ended: res.ended, none: res.none, past: pastOf(rec, res.events, t), photos: res.photos };
+  const sig = r => JSON.stringify([r.events, r.ended, r.none || [], r.past || [], r.photos || {}]);
   log.discovered = res.events.length;
   log.refreshed = res.refreshed.length;
   if (!rec || sig(rec) !== sig(next) || +t - new Date(rec.at) > 6 * H) {

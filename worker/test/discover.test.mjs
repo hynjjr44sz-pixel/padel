@@ -1,10 +1,10 @@
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import worker, { tick, _resetMemory, discoveryDue, discoveryBatch, runDiscovery } from "../src/index.js";
-import { discover, cleanName, ratingFor, PLAYERS } from "../src/discover.js";
+import { discover, cleanName, ratingFor, photoOf, PLAYERS } from "../src/discover.js";
 import { localToDate, isoLocal, dayOf } from "../src/tz.js";
 import { merge } from "../src/events.js";
-import { install, A } from "./fake-rankedin.mjs";
+import { install, A, CDN } from "./fake-rankedin.mjs";
 import { makeSubscription, makeVapid } from "./helpers.mjs";
 
 const NOW = new Date("2026-09-27T11:52:00Z");   // 13:52 in Stockholm, the day of Järfälla no 11
@@ -87,7 +87,9 @@ test("discover: tournaments with class, partner and draws; team league play days
   const again = await discover(getter(st), NOW, { events: res.events, ended: res.ended, none: res.none });
   assert.deepEqual(again.events, res.events);
   assert.ok(!st.calls.some(c => /GetPlayersForClassAsync|GetHeaderAsync\?id=894|Homepage/.test(c)), st.calls.join("\n"));
-  assert.ok(st.calls.length <= PLAYERS.length + 8, "fetches: " + st.calls.length);
+  const prof = st.calls.filter(c => c.startsWith("/player/playerprofileinfoasync"));
+  assert.equal(prof.length, PLAYERS.length, "one profile call per player");
+  assert.ok(st.calls.length - prof.length <= PLAYERS.length + 8, "fetches: " + st.calls.length);
 });
 
 test("discover: a batch replaces only its own players' entries and its teams' play days", async () => {
@@ -216,4 +218,53 @@ test("rotation: more active classes than the budget -> at most 30 RankedIn fetch
   const first = new Set([...PUSH.m.keys()]);
   await tick({ PUSH, NOW: "2026-09-27T12:01:00+02:00" }, evs);
   assert.ok([...PUSH.m.keys()].length > first.size, "the next minute reaches classes the first one skipped");
+});
+
+test("photos: RankedIn profile photos recorded per pid in disc and served in /events; unchanged -> no KV write; a new photo within the rotation", async () => {
+  const st = install({}), PUSH = kv(), t0 = Date.parse("2026-09-27T11:07:00Z"), env = { PUSH, ORIGIN: "https://padel.holmberg.st" };
+  let rec = null;
+  for (let k = 0; k <= 5; k++) { _resetMemory(); rec = await runDiscovery(env, new Date(t0 + k * 600e3), { left: 45 }, rec, {}); }
+  const stored = JSON.parse(PUSH.m.get("disc")).photos;
+  assert.deepEqual(stored["1055851"], { url: CDN + "900001.png", thumb: CDN + "900001thumb.png", placeholder: false }, "Sanna");
+  assert.equal(stored["1702723"].placeholder, true, "Lisa: RankedIn's default logo");
+  assert.equal(stored["1680004"].placeholder, false, "Kian (the page keeps his own photo)");
+  assert.ok(!stored["1675246"], "no profile answer: nothing recorded");
+  assert.ok(Object.keys(stored).every(pid => PLAYERS.some(p => String(p.pid) === pid)), "roster players only");
+  env.NOW = new Date(t0 + 5 * 600e3).toISOString();
+  const body = await (await worker.fetch(new Request("https://w/events"), env)).json();
+  assert.deepEqual(body.photos, stored);
+
+  // A full rotation more with nothing new: profile calls made, no KV write.
+  const puts = PUSH.ops.put;
+  st.calls.length = 0;
+  for (let k = 6; k <= 11; k++) { _resetMemory(); rec = await runDiscovery(env, new Date(t0 + k * 600e3), { left: 45 }, rec, {}); }
+  assert.ok(st.calls.filter(c => c.startsWith("/player/playerprofileinfoasync")).length >= PLAYERS.length, "every player's profile looked at");
+  assert.equal(PUSH.ops.put, puts, "unchanged photos: no write");
+
+  // Lisa uploads a photo: seen at her next turn in the rotation (under an hour), one write.
+  st.over = { "/player/playerprofileinfoasync?rankedinId=R000267664&language=en": { Header: { PlayerId: 1702723, ImageId: 5, ImageOriginalUrl: CDN + "5.png", ImageThumbnailUrl: CDN + "5thumb.png" } } };
+  let when = null;
+  for (let k = 12; k <= 17 && !when; k++) {
+    _resetMemory();
+    rec = await runDiscovery(env, new Date(t0 + k * 600e3), { left: 45 }, rec, {});
+    if (!rec.photos["1702723"].placeholder) when = k - 12;
+  }
+  assert.ok(when !== null && when * 10 < 60, "seen within the hour");
+  assert.equal(PUSH.ops.put, puts + 1, "one write for the change");
+  assert.deepEqual(JSON.parse(PUSH.m.get("disc")).photos["1702723"], { url: CDN + "5.png", thumb: CDN + "5thumb.png", placeholder: false });
+
+  // Profile calls come after the batch's events: out of budget, the events are done and old photos kept.
+  _resetMemory();
+  const mine = await discover(async path => { if (path.startsWith("/player/playerprofile")) { const e = new Error("budget"); e.budget = true; throw e; } return (await fetch("https://api.rankedin.com/v1" + path)).json(); },
+    new Date(t0 + 20 * 600e3), rec, PLAYERS.slice(0, 2));
+  assert.equal(mine.partial, false);
+  assert.deepEqual(mine.photos, rec.photos);
+});
+
+test("photoOf: placeholder, wrong player, bad urls", () => {
+  assert.equal(photoOf({ Header: { PlayerId: 1, ImageId: 0, ImageOriginalUrl: "https://cdn.rankedin.com/images/rin_logo_sm.png", ImageThumbnailUrl: "https://cdn.rankedin.com/images/rin_logo_sm.png" } }, 1).placeholder, true);
+  assert.equal(photoOf({ Header: { PlayerId: 2, ImageId: 7, ImageOriginalUrl: CDN + "7.png" } }, 1), null, "someone else's profile");
+  assert.equal(photoOf({ Header: { PlayerId: 1, ImageId: 7, ImageOriginalUrl: "javascript:alert(1)" } }, 1), null);
+  assert.deepEqual(photoOf({ Header: { PlayerId: 1, ImageId: 7, ImageOriginalUrl: CDN + "7.png" } }, 1), { url: CDN + "7.png", thumb: CDN + "7.png", placeholder: false });
+  assert.equal(photoOf(null, 1), null);
 });

@@ -8,7 +8,7 @@ import ROSTER from "./players.js";
 
 // who = route key on the page ("#thea"), me = full name as RankedIn writes it
 export const PLAYERS = ROSTER.map(p => ({ who: p.key, pid: p.pid, me: p.name, name: p.short, gender: p.gender, rt: p.rt, ag: p.ag,
-  team: p.team, teamId: p.teamId, league: p.league, division: p.division }));
+  team: p.team, teamId: p.teamId, league: p.league, division: p.division, rin: p.rankedinId || null }));
 export const BY_PID = new Map(PLAYERS.map(p => [p.pid, p]));
 // Thea and Kian were the first two players: old push subscriptions ({thea, kian}) and links refer to them.
 export const LEGACY = { thea: 1675246, kian: 1680004 };
@@ -41,6 +41,15 @@ export function drawsOf(names, classId) {
     : null;
 }
 export const namesPath = tournamentId => "/tournament/GetClassesAndDrawNamesAsync/?tournamentId=" + tournamentId;
+export const profilePath = rin => "/player/playerprofileinfoasync?rankedinId=" + encodeURIComponent(rin) + "&language=en";
+// Profile header -> {url, thumb, placeholder} (placeholder: RankedIn's default rin_logo, no photo of their own).
+export function photoOf(x, pid) {
+  const h = x && x.Header, ok = u => typeof u === "string" && /^https:\/\/[a-z0-9.-]+\//i.test(u) && u.length < 500 ? u : null;
+  if (!h || (pid && h.PlayerId && Number(h.PlayerId) !== Number(pid))) return null;
+  const url = ok(h.ImageOriginalUrl) || ok(h.ImageThumbnailUrl), thumb = ok(h.ImageThumbnailUrl) || url;
+  if (!url) return null;
+  return { url, thumb, placeholder: h.ImageId === 0 || /\/rin_logo/i.test(url) };
+}
 export const rubbersPath = tieId => "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=" + tieId + "&language=en";
 
 function venueOf(info) {
@@ -156,7 +165,7 @@ async function teamleague(p, e, get, ctx) {
 
 // get(path) -> parsed JSON (throws on HTTP errors; err.budget = out of subrequests).
 // prev: the last discovery record ({events, ended}). players: whom to look up now (default: everyone).
-// Returns {events, ended, refreshed: [who], partial}: events of the players (and teams) looked up are
+// Returns {events, ended, none, photos: {pid: {url, thumb, placeholder}}, refreshed: [who], partial}: events of the players (and teams) looked up are
 // replaced, everything else is kept from prev. partial = someone in `players` could not be finished.
 export async function discover(get, now, prev, players = PLAYERS) {
   // Several players in the same tournament or team: fetch its info, class lists and team matches once per run.
@@ -186,6 +195,16 @@ export async function discover(get, now, prev, players = PLAYERS) {
     ctx.teams.forEach(k => teams.add(k));
     fresh.push(...mine);
   }
+  // Profile photos (the page shows them for players without a photo in players.json): one call per player of the
+  // batch, after everyone's events so they never take their budget; the others keep the previous record's.
+  const was = (prev && prev.photos) || {}, got = {};
+  for (const p of players) {
+    if (!p.rin) continue;
+    try { const ph = photoOf(await raw(profilePath(p.rin)), p.pid); if (ph) got[p.pid] = ph; }
+    catch (err) { if (err && err.budget) break; }
+  }
+  const photos = {};
+  PLAYERS.forEach(p => { const ph = got[p.pid] || was[p.pid]; if (ph) photos[p.pid] = ph; });
   const known = new Set(PLAYERS.map(p => p.who));
   const out = ctx.prev.filter(x => x.kind === "teamleague" ? !teams.has(x.leagueId + ":" + x.teamId) : !refreshed.has(x.who) && known.has(x.who));
   const byKey = new Map();
@@ -196,5 +215,5 @@ export async function discover(get, now, prev, players = PLAYERS) {
   }
   out.push(...byKey.values());
   out.sort((a, b) => a.windowFrom.localeCompare(b.windowFrom) || a.key.localeCompare(b.key));
-  return { events: out, ended: [...ctx.ended].slice(-300), none: [...ctx.none].slice(-100), refreshed: [...refreshed], partial };
+  return { events: out, ended: [...ctx.ended].slice(-300), none: [...ctx.none].slice(-100), photos, refreshed: [...refreshed], partial };
 }

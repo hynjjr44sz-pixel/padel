@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-PiDSE6lETnoHMNmx1I6CgLbsz1Jb/KAY9czBayZQ+p8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-e4oXtHEbR00Pw2k33lIjzyuAjWrrHUc95S5+FmetvSU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -232,6 +232,7 @@
     font:800 calc(var(--s, 36px) * .42)/1 "Big Shoulders Display", sans-serif; letter-spacing:.04em;
   }
   .av img{ width:100%; height:100%; object-fit:cover; }
+  .av img.rin{ object-position:50% 25%; }
   .avs .av + .av{ margin-left:calc(var(--s, 36px) * -.28); }
   .avs.sm{ --s:24px; }
   .avs .av.ini:first-child:not(:last-child){ padding-right:calc(var(--s, 36px) * .26); }
@@ -663,6 +664,7 @@
   .follow[aria-pressed="true"] svg path{ fill:currentColor; }
 
   /* ---------- hero without a photo: big initials on the court ---------- */
+  .hero.rin > img{ object-position:50% 20%; }   /* RankedIn profile photo: faces sit in the upper part */
   .hero.noimg{ background:radial-gradient(120% 90% at 85% 8%, #1A3789 0%, var(--board-2) 42%, var(--board) 82%); }
   .hero.noimg .ini-big{
     position:absolute; right:14px; top:46px; font:900 clamp(150px, 50vw, 240px)/.8 "Big Shoulders Display", sans-serif;
@@ -882,8 +884,20 @@
   };
   function slug(n){ return n.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
   function initials(n){ var p = n.split(/\s+/); return (p[0][0] + (p.length > 1 ? p[p.length-1][0] : "")).toUpperCase(); }
+  // RankedIn profile photos of roster players (worker GET /events "photos": {pid: {url, thumb, placeholder}}), used only
+  // when players.json has no photo (img/avatar) for the player. Hosts: the CSP img-src. A photo that fails to load
+  // falls back to initials (see the error listener by panel()) and is not tried again until the page reloads.
+  var RIN_IMG = /^https:\/\/(cdn\.rankedin\.com|rankedin-prod-cdn-adavg8d3dwfegkbd\.z01\.azurefd\.net)\/[^"'<>\s]+$/, RIN_BAD = {};
+  function rinPhoto(P, thumb){
+    if (!P || P.img || P.avatar) return null;
+    var x = DISC && DISC.photos && DISC.photos[P.pid];
+    if (!x || x.placeholder) return null;
+    var u = thumb ? x.thumb || x.url : x.url || x.thumb;
+    return typeof u === "string" && RIN_IMG.test(u) && !RIN_BAD[u] ? u : null;
+  }
   function avatar(n){
-    var s = slug(n), me = BYNAME[s], ph = PHOTOS[s];
+    var s = slug(n), me = BYNAME[s], ph = PHOTOS[s], rin = me && rinPhoto(me, true);
+    if (rin) return '<span class="av" title="' + esc(n) + '" data-ini="' + esc(initials(n)) + '"><img class="rin" src="' + esc(rin) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" width="36" height="36"></span>';
     if (me) return me.avatar ? '<span class="av" title="' + esc(n) + '"><img src="' + esc(me.avatar) + '" alt="" loading="lazy" decoding="async" width="36" height="36" style="object-position:50% 30%"></span>' :
       '<span class="av ini" title="' + esc(n) + '" aria-hidden="true">' + esc(initials(n)) + '</span>';
     // img/av/: 150 px squares already cropped at pos (worker/avatars.py)
@@ -2220,7 +2234,7 @@
   function dynShell(who){
     var P = BYKEY[who];
     return '<div class="livebar" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div><div class="recent" data-r="recent" hidden></div>' +
-      '<div class="' + (P.img ? "hero" : "hero noimg") + '">' + heroMedia(P) + '<div class="scrim"></div>' + COURT_SVG +
+      '<div class="' + heroCls(P) + '">' + heroMedia(P) + '<div class="scrim"></div>' + COURT_SVG +
       '<div class="hero-top"><a class="glass" data-r="link" target="_blank" rel="noopener"></a><span class="glass" data-r="pill"><span class="dot"></span><span>–</span></span></div>' +
       '<div class="hero-bot"><div class="eyebrow" data-r="round"></div><div class="timeline-big"><div class="bigtime" data-r="time">–</div><div class="court-no" data-r="cno"><small data-r="clab">Bana</small><b data-r="court"></b></div></div></div></div>' +
       '<div class="board" aria-live="polite"><div class="countdown" data-r="cd"><span class="l"><span class="dot"></span><span data-r="cdt">–</span></span><a data-r="rl" target="_blank" rel="noopener">RankedIn ↗︎</a></div>' +
@@ -2937,6 +2951,7 @@
   function applyDisc(d){
     if (!d || !Array.isArray(d.events)) return;
     DISC = d;
+    try { rinHeroes(); } catch (e){ warn("Profilbilder", e); }
     if (d.src === "worker"){
       var l = store.json(PUSH_CLS_KEY);
       if (!Array.isArray(l)) l = [];
@@ -2963,7 +2978,7 @@
     CLIENT_AT[P.key] = Date.now();
     clientDiscover(DISC, [P]).then(function(r){
       var keep = (DISC.events || []).filter(function(e){ return !(e.kind === "tournament" && (e.who === P.key || e.pid === P.pid)) && !(e.kind === "teamleague" && r.events.some(function(x){ return x.key === e.key; })); });
-      var d = {at:r.at, src:"client", events:keep.concat(r.events).sort(function(a, b){ return String(a.windowFrom).localeCompare(String(b.windowFrom)); }), past:DISC.past || [], latest:DISC.latest || [], live:DISC.live || {}, wins:DISC.wins || []};
+      var d = {at:r.at, src:"client", events:keep.concat(r.events).sort(function(a, b){ return String(a.windowFrom).localeCompare(String(b.windowFrom)); }), past:DISC.past || [], latest:DISC.latest || [], live:DISC.live || {}, wins:DISC.wins || [], photos:DISC.photos || {}};
       d.savedAt = DISC.savedAt || Date.now();
       store.set(EV_KEY, JSON.stringify(d));
       applyDisc(d);
@@ -3270,7 +3285,7 @@
     var k = P.key, last = lastName(P);
     return '<div class="phead"><div class="pt"><h1 id="ph-' + k + '">' + esc(P.short) + (last ? ' <span>' + esc(last) + '</span>' : "") + '</h1>' +
       '<div class="pm">' + esc([P.team, P.division].filter(Boolean).join(" · ") + (P.captain ? " · kapten" : "")) + '</div></div>' + followBtnHtml(P) + '</div>' +
-      '<div class="dyn" id="dyn-' + k + '"><div class="' + (P.img ? "hero" : "hero noimg") + '">' + heroMedia(P) + '<div class="scrim"></div>' + COURT_SVG + '</div>' +
+      '<div class="dyn" id="dyn-' + k + '"><div class="' + heroCls(P) + '">' + heroMedia(P) + '<div class="scrim"></div>' + COURT_SVG + '</div>' +
         '<div class="board"><div class="countdown"><span class="l"><span class="dot"></span><span>Hämtar tävlingar …</span></span></div></div></div>' +
       '<section aria-labelledby="h-dev-' + k + '"><div class="sh"><h2 id="h-dev-' + k + '">Utveckling</h2><div class="meta">SPF-ranking</div></div>' +
         '<div class="stats">' + statHtml(k, "rank", "Ranking", P.gender === "F" ? "Dam huvudlista" : "Herrar huvudlista") + statHtml(k, "pts", "Rankingpoäng", "SPF, 12 mån") + statHtml(k, "skill", "Skill", "") + '</div>' +
@@ -3284,11 +3299,48 @@
       '<section aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">Bra att veta</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>';
   }
   var WATCHING = false;   // panel built by ensureWatch (hidden): its photo waits until the page is shown
+  function heroCls(P){ return P.img ? "hero" : rinPhoto(P) ? "hero rin" : "hero noimg"; }
   function heroMedia(P){
+    var rin = rinPhoto(P);
+    if (rin) return '<img class="rin" src="' + esc(rin) + '" alt="' + esc(P.name) + '" decoding="async" referrerpolicy="no-referrer" data-ini="' + esc(initials(P.name)) + '"' +
+      (WATCHING ? ' loading="lazy"' : ' fetchpriority="high"') + '>';
     if (P.img) return '<img src="' + esc(P.img) + '" width="' + (P.imgW || 800) + '" height="' + (P.imgH || 1000) + '" alt="' + esc(P.o.alt || P.name) + '"' +
       (WATCHING ? ' loading="lazy"' : ' fetchpriority="high"') + '>';
     return '<div class="ini-big" aria-hidden="true">' + esc(initials(P.name)) + '</div>';
   }
+  // New or changed RankedIn photos (applyDisc): the heroes already built get the new image (or initials); the
+  // avatars follow with the next render of their list.
+  function rinHeroes(){
+    Object.keys(PANELS).forEach(function(w){
+      var P = BYKEY[w];
+      if (!P || P.img) return;
+      [].forEach.call(PANELS[w].querySelectorAll(".hero"), function(h){
+        var cur = h.querySelector(".hero > img, .hero > .ini-big"), want = rinPhoto(P);
+        if (cur && (cur.tagName === "IMG" ? cur.getAttribute("src") === want : !want)) return;
+        var tmp = document.createElement("div");
+        tmp.innerHTML = heroMedia(P);
+        if (cur) h.replaceChild(tmp.firstChild, cur); else h.insertBefore(tmp.firstChild, h.firstChild);
+        h.classList.toggle("rin", !!want); h.classList.toggle("noimg", !want);
+      });
+    });
+  }
+  // A RankedIn photo that does not load: initials instead (CSP: no inline handlers; error does not bubble -> capture).
+  document.addEventListener("error", function(e){
+    var im = e.target;
+    if (!im || im.tagName !== "IMG" || !im.classList.contains("rin")) return;
+    RIN_BAD[im.getAttribute("src")] = 1;
+    var box = im.parentNode, h = box && box.classList;
+    if (!h) return;
+    if (h.contains("av")){
+      h.add("ini"); box.setAttribute("aria-hidden", "true");
+      box.textContent = box.getAttribute("data-ini") || "";
+    } else if (h.contains("hero")){
+      var d = document.createElement("div");
+      d.className = "ini-big"; d.setAttribute("aria-hidden", "true"); d.textContent = im.getAttribute("data-ini") || "";
+      box.replaceChild(d, im);
+      h.remove("rin"); h.add("noimg");
+    }
+  }, true);
   function panel(P){
     if (PANELS[P.key]) return PANELS[P.key];
     var m = document.createElement("main");

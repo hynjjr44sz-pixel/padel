@@ -14,6 +14,20 @@ export const JARFALLA_INFO = { TournamentSidebarModel: {
   Classes: [{ Id: 164677, Name: "Herrar C" }, { Id: 164681, Name: "Damer C" }] } };
 const tlHeader = (id, name, end) => ({ ...A("tl829_header"), Id: id, Name: name, EventState: 7, EndDate: end, EventUrl: "/en/teamleague/" + id + "/x" });
 
+// Profile photos (playerprofileinfoasync, by rankedinId): Sanna and Kian have one of their own, Oliver's points at a
+// file that is gone (the page falls back to initials), Lisa has RankedIn's default logo; the others: 404.
+export const CDN = "https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net/images/upload/player/";
+export const PROFILE_PHOTOS = {
+  R000214688: [1055851, 900001, CDN + "900001.png", CDN + "900001thumb.png"],
+  R000266815: [1680004, 121978, CDN + "121978.png", CDN + "121978thumb.png"],
+  R000267043: [1683035, 900002, "https://cdn.rankedin.com/images/upload/player/900002.png", "https://cdn.rankedin.com/images/upload/player/900002thumb.png"],
+  R000267664: [1702723, 0, "https://cdn.rankedin.com/images/rin_logo_sm.png", "https://cdn.rankedin.com/images/rin_logo_sm.png"]
+};
+export function profile(rin) {
+  const x = PROFILE_PHOTOS[rin];
+  return x ? { Header: { PlayerId: x[0], ImageId: x[1], ImageOriginalUrl: x[2], ImageThumbnailUrl: x[3], RankedinId: rin, Form: ["W", "L"] }, Statistics: {} } : null;
+}
+
 // Routes a RankedIn API path (with query) to a response body. Unknown paths -> 404.
 export function route(path, over = {}) {
   const u = new URL("https://x" + path), q = k => u.searchParams.get(k), p = u.pathname.toLowerCase();
@@ -48,6 +62,7 @@ export function route(path, over = {}) {
   if (p.endsWith("/teamleague/getteammatchesasync")) return q("teamid") === "3355655" ? A("tl_teammatches_3355655") : A("tl_teammatches_3383536");
   if (p.endsWith("/teamleague/getteamleagueteamhomepageasync")) return q("teamId") === "3355655" ? A("tl_homepage_3355655") : { team: { players: [] } };
   if (p.endsWith("/teamleague/getteamleagueteamsmatchesasync")) return A("tm_166800_matches");
+  if (p.endsWith("/player/playerprofileinfoasync")) return profile(q("rankedinId"));
   return null;
 }
 // globalThis.fetch replacement: RankedIn -> route(), everything else -> push(url, init) (201 by default)
