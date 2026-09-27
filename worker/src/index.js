@@ -29,6 +29,7 @@ function validSub(s, env) {
   }
 }
 async function readBody(req) {
+  if (Number(req.headers.get("Content-Length") || 0) > 4096) throw new Error("too large");
   const t = await req.text();
   if (t.length > 4096) throw new Error("too large");
   return JSON.parse(t);
@@ -37,9 +38,11 @@ async function readBody(req) {
 async function handle(req, env) {
   const url = new URL(req.url), h = cors(req, env);
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: h });
+  // Writes only from the site (or localhost): keeps drive-by pages from filling KV (1000 writes/day).
+  if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
   const route = req.method + " " + url.pathname;
   if (route === "GET /health") return json({ ok: true, active: activeEvents(now(env)).map(e => e.cls) }, 200, h);
-  if (route === "GET /vapid") return json({ key: env.VAPID_PUBLIC_KEY || "" }, env.VAPID_PUBLIC_KEY ? 200 : 503, h);
+  if (route === "GET /vapid") return json({ key: env.VAPID_PUBLIC_KEY || "", classes: EVENTS.map(e => e.classId) }, env.VAPID_PUBLIC_KEY ? 200 : 503, h);
   if (route === "POST /subscribe") {
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
@@ -72,15 +75,19 @@ async function fetchStage(env, ev, stage) {
   return res.json();
 }
 
+const SUBREQUESTS = 45;
 // One cron tick. Returns what happened (used by tests and logs).
 export async function tick(env, events = EVENTS) {
   const evs = activeEvents(now(env), events);
   if (!evs.length) return { active: 0 };
   const msgs = [], log = { active: evs.length, writes: 0, sent: 0, removed: 0 };
+  let fetches = 0;
   for (const ev of evs) {
     let matches;
     try {
-      matches = parse(await Promise.all((ev.stages || [0]).map(s => fetchStage(env, ev, s))));
+      const stages = ev.stages || [0];
+      fetches += stages.length;
+      matches = parse(await Promise.all(stages.map(s => fetchStage(env, ev, s))));
     } catch (e) {
       console.warn("fetch", ev.classId, e.message);
       continue;
@@ -100,12 +107,28 @@ export async function tick(env, events = EVENTS) {
     subs.push(...page.keys.map(k => k.name));
     cursor = page.list_complete ? null : page.cursor;
   } while (cursor);
+  // Free plan: 50 subrequests per invocation (RankedIn fetches + one per push). Stay well under it:
+  // fold everything into one notis per device when needed, and cap the number of devices.
+  const budget = SUBREQUESTS - fetches;
+  let out = msgs;
+  if (subs.length * msgs.length > budget && msgs.length > 1) {
+    const url = msgs[msgs.length - 1].m.url;
+    out = [...new Set(msgs.map(x => x.who))].map(who => {
+      const ms = msgs.filter(x => x.who === who).map(x => x.m);
+      return { who, m: ms.length === 1 ? ms[0] : { title: ms.length + " nya resultat", body: ms.map(m => m.title).join("\n"), tag: "padel-sammanfattning", url } };
+    });
+  }
+  if (subs.length * out.length > budget) {
+    console.warn("push budget: " + subs.length + " devices, sending to the first " + Math.floor(budget / out.length));
+    subs.length = Math.floor(budget / out.length);
+  }
+  const jwts = {};   // one VAPID JWT per push service per tick (CPU time on the free plan is 10 ms)
   await Promise.all(subs.map(async name => {
     const rec = JSON.parse((await env.PUSH.get(name)) || "null");
     if (!rec) return;
-    for (const { who, m } of msgs) {
+    for (const { who, m } of out) {
       if (rec.prefs && rec.prefs[who] === false) continue;
-      const st = await send(rec.sub, m, env, key);
+      const st = await send(rec.sub, m, env, key, jwts);
       if (st === 404 || st === 410) { await env.PUSH.delete(name); log.removed++; return; }
       if (st >= 200 && st < 300) log.sent++;
       else console.warn("push", st, new URL(rec.sub.endpoint).host);

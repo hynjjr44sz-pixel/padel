@@ -67,10 +67,14 @@ async function topic(tag) {
 }
 
 // Sends one message. Returns the push service's HTTP status (0 on network error).
-export async function send(sub, msg, env, key) {
+// jwts: optional cache {aud: jwt} shared by the sends of one tick.
+export async function send(sub, msg, env, key, jwts = {}) {
   const aud = new URL(sub.endpoint).origin;
-  const jwt = await vapidJwt(aud, env.VAPID_SUBJECT, key);
-  const body = await encrypt(JSON.stringify(msg), sub.keys.p256dh, sub.keys.auth);
+  const jwt = await (jwts[aud] = jwts[aud] || vapidJwt(aud, env.VAPID_SUBJECT, key));
+  // One aes128gcm record holds 3993 bytes of plaintext; keep well inside it.
+  let text = JSON.stringify(msg);
+  if (te.encode(text).length > 3000) text = JSON.stringify({ ...msg, body: String(msg.body || "").slice(0, 600) + "…" });
+  const body = await encrypt(text, sub.keys.p256dh, sub.keys.auth);
   try {
     const res = await fetch(sub.endpoint, {
       method: "POST", body,

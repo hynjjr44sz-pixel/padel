@@ -1618,7 +1618,7 @@
   function poll(L){
     clearTimeout(L.timer); L.timer = null;
     if (!inWindow(L.ev.live)){ setBar(L, "off"); schedule(L); return; }
-    if (L.busy || (document.visibilityState === "hidden" && !localNoti())) return;
+    if (L.busy || (document.visibilityState === "hidden" && !localNoti(L))) return;
     L.busy = true;
     if (!L.okAt && !L.failed) setBar(L, "wait");
     var ctl = typeof AbortController === "function" ? new AbortController() : null, p;
@@ -1651,12 +1651,12 @@
   function schedule(L){
     clearTimeout(L.timer); L.timer = null;
     var hidden = document.visibilityState === "hidden";
-    if (hidden && !localNoti()) return;
+    if (hidden && !localNoti(L)) return;
     L.timer = setTimeout(function(){ poll(L); }, hidden ? 2 * LIVE_EVERY : LIVE_EVERY);
   }
   document.addEventListener("visibilitychange", function(){
     LIVE.forEach(function(L){
-      if (document.visibilityState === "hidden"){ if (!localNoti()){ clearTimeout(L.timer); L.timer = null; } }
+      if (document.visibilityState === "hidden"){ if (!localNoti(L)){ clearTimeout(L.timer); L.timer = null; } }
       else if (!L.lastPoll || Date.now() - L.lastPoll > 5000) poll(L);
       else schedule(L);
     });
@@ -1673,7 +1673,13 @@
   var PUSH_KEY = "padel.push";
   function pushSupported(){ return !!PUSH_API && "serviceWorker" in navigator && "PushManager" in window; }
   function pushOn(){ return notiOn() && pushSupported() && store.get(PUSH_KEY) === "1"; }
-  function localNoti(){ return notiOn() && !pushOn(); }
+  function localNoti(L){ return notiOn() && !(pushOn() && pushCovers(L.ev.live.classId + ":")); }
+  // Classes the push server watches (from /vapid). The page still notifies for any other class itself.
+  var PUSH_CLS_KEY = "padel.pushClasses";
+  function pushCovers(id){
+    var l = store.json(PUSH_CLS_KEY);
+    return Array.isArray(l) && l.map(String).indexOf(String(id).split(":")[0]) >= 0;
+  }
   function swReady(){
     return Promise.race([navigator.serviceWorker.ready, new Promise(function(res, rej){ setTimeout(function(){ rej(new Error("sw timeout")); }, 8000); })]);
   }
@@ -1701,6 +1707,7 @@
     return swReady().then(function(r){ reg = r; return Promise.all([api("/vapid"), reg.pushManager.getSubscription()]); })
       .then(function(x){
         var key = x[0].key, sub = x[1];
+        store.set(PUSH_CLS_KEY, JSON.stringify(x[0].classes || []));
         if (sub && sameKey(sub, key)) return sub;
         return (sub ? sub.unsubscribe() : Promise.resolve()).then(function(){
           return reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64uBytes(key)});
@@ -1728,7 +1735,7 @@
   function showNote(id, title, body, hash, tag){
     if (!notiOn() || notified(id)) return;
     markNotified(id);
-    if (pushOn()) return;   // the push server sends this one (same tag), even when the app is closed
+    if (pushOn() && pushCovers(id)) return;   // the push server sends this one (same tag), even when the app is closed
     var opt = {body:body, icon:"icons/icon-192.png", badge:"icons/icon-192.png", tag:tag || "padel-" + id, lang:"sv", data:{url:"./" + (hash || "")}};
     function fallback(){
       try {

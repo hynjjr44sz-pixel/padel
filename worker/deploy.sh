@@ -18,6 +18,14 @@ echo "1/6 wrangler (pinned in package.json)"
 npm install --no-audit --no-fund --silent
 WR=(npx --no-install wrangler)
 
+# Checked before anything is created: without a workers.dev subdomain, deploy has nowhere to go.
+SUB="$(cf "$API/workers/subdomain" | js 'process.stdout.write(r.result&&r.result.subdomain||"")' 2>/dev/null || true)"
+if [ -z "$SUB" ]; then
+  echo "No workers.dev subdomain (or the token/account id is wrong): open Workers & Pages in the Cloudflare dashboard once, then run this again." >&2
+  exit 1
+fi
+URL="https://padel-push.$SUB.workers.dev"
+
 echo "2/6 KV namespace 'padel-push'"
 KV_ID="$(cf "$API/storage/kv/namespaces?per_page=100" | js 'const n=r.result.find(x=>x.title==="padel-push");process.stdout.write(n?n.id:"")')"
 if [ -z "$KV_ID" ]; then
@@ -31,7 +39,8 @@ echo "3/6 deploy"
 
 echo "4/6 VAPID keys"
 # The private key goes straight from gen-vapid.mjs into a wrangler secret (stdin), never to disk or screen.
-if [ -s vapid-public.txt ] && "${WR[@]}" secret list 2>/dev/null | grep -q VAPID_PRIVATE_KEY; then
+SECRETS="$("${WR[@]}" secret list 2>/dev/null || true)"
+if [ -s vapid-public.txt ] && grep -q VAPID_PRIVATE_KEY <<<"$SECRETS"; then
   echo "    already set (vapid-public.txt + secret) - keeping them"
 else
   node gen-vapid.mjs vapid-public.tmp | "${WR[@]}" secret put VAPID_PRIVATE_KEY >/dev/null
@@ -41,13 +50,7 @@ else
 fi
 
 echo "5/6 URL"
-SUB="$(cf "$API/workers/subdomain" | js 'process.stdout.write(r.result&&r.result.subdomain||"")')"
-if [ -z "$SUB" ]; then
-  echo "No workers.dev subdomain yet: open Workers & Pages in the Cloudflare dashboard once, then run this again." >&2
-  exit 1
-fi
-URL="https://padel-push.$SUB.workers.dev"
-for i in 1 2 3 4 5 6; do
+for _ in 1 2 3 4 5 6; do
   KEY="$(curl -fsS "$URL/vapid" 2>/dev/null | js 'process.stdout.write(r.key||"")' 2>/dev/null || true)"
   [ -n "$KEY" ] && break
   sleep 5

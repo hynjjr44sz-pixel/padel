@@ -98,3 +98,57 @@ test("HTTP API: CORS, vapid, unsubscribe", async () => {
   assert.equal((await call("/subscribe", { method: "POST", body: "{" })).status, 400);
   assert.equal((await call("/nope")).status, 404);
 });
+
+test("free-plan subrequest budget: many devices -> one folded notis each, never more than 45 fetches", async () => {
+  const v = await makeVapid(), PUSH = kv();
+  const env = { PUSH, ...v, VAPID_SUBJECT: "https://padel.holmberg.st", ORIGIN: "https://padel.holmberg.st", NOW: "2026-09-27T12:00:00+02:00" };
+  const state = { fixture: "dc_1031.json", rankedin: 0, status: {} }, pushes = net(state);
+  const devs = [];
+  for (let i = 0; i < 60; i++) { const d = await makeSubscription("https://fcm.googleapis.com/fcm/send/d" + i); devs.push(d); await subscribe(env, d.sub); }
+  await tick(env, EV);
+  state.fixture = "dc_1112.json";
+  const r = await tick(env, EV);
+  assert.ok(state.rankedin + pushes.length <= 45 + 1, "fetches this tick: " + (pushes.length + 1));
+  assert.equal(pushes.length, 44);
+  const first = devs.find(d => d.sub.endpoint === pushes[0].url);
+  const m = JSON.parse(await first.decrypt(pushes[0].init.body));
+  assert.equal(m.title, "3 nya resultat");
+  assert.match(m.body, /möter Pettersson/);
+  assert.equal(r.sent, 44);
+});
+
+test("POST needs the site's Origin; /vapid lists the watched classes", async () => {
+  const v = await makeVapid(), PUSH = kv(), env = { PUSH, ...v, ORIGIN: "https://padel.holmberg.st" };
+  const s = await makeSubscription("https://fcm.googleapis.com/fcm/send/o");
+  const res = await worker.fetch(new Request("https://w/subscribe", { method: "POST", body: JSON.stringify({ subscription: s.sub }) }), env);
+  assert.equal(res.status, 403);
+  const evil = await worker.fetch(new Request("https://w/subscribe", { method: "POST", headers: { Origin: "https://evil.example" }, body: JSON.stringify({ subscription: s.sub }) }), env);
+  assert.equal(evil.status, 403);
+  assert.equal(PUSH.ops.put, 0);
+  const vk = await (await worker.fetch(new Request("https://w/vapid"), env)).json();
+  assert.ok(vk.classes.includes(164681) && vk.classes.includes(173729));
+});
+
+test("validation: non-https / foreign hosts / bad keys / oversized body rejected", async () => {
+  const v = await makeVapid(), PUSH = kv(), env = { PUSH, ...v, ORIGIN: "https://padel.holmberg.st" };
+  const post = body => worker.fetch(new Request("https://w/subscribe", { method: "POST", headers: { Origin: "https://padel.holmberg.st" }, body }), env);
+  const s = await makeSubscription("https://fcm.googleapis.com/fcm/send/v");
+  for (const ep of ["http://fcm.googleapis.com/x", "https://fcm.googleapis.com.evil.example/x", "https://evil.example/fcm.googleapis.com/x", "javascript:alert(1)"])
+    assert.equal((await post(JSON.stringify({ subscription: { ...s.sub, endpoint: ep } }))).status, 400, ep);
+  assert.equal((await post(JSON.stringify({ subscription: { ...s.sub, keys: { p256dh: "AAAA", auth: s.sub.keys.auth } } }))).status, 400);
+  assert.equal((await post(JSON.stringify({ subscription: s.sub, pad: "x".repeat(5000) }))).status, 400);
+  assert.equal(PUSH.ops.put, 0);
+});
+
+test("events.js: windows valid, offsets match Europe/Stockholm (CEST/CET) at that moment", async () => {
+  const { EVENTS, activeEvents } = await import("../src/events.js");
+  const off = d => { const p = new Intl.DateTimeFormat("en", { timeZone: "Europe/Stockholm", timeZoneName: "longOffset" }).formatToParts(d).find(x => x.type === "timeZoneName").value; return p.replace("GMT", ""); };
+  for (const e of EVENTS) for (const t of [e.activeFrom, e.activeTo]) {
+    assert.match(t, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[+-]\d\d:\d\d$/, t);
+    assert.equal(t.slice(-6), off(new Date(t)), e.cls + " " + t + " has the wrong UTC offset");
+  }
+  for (const e of EVENTS) assert.ok(new Date(e.activeTo) > new Date(e.activeFrom), e.cls);
+  assert.deepEqual(activeEvents(new Date("2026-09-27T05:59:59Z")).map(e => e.cls), []);        // 07:59:59 CEST
+  assert.deepEqual(activeEvents(new Date("2026-09-27T06:00:00Z")).map(e => e.cls), ["Damer C"]);  // 08:00 CEST
+  assert.deepEqual(activeEvents(new Date("2026-10-11T21:00:01Z")).map(e => e.cls), []);        // 23:00:01 CEST
+});
