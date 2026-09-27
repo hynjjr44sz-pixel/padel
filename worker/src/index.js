@@ -257,6 +257,6 @@ async function testPush(env) {
 export default {
   fetch: (req, env) => handle(req, env).catch(e => json({ error: "server error" }, 500, cors(req, env))),
   scheduled(controller, env, ctx) {
-    ctx.waitUntil(tick(env).then(r => { if (r.active) console.log("tick", JSON.stringify(r)); }));
+    ctx.waitUntil(tick(env).then(r => { if (r.active || r.discovered != null) console.log("tick", JSON.stringify(r)); }));
   }
 };

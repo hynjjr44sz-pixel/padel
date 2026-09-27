@@ -29,9 +29,9 @@ export function normalize(e) {
 export function merge(discovered, statics = EVENTS) {
   const out = (discovered || []).slice();
   statics.map(normalize).forEach(s => {
-    const d = out.find(x => x.kind === "tournament" && x.classId === s.classId && x.who === s.who);
-    if (!d) out.push(s);
-    else if (!d.draws && s.draws) d.draws = s.draws;   // stages known before RankedIn publishes the draw
+    const i = out.findIndex(x => x.kind === "tournament" && x.classId === s.classId && x.who === s.who);
+    if (i < 0) out.push(s);
+    else if (!out[i].draws && s.draws) out[i] = { ...out[i], draws: s.draws };   // stages known before RankedIn publishes the draw
   });
   return out.sort((a, b) => String(a.windowFrom).localeCompare(String(b.windowFrom)));
 }

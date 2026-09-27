@@ -21,32 +21,26 @@ medan en tävling pågår och skickar Web Push till alla som slagit på Notiser 
 Den privata nyckeln finns bara som hemlighet hos Cloudflare. Tappar du den: ta bort `vapid-public.txt`
 och kör skriptet igen (alla får då slå på Notiser på nytt).
 
-## Lägga till en tävling
+## Tävlingar hittas automatiskt
 
-Öppna `src/events.js` och lägg till en rad i `EVENTS`:
+Workern letar själv upp allt Thea och Kian anmäler sig till på RankedIn (`src/discover.js`):
+turneringar (klass, partner, lottning, gruppspel eller slutspel) och lagserier som SPL (lagets
+matcher, en post per speldag). Listan uppdateras en gång i timmen (minut 7) och sparas i KV under
+`disc`. Den skrivs bara om när något ändrats, eller var sjätte timme.
 
-```js
-{
-  who: "thea",                       // "thea" eller "kian" (fliken notisen öppnar)
-  me: "Thea Holmberg Löving",        // namnet exakt som på RankedIn
-  cls: "Dam B",                      // klassens namn i notiserna
-  tournamentId: 73554, classId: 173729,
-  stages: [0, 1],                    // valfritt: 0 = lottning/grupper, 1 = slutspel efter grupper
-  activeFrom: "2026-10-09T16:00:00+02:00", activeTo: "2026-10-11T23:00:00+02:00"
-}
-```
+- `GET /events` ger listan (sidan läser den var 30:e minut).
+- Under speldagen (07:00–23:00 svensk tid, från första till sista dagen) kollas lottningen eller
+  lagmatchen varje minut. Nya resultat blir push till alla som slagit på Notiser.
+- Max 30 anrop till RankedIn per minut. Pågår flera tävlingar samtidigt turas de om.
 
-- **classId** står i RankedIn-adressen när du klickar på klassen (`.../draws?tournamentClassId=173729`).
-- Tider är svensk tid: `+02:00` på sommartid, `+01:00` efter sista söndagen i oktober.
-- Kör `./worker/deploy.sh` igen. Klart.
-
-Utanför fönstret gör workern ingenting. Skriv fönstret så kort det går: varje minut i fönstret är ett anrop till RankedIn.
+`src/events.js` finns kvar som reserv: en rad där läggs till i listan (samma klass + spelare vinner
+det som hittats automatiskt). Normalt behöver du inte röra den.
 
 ## Testa
 
 ```sh
 cd worker
 npm install
-npm test                 # kryptering (RFC 8291/8292), notistexter, KV-logik
+npm test                 # kryptering (RFC 8291/8292), notistexter, KV-logik, automatisk sökning, lagserier
 node test/e2e-dev.mjs    # wrangler dev lokalt: prenumerera, kör cron, ta emot och dekryptera en push
 ```

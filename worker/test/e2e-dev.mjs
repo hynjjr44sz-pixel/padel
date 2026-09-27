@@ -12,7 +12,7 @@ import { b64u } from "../src/webpush.js";
 import { route } from "./fake-rankedin.mjs";
 
 const dir = new URL("..", import.meta.url).pathname, FX = new URL("./fixtures/", import.meta.url).pathname;
-const P = 18787, W = 18788;
+const P = +(process.env.E2E_PORT || 18787), W = P + 1;   // E2E_PORT: run next to another copy
 let fixture = "dc_1031.json";
 const pushes = [], fixtureHits = [], apiHits = [];
 const srv = http.createServer((req, res) => {

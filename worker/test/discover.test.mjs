@@ -139,6 +139,9 @@ test("merge: static events fill in, discovered wins (same classId + who)", () =>
   assert.equal(m.filter(e => e.classId === 164681).length, 1);
   assert.equal(m.find(e => e.classId === 164681).windowFrom, "2026-09-25T07:00:00+02:00");
   assert.deepEqual(m.find(e => e.classId === 173729).draws, [[0, 0], [1, 0]]);
+  const vista = [{ key: "t173729-thea", kind: "tournament", who: "thea", classId: 173729, draws: null, windowFrom: "2026-10-09T07:00:00+02:00", windowTo: "2026-10-11T23:00:00+02:00" }];
+  assert.deepEqual(merge(vista).find(e => e.classId === 173729).draws, [[0, 0], [1, 0]]);
+  assert.equal(vista[0].draws, null, "the stored record is never changed (it would look like a new list every hour)");
 });
 
 test("rotation: more active classes than the budget -> at most 30 RankedIn fetches per tick, others next minute", async () => {

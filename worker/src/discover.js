@@ -129,6 +129,9 @@ async function teamleague(p, e, get, ctx) {
 // get(path) -> parsed JSON (throws on HTTP errors; err.budget = out of subrequests).
 // prev: the last discovery record ({events, ended}). Returns {events, ended, partial}.
 export async function discover(get, now, prev) {
+  // Both players in the same tournament: fetch its info and class lists once per run.
+  const seen = new Map(), raw = get;
+  get = path => { if (!seen.has(path)) seen.set(path, raw(path)); return seen.get(path); };
   const ctx = { now, today: dayOf(now), prev: (prev && prev.events) || [], ended: new Set((prev && prev.ended) || []) };
   const out = [];
   let partial = false;
