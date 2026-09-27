@@ -1,6 +1,6 @@
 // Team league (SPL) tie -> rubbers -> notiser. The rubbers endpoint is camelCase; challenger = home team,
 // scores are from the challenger's side. Tags: "padel-tm<tieId>:..." (index.html uses the same ids).
-import { short } from "./rankedin.js";
+import { short, linkTo } from "./rankedin.js";
 
 const firstNames = p => p.n.map(n => n.split(" ")[0]).join(" och ");
 const TYPE = { 3: "Herr", 4: "Dam", 5: "Mixed" };
@@ -61,7 +61,7 @@ export function ourSide(tie, rubbers, pid) {
 // ev: team league play day ({who, pid, team, name, round}); tie: {id, home, opp, time, venue}.
 export function tieNotes(ev, tie, rubbers, before) {
   const pid = String(ev.pid), isMe = p => !!p && p.ids.map(String).includes(pid);
-  const us = ourSide(tie, rubbers, pid), them = us === "a" ? "b" : "a", url = "./#" + ev.who, cid = "tm" + tie.id;
+  const us = ourSide(tie, rubbers, pid), them = us === "a" ? "b" : "a", cid = "tm" + tie.id;
   const score = r => { const s = r.s ? (us === "a" ? r.s : flipScore(r.s)) : ""; return s || r.note || ""; };
   let W = 0, L = 0;
   rubbers.forEach(r => { if (r.w) { if (r.w === us) W++; else L++; } });
@@ -72,7 +72,7 @@ export function tieNotes(ev, tie, rubbers, before) {
     if (!r.w || was.w) return;
     const ours = r[us], theirs = r[them], won = r.w === us, sc = score(r), id = cid + ":r" + r.id;
     if (isMe(ours)) {
-      mine.push({ id, title: firstNames(ours) + (won ? " vann sin match " : " förlorade sin match ") + sc,
+      mine.push({ id, mid: r.id, title: firstNames(ours) + (won ? " vann sin match " : " förlorade sin match ") + sc,
         body: ("Mot " + short(theirs) + ". Ställning: " + tieScore + ".").trim() });
     } else {
       others.push({ id, title: ev.team + ": " + short(ours) + (won ? " vann " : " förlorade ") + sc,
@@ -83,18 +83,18 @@ export function tieNotes(ev, tie, rubbers, before) {
   rubbers.forEach(r => {
     if (r.w || !isMe(r[us]) || !r[them]) return;
     if (unpack(before[r.id])[them]) return;
-    mine.push({ id: cid + ":opp:r" + r.id + ":" + r[them].id, title: firstNames(r[us]) + " möter " + short(r[them]),
+    mine.push({ id: cid + ":opp:r" + r.id + ":" + r[them].id, mid: r.id, title: firstNames(r[us]) + " möter " + short(r[them]),
       body: [ev.name, ev.team + " mot " + tie.opp, tie.time, tie.venue].filter(Boolean).join(" · ") });
   });
   const out = [];
   // Only Thea's/Kian's own rubbers (and the tie result) are pushed; teammates' rubbers stay on the page.
-  mine.forEach(o => out.push({ title: o.title, body: o.body, tag: "padel-" + o.id, url }));
+  mine.forEach(o => out.push({ title: o.title, body: o.body, tag: "padel-" + o.id, url: linkTo(ev.who, o.mid) }));
   const done = rubbers.length && rubbers.every(r => r.w), wasDone = before._done || (rubbers.length && rubbers.every(r => unpack(before[r.id]).w));
   if (done && !wasDone) {
     const t = W > L ? ev.team + " vann mot " + tie.opp + " " + W + "–" + L : W < L ? ev.team + " förlorade mot " + tie.opp + " " + W + "–" + L : ev.team + " och " + tie.opp + " delade " + W + "–" + L;
     const myR = rubbers.find(r => isMe(r[us]));
     const body = [ev.name + (ev.round ? " omgång " + ev.round : ""), myR ? firstNames(myR[us]) + (myR.w === us ? " vann sin match " : " förlorade sin match ") + score(myR) : ""].filter(Boolean).join(". ") + ".";
-    out.push({ title: t, body, tag: "padel-" + cid + ":klar", url });
+    out.push({ title: t, body, tag: "padel-" + cid + ":klar", url: linkTo(ev.who, myR && myR.id) });
   }
   return out;
 }

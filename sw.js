@@ -1,7 +1,7 @@
 /* Nynäs Padel service worker.
    index.html: network first (updates arrive at once), cache as offline fallback.
    img/ and icons/: cache first. Other origins (api.rankedin.com, fonts) are never touched. */
-var VERSION = "padel-v2";
+var VERSION = "padel-v3";
 var PRECACHE = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png"];
 
 self.addEventListener("install", function(e){
@@ -55,16 +55,20 @@ self.addEventListener("push", function(e){
   }));
 });
 
+/* Tap on a notis: url is a deep link ("./#thea/m6872156" = tab + match). An open page gets it as a message
+   (it switches tab and scrolls to the match without reloading); otherwise the app opens at that link. */
 self.addEventListener("notificationclick", function(e){
   e.notification.close();
   var target = new URL((e.notification.data && e.notification.data.url) || "./", self.registration.scope).href;
+  var hash = target.indexOf("#") >= 0 ? target.slice(target.indexOf("#")) : "";
   e.waitUntil(self.clients.matchAll({type:"window", includeUncontrolled:true}).then(function(list){
     for (var i = 0; i < list.length; i++){
       var c = list[i];
       if (c.url.indexOf(self.registration.scope) === 0 && "focus" in c){
         return c.focus().then(function(w){
           w = w || c;
-          return w.url !== target && "navigate" in w ? w.navigate(target).catch(function(){ return w; }) : w;
+          try { w.postMessage({type:"padel-open", url:target, hash:hash}); return w; }
+          catch (err){ return "navigate" in w ? w.navigate(target).catch(function(){ return w; }) : w; }
         });
       }
     }

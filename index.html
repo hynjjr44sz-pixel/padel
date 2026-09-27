@@ -41,6 +41,7 @@
     --board-dim:#A6B2D2;
     --shadow:0 18px 40px -26px rgba(6,13,34,.55);
     --solid:#0A1733; --solid-ink:#FFFFFF; --panel:#0A1733;
+    --up:#17774A;              /* trend: better */
     color-scheme:light;
   }
   @media (prefers-color-scheme: dark){
@@ -60,6 +61,7 @@
       --board-2:#0B1633;
       --shadow:0 18px 40px -26px rgba(0,0,0,.8);
       --solid:#8EC5FF; --solid-ink:#0A1733; --panel:#16295A;
+      --up:#6FD69C;
       color-scheme:dark;
     }
   }
@@ -79,6 +81,7 @@
     --board-2:#0B1633;
     --shadow:0 18px 40px -26px rgba(0,0,0,.8);
     --solid:#8EC5FF; --solid-ink:#0A1733; --panel:#16295A;
+    --up:#6FD69C;
     color-scheme:dark;
   }
 
@@ -501,6 +504,86 @@
   .empty{ font-size:13.5px; line-height:1.45; color:var(--dim); margin:0; }
   .court-no[hidden]{ display:none; }
 
+
+  /* ---------- pair average skill ---------- */
+  .e .n .sk b, .gt .gsk b{ font-weight:600; color:var(--ink); margin-right:2px; }
+  .opt .osk b{ font-weight:600; color:var(--board-ink); margin-right:2px; }
+  .cmp{ padding:11px 0 12px; border-top:1px dashed var(--board-line); }
+  .cmp-row{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:10px; align-items:end; }
+  .cmp-side small{ display:block; font:500 11px/1.3 "Chivo Mono", monospace; color:var(--board-dim); overflow-wrap:anywhere; }
+  .cmp-side b{ display:block; font:900 30px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; margin-top:4px; color:var(--board-ink); }
+  .cmp-side.me b{ color:var(--racket); }
+  .cmp-side.op{ text-align:right; }
+  .cmp-row > i{ font:500 13px/1 "Chivo Mono", monospace; font-style:normal; color:var(--board-dim); padding-bottom:7px; }
+  .cmp-bar{ position:relative; height:6px; border-radius:3px; background:rgba(255,255,255,.1); margin-top:10px; }
+  .cmp-bar::after{ content:""; position:absolute; left:calc(50% - .75px); top:-3px; bottom:-3px; width:1.5px; background:var(--board-dim); }
+  .cmp-bar span{ position:absolute; top:0; bottom:0; }
+  .cmp-bar .me{ right:50%; background:var(--racket); border-radius:3px 0 0 3px; }
+  .cmp-bar .op{ left:50%; background:var(--board-dim); border-radius:0 3px 3px 0; }
+  .cmp-note{ font:500 11px/1.3 "Chivo Mono", monospace; color:var(--board-dim); margin-top:7px; }
+
+  /* ---------- trend arrows (Utveckling) ---------- */
+  .stat .d, .kskill .d{ font:600 11.5px/1.2 "Chivo Mono", monospace; margin-top:4px; white-space:nowrap; letter-spacing:.01em; }
+  .stat .d[hidden], .kskill .d[hidden]{ display:none; }
+  .d .up{ color:var(--up); }
+  .d .down{ color:var(--loss); }
+  .kskill .now .d .up{ color:#6FD69C; }
+  .kskill .now .d .down{ color:#F0A89F; }
+
+  /* ---------- senaste resultat (strip under the live bar) ---------- */
+  .recent{ margin:0 -16px 10px; }
+  .recent[hidden]{ display:none; }
+  .recent .rk{ font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); padding:0 16px 6px; }
+  .recent ol{ list-style:none; margin:0; padding:0 16px 2px; display:flex; gap:8px; overflow-x:auto; scroll-snap-type:x proximity; scroll-padding-inline:16px; scrollbar-width:none; overscroll-behavior-x:contain; }
+  .recent ol::-webkit-scrollbar{ display:none; }
+  .recent li{ flex:0 0 auto; width:min(62vw, 214px); scroll-snap-align:start; display:flex; }
+  .recent a{ display:block; width:100%; padding:8px 10px 9px; border-radius:12px; background:var(--surface); border:1px solid var(--line); color:var(--ink); text-decoration:none; }
+  .recent a.mine{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); background:var(--accent-soft); }
+  .recent .rh{ display:flex; justify-content:space-between; gap:6px; font:500 10.5px/1.2 "Chivo Mono", monospace; color:var(--dim); white-space:nowrap; }
+  .recent .rh b{ font-weight:600; color:var(--accent); text-transform:uppercase; letter-spacing:.06em; }
+  .recent .rw{ font:700 13px/1.25 "Instrument Sans", sans-serif; margin-top:5px; overflow-wrap:anywhere; }
+  .recent .rl{ font:500 11.5px/1.35 "Chivo Mono", monospace; color:var(--dim); margin-top:2px; overflow-wrap:anywhere; }
+
+  /* ---------- deep link highlight ---------- */
+  .flash{ outline:3px solid var(--accent); outline-offset:2px; }
+
+  /* ---------- between events: result + next event ---------- */
+  .bigtime.word{ font-size:clamp(50px, 15.5vw, 86px); line-height:.86; text-transform:uppercase; overflow-wrap:anywhere; }
+  .timeline-big.wrap{ flex-wrap:wrap; row-gap:8px; }
+  .nextev{ padding:12px 0 4px; border-top:1px solid var(--board-line); }
+  .nextev[hidden]{ display:none; }
+  .nextev .nk{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; font:600 11px/1.2 "Chivo Mono", monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--racket); }
+  .nextev .nk span{ color:var(--board-ink); letter-spacing:.04em; white-space:nowrap; }
+  .nextev h3{ margin:7px 0 0; font:800 22px/1.05 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; color:var(--board-ink); overflow-wrap:anywhere; }
+  .nextev .nf{ font:500 12px/1.5 "Chivo Mono", monospace; color:var(--board-dim); margin-top:5px; overflow-wrap:anywhere; }
+  .nextev .nf b{ color:var(--board-ink); font-weight:600; }
+  .nextev .nd{ font-size:14px; line-height:1.4; color:var(--board-ink); margin:10px 0 4px; }
+  .nextev .nd b{ color:var(--racket); }
+
+  /* ---------- senaste tävlingar: expandable rows ---------- */
+  .tr-item + .tr-item{ border-top:1px solid var(--line); }
+  button.tr{ appearance:none; border:0; background:none; width:100%; margin:0; text-align:left; color:inherit; font:inherit; cursor:pointer; border-radius:10px; }
+  .tr .tn{ display:block; }
+  .tr .wl .chev{ display:inline-block; width:8px; height:8px; margin:6px 2px 0 0; border-right:2px solid var(--faint); border-bottom:2px solid var(--faint); transform:rotate(45deg); transition:transform .2s; }
+  .tr[aria-expanded="true"] .wl .chev{ transform:rotate(225deg); margin-top:10px; }
+  .tx{ padding:0 0 16px; }
+  .tx[hidden]{ display:none; }
+  .tx-top{ display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px 12px; font:500 12px/1.4 "Chivo Mono", monospace; color:var(--dim); margin-bottom:10px; }
+  .tx-top b{ color:var(--ink); font-weight:600; }
+  .tx-top a{ font-family:"Instrument Sans", sans-serif; font-weight:600; font-size:13px; }
+  .tx h4{ margin:16px 0 8px; font:800 17px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.05em; }
+  .tx .results{ gap:8px; }
+  .tx .bk-wrap{ margin:0 -14px; }
+  .tx .bk-scroll{ padding:0 14px 10px; scroll-padding-inline:14px; }
+  .tx-note{ font-size:13px; line-height:1.45; color:var(--dim); margin:2px 0 6px; }
+  .tx-note button{ appearance:none; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:8px; padding:5px 10px; margin-left:6px; font:600 12.5px/1 "Instrument Sans", sans-serif; cursor:pointer; }
+
+  @media (min-width:640px){
+    .recent{ margin-left:0; margin-right:0; }
+    .recent ol, .recent .rk{ padding-left:0; padding-right:0; }
+    .tx .bk-wrap{ margin:0; }
+  }
+
   footer{ margin-top:48px; padding-top:18px; border-top:2px solid var(--ink); display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
   footer b{ font:900 22px/1 "Big Shoulders Display", sans-serif; letter-spacing:.12em; text-transform:uppercase; }
   footer span{ font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); }
@@ -524,6 +607,8 @@
     .draw-line{ stroke-dasharray:var(--len); stroke-dashoffset:var(--len); transition:stroke-dashoffset 1.3s cubic-bezier(.3,.6,.2,1); }
     .drawn .draw-line{ stroke-dashoffset:0; }
     .bk-scroll{ scroll-behavior:smooth; }
+    .flash{ animation:flash 2.6s ease-out both; }
+    @keyframes flash{ 0%, 35%{ outline-color:var(--accent); outline-offset:2px; } 100%{ outline-color:transparent; outline-offset:6px; } }
   }
 </style>
 </head>
@@ -560,6 +645,7 @@
   <!-- ================= THEA ================= -->
   <main role="tabpanel" id="p-thea" aria-labelledby="tab-thea" tabindex="-1">
     <div class="livebar" id="live-thea" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div>
+    <div class="recent" id="recent-thea" hidden></div>
     <div class="dyn" id="dyn-thea" hidden></div>
     <div class="hero" data-ev>
       <img src="img/thea.jpg" width="900" height="1017" alt="Thea Holmberg Löving i Nynäs-jackan" fetchpriority="high">
@@ -596,9 +682,9 @@
     <section aria-labelledby="h-dev">
       <div class="sh"><h2 id="h-dev">Utveckling</h2><div class="meta">SPF-ranking</div></div>
       <div class="stats">
-        <div class="stat"><div class="k">Ranking</div><div class="v">#150</div><div class="s">Dam huvudlista</div></div>
-        <div class="stat"><div class="k">Poäng</div><div class="v">68.7</div><div class="s">SPF</div></div>
-        <div class="stat"><div class="k">Skill</div><div class="v">15.94</div><div class="s">topp 16.07</div></div>
+        <div class="stat"><div class="k">Ranking</div><div class="v" id="tv-thea-rank">#150</div><div class="d" id="td-thea-rank" hidden></div><div class="s">Dam huvudlista</div></div>
+        <div class="stat"><div class="k">Poäng</div><div class="v" id="tv-thea-pts">68.7</div><div class="d" id="td-thea-pts" hidden></div><div class="s">SPF</div></div>
+        <div class="stat"><div class="k">Skill</div><div class="v" id="tv-thea-skill">15.94</div><div class="d" id="td-thea-skill" hidden></div><div class="s">topp 16.07</div></div>
       </div>
       <div class="card chart" id="chartCard">
         <svg id="trend" viewBox="0 0 340 176" role="img" aria-label="Theas skill de tio senaste matcherna: 15.88 den 25 juli, topp 16.07 den 13 september, nu 15.94"></svg>
@@ -639,6 +725,7 @@
   <!-- ================= KIAN ================= -->
   <main role="tabpanel" id="p-kian" aria-labelledby="tab-kian" tabindex="-1" hidden>
     <div class="livebar" id="live-kian" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div>
+    <div class="recent" id="recent-kian" hidden></div>
     <div class="dyn" id="dyn-kian" hidden></div>
     <div class="hero khero2" data-ev>
       <img src="img/kian.jpg" width="831" height="1038" alt="Kian Borgström med racket" loading="lazy">
@@ -681,13 +768,13 @@
     <section aria-labelledby="h-kdev">
       <div class="sh"><h2 id="h-kdev">Utveckling</h2><div class="meta">SPF-ranking</div></div>
       <div class="stats" style="grid-template-columns:repeat(2, minmax(0,1fr))">
-        <div class="stat"><div class="k">Ranking</div><div class="v">#789</div><div class="s">Herrar huvudlista</div></div>
-        <div class="stat"><div class="k">Poäng</div><div class="v">11.99</div><div class="s">SPF</div></div>
+        <div class="stat"><div class="k">Ranking</div><div class="v" id="tv-kian-rank">#789</div><div class="d" id="td-kian-rank" hidden></div><div class="s">Herrar huvudlista</div></div>
+        <div class="stat"><div class="k">Poäng</div><div class="v" id="tv-kian-pts">11.99</div><div class="d" id="td-kian-pts" hidden></div><div class="s">SPF</div></div>
       </div>
       <div class="kskill">
         <div><div class="k">Topp · juli</div><b>11.98</b></div>
         <div><div class="k">10 matcher sedan</div><b>11.86</b></div>
-        <div class="now"><div class="k">Nu</div><b>11.56</b></div>
+        <div class="now"><div class="k">Nu</div><b id="tv-kian-skill">11.56</b><div class="d" id="td-kian-skill" hidden></div></div>
       </div>
       <div class="formrow">
         <div class="k"><span>Form, 10 senaste</span><span>äldst → senast</span></div>
@@ -727,9 +814,11 @@
   var PUSH_API = "https://padel-push.holmberg-padel.workers.dev";
 
   /* ================= helpers ================= */
+  // Shared constants (also used before the discovery code further down runs)
+  var RI_API = "https://api.rankedin.com/v1", RI_WEB = "https://www.rankedin.com", HOUR = 3600e3;
   var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); };
   var params = new URLSearchParams(location.search);
-  function now(){ var t = params.get("t"); return t ? new Date(t) : new Date(); }
+  function now(){ var t = params.get("t"); return t ? new Date(t.replace(" ", "+")) : new Date(); }   // "+02:00" arrives as " 02:00" when not encoded
   function at(date, hhmm){ return new Date(date + "T" + hhmm + ":00+02:00"); }
   // localStorage can be missing or throw (private mode, blocked site data): never let that break the page.
   var store = {
@@ -783,6 +872,29 @@
     return v.some(function(x){ return x != null; }) ? v : (p.skill || null);
   }
   function fmtSkill(v){ return v ? v.map(function(x){ return x == null ? "–" : x.toFixed(2); }).join(" · ") : ""; }
+  // Pair average (only when both players have a skill)
+  function avgSkill(v){   // in hundredths, so 15.94 and 13.89 give 14.92 (not 14.91 from float noise)
+    return v && v.length === 2 && v[0] != null && v[1] != null ? Math.round((Math.round(v[0] * 100) + Math.round(v[1] * 100)) / 2) / 100 : (v && v.length === 1 && v[0] != null ? v[0] : null);
+  }
+  // "<b>14.92</b> 15.94 · 13.89": the pair's average first, the two players smaller
+  function skillHtml(v){
+    if (!v) return "";
+    var a = avgSkill(v);
+    return (a != null && v.length > 1 ? "<b>" + a.toFixed(2) + "</b> " : "") + esc(fmtSkill(v));
+  }
+  function skillLabel(v){ var a = avgSkill(v); return v ? (a != null && v.length > 1 ? "snitt " + a.toFixed(2) + " (" + fmtSkill(v) + ")" : "skill " + fmtSkill(v)) : ""; }
+  // Hero: "Thea & Cassandra 14.92 – 12.97 Pettersson Österberg & Ekeland" with a bar for the difference
+  function cmpHtml(me, op){
+    var a = avgSkill(pskill(me)), b = avgSkill(pskill(op));
+    if (a == null || b == null || !me || !op) return "";
+    var d = a - b, w = Math.min(Math.abs(d) / 3, 1) * 50;
+    var note = Math.abs(d) < 0.005 ? "Snitt skill · jämnt" : "Snitt skill · +" + Math.abs(d).toFixed(2) + (d > 0 ? " till er" : " till dem");
+    return '<div class="cmp" data-r2="cmp"><div class="cmp-row">' +
+      '<div class="cmp-side me"><small>' + esc(me.n.map(function(n){ return n.split(" ")[0]; }).join(" & ")) + '</small><b>' + a.toFixed(2) + '</b></div><i aria-hidden="true">–</i>' +
+      '<div class="cmp-side op"><small>' + esc(op.n.map(surname).join(" & ")) + '</small><b>' + b.toFixed(2) + '</b></div></div>' +
+      '<div class="cmp-bar" aria-hidden="true"><span class="' + (d >= 0 ? "me" : "op") + '" style="width:' + w.toFixed(1) + '%"></span></div>' +
+      '<div class="cmp-note">' + esc(note) + '</div></div>';
+  }
   var SKILL_KEY = "padel-skill-v1", SKV = {};
   function applySkillCache(){
     try{ var c = JSON.parse(localStorage.getItem(SKILL_KEY) || "null"); if (c && c.v) Object.keys(c.v).forEach(function(n){ if (PLAYERS[n]) PLAYERS[n][1] = c.v[n]; }); return c; }catch(e){ return null; }
@@ -966,7 +1078,7 @@
       if (o.c) mt.c = o.c;
       if (o.wKey){ mt.s = o.s || (o.note ? null : mt.s); mt.note = o.note || null; }
     }); }); });
-    draws.forEach(function(d){ resolve(ev, d); });
+    draws.forEach(function(d, di){ resolve(ev, d); d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt, i){ mt.sid = "s" + di + "-" + r + "-" + i; }); }); });
     ev.draws = draws;
   }
   [THEA_EVENT, KIAN_EVENT].forEach(function(ev){
@@ -1001,7 +1113,7 @@
     var p = e.pair;
     if (p.me) cls += " me";
     var right = mt.s ? '<span class="sc">' + sideScores(mt, side) + '</span>' : (mt.w === side ? '<span class="wmark">' + (mt.note === "W.O." ? "W.O." : "Vidare") + '</span>' : "<span></span>");
-    return '<div class="' + cls + '">' + avatars(p, "sm") + '<span class="n" title="' + esc(p.n.join(" / ")) + '">' + esc(short(p)) + (p.seed ? '<span class="sd">' + esc(p.seed) + '</span>' : "") + (pskill(p) ? '<small class="sk">' + fmtSkill(pskill(p)) + '</small>' : "") + '</span>' + right + '</div>';
+    return '<div class="' + cls + '">' + avatars(p, "sm") + '<span class="n" title="' + esc(p.n.join(" / ")) + '">' + esc(short(p)) + (p.seed ? '<span class="sd">' + esc(p.seed) + '</span>' : "") + (pskill(p) ? '<small class="sk" aria-label="' + esc(skillLabel(pskill(p))) + '">' + skillHtml(pskill(p)) + '</small>' : "") + '</span>' + right + '</div>';
   }
   function statusLabel(ev, mt, isNext){
     var st = matchState(ev, mt);
@@ -1011,6 +1123,9 @@
     return isNext ? '<span class="st nx">Nästa</span>' : '<span class="st"></span>';
   }
 
+  // Match id used by deep links ("#thea/m6872156"): RankedIn's MatchId, else a stable id for the static draw.
+  function midOf(mt){ return (mt && ((mt.live && mt.live.mid) || mt.mid || mt.sid)) || ""; }
+  function midAttr(mt){ var id = midOf(mt); return id ? ' data-mid="' + esc(id) + '"' : ""; }
   function renderKnockout(ev, draw, host, nextMatch){
     var n1 = draw.rounds[0].matches.length;
     var wrap = document.createElement("div"); wrap.className = "bk-wrap";
@@ -1028,7 +1143,7 @@
         html += '<div class="slot ' + (i % 2 ? "odd" : "even") + '">';
         if (r > 0) html += '<span class="in' + (mt.hasMe && (mt.a.via || mt.b.via) ? " hot" : "") + '"></span>';
         if (!last){ var hot = mt.meWon ? " hot" : ""; html += '<span class="out' + hot + '"></span><span class="vl' + hot + '"></span>'; }
-        html += '<div class="' + mcls + '"><div class="mh"><span>' + esc([mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : "")) + '</span>' + statusLabel(ev, mt, isNext) + '</div>' +
+        html += '<div class="' + mcls + '"' + midAttr(mt) + '><div class="mh"><span>' + esc([mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : "")) + '</span>' + statusLabel(ev, mt, isNext) + '</div>' +
           entrantRow(mt, "a") + entrantRow(mt, "b") + '</div></div>';
       });
       html += '</div></div>';
@@ -1051,11 +1166,11 @@
           var p = ev.pairs[x.pair];
           if (!p) return "";
           var sk = pskill(p);
-          return '<tr' + (p.me ? ' class="me"' : '') + '><td>' + esc(short(p)) + (sk ? '<small class="gsk">' + fmtSkill(sk) + '</small>' : '') + '</td><td>' + x.played + '</td><td>' + x.won + '</td><td>' + x.lost + '</td><td>' + (x.diff > 0 ? "+" : "") + x.diff + '</td></tr>';
+          return '<tr' + (p.me ? ' class="me"' : '') + '><td>' + esc(short(p)) + (sk ? '<small class="gsk" aria-label="' + esc(skillLabel(sk)) + '">' + skillHtml(sk) + '</small>' : '') + '</td><td>' + x.played + '</td><td>' + x.won + '</td><td>' + x.lost + '</td><td>' + (x.diff > 0 ? "+" : "") + x.diff + '</td></tr>';
         }).join("") + '</tbody></table>' +
         (g.matches && g.matches.length ? '<div class="gm">' + g.matches.map(function(mt){
           var st = matchState(ev, mt), lab = st === "done" ? (mt.note || "Klar") : st === "live" ? "Pågår" : st === "nr" ? "Ej rapporterad" : "";
-          return '<div class="res' + (mt.hasMe ? " mine" : "") + '"><div class="mh"><span>' + esc([mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : "")) + '</span><span class="st' + (st === "live" ? " nx" : st === "nr" ? " nr" : "") + '">' + esc(lab) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
+          return '<div class="res' + (mt.hasMe ? " mine" : "") + '"' + midAttr(mt) + '><div class="mh"><span>' + esc([mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : "")) + '</span><span class="st' + (st === "live" ? " nx" : st === "nr" ? " nr" : "") + '">' + esc(lab) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
         }).join("") + '</div>' : "");
       host.appendChild(d);
     });
@@ -1071,7 +1186,7 @@
     ev.draws.forEach(function(d, i){
       var b = document.createElement("button"); b.type = "button"; b.textContent = d.label; b.setAttribute("aria-pressed", i === sel ? "true" : "false");
       seg.appendChild(b);
-      var box = document.createElement("div"); box.hidden = i !== sel;
+      var box = document.createElement("div"); box.hidden = i !== sel; box.setAttribute("data-view", i);
       if ((d.format || ev.format) === "groups") renderGroups(ev, d, box); else renderKnockout(ev, d, box, nextMatch);
       views.push(box);
       b.addEventListener("click", function(){
@@ -1199,7 +1314,7 @@
       var st = src ? matchState(THEA_EVENT, src) : "up";
       var tag = st === "nr" ? "Ej rapporterad" : (st === "live" ? "Pågår" : (src ? src.t + " · " + src.c : ""));
       return '<div class="team opp"><span></span><div class="tname">Mot vinnaren av<div class="opts">' +
-        op.from.map(function(pp, i){ return (i ? '<div class="opt"><i>eller</i></div>' : "") + '<div class="opt">' + avatars(pp, "md") + '<span>' + esc(short(pp)) + (pskill(pp) ? '<small class="osk">skill ' + fmtSkill(pskill(pp)) + '</small>' : '') + '</span></div>'; }).join("") +
+        op.from.map(function(pp, i){ return (i ? '<div class="opt"><i>eller</i></div>' : "") + '<div class="opt">' + avatars(pp, "md") + '<span>' + esc(short(pp)) + (pskill(pp) ? '<small class="osk">' + skillHtml(pskill(pp)) + '</small>' : '') + '</span></div>'; }).join("") +
         '</div></div><span class="tag">' + esc(tag) + '</span></div>';
     }
     return '<div class="team opp"><span></span><div class="tname">' + esc(op.ph || "Motståndare klar senare") + '</div><span></span></div>';
@@ -1216,6 +1331,7 @@
       right = '<span class="tag">' + (mt.meWon ? "Vinst" : "Förlust") + '<b>' + esc(mePersp(mt) || mt.note || "") + '</b></span>';
     }
     h += oppTeam(op, x.d, x.r, right);
+    if (op.pair) h += cmpHtml(p, op.pair);
     box.innerHTML = h;
     // Latest result above the next match
     var L = TS.next && TS.last;
@@ -1261,6 +1377,7 @@
     rerenderEvent(THEA_EVENT, document.getElementById("theaDraw"), TS.next && TS.next.mt, "Thea");
     renderHist();
     renderTours("thea");
+    renderStaticRecent("thea");
   }
   setInterval(function(){ renderHero(); renderVs(); }, 30000);
 
@@ -1306,26 +1423,26 @@
   var RI = "https://www.rankedin.com/en/tournament/";
   var TOURS = {
     thea:[
-      {live:true, d:"2026-09-27", n:"Järfälla Padel Open no 11", u:RI + "66374/jarfalla-padel-open-no-11-sanktionerad-b-c-d", c:"Damer C", p:"Cassandra Ersson"},
-      {d:"2026-09-13", n:"Trosa September Open", u:RI + "69553/trosa-september-open-sanktionerad-herr-dam-b-c-d-mixed-endagars", c:"Dam C", p:"Cassandra Ersson", b:"Final", x:"tvåa", w:2, l:1, pts:4.8},
-      {d:"2026-08-30", n:"UNO Augusti Open", u:RI + "70393/uno-augusti-open-29-30-8-2026", c:"Dam C", p:"Nathalie Hällegard", b:"Vinnare", w:4, l:0, pts:10},
-      {d:"2026-08-23", n:"Järfälla Padel Open no 10", u:RI + "66371/jarfalla-padel-open-no-10-sanktionerad-b-c-d", c:"Damer C", p:"Alva Sahlström Dahl", b:"KF", x:"delad 5:e", w:1, l:1, pts:1.75},
-      {d:"2026-07-25", n:"UNO July Open", u:RI + "69709/uno-july-open-25-7-dam-b-c-och-herr-c", c:"Dam C", p:"Cassandra Ersson", b:"Vinnare", w:3, l:0, pts:8},
-      {d:"2026-07-11", n:"Vista Padel Open Summer Edition", u:RI + "68341/vista-padel-open-summer-edition-huddinge-sanktionerad-herr-dam-b-c-d-mix-herr-dam-veteran-45-powered-by-hell-ice-coffee", c:"Dam C", p:"Nathalie Hällegard", b:"Vinnare", x:"inget set förlorat", w:4, l:0, pts:10},
-      {d:"2026-06-07", n:"Good to Great Volvo Open", u:RI + "65712/good-to-great-volvo-open-b-c-d-mixed", c:"Damer C", p:"Nathalie Hällegard", b:"Vinnare", w:3, l:0, pts:10},
-      {d:"2026-05-23", n:"Padelverket Open No.2", u:RI + "65067/padelverket-open-no-2-sanktionerad-a-b-c-d-och-mix", c:"Dam C", p:"Cassandra Ersson", b:"Vinnare", w:4, l:0, pts:10},
-      {d:"2026-04-26", n:"UNO Spring Open", u:RI + "65005/uno-spring-open-25-26-4-klasser-dam-b-c-d-herr-b-c-d-mixed", c:"Damer C", p:"Cassandra Ersson", b:"5:e", x:"KF, sen vann 5–8", w:3, l:1, pts:1.9}
+      {live:true, d:"2026-09-27", n:"Järfälla Padel Open no 11", u:RI + "66374/jarfalla-padel-open-no-11-sanktionerad-b-c-d", c:"Damer C", p:"Cassandra Ersson", cid:164681},
+      {d:"2026-09-13", n:"Trosa September Open", u:RI + "69553/trosa-september-open-sanktionerad-herr-dam-b-c-d-mixed-endagars", c:"Dam C", p:"Cassandra Ersson", b:"Final", x:"tvåa", w:2, l:1, pts:4.8, cid:164475},
+      {d:"2026-08-30", n:"UNO Augusti Open", u:RI + "70393/uno-augusti-open-29-30-8-2026", c:"Dam C", p:"Nathalie Hällegard", b:"Vinnare", w:4, l:0, pts:10, cid:166356},
+      {d:"2026-08-23", n:"Järfälla Padel Open no 10", u:RI + "66371/jarfalla-padel-open-no-10-sanktionerad-b-c-d", c:"Damer C", p:"Alva Sahlström Dahl", b:"KF", x:"delad 5:e", w:1, l:1, pts:1.75, cid:156728},
+      {d:"2026-07-25", n:"UNO July Open", u:RI + "69709/uno-july-open-25-7-dam-b-c-och-herr-c", c:"Dam C", p:"Cassandra Ersson", b:"Vinnare", w:3, l:0, pts:8, cid:164806},
+      {d:"2026-07-11", n:"Vista Padel Open Summer Edition", u:RI + "68341/vista-padel-open-summer-edition-huddinge-sanktionerad-herr-dam-b-c-d-mix-herr-dam-veteran-45-powered-by-hell-ice-coffee", c:"Dam C", p:"Nathalie Hällegard", b:"Vinnare", x:"inget set förlorat", w:4, l:0, pts:10, cid:161444},
+      {d:"2026-06-07", n:"Good to Great Volvo Open", u:RI + "65712/good-to-great-volvo-open-b-c-d-mixed", c:"Damer C", p:"Nathalie Hällegard", b:"Vinnare", w:3, l:0, pts:10, cid:155097},
+      {d:"2026-05-23", n:"Padelverket Open No.2", u:RI + "65067/padelverket-open-no-2-sanktionerad-a-b-c-d-och-mix", c:"Dam C", p:"Cassandra Ersson", b:"Vinnare", w:4, l:0, pts:10, cid:153540},
+      {d:"2026-04-26", n:"UNO Spring Open", u:RI + "65005/uno-spring-open-25-26-4-klasser-dam-b-c-d-herr-b-c-d-mixed", c:"Damer C", p:"Cassandra Ersson", b:"5:e", x:"KF, sen vann 5–8", w:3, l:1, pts:1.9, cid:153245}
     ],
     kian:[
-      {d:"2026-09-26", n:"Järfälla Padel Open no 11", u:RI + "66374/jarfalla-padel-open-no-11-sanktionerad-b-c-d", c:"Herrar C", p:"Andreas Mickos", b:"Omg 1", x:"plate: 8-10 i avgörandet", w:0, l:2, pts:null},
-      {d:"2026-09-13", n:"Trosa September Open", u:RI + "69553/trosa-september-open-sanktionerad-herr-dam-b-c-d-mixed-endagars", c:"Herr C", p:"Andreas Mickos", b:"Semi", x:"3:e plats", w:1, l:1, pts:3},
-      {d:"2026-08-29", n:"UNO Augusti Open", u:RI + "70393/uno-augusti-open-29-30-8-2026", c:"Herr C", p:"Andreas Mickos", b:"Grupp 4/4", w:0, l:3, pts:0.3},
-      {d:"2026-07-11", n:"Vista Padel Open Summer Edition", u:RI + "68341/vista-padel-open-summer-edition-huddinge-sanktionerad-herr-dam-b-c-d-mix-herr-dam-veteran-45-powered-by-hell-ice-coffee", c:"Herr C", p:"Andreas Mickos", b:"7:e", x:"första C-tävlingen, KF", w:1, l:2, pts:1.65},
-      {d:"2026-05-23", n:"Padelverket Open No.2", u:RI + "65067/padelverket-open-no-2-sanktionerad-a-b-c-d-och-mix", c:"Herr D", p:"Andreas Mickos", b:"KF", x:"delad 5:e", w:1, l:1, pts:0.7},
-      {d:"2026-05-01", n:"Vista Padel Spring Open", u:RI + "65183/vista-padel-spring-open-huddinge-sanktionerad-herr-dam-b-c-d-powered-by-head-vitamin-well", c:"Herr D", p:"Andreas Mickos", b:"8:e", x:"gruppspel", w:2, l:4, pts:0.64},
-      {d:"2026-04-04", n:"Good to Great Vitamin Well Open", u:RI + "63451/good-to-great-vitamin-well-open-a-b-c-d-mix-herr-dam", c:"Herr D", p:"Andreas Mickos", b:"Semi", x:"3:e plats", w:1, l:1, pts:1.2},
-      {d:"2026-01-23", n:"Golden Padel Open No1", u:RI + "61106/golden-padel-open-no1-herr-dam-b-c-d-by-vitamin-well-nordic-catering", c:"Herr D", p:"Andreas Mickos", b:"6:e", x:"KF", w:1, l:2, pts:0.9},
-      {d:"2026-01-09", n:"Vista Padel January Open", u:RI + "60766/vista-padel-2026-january-open-sanktionerad-herr-dam-b-c-d-mix", c:"Herr D", p:"Andreas Mickos", b:"7:e", x:"gruppspel", w:3, l:3, pts:0.85}
+      {d:"2026-09-26", n:"Järfälla Padel Open no 11", u:RI + "66374/jarfalla-padel-open-no-11-sanktionerad-b-c-d", c:"Herrar C", p:"Andreas Mickos", b:"Omg 1", x:"plate: 8-10 i avgörandet", w:0, l:2, pts:null, cid:164677},
+      {d:"2026-09-13", n:"Trosa September Open", u:RI + "69553/trosa-september-open-sanktionerad-herr-dam-b-c-d-mixed-endagars", c:"Herr C", p:"Andreas Mickos", b:"Semi", x:"3:e plats", w:1, l:1, pts:3, cid:164472},
+      {d:"2026-08-29", n:"UNO Augusti Open", u:RI + "70393/uno-augusti-open-29-30-8-2026", c:"Herr C", p:"Andreas Mickos", b:"Grupp 4/4", w:0, l:3, pts:0.3, cid:166357},
+      {d:"2026-07-11", n:"Vista Padel Open Summer Edition", u:RI + "68341/vista-padel-open-summer-edition-huddinge-sanktionerad-herr-dam-b-c-d-mix-herr-dam-veteran-45-powered-by-hell-ice-coffee", c:"Herr C", p:"Andreas Mickos", b:"7:e", x:"första C-tävlingen, KF", w:1, l:2, pts:1.65, cid:161449},
+      {d:"2026-05-23", n:"Padelverket Open No.2", u:RI + "65067/padelverket-open-no-2-sanktionerad-a-b-c-d-och-mix", c:"Herr D", p:"Andreas Mickos", b:"KF", x:"delad 5:e", w:1, l:1, pts:0.7, cid:153541},
+      {d:"2026-05-01", n:"Vista Padel Spring Open", u:RI + "65183/vista-padel-spring-open-huddinge-sanktionerad-herr-dam-b-c-d-powered-by-head-vitamin-well", c:"Herr D", p:"Andreas Mickos", b:"8:e", x:"gruppspel", w:2, l:4, pts:0.64, cid:153640, st:[[0,0],[1,0]]},
+      {d:"2026-04-04", n:"Good to Great Vitamin Well Open", u:RI + "63451/good-to-great-vitamin-well-open-a-b-c-d-mix-herr-dam", c:"Herr D", p:"Andreas Mickos", b:"Semi", x:"3:e plats", w:1, l:1, pts:1.2, cid:148985},
+      {d:"2026-01-23", n:"Golden Padel Open No1", u:RI + "61106/golden-padel-open-no1-herr-dam-b-c-d-by-vitamin-well-nordic-catering", c:"Herr D", p:"Andreas Mickos", b:"6:e", x:"KF", w:1, l:2, pts:0.9, cid:142891},
+      {d:"2026-01-09", n:"Vista Padel January Open", u:RI + "60766/vista-padel-2026-january-open-sanktionerad-herr-dam-b-c-d-mix", c:"Herr D", p:"Andreas Mickos", b:"7:e", x:"gruppspel", w:3, l:3, pts:0.85, cid:142012, st:[[0,0],[1,0]]}
     ]
   };
   var MON = ["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
@@ -1346,25 +1463,108 @@
     var c = b === "Vinnare" ? "win" : (b === "Final" || b === "Semi" ? "hi" : (b === "Pågår" ? "now" : ""));
     return '<span class="pb ' + c + (b.length > 7 ? " long" : "") + '">' + (c === "now" ? "<i></i>" : "") + esc(b) + '</span>';
   }
+  // Rows: the static list plus finished events found on RankedIn that are not in it (newest first).
+  function tourRows(who){
+    var t = now(), have = {};
+    var list = TOURS[who].map(function(r){
+      if (!r.st) r.st = [[0, 0]];   // the static list's draws (checked on RankedIn): main draw only unless given
+      if (!r.live) return r;
+      var o = liveTour(r);
+      // Over, but the draw on this device stops halfway (no live data saved): RankedIn's result instead
+      if (o.b === "Pågår" && t > new Date(THEA_EVENT.live.activeTo)){
+        var sm0 = tsumGet(who, r.cid);
+        if (sm0){ o.b = sm0.b; o.w = sm0.w; o.l = sm0.l; o.pts = sm0.pts; o.x = sm0.x || ""; }
+        else { o.b = "Klar"; o.x = ""; o.w = null; o.needSum = true; }
+      }
+      return o;
+    });
+    list.forEach(function(r){ var m = /tournament\/(\d+)/.exec(r.u || ""); if (m) have[m[1]] = true; });
+    pastEvents(who).forEach(function(e){
+      if (e.kind !== "tournament" || !e.classId || have[String(e.tournamentId)]) return;
+      have[String(e.tournamentId)] = true;
+      var st = riDate(e.start) || new Date(e.windowFrom), sm = tsumGet(who, e.classId) || {};
+      list.push({d:dayOf(st), n:e.name || "Turnering", u:e.url || RI_WEB, c:e.cls || "", p:e.partner || "", cid:e.classId, tid:e.tournamentId, st:e.draws || null,
+        b:sm.b || "Klar", x:sm.x || "", w:sm.w, l:sm.l, pts:sm.pts == null ? null : sm.pts, disc:true, needSum:!sm.b});
+    });
+    list.sort(function(x, y){ return x.d < y.d ? 1 : x.d > y.d ? -1 : 0; });
+    return list;
+  }
+  var TOPEN = {};
   function renderTours(who){
-    var list = TOURS[who].map(function(r){ return r.live ? liveTour(r) : r; });
     var host = document.getElementById(who + "Tours"), sum = document.getElementById(who + "Sum");
     if (!host) return;
-    host.innerHTML = list.map(function(r){
+    var list = tourRows(who), keep = {};
+    list.forEach(function(r, i){
+      var key = String(r.cid || r.u), id = "tx-" + who + "-" + (r.cid || i), item = null;
+      keep[key] = true;
+      [].forEach.call(host.children, function(c){ if (c.getAttribute("data-key") === key) item = c; });
+      if (!item){
+        item = document.createElement("div"); item.className = "tr-item"; item.setAttribute("data-key", key);
+        item.innerHTML = '<button class="tr" type="button" aria-expanded="false" aria-controls="' + id + '"></button><div class="tx" id="' + id + '" hidden></div>';
+        item.firstChild.addEventListener("click", function(){ toggleTour(who, item); });
+      }
+      item._row = r;
+      var wl = r.w == null ? "–" : r.w + "–" + r.l;
       var pts = r.pts == null ? (r.b === "Pågår" ? "pågår" : "– p") : String(r.pts) + " p";
-      return '<div class="tr"><div>' + badge(r.b) + '<span class="dt">' + esc(dayMon(r.d)) + '</span></div>' +
-        '<div><a class="tn" href="' + esc(r.u) + '" target="_blank" rel="noopener">' + esc(r.n) + '<span>↗︎</span></a>' +
-        '<div class="tm">' + esc(r.c + " · med " + r.p + (r.x ? " · " + r.x : "")) + '</div></div>' +
-        '<div class="wl"><b>' + r.w + '–' + r.l + '</b><span>' + esc(pts) + '</span></div></div>';
-    }).join("");
+      item.firstChild.innerHTML = '<div>' + badge(r.b) + '<span class="dt">' + esc(dayMon(r.d)) + '</span></div>' +
+        '<div><span class="tn">' + esc(r.n) + '</span>' +
+        '<div class="tm">' + esc(r.c + (r.p ? " · med " + r.p : "") + (r.x ? " · " + r.x : "")) + '</div></div>' +
+        '<div class="wl"><b>' + esc(wl) + '</b><span>' + esc(pts) + '</span><span class="chev" aria-hidden="true"></span></div>';
+      item.firstChild.setAttribute("aria-label", r.n + ", " + r.c + ", " + (r.b || "") + ". Visa matcher och lottning");
+      if (host.children[i] !== item) host.insertBefore(item, host.children[i] || null);
+      if (TOPEN[who + ":" + key] && item.firstChild.getAttribute("aria-expanded") !== "true") toggleTour(who, item, true);
+    });
+    [].slice.call(host.children).forEach(function(c){ if (!keep[c.getAttribute("data-key")]) host.removeChild(c); });
+    if (list.some(function(r){ return r.needSum; })) setTimeout(function(){ fillSummaries(who); }, 0);
     var done = list.filter(function(r){ return r.b !== "Pågår"; });
-    var W = list.reduce(function(a, r){ return a + r.w; }, 0), L = list.reduce(function(a, r){ return a + r.l; }, 0);
+    var W = list.reduce(function(a, r){ return a + (r.w || 0); }, 0), L = list.reduce(function(a, r){ return a + (r.l || 0); }, 0);
     if (who === "thea"){
       var t = done.filter(function(r){ return r.b === "Vinnare"; }).length;
       sum.innerHTML = '<b>' + t + (t === 1 ? " titel" : " titlar") + '</b><span>på ' + done.length + ' tävlingar · ' + W + '–' + L + ' i matcher</span>';
     } else {
       var sf = done.filter(function(r){ return r.b === "Semi" || r.b === "Final" || r.b === "Vinnare"; }).length;
       sum.innerHTML = '<b>' + sf + (sf === 1 ? " semifinal" : " semifinaler") + '</b><span>på ' + done.length + ' tävlingar · ' + W + ' matchvinster · C-klass sedan juli</span>';
+    }
+  }
+  // Expand a row: placement, own matches (scores, opponents' skill) and the full draw, fetched from RankedIn once.
+  function toggleTour(who, item, restore){
+    var btn = item.firstChild, box = item.lastChild, open = btn.getAttribute("aria-expanded") === "true", r = item._row;
+    if (open && !restore){
+      btn.setAttribute("aria-expanded", "false"); box.hidden = true; delete TOPEN[who + ":" + item.getAttribute("data-key")];
+      return;
+    }
+    btn.setAttribute("aria-expanded", "true"); box.hidden = false; TOPEN[who + ":" + item.getAttribute("data-key")] = true;
+    if (box._done && !(r.live && r.b === "Pågår")) return;
+    if (!box._done) box.innerHTML = '<p class="tx-note" role="status">Hämtar matcher och lottning …</p>';
+    loadTour(who, r).then(function(det){
+      if (!btn.isConnected) return;
+      renderTourBox(who, r, det, box);
+      box._done = true;
+    }).catch(function(){
+      if (box._done) return;
+      box.innerHTML = '<p class="tx-note" role="status">Kunde inte hämta just nu. <button type="button">Försök igen</button></p>';
+      box.querySelector("button").addEventListener("click", function(){ box._done = false; toggleTour(who, item, true); });
+    });
+  }
+  function ordinal(n){ return n + (n === 1 || n === 2 ? ":a" : ":e"); }
+  function renderTourBox(who, r, det, box){
+    var ev = det.ev, st = tourState(ev), W = WHO[who], sm = det.sum;
+    var place = det.place ? (det.place === 1 ? "<b>Vinnare</b>" : "Placering <b>" + esc(ordinal(det.place)) + "</b>") : "Resultat <b>" + esc(sm.label) + "</b>";
+    var h = '<div class="tx-top"><span>' + place + (det.pts != null ? " · <b>" + esc(String(det.pts)) + "</b> poäng" : "") + " · " + sm.w + "–" + sm.l + ' i matcher</span>' +
+      '<a href="' + esc(r.u || RI_WEB) + '" target="_blank" rel="noopener">RankedIn ↗︎</a></div>';
+    var mine = st.played.concat(st.next ? [st.next] : []);
+    if (!ev.draws.length){
+      box.innerHTML = h.replace(/Resultat <b>[^<]*<\/b> · [^<]*<\/span>/, "Ingen lottning publicerad</span>");
+      return;
+    }
+    h += mine.length ? '<h4>' + esc(W.name) + 's matcher</h4><div class="results">' + mine.map(function(x){
+      return resCard(dynRound(ev, x) + (x.mt.dl ? " · " + x.mt.dl : ""), x.mt, true);
+    }).join("") + '</div>' : '<p class="tx-note">Inga matcher inlagda.</p>';
+    box.innerHTML = h + (ev.draws.length ? '<h4>' + (ev.draws.some(function(d){ return d.format !== "groups"; }) ? "Lottning" : "Grupper") + '</h4><div class="txd"></div>' : "");
+    var host = box.querySelector(".txd");
+    if (host){
+      var x = st.last || st.next;
+      renderEvent(ev, host, null, W.name, x ? x.di : Math.max(0, ev.mainIdx));
     }
   }
 
@@ -1433,9 +1633,9 @@
       facts:"Starttider inte klara<br>Laget: Anton Svedman (kapten), Kian Borgström, Andreas Mickos, Oliver Lind, Svante Svedberg, Jones Elmourid, Javier Castilla<br>Nästa omgångar: 7 nov, 12 dec, 16 jan, 13 feb<br><a href=\"https://rankedin.com/en/teamleague/946/spl-swedish-padel-league-herrar-2026-27\" target=\"_blank\" rel=\"noopener\">Serien på RankedIn ↗︎</a>"});
 
   /* ================= Kian results ================= */
-  function resCard(label, mt){
+  function resCard(label, mt, mark){
     var st = mt.w ? (mt.meWon ? "Vinst" : "Förlust") : "";
-    return '<div class="res"><div class="mh"><span>' + esc(label + " · " + mt.t + " · " + mt.c) + '</span><span class="st">' + st + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
+    return '<div class="res' + (mark && mt.hasMe ? " mine" : "") + '"' + midAttr(mt) + '><div class="mh"><span>' + esc([label, mt.t, mt.c].filter(Boolean).join(" · ")) + '</span><span class="st">' + st + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
   }
   function renderKianAll(){
     var h = "";
@@ -1444,6 +1644,7 @@
     }); }); });
     document.getElementById("kianRes").innerHTML = h;
     rerenderEvent(KIAN_EVENT, document.getElementById("kianDraw"), null, "Kian");
+    renderStaticRecent("kian");
   }
   renderKianAll();
 
@@ -1591,7 +1792,8 @@
   function snapshot(ev){
     var s = {};
     ev.draws.forEach(function(d, di){ d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt, i){
-      s[di + ":" + r + ":" + i] = {w:mt.w && mt[mt.w].pair ? mt[mt.w].pair.key : null, a:mt.a.pair ? mt.a.pair.key : null, b:mt.b.pair ? mt.b.pair.key : null};
+      s[di + ":" + r + ":" + i] = {w:mt.w && mt[mt.w].pair ? mt[mt.w].pair.key : null, a:mt.a.pair ? mt.a.pair.key : null, b:mt.b.pair ? mt.b.pair.key : null,
+        tc:ev.date + "T" + mt.t + "@" + String(mt.c || "").replace(/,/g, " ").trim()};
     }); }); });
     return s;
   }
@@ -1623,7 +1825,7 @@
         if (mt.meWon) body += nextText(st);
         else if (ev === THEA_EVENT && !st.next) body += " " + outCopy();
         if (mt.meWon && st.next) covered[st.next.di + ":" + st.next.r + ":" + st.next.i] = true;
-        mine.push({id:id, title:title, body:body.trim()});
+        mine.push({id:id, title:title, body:body.trim(), mid:mt.live && mt.live.mid});
       } else if (wp){
         var title2 = roundName(x) + ": " + short(wp) + (fin ? (di === 0 ? " vann " + ev.cls : " vann plate") : " vidare");
         others.push({id:id, wk:wp.key, title:title2, body:((mt.s || mt.note || "") + (lp ? " mot " + short(lp) : "")).trim() + " · " + ev.cls,
@@ -1639,11 +1841,21 @@
         others = others.filter(function(o){ if (o.wk !== ok) return true; how = o.how; return false; });
         var nl = n.mt.live || {}, oid = nl.mid && nl["i" + os] ? cid + ":opp:m" + nl.mid + ":" + nl["i" + os] : cid + ":opp:" + nk + ":" + ok;
         mine.push({id:oid, title:firstNames(n.mt[meSide(n.mt)].pair) + " möter " + short(n.mt[os].pair),
-          body:(how ? how + ". " : "") + roundName(n) + " " + n.mt.t + " · " + n.mt.c});
+          body:(how ? how + ". " : "") + roundName(n) + " " + n.mt.t + " · " + n.mt.c, mid:nl.mid});
+        covered[nk] = true;
+      }
+      // Time or court of the next match changed (same id/tag as the worker's notes())
+      var bt = before[nk] && before[nk].tc, at2 = after[nk] && after[nk].tc, nmid = n.mt.live && n.mt.live.mid;
+      var cut = bt != null ? bt.indexOf("@") : -1, od = cut < 0 ? "" : bt.slice(0, cut), oc = cut < 0 ? "" : bt.slice(cut + 1);
+      if (!covered[nk] && bt != null && at2 && bt !== at2 && n.mt.t && nmid && /^(19|2\d)\d\d-\d\d-\d\dT\d\d:\d\d/.test(od) && (od !== at2.slice(0, at2.indexOf("@")) || oc)){
+        var nop = n.mt[os].pair;
+        mine.push({id:cid + ":tid:m" + nmid + ":" + slug(at2), tag:"padel-" + cid + ":tid:m" + nmid, mid:nmid,
+          title:(od !== at2.slice(0, at2.indexOf("@")) ? "Ny tid: " : "Ny bana: ") + firstNames(n.mt[meSide(n.mt)].pair) + " spelar " + roundDef(n) + " " + [n.mt.t, courtName(n.mt.c)].filter(Boolean).join(", "),
+          body:("Förut " + [od.slice(11, 16), courtName(oc)].filter(Boolean).join(", ") + "." + (nop ? " Mot " + short(nop) + "." : "")).trim()});
       }
     }
     // Only Thea's/Kian's own matches notify; other results in the class are shown on the page only.
-    mine.forEach(function(o){ showNote(o.id, o.title, o.body, L.hash); });
+    mine.forEach(function(o){ showNote(o.id, o.title, o.body, L.hash + (o.mid ? "/m" + o.mid : ""), o.tag); });
   }
 
   function poll(L){
@@ -1794,7 +2006,6 @@
   // The push worker (GET /events) finds every event Thea and Kian are entered in on RankedIn.
   // Fallback 1: the same discovery straight against RankedIn from this page. Fallback 2: the static data above.
   // A tab shows a discovered event when it is on today (or the next one coming); Järfälla no 11 keeps its own view.
-  var RI_API = "https://api.rankedin.com/v1", RI_WEB = "https://www.rankedin.com", HOUR = 3600e3;
   var WHO = {
     thea:{pid:1675246, me:"Thea Holmberg Löving", name:"Thea", img:"img/thea.jpg", w:900, h:1017, alt:"Thea Holmberg Löving i Nynäs-jackan", cls:"hero", staticEv:THEA_EVENT, sub:"tabSubThea"},
     kian:{pid:1680004, me:"Kian Borgström", name:"Kian", img:"img/kian.jpg", w:831, h:1038, alt:"Kian Borgström med racket", cls:"hero khero2", staticEv:KIAN_EVENT, sub:"tabSubKian"}
@@ -1936,10 +2147,14 @@
   }
   function flatSnap(matches){
     var s = {};
-    matches.forEach(function(m){ var w = m.w ? m[m.w].id : ""; if (m.a || m.b || w) s[m.id] = [m.a ? m.a.id : "", m.b ? m.b.id : "", w].join(","); });
+    matches.forEach(function(m){ var w = m.w ? m[m.w].id : ""; if (m.a || m.b || w) s[m.id] = [m.a ? m.a.id : "", m.b ? m.b.id : "", w, tcOf(m)].join(","); });
     return s;
   }
-  function unpackSnap(v){ var p = String(v || "").split(","); return {a:p[0] || "", b:p[1] || "", w:p[2] || ""}; }
+  function unpackSnap(v){ var p = String(v || "").split(","); return {a:p[0] || "", b:p[1] || "", w:p[2] || "", tc:p.length > 3 ? p.slice(3).join(",") : null}; }
+  // Same helpers as worker/src/rankedin.js (time@court in snapshots, weekday, court name, deep link)
+  function tcOf(m){ return String(m.date || "").slice(0, 16) + "@" + String(m.c || "").replace(/,/g, " ").trim(); }
+  function dowOf(d){ var m = /^(\d{4})-(\d\d)-(\d\d)/.exec(d || ""); return m && +m[1] > 2000 ? ["sön","mån","tis","ons","tor","fre","lör"][new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()] : ""; }
+  function linkTo(who, mid){ return "./#" + who + (mid ? "/m" + mid : ""); }
   // Same wording, ids and tags as the worker's notes(), so the OS never shows the same result twice.
   function tNotes(ev, matches, before){
     var cid = ev.classId, cls = ev.cls, me = slug(ev.me), unpack = unpackSnap;
@@ -1987,7 +2202,7 @@
         if (m.meWon) body += nextText();
         else if (!next && m.kind === "ko") body += " " + outCopy2(mp);
         if (m.meWon && next) covered[next.id] = true;
-        mine.push({id:id, title:title, body:body.trim()});
+        mine.push({id:id, title:title, body:body.trim(), mid:m.id});
       } else if (wp){
         var res = m.s || m.note || "";
         var t2 = rName(m) + ": " + short(wp) + (m.kind === "rr" ? " vann" : fin ? (m.di === 0 ? " vann " + cls : " vann plate") : " vidare");
@@ -2001,7 +2216,18 @@
         var how = "";
         others = others.filter(function(o){ if (o.wk !== op2.id) return true; how = o.how; return false; });
         mine.push({id:cid + ":opp:m" + next.id + ":" + op2.id, title:firstNames(next[next.ms]) + " möter " + short(op2),
-          body:(how ? how + ". " : "") + [rName(next), when(next).join(" · ")].filter(Boolean).join(" ")});
+          body:(how ? how + ". " : "") + [rName(next), when(next).join(" · ")].filter(Boolean).join(" "), mid:next.id});
+        covered[next.id] = true;
+      }
+      var tc = tcOf(next);
+      var at = was2.tc != null ? was2.tc.indexOf("@") : -1, od = at < 0 ? "" : was2.tc.slice(0, at), oc = at < 0 ? "" : was2.tc.slice(at + 1);
+      var movedT = od !== String(next.date || "").slice(0, 16);
+      if (!covered[next.id] && was2.tc != null && was2.tc !== tc && next.t && hhmmOf(od + ":00") && (movedT || oc)){
+        var op3 = next[os];
+        var moved = od !== String(next.date || "").slice(0, 16), otherDay = od.slice(0, 10) !== String(next.date || "").slice(0, 10);
+        mine.push({id:cid + ":tid:m" + next.id + ":" + slug(tc), tag:cid + ":tid:m" + next.id, mid:next.id,
+          title:(moved ? "Ny tid: " : "Ny bana: ") + firstNames(next[next.ms]) + " spelar " + rDef(next) + " " + [(otherDay ? dowOf(next.date) + " " : "") + next.t, courtName(next.c)].filter(Boolean).join(", "),
+          body:("Förut " + [(otherDay ? dowOf(od) + " " : "") + hhmmOf(od + ":00"), courtName(oc)].filter(function(x){ return String(x).trim(); }).join(", ") + "." + (op3 ? " Mot " + short(op3) + "." : "")).trim()});
       }
     }
     var ORD = ["etta", "tvåa", "trea", "fyra", "femma", "sexa", "sjua", "åtta"];
@@ -2018,13 +2244,39 @@
       rows.forEach(function(r, i){ if (mi < 0 && r.n.some(function(n){ return slug(n) === me; })) mi = i; });
       if (mi < 0) return;
       var place = rows[mi].standing || mi + 1, where = pl.label === "Gruppspel" ? "gruppen" : pl.label;
+      var lastMine = ms.filter(function(m){ return m.hasMe; }).sort(cmp).pop();
       mine.push({id:cid + ":grupp:" + slug(pl.label), title:firstNames(rows[mi]) + " slutade " + (ORD[place - 1] || place + ":a") + " i " + where,
-        body:rows.slice(0, 5).map(function(r, i){ return (r.standing || i + 1) + ". " + short(r) + " " + r.wins + "–" + r.losses; }).join("\n")});
+        body:rows.slice(0, 5).map(function(r, i){ return (r.standing || i + 1) + ". " + short(r) + " " + r.wins + "–" + r.losses; }).join("\n"), mid:lastMine && lastMine.id});
     });
     var out = [];
     // Only Thea's/Kian's own matches notify; everything else is shown on the page only.
-    mine.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + o.id}); });
+    mine.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + (o.tag || o.id), url:linkTo(ev.who, o.mid)}); });
     return out;
+  }
+  // Same as worker/src/rankedin.js drawNote(): the draw of Thea's/Kian's class was just published.
+  function drawNote(ev, matches){
+    var me = slug(ev.me), isMe = function(p){ return !!p && p.n.some(function(n){ return slug(n) === me; }); };
+    var cmp = function(x, y){ return (x.date < y.date ? -1 : x.date > y.date ? 1 : 0) || x.di - y.di || x.r - y.r; };
+    var mine = matches.filter(function(m){ return isMe(m.a) || isMe(m.b); }).sort(cmp), open = mine.filter(function(m){ return !m.w; }), first = (open.length ? open : mine)[0];
+    var tag = "padel-" + ev.classId + ":lottning", where = [ev.name, ev.cls].filter(Boolean).join(", "), title, body;
+    if (!first) return {id:ev.classId + ":lottning", title:"Lottningen klar i " + ev.cls, body:where ? where + "." : "", tag:tag, url:linkTo(ev.who)};
+    var ms = isMe(first.a) ? "a" : "b", mp = first[ms], op = first[ms === "a" ? "b" : "a"];
+    var when = [[dowOf(first.date), first.t].filter(Boolean).join(" "), courtName(first.c)].filter(Boolean).join(", ");
+    if (first.kind === "rr"){
+      var seen = {}, others = [];
+      matches.filter(function(m){ return m.kind === "rr" && m.di === first.di; }).forEach(function(m){ ["a", "b"].forEach(function(sd){
+        var p = m[sd];
+        if (p && !isMe(p) && !seen[p.id]){ seen[p.id] = 1; others.push(short(p)); }
+      }); });
+      title = "Lottningen klar: " + firstNames(mp) + " i " + (first.label === "Gruppspel" ? "gruppen" : first.label);
+      body = (others.length ? "Med " + others.join(", ") + ". " : "") + (when ? "Första match " + when + ". " : "") + where + (where ? "." : "");
+    } else {
+      var rd = first.label.toLowerCase();
+      if (/final$/.test(rd)) rd += "en";
+      title = "Lottningen klar: " + firstNames(mp) + (op ? " möter " + short(op) : " börjar i " + rd);
+      body = (when ? when.charAt(0).toUpperCase() + when.slice(1) + ". " : "") + where + (where ? "." : "");
+    }
+    return {id:ev.classId + ":lottning", title:title, body:body.trim(), tag:tag, url:linkTo(ev.who, first.id)};
   }
 
   /* ---- tournament: RankedIn draws -> the page's draw model (bracket tabs + group tables) ---- */
@@ -2171,6 +2423,119 @@
     return names ? "Klart för den här gången. Bra kämpat, " + names + "." : "Klart.";
   }
 
+  /* ---- tournament details: one class of one tournament, fetched when needed (Senaste tävlingar, result hero) ---- */
+  // Only the fields the draw model reads are kept, so a few finished tournaments fit in localStorage.
+  var KEEP = {};
+  ("Elimination RoundRobin BaseType RatingId PlacesStartPos PlacesEndPos Width Height DrawData Round MatchOrder MaxRound MatchId Date CourtName " +
+   "WinnerParticipantId ChallengerParticipant ChallengedParticipant EventParticipantId Seed FirstPlayer SecondPlayer Id Name RatingBegin " +
+   "MatchViewModel CancellationStatus HasCancellation Score DetailedScoring FirstParticipantScore SecondParticipantScore LoserTiebreak " +
+   "TournamentClassId Pool ParticipantCell Players MatchCell Court MatchResults HasScore IsFirstParticipantWinner Standings " +
+   "DoublesPlayer1Model DoublesPlayer2Model Standing Wins Losses Played GamesDifference").split(" ").forEach(function(k){ KEEP[k] = 1; });
+  function prune(x){
+    if (Array.isArray(x)) return x.map(prune);
+    if (!x || typeof x !== "object") return x;
+    var o = {};
+    for (var k in x) if (KEEP[k]) o[k] = prune(x[k]);
+    return o;
+  }
+  var TD_MEM = {}, TD_PRE = "padel.tour.v1.", TD_IDX = "padel.tour.v1";
+  function tdSave(k, rec){
+    if (CACHE_OFF) return;
+    var idx = store.json(TD_IDX);
+    if (!Array.isArray(idx)) idx = [];
+    idx = idx.filter(function(x){ return x !== k; }); idx.push(k);
+    while (idx.length > 8){ try { localStorage.removeItem(TD_PRE + idx.shift()); } catch (e){} }
+    if (!store.set(TD_PRE + k, JSON.stringify(rec))){   // full: drop the oldest and try once more
+      try { if (idx.length > 1) localStorage.removeItem(TD_PRE + idx.shift()); } catch (e){}
+      store.set(TD_PRE + k, JSON.stringify(rec));
+    }
+    store.set(TD_IDX, JSON.stringify(idx));
+  }
+  // row: {cid, tid | u, st (draws), c (class), d (day), live}. -> Promise {ev, st, sum, place, pts}
+  function loadTour(who, row){
+    var k = who + ":" + row.cid, W = WHO[who], ongoing = !!row.live && row.b === "Pågår";
+    var m = TD_MEM[k] || (CACHE_OFF ? null : store.json(TD_PRE + k));
+    function done(rec){
+      var e = {cls:row.c, me:W.me, pid:W.pid, rating:ratingFor(row.c)}, ev = buildTour(e, rec.datas);
+      wantSkills(Object.keys(ev.pairs).map(function(x){ return ev.pairs[x]; }));
+      var st = tourState(ev), sum = tourSummary(ev, st, rec.res);
+      return {ev:ev, st:st, sum:sum, place:rec.res && rec.res.place || null, pts:rec.res ? rec.res.pts : null};
+    }
+    if (m && m.datas && (!ongoing || Date.now() - m.at < 60000)){ TD_MEM[k] = m; return Promise.resolve(done(m)); }
+    if (m && m.p) return m.p;
+    var tid = row.tid || (/tournament\/(\d+)/.exec(row.u || "") || [])[1];
+    var draws = row.st ? Promise.resolve(row.st) : riGet("/tournament/GetClassesAndDrawNamesAsync/?tournamentId=" + tid).then(function(names){
+      var r = (Array.isArray(names) ? names : []).filter(function(x){ return x && String(x.Id) === String(row.cid); })[0], out = [], seen = {};
+      ((r && r.TournamentDraws) || []).forEach(function(d){ var q = (d.Stage || 0) + ":" + (d.Strength || 0); if (!seen[q]){ seen[q] = 1; out.push([d.Stage || 0, d.Strength || 0]); } });
+      return out.sort(function(x, y){ return x[0] - y[0] || x[1] - y[1]; });
+    });
+    var p = draws.then(function(ds){
+      var res = riGet("/tournament/GetResultsAsync?tournamentId=" + tid + "&classId=" + row.cid + "&rankingId=1917&language=en").then(function(x){
+        var hit = ((x && x.Data) || []).filter(function(d){ return d.Player1ParticipantId === W.pid || d.Player2ParticipantId === W.pid; })[0];
+        return hit ? {place:hit.Standing || null, pts:hit.RankingPoint && typeof hit.RankingPoint.Points === "number" ? hit.RankingPoint.Points : null} : null;
+      }).catch(function(){ return null; });
+      return Promise.all([Promise.all(ds.map(function(d){ return riGet(drawPath(row.cid, d[0], d[1])); })), res]);
+    }).then(function(x){
+      var rec = {at:Date.now(), datas:prune(x[0]), res:x[1]};
+      TD_MEM[k] = rec;
+      if (!ongoing && row.d && row.d < dayOf(now())) tdSave(k, rec);
+      return done(rec);
+    }, function(err){ if (TD_MEM[k] && TD_MEM[k].p) delete TD_MEM[k].p; throw err; });
+    TD_MEM[k] = m ? m : {}; TD_MEM[k].p = p;
+    p.then(function(){ if (TD_MEM[k]) delete TD_MEM[k].p; }, function(){});
+    return p;
+  }
+  var LONG = {Semi:"Semifinal", KF:"Kvartsfinal", "Omg 1":"Omgång 1", Pågår:"Pågår"};
+  var SHORTB = {Semifinal:"Semi", Kvartsfinal:"KF", "Omgång 1":"Omg 1"};
+  // Placement from RankedIn's results when there, otherwise from the draw.
+  function tourSummary(ev, st, res){
+    var w = 0, l = 0, lm = st.lostMain, R = st.R, label;
+    st.played.forEach(function(x){ if (x.mt.meWon) w++; else l++; });
+    if (st.champ || (res && res.place === 1)) label = "Vinnare";
+    else if (lm) label = lm.r === R - 1 ? "Final" : lm.r === R - 2 ? "Semifinal" : lm.r === R - 3 ? "Kvartsfinal" : "Omgång " + (lm.r + 1);
+    else if (ev.mainIdx < 0 && st.last && st.last.kind === "rr"){
+      var g = st.last.d.groups.filter(function(gg){ return gg.name === st.last.rd.label; })[0], row = g && g.rows.filter(function(r){ var p = ev.pairs[r.pair]; return p && p.me; })[0];
+      label = row && row.standing ? "Grupp " + row.standing + "/" + g.rows.length : (res && res.place ? "Plats " + res.place : "Klar");
+    } else label = res && res.place ? "Plats " + res.place : st.next ? "Pågår" : "Klar";
+    return {label:label, b:SHORTB[label] || label, w:w, l:l, text:dynOutCopy(ev, st)};
+  }
+  // Short summaries of discovered finished tournaments (badge, W–L, points), kept per player + class.
+  var TSUM_KEY = "padel.tsum.v1";
+  function tsumGet(who, cid){ var c = store.json(TSUM_KEY); return c && c[who + ":" + cid] || null; }
+  var tsumBusy = {};
+  function fillSummaries(who){
+    tourRows(who).filter(function(r){ return r.needSum; }).slice(0, 3).forEach(function(r){
+      var k = who + ":" + r.cid;
+      if (tsumBusy[k]) return;
+      tsumBusy[k] = true;
+      loadTour(who, r).then(function(det){
+        var c = store.json(TSUM_KEY) || {};
+        c[k] = {b:det.sum.b, w:det.sum.w, l:det.sum.l, pts:det.pts, x:det.place && det.place > 1 ? ordinal(det.place) + " plats" : ""};
+        store.set(TSUM_KEY, JSON.stringify(c));
+        renderTours(who);
+      }).catch(function(){});
+    });
+  }
+
+  /* ---- finished events: from the worker (past), the current list, and what this device has seen before ---- */
+  var ARCH_KEY = "padel.seen.v1";
+  function archiveList(){ var a = store.json(ARCH_KEY); return Array.isArray(a) ? a : []; }
+  function archive(evs){
+    var t = now(), a = archiveList(), by = {};
+    a.concat(evs || []).forEach(function(e){ if (e && e.key && e.windowTo && +t - new Date(e.windowTo) < 60 * 864e5) by[e.key] = e; });
+    var out = Object.keys(by).map(function(k){ return by[k]; }).sort(function(x, y){ return String(y.windowTo).localeCompare(String(x.windowTo)); }).slice(0, 60);
+    store.set(ARCH_KEY, JSON.stringify(out));
+  }
+  function pastEvents(who){
+    var t = now(), seen = {}, out = [];
+    var d = typeof DISC !== "undefined" && DISC ? DISC : null;
+    [].concat((d && d.past) || [], (d && d.events) || [], archiveList()).forEach(function(e){
+      if (!e || e.who !== who || !e.windowTo || seen[e.key] || new Date(e.windowTo) >= t) return;
+      seen[e.key] = true; out.push(e);
+    });
+    return out.sort(function(x, y){ return String(y.windowTo).localeCompare(String(x.windowTo)); });
+  }
+
   /* ---- team league (SPL): rubbers of a tie (camelCase; challenger = home team, scores from the challenger's side) ---- */
   var TL_TYPE = {3:"Herr", 4:"Dam", 5:"Mixed"}, TL_RID = {3:64, 4:65, 5:66};
   function tlSide(x){
@@ -2230,25 +2595,25 @@
       var was = unpackSnap(before[r.id]);
       if (!r.w || was.w) return;
       var ours = r[us], theirs = r[them], won = r.w === us, sc = score(r), id = cid + ":r" + r.id;
-      if (isMe(ours)) mine.push({id:id, title:firstNames(ours) + (won ? " vann sin match " : " förlorade sin match ") + sc, body:("Mot " + short(theirs) + ". Ställning: " + tieScore + ".").trim()});
+      if (isMe(ours)) mine.push({id:id, mid:r.id, title:firstNames(ours) + (won ? " vann sin match " : " förlorade sin match ") + sc, body:("Mot " + short(theirs) + ". Ställning: " + tieScore + ".").trim()});
       else others.push({id:id, title:ev.team + ": " + short(ours) + (won ? " vann " : " förlorade ") + sc, body:"Mot " + short(theirs) + " · " + tieScore});
     });
     rubbers.forEach(function(r){
       if (r.w || !isMe(r[us]) || !r[them]) return;
       if (unpackSnap(before[r.id])[them]) return;
-      mine.push({id:cid + ":opp:r" + r.id + ":" + r[them].id, title:firstNames(r[us]) + " möter " + short(r[them]),
+      mine.push({id:cid + ":opp:r" + r.id + ":" + r[them].id, mid:r.id, title:firstNames(r[us]) + " möter " + short(r[them]),
         body:[ev.name, ev.team + " mot " + tie.opp, tie.time, tie.venue].filter(Boolean).join(" · ")});
     });
     var out = [];
     // Only Thea's/Kian's own matches notify; everything else is shown on the page only.
-    mine.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + o.id}); });
+    mine.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + o.id, url:linkTo(ev.who, o.mid)}); });
     var done = rubbers.length && rubbers.every(function(r){ return r.w; });
     var wasDone = before._done || (rubbers.length && rubbers.every(function(r){ return unpackSnap(before[r.id]).w; }));
     if (done && !wasDone){
       var t = W > L ? ev.team + " vann mot " + tie.opp + " " + W + "–" + L : W < L ? ev.team + " förlorade mot " + tie.opp + " " + W + "–" + L : ev.team + " och " + tie.opp + " delade " + W + "–" + L;
       var myR = rubbers.filter(function(r){ return isMe(r[us]); })[0];
       var body = [ev.name + (ev.round ? " omgång " + ev.round : ""), myR ? firstNames(myR[us]) + (myR.w === us ? " vann sin match " : " förlorade sin match ") + score(myR) : ""].filter(Boolean).join(". ") + ".";
-      out.push({id:cid + ":klar", title:t, body:body, tag:"padel-" + cid + ":klar"});
+      out.push({id:cid + ":klar", title:t, body:body, tag:"padel-" + cid + ":klar", url:linkTo(ev.who, myR && myR.id)});
     }
     return out;
   }
@@ -2274,14 +2639,14 @@
   var COURT_SVG = '<svg class="court" viewBox="0 0 390 230" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1"><path d="M20 229 L110 20 H280 L370 229 Z"/><path d="M58 140 H332"/><path d="M195 140 V229"/><path d="M92 62 H298" stroke-dasharray="3 5"/></svg>';
   function dynShell(who){
     var W = WHO[who];
-    return '<div class="livebar" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div>' +
+    return '<div class="livebar" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div><div class="recent" data-r="recent" hidden></div>' +
       '<div class="' + W.cls + '"><img src="' + W.img + '" width="' + W.w + '" height="' + W.h + '" alt="' + esc(W.alt) + '"><div class="scrim"></div>' + COURT_SVG +
       '<div class="hero-top"><a class="glass" data-r="link" target="_blank" rel="noopener"></a><span class="glass" data-r="pill"><span class="dot"></span><span>–</span></span></div>' +
       '<div class="hero-bot"><div class="eyebrow" data-r="round"></div><div class="timeline-big"><div class="bigtime" data-r="time">–</div><div class="court-no" data-r="cno"><small data-r="clab">Bana</small><b data-r="court"></b></div></div></div></div>' +
       '<div class="board" aria-live="polite"><div class="countdown" data-r="cd"><span class="l"><span class="dot"></span><span data-r="cdt">–</span></span><a data-r="rl" target="_blank" rel="noopener">RankedIn ↗︎</a></div>' +
-      '<div class="lastres" data-r="last" hidden></div><div class="vs" data-r="vs"></div></div>' +
+      '<div class="lastres" data-r="last" hidden></div><div class="vs" data-r="vs"></div><div class="nextev" data-r="next" hidden></div></div>' +
       '<ol class="route" data-r="route" aria-label="Vägen genom tävlingen" hidden></ol>' +
-      '<section aria-labelledby="dh-' + who + '"><div class="sh"><h2 id="dh-' + who + '" data-r="h">Spelträd</h2><div class="meta" data-r="meta"></div></div><div data-r="draw"></div></section>';
+      '<section data-r="sec" aria-labelledby="dh-' + who + '"><div class="sh"><h2 id="dh-' + who + '" data-r="h">Spelträd</h2><div class="meta" data-r="meta"></div></div><div data-r="draw"></div></section>';
   }
   function meTeamRow(p, right){
     var sv = pskill(p), info = p.n.map(function(n){ return n.split(" ")[0]; }).join(" och ") + (sv ? " · skill " + fmtSkill(sv) : "");
@@ -2296,7 +2661,7 @@
     }
     if (op && op.from){
       return '<div class="team opp"><span></span><div class="tname">Mot vinnaren av<div class="opts">' + op.from.map(function(pp, i){
-        return (i ? '<div class="opt"><i>eller</i></div>' : "") + '<div class="opt">' + avatars(pp, "md") + '<span>' + esc(short(pp)) + (pskill(pp) ? '<small class="osk">skill ' + fmtSkill(pskill(pp)) + '</small>' : '') + '</span></div>';
+        return (i ? '<div class="opt"><i>eller</i></div>' : "") + '<div class="opt">' + avatars(pp, "md") + '<span>' + esc(short(pp)) + (pskill(pp) ? '<small class="osk">' + skillHtml(pskill(pp)) + '</small>' : '') + '</span></div>';
       }).join("") + '</div></div><span></span></div>';
     }
     return '<div class="team opp"><span></span><div class="tname">' + esc((op && op.ph) || "Motståndare klara senare") + '</div>' + (right || "<span></span>") + '</div>';
@@ -2316,6 +2681,10 @@
     el.link.textContent = o.link || ""; el.link.href = o.url || RI_WEB; el.rl.href = o.url || RI_WEB;
     el.round.textContent = o.round || "";
     el.time.textContent = o.big || "–";
+    el.time.className = "bigtime" + (o.word ? " word" : "");
+    // Long words ("Kvartsfinal") must fit on one line even in the fallback font (web font not loaded yet)
+    el.time.style.fontSize = o.word && String(o.big).length > 7 ? "min(86px, 15.5vw, calc((100vw - 40px) / " + (String(o.big).length * 0.63).toFixed(2) + "))" : "";
+    el.time.parentNode.className = "timeline-big" + (o.word ? " wrap" : "");
     el.cno.hidden = !o.court; el.clab.textContent = o.clab || "Bana"; el.court.textContent = o.court || "";
     el.pill.className = "glass" + (o.pcls ? " " + o.pcls : "");
     el.pill.innerHTML = '<span class="dot"></span><span>' + esc(o.pill || "–") + '</span>';
@@ -2324,6 +2693,9 @@
     el.vs.innerHTML = o.vs || "";
     el.last.hidden = !o.last; el.last.innerHTML = o.last || "";
     el.route.hidden = !o.route; el.route.innerHTML = o.route || "";
+    el.next.hidden = !o.next; el.next.innerHTML = o.next || "";
+    el.recent.hidden = !o.recent; el.recent.innerHTML = o.recent || "";
+    el.sec.hidden = !!o.nosec;
     el.h.textContent = o.h || "Spelträd"; el.meta.textContent = o.meta || "";
     var sub = document.getElementById(WHO[D.who].sub);
     if (sub && o.sub) sub.textContent = o.sub;
@@ -2370,7 +2742,8 @@
       }
       var ms = meSide(mt), right = null;
       if (!st.next && mt.w) right = '<span class="tag">' + (mt.meWon ? "Vinst" : "Förlust") + '<b>' + esc(mePersp(mt) || mt.note || "") + '</b></span>';
-      o.vs = meTeamRow(mt[ms].pair) + oppRow(mt[ms === "a" ? "b" : "a"], ev, right);
+      var opx = mt[ms === "a" ? "b" : "a"];
+      o.vs = meTeamRow(mt[ms].pair) + oppRow(opx, ev, right) + (opx && opx.pair ? cmpHtml(mt[ms].pair, opx.pair) : "");
       var L = st.next && st.last;
       if (L){
         var lop = L.mt[meSide(L.mt) === "a" ? "b" : "a"];
@@ -2378,8 +2751,12 @@
       }
       o.route = dynRouteHtml(ev, st);
     }
+    if (inWin(e)) o.recent = recentHtml(D.who, tourFinished(ev));
     setHero(D, o);
-    var host = D.el.draw;
+    renderTourDraw(D, ev, st);
+  }
+  function renderTourDraw(D, ev, st){
+    var host = D.el.draw, W = WHO[D.who], x = st.next || st.last;
     if (!ev.draws.length){
       host.innerHTML = '<p class="empty">Lottningen är inte publicerad än. Den dyker upp här när arrangören lägger ut den.</p>';
       return;
@@ -2452,36 +2829,261 @@
     }
     if (myMt){
       var ms = meSide(myMt), right = myMt.w ? '<span class="tag">' + (myMt.meWon ? "Vinst" : "Förlust") + '<b>' + esc(mePersp(myMt) || myMt.note || "") + '</b></span>' : null;
-      o.vs = meTeamRow(myMt[ms].pair) + oppRow(myMt[ms === "a" ? "b" : "a"], null, right);
+      var opt = myMt[ms === "a" ? "b" : "a"];
+      o.vs = meTeamRow(myMt[ms].pair) + oppRow(opt, null, right) + (opt && opt.pair ? cmpHtml(myMt[ms].pair, opt.pair) : "");
     } else {
       o.vs = '<div class="team me"><span></span><div class="tname">' + esc(e.team) + '<small>' + esc(W.name + (cur.rubbers.length ? " spelar inte den här matchen" : " · laguppställningen kommer senare")) + '</small></div><span class="seed">' + (tie.home ? "Hemma" : "Borta") + '</span></div>' +
         '<div class="team opp"><span></span><div class="tname" ' + OPP_NAME + '>' + esc(tie.opp) + '<small>' + esc(tie.venue || "Plats inte klar") + '</small></div><span></span></div>';
     }
     if (cur.W + cur.L) o.last = '<span>Ställning mot ' + esc(tie.opp) + '</span><span class="sc"><b>' + cur.W + "–" + cur.L + '</b></span>';
+    if (inWin(e)) o.recent = recentHtml(D.who, tieFinished(m));
     setHero(D, o);
-    D.el.draw.innerHTML = m.ties.map(function(x){
+    D.el.draw.innerHTML = tlListHtml(e, m, day);
+  }
+  function tlListHtml(e, m, day){
+    return m.ties.map(function(x){
       var tt = x.tie, home = tt.home ? e.team : tt.opp, away = tt.home ? tt.opp : e.team;
       var meta = [x.start ? dayLabel(x.start) + " " + hm(x.start) : dayLabel(day), tt.venue, tt.home ? "hemma" : "borta"].filter(Boolean).join(" · ");
       return '<div class="tie"><div class="tiehd"><div><div class="tt">' + esc(home) + ' <i>–</i> ' + esc(away) + '</div><div class="tm">' + esc(meta) + '</div></div>' +
         (x.W + x.L ? '<div class="ts">' + x.W + '–' + x.L + '<small>' + (x.done ? "Slut" : "Ställning") + '</small></div>' : '<div></div>') + '</div>' +
         (x.mts.length ? '<div class="results">' + x.mts.map(function(mt){
           var r = mt.r, st2 = mt.w ? (mt.w === x.us ? "Vinst" : "Förlust") : (inWin(e) && x.start && now() >= x.start ? "Pågår" : "");
-          return '<div class="res' + (mt.hasMe ? " mine" : "") + '"><div class="mh"><span>' + esc("Match " + r.k + (r.kind ? " · " + r.kind : "")) + '</span><span class="st' + (st2 === "Pågår" ? " nx" : "") + '">' + esc(st2) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
+          return '<div class="res' + (mt.hasMe ? " mine" : "") + '" data-mid="' + esc(r.id) + '"><div class="mh"><span>' + esc("Match " + r.k + (r.kind ? " · " + r.kind : "")) + '</span><span class="st' + (st2 === "Pågår" ? " nx" : "") + '">' + esc(st2) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
         }).join("") + '</div>' : '<p class="empty">Laguppställningarna är inte publicerade än.</p>') + '</div>';
     }).join("");
   }
   function dynRender(D){
     if (D.dead) return;
-    if (D.e.kind === "teamleague") renderDynTL(D); else renderDynTour(D);
+    if (D.mode === "between") renderBetween(D);
+    else if (D.e.kind === "teamleague") renderDynTL(D); else renderDynTour(D);
   }
-  function dynBuild(D){ D.model = D.e.kind === "teamleague" ? buildTL(D.e, D.datas) : buildTour(D.e, D.datas); }
+  function dynBuild(D){ if (!D.e) return; D.model = D.e.kind === "teamleague" ? buildTL(D.e, D.datas) : buildTour(D.e, D.datas); }
+
+  /* ---- "Senaste resultat": the last finished matches in the class, under the live bar ---- */
+  function recentHtml(who, items){
+    items = items.slice(0, 4);
+    if (!items.length) return "";
+    return '<div class="rk" aria-hidden="true">Senaste resultat</div><ol aria-label="Senaste resultat">' + items.map(function(x){
+      return '<li><a href="#' + who + '/m' + esc(x.mid) + '"' + (x.mine ? ' class="mine"' : "") + '><div class="rh"><b>' + esc(x.lab) + '</b><span>' + esc(x.when) + '</span></div>' +
+        '<div class="rw">' + esc(x.win) + '</div><div class="rl">' + esc(((x.score ? x.score + " " : "") + (x.lose ? "mot " + x.lose : "")).trim()) + '</div></a></li>';
+    }).join("") + '</ol>';
+  }
+  function finItem(mt, lab, whenTxt, key){
+    var wp = mt[mt.w] && mt[mt.w].pair, lp = mt[mt.w === "a" ? "b" : "a"], mid = midOf(mt);
+    if (!wp || !mid) return null;
+    return {mid:mid, lab:lab, when:whenTxt, key:key, win:short(wp), lose:lp && lp.pair ? short(lp.pair) : "", score:mt.s || mt.note || "", mine:!!mt.hasMe};
+  }
+  // Finished matches of a draw model, latest first (start time, then later rounds first).
+  function tourFinished(ev, dateOf){
+    var out = [];
+    ev.draws.forEach(function(d, di){
+      if (d.format === "groups") d.groups.forEach(function(g){ g.matches.forEach(function(mt){
+        if (!mt.w) return;
+        var it = finItem(mt, g.name === "Gruppspel" ? "Grupp" : g.name, [mt.dl, mt.t].filter(Boolean).join(" "), [mt.at ? +mt.at : 0, 0, di]);
+        if (it) out.push(it);
+      }); });
+      else d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt){
+        if (!mt.w) return;
+        var at0 = mt.at ? +mt.at : dateOf && mt.t ? +dateOf(mt.t) : 0;
+        var it = finItem(mt, (d.places > 1 || /^Plate/.test(d.label) ? "Plate " : "") + rd.short, [mt.dl, mt.t].filter(Boolean).join(" "), [at0, r, di]);
+        if (it) out.push(it);
+      }); });
+    });
+    return out.sort(function(a, b){ return b.key[0] - a.key[0] || b.key[1] - a.key[1] || a.key[2] - b.key[2]; });
+  }
+  function tieFinished(m){
+    var out = [];
+    m.ties.forEach(function(x, ti){ x.mts.forEach(function(mt){
+      if (!mt.w) return;
+      var wp = mt[mt.w].pair, lp = mt[mt.w === "a" ? "b" : "a"].pair;
+      if (wp) out.push({mid:mt.r.id, lab:"Match " + mt.r.k, when:x.tie.opp, win:short(wp), lose:lp ? short(lp) : "", score:mt.s || mt.note || "", mine:!!mt.hasMe, key:[ti, mt.r.k]});
+    }); });
+    return out.sort(function(a, b){ return b.key[0] - a.key[0] || b.key[1] - a.key[1]; });
+  }
+  // The static events (Järfälla): strip under the page's own live bar while the event is on.
+  function renderStaticRecent(who){
+    var box = document.getElementById("recent-" + who), ev = who === "thea" ? THEA_EVENT : KIAN_EVENT;
+    if (!box) return;
+    var dyn = document.getElementById("dyn-" + who), on = inWindow(ev.live) && !(dyn && !dyn.hidden);
+    var html = on ? recentHtml(who, tourFinished(ev, function(t){ return at(ev.date, t); })) : "";
+    box.hidden = !html; box.innerHTML = html;
+  }
+
+  /* ---- between events: the result of the event that just ended (2 days), then the next one ---- */
+  function fmtUntil(ms){
+    if (ms <= 0) return "nu";
+    var min = Math.round(ms / 60000), h = min / 60, d = Math.floor(h / 24), rh = Math.floor(h - d * 24);
+    if (h < 24) return "om " + fmtLeft(ms);
+    if (d < 2) return "om 1 dag" + (rh ? " " + rh + " h" : "");
+    return "om " + d + " dagar";
+  }
+  function dateRange(e){
+    var s1 = riDate(e.start) || new Date(e.windowFrom), s2 = riDate(e.end) || s1;
+    if (dayOf(s1) === dayOf(s2)) return cap(dayLabel(s1));
+    var a = loc(s1), b = loc(s2);
+    return cap(DOW[a.getUTCDay()]) + " " + a.getUTCDate() + (a.getUTCMonth() !== b.getUTCMonth() ? " " + MON[a.getUTCMonth()] : "") + " – " + DOW[b.getUTCDay()] + " " + b.getUTCDate() + " " + MON[b.getUTCMonth()];
+  }
+  // When does the next event start for this player (first own match when the draw says so)?
+  function nextStart(D){
+    var e = D.e, t = now();
+    if (e.kind === "teamleague"){
+      var m = D.model || buildTL(e, []), first = m.ties[0];
+      return first && first.start ? first.start : riDate(e.date + "T" + ((first && first.tie.time) || "09:00"));
+    }
+    var ev = D.model || buildTour(e, []), st = tourState(ev);
+    return (st.next && st.next.mt.at) || riDate(e.start) || new Date(e.windowFrom) || t;
+  }
+  function nextBlock(D, withName){
+    var e = D.e, W = WHO[D.who], t = now(), h = "", s0 = nextStart(D);
+    // withName: under the result of the last event. Otherwise the hero above already has name, countdown and venue.
+    h += '<div class="nk">' + (withName ? "Nästa tävling" : "Inför start") + (withName ? '<span>' + esc(cap(fmtUntil(s0 - t))) + '</span>' : "") + '</div>';
+    if (withName) h += '<h3>' + esc(e.name || (e.kind === "teamleague" ? "Lagserie" : "Turnering")) + '</h3>';
+    if (e.kind === "teamleague"){
+      var m = D.model || buildTL(e, []), day = riDate(e.date + "T12:00");
+      h += '<div class="nf">' + esc(cap(dayLabel(day))) + (e.ties && e.ties[0] && e.ties[0].venue ? " · " + esc(e.ties[0].venue) : "") + '<br><b>' + esc(e.team) + '</b>' + (e.division ? " · " + esc(e.division) : "") + '</div>';
+      h += '<div class="nf">' + (e.ties || []).map(function(tt){ return esc((tt.home ? "Hemma" : "Borta") + " mot " + tt.opp + (tt.time ? " " + tt.time : "")); }).join("<br>") + '</div>';
+      var mine = null;
+      m.ties.forEach(function(x){ x.mts.forEach(function(mt){ if (!mine && mt.hasMe) mine = {mt:mt, x:x}; }); });
+      if (mine){
+        var ms = meSide(mine.mt), op = mine.mt[ms === "a" ? "b" : "a"];
+        h += '<div class="vs">' + meTeamRow(mine.mt[ms].pair) + oppRow(op, null) + (op && op.pair ? cmpHtml(mine.mt[ms].pair, op.pair) : "") + '</div>';
+        h += '<div class="nd">Första match <b>' + esc([mine.x.start ? dayLabel(mine.x.start) + " " + hm(mine.x.start) : "", "mot " + mine.x.tie.opp].filter(Boolean).join(" · ")) + '</b></div>';
+      } else h += '<div class="nd">Laguppställningen ej klar</div>';
+      return h;
+    }
+    var ev = D.model || buildTour(e, []), st = tourState(ev), partner = e.partner || "";
+    h += '<div class="nf">' + esc(dateRange(e)) + (e.venue && withName ? " · " + esc(e.venue) : "") + '<br><b>' + esc(e.cls || "") + '</b>' + (partner ? " · med " + esc(partner) : "") + '</div>';
+    wantSkills(Object.keys(ev.pairs).map(function(k){ return ev.pairs[k]; }));
+    if (ev.draws.length && st.next){
+      var x = st.next, mt = x.mt, ms2 = meSide(mt), op2 = mt[ms2 === "a" ? "b" : "a"];
+      h += '<div class="vs">' + meTeamRow(mt[ms2].pair) + oppRow(op2, ev) + (op2 && op2.pair ? cmpHtml(mt[ms2].pair, op2.pair) : "") + '</div>';
+      h += '<div class="nd">Första match <b>' + esc([mt.at ? dayLabel(mt.at) + " " + hm(mt.at) : mt.t, mt.c].filter(Boolean).join(" · ")) + '</b>' + (x.kind === "rr" ? " · " + esc(x.rd.label) : "") + '</div>';
+    } else if (ev.draws.length) h += '<div class="nd">Lottningen är klar.</div>';
+    else {
+      var mp = {n:[e.me, e.partner].filter(Boolean), ids:[e.pid, e.partnerId || null], rid:ev.rid, me:true, seed:e.seed || ""};
+      wantSkills([mp]);
+      h += '<div class="nd">Lottningen ej klar</div>';
+    }
+    return h;
+  }
+  // Summary of the event that just ended: fetched once per view (tournament: placement from RankedIn).
+  function loadRecent(D){
+    var rc = D.recent, who = D.who;
+    if (!rc || D.sumFor === rc.key) return;
+    D.sumFor = rc.key; D.sum = null;
+    var p;
+    if (rc.kind === "teamleague"){
+      p = Promise.all((rc.ties || []).map(function(tt){ return riGet(rubbersPath(tt.id)); })).then(function(datas){
+        var m = buildTL(rc, datas), W = 0, L = 0, tw = 0, tl = 0;
+        m.ties.forEach(function(x){ if (x.W > x.L) tw++; else if (x.W < x.L) tl++; x.mts.forEach(function(mt){ if (mt.hasMe && mt.w){ if (mt.meWon) W++; else L++; } }); });
+        var first = m.ties[0];
+        if (!m.ties.some(function(x){ return x.W + x.L; })) return {label:"Klart", b:"klart", w:null, l:null, text:"Inga resultat inlagda än. De finns på RankedIn när lagen rapporterat."};
+        var label = !first || !first.done ? "Klart" : m.ties.length > 1 ? (tw + "–" + tl + " i matcher") : first.W > first.L ? "Vinst" : first.W < first.L ? "Förlust" : "Oavgjort";
+        var text = m.ties.map(function(x){ return x.W > x.L ? rc.team + " vann mot " + x.tie.opp + " " + x.W + "–" + x.L : x.W < x.L ? rc.team + " förlorade mot " + x.tie.opp + " " + x.W + "–" + x.L : rc.team + " och " + x.tie.opp + " delade " + x.W + "–" + x.L; }).join(". ") + ".";
+        return {label:label, b:label, w:W, l:L, text:text, clab:"Egna"};
+      });
+    } else {
+      var W2 = WHO[who], st = riDate(rc.start) || new Date(rc.windowFrom);
+      p = loadTour(who, {cid:rc.classId, tid:rc.tournamentId, st:rc.draws || null, c:rc.cls, d:dayOf(st), u:rc.url}).then(function(det){ return det.sum; });
+      // No RankedIn: the page's own data for its static events (Järfälla)
+      p = p.catch(function(err){
+        var se = W2.staticEv;
+        if (!se || !se.live || se.live.classId !== rc.classId) throw err;
+        var row = TOURS[who].filter(function(r){ return r.cid === rc.classId; })[0];
+        var o = row && row.live ? liveTour(row) : row;
+        if (!o || o.b === "Pågår") throw err;
+        var lab = LONG[o.b] || o.b;
+        return {label:lab, b:o.b, w:o.w, l:o.l, text:who === "thea" ? outCopy() : "Klart för den här gången. Bra kämpat, " + W2.name + "."};
+      });
+    }
+    p.then(function(sum){ if (D.dead || D.sumFor !== rc.key) return; D.sum = sum; dynRender(D); },
+      function(){ if (D.dead || D.sumFor !== rc.key) return; D.sum = {label:"Klart", b:"Klart", w:null, l:null, text:"Resultatet finns på RankedIn."}; dynRender(D); });
+  }
+  function renderBetween(D){
+    var who = D.who, W = WHO[who], e = D.e, rc = D.recent, t = now(), o = {};
+    if (rc){
+      loadRecent(D);
+      var sum = D.sum, end = new Date(rc.windowTo);
+      o.link = rc.name || "Senaste tävlingen"; o.url = rc.url;
+      o.round = "Senaste tävlingen · " + (rc.kind === "teamleague" ? rc.team : rc.cls);
+      if (sum){
+        o.pill = sum.label === "Vinnare" ? "Vinnare" : "Klart"; o.pcls = sum.label === "Vinnare" ? "live" : "done";
+        o.big = sum.label; o.word = true;
+        if (sum.w != null){ o.court = sum.w + "–" + sum.l; o.clab = sum.clab || "Matcher"; }
+        o.txt = sum.text;
+        o.sub = (rc.kind === "teamleague" ? rc.name : rc.cls) + " · " + (sum.b || "klart");
+      } else {
+        o.pill = "Klart"; o.pcls = "done"; o.big = dayMonD(end); o.txt = "Hämtar resultatet …"; o.sub = (rc.cls || rc.name || "") + " · klart";
+      }
+      if (e) o.next = nextBlock(D, true);
+    } else if (e){
+      var s0 = nextStart(D), left = s0 - t, hrs = Math.round(left / 60000) / 60;
+      o.link = e.name || "Nästa tävling"; o.url = e.url;
+      o.pill = cap(fmtUntil(left));
+      o.round = "Nästa tävling · " + (e.kind === "teamleague" ? e.team : e.cls + (e.partner ? " · med " + e.partner.split(" ")[0] : ""));
+      o.big = dayMonD(e.kind === "teamleague" ? riDate(e.date + "T12:00") : (riDate(e.start) || new Date(e.windowFrom)));
+      if (left > 0){ o.court = String(hrs >= 24 ? Math.floor(hrs / 24) : hrs >= 1 ? Math.floor(hrs) : Math.max(1, Math.round(left / 60000))); o.clab = hrs >= 24 ? "Dagar" : hrs >= 1 ? "Timmar" : "Min"; }
+      o.txt = e.kind === "teamleague" ? cap(dayLabel(riDate(e.date + "T12:00"))) + ((e.ties || [])[0] && e.ties[0].time ? " " + e.ties[0].time : "") + ((e.ties || [])[0] && e.ties[0].venue ? " · " + e.ties[0].venue : "")
+        : "Start " + dayLabel(riDate(e.start) || new Date(e.windowFrom)) + " " + hm(riDate(e.start) || new Date(e.windowFrom)) + (e.venue ? " · " + e.venue : "");
+      o.next = nextBlock(D, false);
+      o.sub = (e.kind === "teamleague" ? e.name : e.cls) + " · " + dayLabel(s0);
+    } else {
+      o.link = W.name; o.url = RI_WEB; o.pill = "Paus"; o.pcls = "done"; o.round = "Inget inbokat"; o.big = "–";
+      o.txt = "Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva."; o.sub = "Inget inbokat";
+    }
+    if (!e){ o.nosec = true; setHero(D, o); D.el.draw.innerHTML = ""; return; }
+    if (e.kind === "teamleague"){
+      var m = D.model || buildTL(e, []);
+      o.h = m.ties.length > 1 ? "Lagmatcher" : "Lagmatch"; o.meta = e.team + (e.division ? " · " + e.division : "");
+      setHero(D, o);
+      D.el.draw.innerHTML = tlListHtml(e, m, riDate(e.date + "T12:00"));
+      return;
+    }
+    var ev = D.model || buildTour(e, []), st = tourState(ev), npairs = Object.keys(ev.pairs).length || e.pairs || 0;
+    o.h = !ev.draws.length ? "Lottning" : ev.draws.some(function(d){ return d.format !== "groups"; }) ? "Spelträd" : "Grupper";
+    o.meta = e.cls + (npairs ? " · " + npairs + " par" : "");
+    setHero(D, o);
+    renderTourDraw(D, ev, st);
+  }
+
+  /* ---- draw published: local notis when the push server does not cover it (same text/tag as the worker) ---- */
+  var PUB_KEY = "padel.pub.v1";
+  function pubSoon(e){ var t = now(); return !!e && e.kind === "tournament" && !!e.classId && new Date(e.windowTo) > t && new Date(e.windowFrom) - t <= 7 * 864e5; }
+  function pubSeen(e, has, flat){
+    if (!pubSoon(e)) return;
+    var m = store.json(PUB_KEY) || {}, k = String(e.classId), was = m[k], st = has ? "1" : "0";
+    if (was === st) return;
+    if (was === "0" && has && !(flat && flat.length)) return;   // need the draw itself for the text
+    m[k] = st; store.set(PUB_KEY, JSON.stringify(m));
+    if (was === "0" && has){
+      var o = drawNote({who:e.who, me:e.me, classId:e.classId, cls:e.cls, name:e.name}, flat);
+      showNote(o.id, o.title, o.body, o.url.slice(2), o.tag);
+    }
+  }
+  function pubWatch(events){
+    (events || []).filter(pubSoon).forEach(function(e){
+      var m = store.json(PUB_KEY) || {}, was = m[String(e.classId)];
+      if (was === "0" && e.published && e.draws && e.draws.length){
+        Promise.all(e.draws.map(function(d){ return riGet(drawPath(e.classId, d[0], d[1])); })).then(function(datas){
+          var ko = [], rr = [];
+          datas.forEach(function(data){ (Array.isArray(data) ? data : []).forEach(function(dr){
+            if (dr && dr.Elimination && Array.isArray(dr.Elimination.DrawData)) ko.push(dr);
+            else if (dr && dr.RoundRobin && Array.isArray(dr.RoundRobin.Pool)) rr.push(dr);
+          }); });
+          ko.sort(function(x, y){ return (x.Elimination.PlacesStartPos || 0) - (y.Elimination.PlacesStartPos || 0); });
+          var flat = flatParse(ko, rr);
+          pubSeen(e, flat.length > 0, flat);
+        }).catch(function(){});
+      } else if (was == null || (was === "1" && !e.published)) pubSeen(e, !!e.published, null);
+    });
+  }
 
   /* ---- live polling + notiser for the discovered event on each tab ---- */
   function dynPaths(e){
     return e.kind === "teamleague" ? (e.ties || []).map(function(t){ return rubbersPath(t.id); }) :
       (e.draws || [[0, 0], [1, 0]]).map(function(d){ return drawPath(e.classId, d[0], d[1]); });
   }
-  function dynLocal(D){ return notiOn() && !(pushOn() && (D.e.cover || []).length && D.e.cover.every(function(c){ return pushCovers(c + ":"); })); }
+  function dynLocal(D){ return !!D.e && notiOn() && !(pushOn() && (D.e.cover || []).length && D.e.cover.every(function(c){ return pushCovers(c + ":"); })); }
   function dynSnap(D){
     if (D.e.kind === "teamleague") return D.model.ties.map(function(x){ return snapTie(x.rubbers); });
     return flatSnap(D.model.flat);
@@ -2496,13 +3098,13 @@
         if (!fresh.length) return;
         o.batch.forEach(markNotified);
       }
-      showNote(o.id, o.title, o.body, "#" + D.who, o.tag);
+      showNote(o.id, o.title, o.body, (o.url || "./#" + D.who).slice(2), o.tag);
     });
   }
   function dynCacheKey(D){ return "padel.dyn." + D.e.key; }
   function dynPoll(D){
     clearTimeout(D.timer); D.timer = null;
-    if (D.dead) return;
+    if (D.dead || !D.e) return;
     var live = inWin(D.e);
     if (!live){ setBar(D, "off"); if (D.okAt && Date.now() - D.fetchedAt < 30 * 60000) return; }
     if (D.busy || (document.visibilityState === "hidden" && !(live && dynLocal(D)))) return;
@@ -2518,6 +3120,7 @@
       // First successful fetch = baseline: results already there never notify (same as the worker)
       if (D.snap && live){ try { dynNotify(D, D.snap); } catch (e){ if (window.console) console.warn("Notis misslyckades:", e && e.message); } }
       D.snap = snap;
+      if (D.e.kind === "tournament") try { pubSeen(D.e, D.model.flat.length > 0, D.model.flat); } catch (e){}
     }).catch(function(err){
       D.failed = true;
       if (live) setBar(D, "err");
@@ -2526,7 +3129,7 @@
   }
   function dynSchedule(D){
     clearTimeout(D.timer); D.timer = null;
-    if (D.dead || !inWin(D.e)) return;
+    if (D.dead || !D.e || !inWin(D.e)) return;
     var hidden = document.visibilityState === "hidden";
     if (hidden && !dynLocal(D)) return;
     D.timer = setTimeout(function(){ dynPoll(D); }, hidden ? 2 * LIVE_EVERY : LIVE_EVERY);
@@ -2542,71 +3145,59 @@
   });
 
   /* ---- which event each tab shows ---- */
+  // Which view a tab shows: {mode:"live", e} while an event is on (Järfälla: the page's own view),
+  // otherwise {mode:"between", e:next event, recent:event that ended in the last 2 days}.
   function pickHero(who){
     var t = now(), list = ((DISC && DISC.events) || []).filter(function(e){ return e.who === who && e.windowFrom && e.windowTo; });
     var W = WHO[who], sid = W.staticEv && W.staticEv.live && W.staticEv.live.classId;
     var on = list.filter(function(e){ return inWin(e, t); });
     function rank(e){ return e.kind === "tournament" && e.classId === sid ? 0 : e.kind === "teamleague" ? 1 : 2; }
-    if (on.length) return on.sort(function(a, b){ return rank(a) - rank(b) || String(a.windowFrom).localeCompare(String(b.windowFrom)); })[0];
-    return list.filter(function(e){ return new Date(e.windowFrom) > t; }).sort(function(a, b){ return String(a.windowFrom).localeCompare(String(b.windowFrom)); })[0] || null;
+    if (on.length){
+      var e0 = on.sort(function(a, b){ return rank(a) - rank(b) || String(a.windowFrom).localeCompare(String(b.windowFrom)); })[0];
+      return {mode:"live", e:e0, key:"live:" + e0.key};
+    }
+    var next = list.filter(function(e){ return new Date(e.windowFrom) > t; }).sort(function(a, b){ return String(a.windowFrom).localeCompare(String(b.windowFrom)); })[0] || null;
+    var recent = pastEvents(who).filter(function(e){ return +t - new Date(e.windowTo) < 48 * HOUR; })[0] || null;
+    // Nothing found (e.g. RankedIn answered with nonsense): keep the page's own Järfälla view while it is current
+    if (!next && !recent && W.staticEv && W.staticEv.live && t < new Date(+new Date(W.staticEv.live.activeTo) + 48 * HOUR)) return null;
+    return {mode:"between", e:next, recent:recent, key:"btw:" + (next ? next.key : "-") + ":" + (recent ? recent.key : "-")};
   }
   function setStatic(who, show){
     [].forEach.call(document.querySelectorAll("#p-" + who + " [data-ev]"), function(x){ x.hidden = !show; });
+    try { renderStaticRecent(who); } catch (e){}
   }
-  function setMode(who, e){
-    var W = WHO[who], box = document.getElementById("dyn-" + who), D = DYN[who];
-    var isStatic = !e || (e.kind === "tournament" && W.staticEv && W.staticEv.live && e.classId === W.staticEv.live.classId);
+  function setMode(who, pk){
+    var W = WHO[who], box = document.getElementById("dyn-" + who), D = DYN[who], e = pk && pk.e;
+    var isStatic = !pk || (pk.mode === "live" && e.kind === "tournament" && W.staticEv && W.staticEv.live && e.classId === W.staticEv.live.classId);
     if (isStatic){
       if (D){ D.dead = true; clearTimeout(D.timer); DYN[who] = null; }
-      if (box){ box.hidden = true; box.innerHTML = ""; }
+      if (box && !box.hidden){ box.hidden = true; box.innerHTML = ""; }
       setStatic(who, true);
       return;
     }
-    if (D && D.e.key === e.key){
-      D.e = e;
+    if (D && D.key === pk.key){
+      D.e = e; D.recent = pk.recent || null;
       if (D.datas) dynBuild(D);
       dynRender(D);
-      if (!D.busy && !D.timer) dynPoll(D);
+      if (e && !D.busy && !D.timer) dynPoll(D);
       return;
     }
     if (D){ D.dead = true; clearTimeout(D.timer); }
-    D = DYN[who] = {who:who, e:e, box:box, el:{}};
+    D = DYN[who] = {who:who, e:e || null, mode:pk.mode, recent:pk.recent || null, key:pk.key, box:box, el:{}};
     box.innerHTML = dynShell(who);
     [].forEach.call(box.querySelectorAll("[data-r]"), function(x){ D.el[x.getAttribute("data-r")] = x; });
     D.bar = box.querySelector(".livebar");
     setStatic(who, false);
     box.hidden = false;
-    var c = CACHE_OFF ? null : store.json(dynCacheKey(D));
-    if (c && Array.isArray(c.datas)){ D.datas = c.datas; D.cachedAt = new Date(c.at); }
-    try { dynBuild(D); } catch (err){ D.datas = null; dynBuild(D); }
+    if (e){
+      var c = CACHE_OFF ? null : store.json(dynCacheKey(D));
+      if (c && Array.isArray(c.datas)){ D.datas = c.datas; D.cachedAt = new Date(c.at); }
+      try { dynBuild(D); } catch (err){ D.datas = null; dynBuild(D); }
+    }
     dynRender(D);
-    dynPoll(D);
+    if (e) dynPoll(D);
   }
 
-  /* ---- Kommande, from the discovered list ---- */
-  function tourCard(e){
-    var s = riDate(e.start) || new Date(e.windowFrom), en = riDate(e.end) || s, sd = loc(s), ed = loc(en), multi = dayOf(s) !== dayOf(en);
-    var mon = MON[sd.getUTCMonth()] + (multi && ed.getUTCMonth() !== sd.getUTCMonth() ? "–" + MON[ed.getUTCMonth()] : "");
-    var facts = ["Start " + dayLabel(s) + " " + hm(s) + (e.closes && riDate(e.closes) && riDate(e.closes) > now() ? " · anmälan stänger " + dayMonD(riDate(e.closes)) : "")];
-    if (e.pairs) facts.push(e.pairs + " par anmälda i " + esc(e.cls));
-    if (e.published) facts.push("Lottningen är klar" + (e.format === "groups" ? " · gruppspel" : e.format === "mixed" ? " · grupper och slutspel" : e.format === "knockout" ? " · utslagsspel" : ""));
-    facts.push('<a href="' + esc(e.url || RI_WEB) + '" target="_blank" rel="noopener">Turneringen på RankedIn ↗︎</a>');
-    return upCard({dow:multi ? cap(DOW[sd.getUTCDay()]) + "–" + DOW[ed.getUTCDay()] : cap(DOW[sd.getUTCDay()]), day:multi ? sd.getUTCDate() + "–" + ed.getUTCDate() : String(sd.getUTCDate()), mon:mon,
-      title:e.name || "Turnering", cls:e.cls, what:esc([e.partner ? "Med " + e.partner : "", [e.venue, e.address].filter(Boolean).join(", ")].filter(Boolean).join(" · ")), facts:facts.join("<br>")});
-  }
-  function tlCard(e, later){
-    var d = loc(riDate(e.date + "T12:00")), spl = /^SPL/.test(e.name || "");
-    var span = function(s){ return ' <span class="mono" style="color:var(--dim);font-size:11.5px">· ' + esc(s) + '</span>'; };
-    var times = (e.ties || []).map(function(t){ return t.time; }).filter(Boolean);
-    var facts = [times.length ? "Start " + times[0] : "Tid och plats inte klart"];
-    if (e.players && e.players.length) facts.push("Laget: " + esc(e.players.join(", ")));
-    if (later.length) facts.push("Nästa omgångar: " + esc(later.join(", ")));
-    facts.push('<a href="' + esc(e.url || RI_WEB) + '" target="_blank" rel="noopener">Serien på RankedIn ↗︎</a>');
-    return upCard({dow:cap(DOW[d.getUTCDay()]), day:String(d.getUTCDate()), mon:MON[d.getUTCMonth()], title:e.name || "Lagserie",
-      what:esc((spl ? "Swedish Padel League · " : "") + e.team + (e.division ? " · " + e.division : "") + (spl ? ". Lagserie, inte SPT." : ". Lagserie.")),
-      list:(e.ties || []).map(function(t){ return esc(t.home ? e.team + " – " + t.opp : t.opp + " – " + e.team) + (t.time ? span(t.time) : "") + (t.venue ? span(t.venue) : ""); }),
-      facts:facts.join("<br>")});
-  }
   function renderUps(who){
     var host = document.getElementById(who + "Up"), meta = document.getElementById(who + "UpMeta");
     if (!host || !DISC) return;
@@ -2735,8 +3326,11 @@
       d.events.forEach(function(e){ (e.cover || []).forEach(function(c){ if (l.map(String).indexOf(String(c)) < 0) l.push(c); }); });
       store.set(PUSH_CLS_KEY, JSON.stringify(l));
     }
+    try { archive(d.events.concat(d.past || [])); } catch (e){}
+    try { pubWatch(d.events); } catch (e){}
     ["thea", "kian"].forEach(function(w){
       try { renderUps(w); } catch (e){ if (window.console) console.warn("Kommande:", e && e.message); }
+      try { renderTours(w); } catch (e){ if (window.console) console.warn("Tävlingar:", e && e.message); }
       try { setMode(w, pickHero(w)); } catch (e){
         if (window.console) console.warn("Visning:", e && e.message);
         try { setMode(w, null); } catch (e2){}
@@ -2775,8 +3369,75 @@
   // Re-pick the tab's event now and then (a window opens or closes) and keep the countdowns fresh.
   setInterval(function(){
     if (!DISC) return;
-    ["thea", "kian"].forEach(function(w){ try { var e = pickHero(w), D = DYN[w]; if ((D && D.e.key) !== (e && e.key)) setMode(w, e); else if (D) dynRender(D); } catch (err){} });
+    ["thea", "kian"].forEach(function(w){ try { setMode(w, pickHero(w)); } catch (err){} });
   }, 30000);
+
+  /* ================= Utveckling: trend arrows (ranking, points, skill) ================= */
+  // [now, previous]. Static values from 27 sep; replaced live from RankedIn (SPF ranking 1917 and the skill history).
+  // An arrow is only shown when the previous value is known.
+  var TREND_KEY = "padel.trend.v1";
+  var TREND = {
+    thea:{rank:[150, 168], pts:[68.695, 63.895], skill:[15.94, 16.07], rt:4, ag:83, rid:65, q:"Holmberg"},
+    kian:{rank:[789, 998], pts:[11.99, 8.99], skill:[11.56, 11.62], rt:3, ag:82, rid:64, q:"Borgström"}
+  };
+  function fmtPts(v){ return v.toFixed(v >= 20 ? 1 : 2); }
+  function signed(d, n){ return (d > 0 ? "+" : "−") + Math.abs(d).toFixed(n); }
+  function renderTrend(who){
+    var T = TREND[who];
+    ["rank", "pts", "skill"].forEach(function(k){
+      var v = document.getElementById("tv-" + who + "-" + k), d = document.getElementById("td-" + who + "-" + k), x = T[k];
+      if (!v || !d || !x || typeof x[0] !== "number") return;
+      v.textContent = k === "rank" ? "#" + x[0] : k === "pts" ? fmtPts(x[0]) : x[0].toFixed(2);
+      if (typeof x[1] !== "number" || Math.abs(x[0] - x[1]) < 0.005){ d.hidden = true; d.innerHTML = ""; return; }
+      var better = k === "rank" ? x[0] < x[1] : x[0] > x[1], diff = x[0] - x[1];
+      var txt = k === "rank" ? "(#" + x[1] + ")" : "(" + signed(diff, k === "pts" ? (Math.abs(diff) >= 0.1 ? 1 : 2) : 2) + ")";
+      var say = k === "rank" ? (better ? "Upp från plats " : "Ner från plats ") + x[1] :
+        (better ? "Upp " : "Ner ") + Math.abs(diff).toFixed(k === "pts" ? 1 : 2) + (k === "pts" ? " poäng sedan förra veckan" : " sedan förra matchen");
+      d.innerHTML = '<span class="' + (better ? "up" : "down") + '" aria-hidden="true">' + (better ? "▲︎" : "▼︎") + " " + esc(txt) + '</span><span class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">' + esc(say) + '</span>';
+      d.hidden = false;
+    });
+  }
+  function fetchTrend(who){
+    var T = TREND[who], W = WHO[who], out = {};
+    var q = "/Ranking/SearchRankingPlayersAsync?rankingId=1917&rankingType=" + T.rt + "&ageGroup=" + T.ag + "&weekFromNow=0&language=en&searchTerm=" + encodeURIComponent(T.q) + "&skip=0&take=20&rankingDate=";
+    function mine(x){ return ((x && x.Payload) || []).filter(function(p){ return p && p.Participant && p.Participant.NewParticipantId === W.pid && p.ParticipantPoints; })[0] || null; }
+    var rank = riGet(q + dayOf(now())).then(function(x){
+      var p = mine(x);
+      if (!p) return;
+      var pp = p.ParticipantPoints;
+      out.rank = [pp.Standing, typeof p.StandingDiff === "number" ? pp.Standing + p.StandingDiff : null];
+      out.pts = [pp.Points, null];
+      var prev = new Date(Date.parse(String(pp.RankingDate).slice(0, 10) + "T12:00:00Z") - 7 * 864e5).toISOString().slice(0, 10);
+      return riGet(q + prev).then(function(y){
+        var o = mine(y);
+        if (o && o.ParticipantPoints.RankingDate !== pp.RankingDate) out.pts[1] = o.ParticipantPoints.Points;
+      }, function(){});
+    }).catch(function(){});
+    var skill = riGet("/rating/GetPlayerRatingHistoryForChartAsync?ratingId=" + T.rid + "&playerId=" + W.pid).then(function(a){
+      var pts = [];
+      (Array.isArray(a) ? a : []).slice().sort(function(x, y){ return (x.UnixTimestamp || 0) - (y.UnixTimestamp || 0); }).forEach(function(r){
+        if (typeof r.Rating !== "number") return;
+        var last = pts[pts.length - 1];
+        if (!last || last.d !== r.Date) pts.push({d:r.Date, v:r.Rating});   // each match appears twice
+      });
+      if (pts.length) out.skill = [pts[pts.length - 1].v, pts.length > 1 ? pts[pts.length - 2].v : null];
+    }).catch(function(){});
+    return Promise.all([rank, skill]).then(function(){ return out; });
+  }
+  function applyTrend(c){ ["thea", "kian"].forEach(function(w){ if (c && c[w]) ["rank", "pts", "skill"].forEach(function(k){ if (c[w][k]) TREND[w][k] = c[w][k]; }); }); }
+  (function(){
+    var c = store.json(TREND_KEY);
+    applyTrend(c);
+    ["thea", "kian"].forEach(renderTrend);
+    if (c && c.t && Date.now() - c.t < 6 * HOUR) return;
+    Promise.all([fetchTrend("thea"), fetchTrend("kian")]).then(function(r){
+      var n = {t:Date.now(), thea:r[0], kian:r[1]};
+      if (!Object.keys(r[0]).length && !Object.keys(r[1]).length) return;   // RankedIn down: keep what we have
+      applyTrend(n);
+      ["thea", "kian"].forEach(renderTrend);
+      store.set(TREND_KEY, JSON.stringify(n));
+    });
+  })();
 
   /* ================= info ================= */
   var SRC = {
@@ -2824,7 +3485,44 @@
     });
     window.dispatchEvent(new Event("resize"));
   }
-  function fromHash(){ return location.hash === "#kian" ? "kian" : "thea"; }
+  // Deep links: "#thea", "#kian/m6872156" (tab + match). Used by notiser and the "Senaste resultat" strip.
+  function parseHash(h){ var m = /^#(thea|kian)(?:\/m([\w-]+))?/.exec(h || ""); return m ? {who:m[1], mid:m[2] || null} : null; }
+  function fromHash(){ var x = parseHash(location.hash); return x ? x.who : "thea"; }
+  var focusTimer = null;
+  function focusMatch(who, mid, tries){
+    clearTimeout(focusTimer);
+    var panel = document.getElementById("p-" + who), el = null;
+    if (!panel) return;
+    [].forEach.call(panel.querySelectorAll("[data-mid]"), function(x){
+      if (el || x.getAttribute("data-mid") !== mid || x.closest(".tours") || x.closest("[data-ev][hidden], .dyn[hidden]")) return;
+      el = x;
+    });
+    if (!el){   // the draw may still be loading
+      if ((tries || 0) < 30) focusTimer = setTimeout(function(){ focusMatch(who, mid, (tries || 0) + 1); }, 400);
+      return;
+    }
+    var view = el.closest("[data-view]");
+    if (view && view.hidden){
+      var seg = view.parentNode && view.parentNode.querySelector(".seg"), b = seg && seg.children[+view.getAttribute("data-view")];
+      if (b) b.click();
+    }
+    var sc = el.closest(".bk-scroll"), col = el.closest(".bk-col");
+    if (sc && col){
+      sc.style.scrollBehavior = "auto";
+      sc.scrollLeft += col.getBoundingClientRect().left - sc.getBoundingClientRect().left - (parseFloat(getComputedStyle(sc).paddingLeft) || 0);
+      sc.style.scrollBehavior = "";
+    }
+    var calm = false;
+    try { calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e){}
+    try { el.scrollIntoView({block:"center", behavior:calm ? "auto" : "smooth"}); } catch (e){ el.scrollIntoView(); }
+    el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+    setTimeout(function(){ el.classList.remove("flash"); }, 2700);
+  }
+  function handleHash(){
+    var x = parseHash(location.hash);
+    select(x ? x.who : "thea");
+    if (x && x.mid) focusMatch(x.who, x.mid, 0); else clearTimeout(focusTimer);
+  }
   tabs.forEach(function(t, i){
     t.addEventListener("click", function(){
       var id = t.id.slice(4);
@@ -2837,8 +3535,22 @@
       e.preventDefault(); tabs[j].click(); tabs[j].focus();
     });
   });
-  window.addEventListener("hashchange", function(){ select(fromHash()); });
-  select(fromHash());
+  window.addEventListener("hashchange", handleHash);
+  // Tapping the same "Senaste resultat" card twice: no hashchange, so focus again by hand.
+  document.addEventListener("click", function(e){
+    var a = e.target && e.target.closest && e.target.closest('.recent a[href^="#"]');
+    if (a && a.getAttribute("href") === location.hash){ e.preventDefault(); handleHash(); }
+  });
+  // A tapped notis while the app is open: the service worker posts the link instead of reloading the page.
+  try {
+    if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", function(e){
+      var d = e.data || {};
+      if (d.type !== "padel-open" || !parseHash(d.hash)) return;
+      if (location.hash !== d.hash) history.replaceState(null, "", d.hash);
+      handleHash();
+    });
+  } catch (e){}
+  handleHash();
 
   /* ================= app: notis-knapp, installera, service worker ================= */
   var bell = document.getElementById("bell"), hintEl = document.getElementById("nHint"), hintT = null;

@@ -9,22 +9,25 @@ import { join } from "node:path";
 import assert from "node:assert/strict";
 import { makeSubscription, makeVapid, td } from "./helpers.mjs";
 import { b64u } from "../src/webpush.js";
-import { route } from "./fake-rankedin.mjs";
+import { route, A } from "./fake-rankedin.mjs";
 
 const dir = new URL("..", import.meta.url).pathname, FX = new URL("./fixtures/", import.meta.url).pathname;
 const P = +(process.env.E2E_PORT || 18787), W = P + 1;   // E2E_PORT: run next to another copy
-let fixture = "dc_1031.json";
+let fixture = "dc_1031.json";   // file name, or a draw object (served as JSON)
+// Damer C starts without a published draw (class list): the draw check (PUB_MINUTE=0) records "0" on the first cron
+const unpublished = A("t66374_classnames_draws").map(x => x.Id === 164681 ? { ...x, TournamentDraws: [] } : x);
+const over = { "/tournament/GetClassesAndDrawNamesAsync/?tournamentId=66374": unpublished };
 const pushes = [], fixtureHits = [], apiHits = [];
 const srv = http.createServer((req, res) => {
   const u = new URL(req.url, "http://x");
   if (u.pathname === "/rankedin") {
     res.setHeader("Content-Type", "application/json");
     if (u.searchParams.get("classId") !== "164681") return res.end("[]");   // other live classes: no draw
-    fixtureHits.push(u.search); return res.end(readFileSync(FX + fixture));
+    fixtureHits.push(u.search); return res.end(typeof fixture === "string" ? readFileSync(FX + fixture) : JSON.stringify(fixture));
   }
   if (u.pathname.startsWith("/api/")) {   // discovery: the fake RankedIn API
     apiHits.push(u.pathname);
-    const body = route(req.url.slice(4));
+    const body = route(req.url.slice(4), over);
     res.statusCode = body == null ? 404 : 200; res.setHeader("Content-Type", "application/json");
     return res.end(JSON.stringify(body ?? {}));
   }
@@ -41,7 +44,7 @@ await new Promise(r => srv.listen(P, "127.0.0.1", r));
 const v = await makeVapid();
 writeFileSync(dir + ".dev.vars", [
   "VAPID_PUBLIC_KEY=" + v.VAPID_PUBLIC_KEY, "VAPID_PRIVATE_KEY='" + v.VAPID_PRIVATE_KEY + "'", "PUSH_HOST_ANY=1",
-  "FIXTURE_URL=http://127.0.0.1:" + P + "/rankedin?classId={classId}&stage={stage}", "API_BASE=http://127.0.0.1:" + P + "/api", "NOW=2026-09-27T12:00:00+02:00"].join("\n") + "\n");
+  "FIXTURE_URL=http://127.0.0.1:" + P + "/rankedin?classId={classId}&stage={stage}", "API_BASE=http://127.0.0.1:" + P + "/api", "NOW=2026-09-27T12:00:00+02:00", "PUB_MINUTE=0"].join("\n") + "\n");
 const persist = mkdtempSync(join(tmpdir(), "padel-kv-"));
 const wr = spawn("npx", ["wrangler", "dev", "--test-scheduled", "--port", String(W), "--ip", "127.0.0.1", "--persist-to", persist, "--show-interactive-dev-session=false"],
   { cwd: dir, stdio: ["ignore", "pipe", "pipe"], detached: true,
@@ -71,12 +74,13 @@ try {
   ok("baseline tick: RankedIn fetched, no push", fixtureHits.length === 1 && pushes.length === 0, { fixtureHits, pushes: pushes.length });
   ok("first tick ran discovery against the (fake) RankedIn API", apiHits.some(x => /ParticipatedEventsAsync/.test(x)) && apiHits.length <= 45, apiHits.length);
   const evs = await (await fetch(base + "/events", { headers: { Origin: "http://localhost:8765" } })).json();
-  ok("GET /events: discovered tournaments and SPL play days", evs.src === "worker" && evs.events.some(e => e.key === "t173729-thea") && evs.events.some(e => e.kind === "teamleague" && e.who === "kian"), evs.events.map(e => e.key));
+  ok("GET /events: discovered tournaments and SPL play days (+ past list)", evs.src === "worker" && Array.isArray(evs.past) && evs.events.some(e => e.key === "t173729-thea") && evs.events.some(e => e.kind === "teamleague" && e.who === "kian"), evs.events.map(e => e.key));
   fixture = "dc_1112.json";
+  delete over["/tournament/GetClassesAndDrawNamesAsync/?tournamentId=66374"];   // the draw is out
   await cron();
-  for (let i = 0; i < 40 && pushes.length < 2; i++) await sleep(250);
+  for (let i = 0; i < 40 && pushes.length < 3; i++) await sleep(250);
   const toA = pushes.filter(p => p.path === "/push/a"), toGone = pushes.filter(p => p.path === "/push/gone");
-  ok("1 push to the live subscription", toA.length === 1, pushes.map(p => p.path));
+  ok("2 pushes to the live subscription (draw published + next opponent)", toA.length === 2, pushes.map(p => p.path));
   ok("1 push to the 410 subscription, then dropped", toGone.length === 1, toGone.length);
   const p = toA[0];
   if (p) {
@@ -91,9 +95,20 @@ try {
     ok("TTL 3600, Urgency high, Topic", p.headers.ttl === "3600" && p.headers.urgency === "high" && /^[\w-]{1,32}$/.test(p.headers.topic || ""), p.headers);
     const msgs = await Promise.all(toA.map(async x => JSON.parse(await a.decrypt(x.body))));
     ok("decrypted payloads", msgs.map(x => x.title).join(" | ") ===
-      "Thea och Cassandra möter Pettersson Österberg / Ekeland", msgs);
-    ok("tag + url", msgs[0].tag === "padel-164681:opp:m6872156:6440356" && msgs[0].url === "./#thea", msgs[0]);
+      "Lottningen klar: Thea och Cassandra möter Pettersson Österberg / Ekeland | Thea och Cassandra möter Pettersson Österberg / Ekeland", msgs);
+    ok("tags + deep links", msgs[0].tag === "padel-164681:lottning" && msgs[0].url === "./#thea/m6872156" &&
+      msgs[1].tag === "padel-164681:opp:m6872156:6440356" && msgs[1].url === "./#thea/m6872156", msgs);
   }
+  // The quarterfinal moves: "Ny tid" for Thea's next match
+  const moved = JSON.parse(readFileSync(FX + "dc_1112.json"));
+  moved.forEach(dr => dr.Elimination && dr.Elimination.DrawData.forEach(col => (col || []).forEach(c => { if (c && c.MatchId === 6872156) { c.Date = "2026-09-27T13:15:00"; c.CourtName = "Bana 2"; } })));
+  fixture = moved;
+  const n0 = pushes.length;
+  await cron();
+  for (let i = 0; i < 40 && pushes.length < n0 + 1; i++) await sleep(250);
+  const tm = pushes.slice(n0);
+  const tmsg = tm.length ? JSON.parse(await a.decrypt(tm[0].body)) : {};
+  ok("time change pushed once", tm.length === 1 && tmsg.title === "Ny tid: Thea och Cassandra spelar kvartsfinalen 13:15, Bana 2" && tmsg.url === "./#thea/m6872156" && tmsg.tag === "padel-164681:tid:m6872156", tmsg);
   const n = pushes.length;
   await cron(); await sleep(1500);
   ok("same data again: no pushes", pushes.length === n, pushes.length - n);

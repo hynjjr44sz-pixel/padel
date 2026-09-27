@@ -2,8 +2,8 @@
 // event is active, diffs against the last state in KV and pushes new results. Events come from
 // discover.js (every event Thea and Kian enter on RankedIn, refreshed hourly) merged with events.js.
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
-import { parse, snapshot, notes } from "./rankedin.js";
-import { discover, drawPath, rubbersPath, API } from "./discover.js";
+import { parse, snapshot, notes, drawNote } from "./rankedin.js";
+import { discover, drawPath, rubbersPath, namesPath, drawsOf, API } from "./discover.js";
 import { parseTie, snapshotTie, tieNotes } from "./teamleague.js";
 import { b64u, vapidKey, send } from "./webpush.js";
 
@@ -57,7 +57,8 @@ async function handle(req, env) {
   if (route === "GET /events") {
     const t = now(env), rec = await loadRecord(env);
     const events = merge(rec ? rec.events : []).filter(e => new Date(e.windowTo) > +t - 36 * 3600e3);
-    return json({ at: rec ? rec.at : null, src: "worker", events }, 200, { ...h, "Cache-Control": "public, max-age=300" });
+    // past: events that ended in the last 60 days (for "Senaste tävlingar" and the result hero)
+    return json({ at: rec ? rec.at : null, src: "worker", events, past: (rec && rec.past) || [] }, 200, { ...h, "Cache-Control": "public, max-age=300" });
   }
   if (route === "POST /subscribe") {
     let b;
@@ -83,7 +84,7 @@ async function handle(req, env) {
 }
 
 const now = env => env.NOW ? new Date(env.NOW) : new Date();   // NOW: local tests only
-const H = 3600e3, SUBREQUESTS = 45;
+const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45;
 
 /* ---- discovered events: KV "disc" = {at, events, ended, partial}. Read at most every 5 min per isolate. ---- */
 let MEM = { rec: undefined, readAt: 0, tryAt: 0 };
@@ -120,9 +121,9 @@ export async function runDiscovery(env, t, budget, rec, log = {}) {
   const mine = { left: Math.min(35, budget.left) }, start = mine.left;
   const res = await discover(getter(env, mine), t, rec);
   budget.left -= start - mine.left;
-  const next = { at: t.toISOString(), events: res.events, ended: res.ended };
+  const next = { at: t.toISOString(), events: res.events, ended: res.ended, past: pastOf(rec, res.events, t) };
   if (res.partial) next.partial = true;
-  const sig = r => JSON.stringify([r.events, r.ended, !!r.partial]);
+  const sig = r => JSON.stringify([r.events, r.ended, !!r.partial, r.past || []]);
   log.discovered = res.events.length;
   if (!rec || sig(rec) !== sig(next) || +t - new Date(rec.at) > 6 * H) {
     await env.PUSH.put("disc", JSON.stringify(next));
@@ -131,6 +132,53 @@ export async function runDiscovery(env, t, budget, rec, log = {}) {
   }
   MEM.rec = rec; MEM.readAt = Date.now();
   return rec;
+}
+
+// Events that left the list after their last day: kept 60 days (max 30) so the page can show the result.
+export function pastOf(rec, events, t) {
+  const keys = new Set(events.map(e => e.key)), old = (rec && rec.past) || [];
+  const gone = ((rec && rec.events) || []).filter(e => !keys.has(e.key) && new Date(e.windowTo) < t);
+  const out = gone.concat(old.filter(p => !gone.some(g => g.key === p.key)));
+  return out.filter(p => +t - new Date(p.windowTo) < 60 * DAY)
+    .sort((a, b) => String(b.windowTo).localeCompare(String(a.windowTo)) || a.key.localeCompare(b.key)).slice(0, 30);
+}
+
+// Draw published? Once an hour (minute 37) for every tournament class Thea/Kian plays that starts within
+// 7 days (or is on now). KV "pub:<classId>": "0" = seen without a draw, "1" = draw seen. The first look is the
+// baseline (no notis); "0" -> published gives one notis. KV is written only when the state changes.
+const PUB_MINUTE = 37;   // not exported: workerd only accepts functions and handlers as module exports
+export async function drawChecks(env, t, list, budget, log) {
+  const soon = list.filter(e => e.kind === "tournament" && e.tournamentId && e.classId &&
+    new Date(e.windowTo) > t && new Date(e.windowFrom) - t <= 7 * DAY);
+  const msgs = [], byT = new Map(), mine = { left: Math.min(10, budget.left - 10) }, start = mine.left;
+  soon.forEach(e => { if (!byT.has(e.tournamentId)) byT.set(e.tournamentId, []); byT.get(e.tournamentId).push(e); });
+  const get = getter(env, mine);
+  try {
+    for (const [tid, evs] of byT) {
+      if (mine.left < 1) break;
+      let names;
+      try { names = await get(namesPath(tid)); } catch (e) { if (e.budget) break; console.warn("draw check", tid, e.message); continue; }
+      for (const cid of [...new Set(evs.map(e => e.classId))]) {
+        const draws = drawsOf(names, cid), key = "pub:" + cid, state = draws ? "1" : "0";
+        const was = await env.PUSH.get(key);
+        if (was === state) continue;
+        if (was === "0" && draws) {
+          if (mine.left < draws.length) continue;   // not enough budget: next hour (nothing written)
+          let matches;
+          try { matches = parse(await Promise.all(draws.map(([st, sg]) => fetchDraw(env, get, cid, st, sg)))); }
+          catch (e) { console.warn("draw fetch", cid, e.message); continue; }
+          if (!matches.length) continue;   // listed but still empty
+          evs.filter(e => e.classId === cid).forEach(ev => msgs.push({ who: ev.who, m: drawNote(ev, matches) }));
+        }
+        await env.PUSH.put(key, state);
+        log.writes = (log.writes || 0) + 1;
+      }
+    }
+  } finally {
+    budget.left -= start - mine.left;
+  }
+  if (msgs.length) log.drawn = msgs.length;
+  return msgs;
 }
 
 async function fetchDraw(env, get, classId, stage, strength) {
@@ -153,8 +201,15 @@ export async function tick(env, events) {
     }
     list = merge(rec ? rec.events : []);
   }
+  let pubMsgs = [];
+  if (t.getUTCMinutes() === (env.PUB_MINUTE != null ? +env.PUB_MINUTE : PUB_MINUTE)) {   // PUB_MINUTE: local tests only
+    try { pubMsgs = await drawChecks(env, t, list, budget, log); } catch (e) { console.warn("draw checks", e.message); }
+  }
   const evs = activeEvents(t, list);
-  if (!evs.length) return log.discovered != null ? { active: 0, discovered: log.discovered, writes: log.writes } : { active: 0 };
+  if (!evs.length && !pubMsgs.length) {
+    if (log.discovered != null || log.writes) return { active: 0, discovered: log.discovered, writes: log.writes };
+    return { active: 0 };
+  }
   log.active = evs.length;
 
   // Units of work: one per class (shared by both players) and one per team league tie.
@@ -171,7 +226,7 @@ export async function tick(env, events) {
   // Free plan: 50 subrequests per invocation. RankedIn gets at most 30 (rotating when there is more),
   // pushes get the rest.
   const arr = [...units.values()], cap = Math.min(30, budget.left - 5), start = t.getUTCMinutes() % Math.max(1, arr.length);
-  const get = getter(env, budget), msgs = [];
+  const get = getter(env, budget), msgs = pubMsgs.slice();
   let fetches = 0;
   log.units = arr.length; log.polled = 0;
   for (let i = 0; i < arr.length; i++) {

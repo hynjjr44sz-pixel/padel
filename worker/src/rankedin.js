@@ -40,6 +40,14 @@ function score(mv, cancelled) {
   return out.map(x => x === "MTB" ? x : x.join("-")).join(" ");
 }
 const hhmm = d => { const m = /^(\d{4})-\d\d-\d\dT(\d\d):(\d\d)/.exec(d || ""); return m && +m[1] > 2000 ? m[2] + ":" + m[3] : ""; };
+const DOW = ["sön", "mån", "tis", "ons", "tor", "fre", "lör"];
+// "2026-10-09T18:00:00" (RankedIn local time) -> "fre"
+export const dowOf = d => { const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(d || ""); return m && +m[1] > 2000 ? DOW[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()] : ""; };
+export const courtName = c => { c = String(c || "").trim(); return /^\d+$/.test(c) ? "Bana " + c : c; };
+// Time and court of a match as kept in the snapshot ("2026-09-27T12:45@Bana 1")
+export const tcOf = m => String(m.date || "").slice(0, 16) + "@" + String(m.c || "").replace(/,/g, " ").trim();
+// Deep link the page understands: "./#thea/m6872156" (tab + RankedIn match id)
+export const linkTo = (who, mid) => "./#" + who + (mid ? "/m" + mid : "");
 
 function koPair(p) {
   const f = p && p.FirstPlayer;
@@ -100,20 +108,21 @@ export function parse(stages) {
   return out;
 }
 
-// Compact state kept in KV: MatchId -> "a,b,w" (participant ids, winner id). Only matches with something known.
+// Compact state kept in KV: MatchId -> "a,b,w,time@court" (participant ids, winner id, schedule).
+// Only matches with something known. Old records have no schedule part (tc null: never a "Ny tid" notis).
 export function snapshot(matches) {
   const s = {};
   matches.forEach(m => {
     const w = m.w ? m[m.w].id : "";
-    if (m.a || m.b || w) s[m.id] = [m.a ? m.a.id : "", m.b ? m.b.id : "", w].join(",");
+    if (m.a || m.b || w) s[m.id] = [m.a ? m.a.id : "", m.b ? m.b.id : "", w, tcOf(m)].join(",");
   });
   return s;
 }
-const unpack = v => { const p = String(v || "").split(","); return { a: p[0] || "", b: p[1] || "", w: p[2] || "" }; };
+export const unpack = v => { const p = String(v || "").split(","); return { a: p[0] || "", b: p[1] || "", w: p[2] || "", tc: p.length > 3 ? p.slice(3).join(",") : null }; };
 
 // before/after: snapshots. Returns [{title, body, tag, url}] in the order the page shows them.
 export function notes(ev, matches, before) {
-  const cid = ev.classId, cls = ev.cls, me = slug(ev.me), url = "./#" + ev.who;
+  const cid = ev.classId, cls = ev.cls, me = slug(ev.me);
   const isMe = p => !!p && p.n.some(n => slug(n) === me);
   matches.forEach(m => { m.hasMe = isMe(m.a) || isMe(m.b); m.ms = isMe(m.a) ? "a" : "b"; m.meWon = !!(m.w && m.hasMe && m.w === m.ms); });
   const main = matches.filter(m => m.di === 0), R = main.length ? Math.max(...main.map(m => m.R)) : 0;
@@ -162,7 +171,7 @@ export function notes(ev, matches, before) {
       if (m.meWon) body += nextText();
       else if (!next && m.kind === "ko") body += " " + outCopy(mp);
       if (m.meWon && next) covered[next.id] = true;
-      mine.push({ id, title, body: body.trim() });
+      mine.push({ id, title, body: body.trim(), mid: m.id });
     } else if (wp) {
       const res = m.s || m.note || "";
       const title = roundName(m) + ": " + short(wp) + (m.kind === "rr" ? " vann" : fin ? (m.di === 0 ? " vann " + cls : " vann plate") : " vidare");
@@ -177,7 +186,20 @@ export function notes(ev, matches, before) {
       let how = "";
       others = others.filter(o => { if (o.wk !== op.id) return true; how = o.how; return false; });
       mine.push({ id: cid + ":opp:m" + next.id + ":" + op.id, title: firstNames(next[next.ms]) + " möter " + short(op),
-        body: (how ? how + ". " : "") + [roundName(next), when(next).join(" · ")].filter(Boolean).join(" ") });
+        body: (how ? how + ". " : "") + [roundName(next), when(next).join(" · ")].filter(Boolean).join(" "), mid: next.id });
+      covered[next.id] = true;
+    }
+    // Time or court of the next match changed (the notiser above already carry the new time).
+    const tc = tcOf(next);
+    const at = was.tc != null ? was.tc.indexOf("@") : -1, od = at < 0 ? "" : was.tc.slice(0, at), oc = at < 0 ? "" : was.tc.slice(at + 1);
+    const oldT = hhmm(od + ":00"), moved = od !== String(next.date || "").slice(0, 16);
+    // A real change only: the old time was known (a first schedule is not "Ny tid"), and for a court move the old court too.
+    if (!covered[next.id] && was.tc != null && was.tc !== tc && next.t && oldT && (moved || oc)) {
+      const op2 = next[os], otherDay = od.slice(0, 10) !== String(next.date || "").slice(0, 10);
+      mine.push({ id: cid + ":tid:m" + next.id + ":" + slug(tc), tag: cid + ":tid:m" + next.id, mid: next.id,
+        title: (moved ? "Ny tid: " : "Ny bana: ") + firstNames(next[next.ms]) + " spelar " + roundDef(next) + " " +
+          [(otherDay ? dowOf(next.date) + " " : "") + next.t, courtName(next.c)].filter(Boolean).join(", "),
+        body: ("Förut " + [(otherDay ? dowOf(od) + " " : "") + oldT, courtName(oc)].filter(x => x.trim()).join(", ") + "." + (op2 ? " Mot " + short(op2) + "." : "")).trim() });
     }
   }
   // My group just finished: final placing (from RankedIn's standings, else wins and game difference).
@@ -194,11 +216,40 @@ export function notes(ev, matches, before) {
     const mi = rows.findIndex(r => r.n.some(n => slug(n) === me));
     if (mi < 0) return;
     const place = rows[mi].standing || mi + 1, where = pl.label === "Gruppspel" ? "gruppen" : pl.label;
+    const lastMine = ms.filter(m => m.hasMe).sort(cmp).pop();
     mine.push({ id: cid + ":grupp:" + slug(pl.label), title: firstNames(rows[mi]) + " slutade " + (ORD[place - 1] || place + ":a") + " i " + where,
-      body: rows.slice(0, 5).map((r, i) => (r.standing || i + 1) + ". " + short(r) + " " + r.wins + "–" + r.losses).join("\n") });
+      body: rows.slice(0, 5).map((r, i) => (r.standing || i + 1) + ". " + short(r) + " " + r.wins + "–" + r.losses).join("\n"), mid: lastMine && lastMine.id });
   });
   // Only Thea's/Kian's own matches (and their next opponent) are pushed; other results in the class stay on the page.
   const out = [];
-  mine.forEach(o => out.push({ title: o.title, body: o.body, tag: "padel-" + o.id, url }));
+  mine.forEach(o => out.push({ title: o.title, body: o.body, tag: "padel-" + (o.tag || o.id), url: linkTo(ev.who, o.mid) }));
   return out;
+}
+
+// The draw of a class Thea/Kian plays was just published: one notis with the first match (or the group).
+// ev: {who, me, classId, cls, name}. Same wording, tag and url as drawNote() in index.html.
+export function drawNote(ev, matches) {
+  const me = slug(ev.me), isMe = p => !!p && p.n.some(n => slug(n) === me);
+  const cmp = (x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0) || x.di - y.di || x.r - y.r;
+  const mine = matches.filter(m => isMe(m.a) || isMe(m.b)).sort(cmp), open = mine.filter(m => !m.w), first = (open.length ? open : mine)[0];
+  const tag = "padel-" + ev.classId + ":lottning", where = [ev.name, ev.cls].filter(Boolean).join(", ");
+  if (!first) return { title: "Lottningen klar i " + ev.cls, body: where ? where + "." : "", tag, url: linkTo(ev.who) };
+  const ms = isMe(first.a) ? "a" : "b", mp = first[ms], op = first[ms === "a" ? "b" : "a"];
+  const when = [[dowOf(first.date), first.t].filter(Boolean).join(" "), courtName(first.c)].filter(Boolean).join(", ");
+  let title, body;
+  if (first.kind === "rr") {
+    const seen = {}, others = [];
+    matches.filter(m => m.kind === "rr" && m.di === first.di).forEach(m => ["a", "b"].forEach(sd => {
+      const p = m[sd];
+      if (p && !isMe(p) && !seen[p.id]) { seen[p.id] = 1; others.push(short(p)); }
+    }));
+    title = "Lottningen klar: " + firstNames(mp) + " i " + (first.label === "Gruppspel" ? "gruppen" : first.label);
+    body = (others.length ? "Med " + others.join(", ") + ". " : "") + (when ? "Första match " + when + ". " : "") + where + (where ? "." : "");
+  } else {
+    let rd = first.label.toLowerCase();
+    if (/final$/.test(rd)) rd += "en";
+    title = "Lottningen klar: " + firstNames(mp) + (op ? " möter " + short(op) : " börjar i " + rd);
+    body = (when ? when.charAt(0).toUpperCase() + when.slice(1) + ". " : "") + where + (where ? "." : "");
+  }
+  return { title, body: body.trim(), tag, url: linkTo(ev.who, first.id) };
 }

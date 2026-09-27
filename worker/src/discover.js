@@ -28,6 +28,14 @@ export function ratingFor(cls) {
 }
 export const drawPath = (classId, stage, strength) =>
   "/tournament/GetDrawsForStageAndStrengthAsync?tournamentClassId=" + classId + "&drawStrength=" + (strength || 0) + "&drawStage=" + stage + "&isReadonly=true&language=en";
+// GetClassesAndDrawNamesAsync -> the class's published draws as [[stage, strength], ...], or null (not published)
+export function drawsOf(names, classId) {
+  const row = (Array.isArray(names) ? names : []).find(x => x && String(x.Id) === String(classId));
+  return row && Array.isArray(row.TournamentDraws) && row.TournamentDraws.length
+    ? [...new Set(row.TournamentDraws.map(d => (d.Stage || 0) + ":" + (d.Strength || 0)))].map(s => s.split(":").map(Number)).sort((x, y) => x[0] - y[0] || x[1] - y[1])
+    : null;
+}
+export const namesPath = tournamentId => "/tournament/GetClassesAndDrawNamesAsync/?tournamentId=" + tournamentId;
 export const rubbersPath = tieId => "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=" + tieId + "&language=en";
 
 function venueOf(info) {
@@ -59,13 +67,10 @@ async function tournament(p, e, get, ctx) {
     }
   }
   if (!found.length) return [];
-  const names = await get("/tournament/GetClassesAndDrawNamesAsync/?tournamentId=" + e.Id);
+  const names = await get(namesPath(e.Id));
   const where = venueOf(info), out = [];
   for (const f of found) {
-    const row = (Array.isArray(names) ? names : []).find(x => x.Id === f.classId);
-    const draws = row && row.TournamentDraws && row.TournamentDraws.length
-      ? [...new Set(row.TournamentDraws.map(d => (d.Stage || 0) + ":" + (d.Strength || 0)))].map(s => s.split(":").map(Number)).sort((x, y) => x[0] - y[0] || x[1] - y[1])
-      : null;
+    const draws = drawsOf(names, f.classId);
     const prevE = old.find(x => x.classId === f.classId);
     let format = prevE && JSON.stringify(prevE.draws) === JSON.stringify(draws) ? prevE.format || null : null;
     if (draws && !format) {   // BaseType decides, never the (free text) draw names

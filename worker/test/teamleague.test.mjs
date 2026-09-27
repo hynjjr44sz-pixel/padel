@@ -32,7 +32,8 @@ test("tie notiser: own rubber highlighted, team rubbers, tie result; nothing twi
   assert.equal(n[0].body, "Mot Frohlund / Spong. Ställning: Nynäs Damlag 1–2 Padelverket Damlag.");
   assert.equal(n[0].tag, "padel-tm127649:r5433848");
   assert.equal(n[1].body, "SPL Damer omgång 3. Thea och Rebecca vann sin match 6-3 6-2.");
-  assert.equal(n[1].url, "./#thea");
+  assert.equal(n[0].url, "./#thea/m5433848", "deep link to the rubber");
+  assert.equal(n[1].url, "./#thea/m5433848", "tie result links to her own rubber");
   assert.deepEqual(tieNotes(THEA, TIE, all, full), []);
 
   // A teammate's rubber finishing is not pushed on its own; only the tie result (now complete) is.
@@ -76,7 +77,7 @@ test("groups + playoffs (Vista Spring 65183 Herr D): two groups parsed, playoff 
   const mine = m.filter(x => x.kind === "rr" && x.a && x.b && [x.a, x.b].some(p => p.n.includes("Kian Borgström")));
   assert.ok(mine.length >= 2);
   const last = mine.sort((x, y) => (x.date > y.date ? 1 : -1)).at(-1);
-  before[last.id] = before[last.id].replace(/,[^,]*$/, ",");
+  before[last.id] = before[last.id].split(",").map((x, i) => i === 2 ? "" : x).join(",");   // winner not known yet
   const n = notes(kian, m, before);
   assert.match(n[0].title, /^Kian och Andreas (vann|förlorade) gruppmatchen /);
   assert.match(n.at(-1).title, /^Kian och Andreas slutade \S+ i Grupp [AB]$/);

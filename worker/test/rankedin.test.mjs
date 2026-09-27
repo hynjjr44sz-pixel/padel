@@ -27,7 +27,7 @@ test("opponent known: deciding match folded into one notis", () => {
   assert.deepEqual(n.map(x => x.title), ["Thea och Cassandra möter Pettersson Österberg / Ekeland"]);
   assert.equal(n[0].body, "Vann omgång 1 7-6 7-6 mot Lundström / Callero. Kvartsfinal 12:45 · Bana 1");
   assert.equal(n[0].tag, "padel-164681:opp:m6872156:6440356");
-  assert.equal(n[0].url, "./#thea");
+  assert.equal(n[0].url, "./#thea/m6872156", "deep link: tab + the next match");
 });
 
 test("Thea wins, loses, wins the class", () => {
