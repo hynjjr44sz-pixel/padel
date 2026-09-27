@@ -186,7 +186,7 @@ export function notes(ev, matches, before) {
     const ms = matches.filter(m => m.kind === "rr" && m.di === pl.di);
     if (!ms.length || !ms.some(m => m.hasMe) || ms.some(m => !m.w) || ms.every(m => unpack(before[m.id]).w)) return;
     let rows = pl.rows.slice().sort((x, y) => (x.standing || 99) - (y.standing || 99));
-    if (!rows.length) {
+    if (!rows.length || rows.reduce((a, r) => a + r.wins + r.losses, 0) !== 2 * ms.length) {   // standings missing or not updated yet
       const t = {};
       ms.forEach(m => ["a", "b"].forEach(sd => { if (!m[sd]) return; const r = t[m[sd].id] = t[m[sd].id] || { n: m[sd].n, wins: 0, losses: 0 }; if (m.w === sd) r.wins++; else r.losses++; }));
       rows = Object.values(t).sort((x, y) => y.wins - x.wins);

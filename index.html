@@ -1825,7 +1825,7 @@
   function isoDay(s){ var m = /^(\d\d)\/(\d\d)\/(\d{4})/.exec(String(s || "")); return m ? m[3] + "-" + m[2] + "-" + m[1] : String(s || "").slice(0, 10); }
   var DOW = ["sön","mån","tis","ons","tor","fre","lör"];
   function dayLabel(d){ var x = loc(d); return DOW[x.getUTCDay()] + " " + x.getUTCDate() + " " + MON[x.getUTCMonth()]; }
-  function dayMon(d){ var x = loc(d); return x.getUTCDate() + " " + MON[x.getUTCMonth()]; }
+  function dayMonD(d){ var x = loc(d); return x.getUTCDate() + " " + MON[x.getUTCMonth()]; }
   function hm(d){ var x = loc(d); return ("0" + x.getUTCHours()).slice(-2) + ":" + ("0" + x.getUTCMinutes()).slice(-2); }
   function cap(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
   function inWin(e, t){ t = t || now(); return t >= new Date(e.windowFrom) && t <= new Date(e.windowTo); }
@@ -2014,7 +2014,7 @@
       var ms = matches.filter(function(m){ return m.kind === "rr" && m.di === pl.di; });
       if (!ms.length || !ms.some(function(m){ return m.hasMe; }) || ms.some(function(m){ return !m.w; }) || ms.every(function(m){ return unpack(before[m.id]).w; })) return;
       var rows = pl.rows.slice().sort(function(x, y){ return (x.standing || 99) - (y.standing || 99); });
-      if (!rows.length){
+      if (!rows.length || rows.reduce(function(a, r){ return a + r.wins + r.losses; }, 0) !== 2 * ms.length){   // standings missing or not updated yet
         var tb = {};
         ms.forEach(function(m){ ["a", "b"].forEach(function(sd){ if (!m[sd]) return; var r = tb[m[sd].id] = tb[m[sd].id] || {n:m[sd].n, wins:0, losses:0}; if (m.w === sd) r.wins++; else r.losses++; }); });
         rows = Object.keys(tb).map(function(k){ return tb[k]; }).sort(function(x, y){ return y.wins - x.wins; });
@@ -2098,7 +2098,7 @@
       var pool = dr.RoundRobin, g = pool.Pool, name = String(pool.Name || ""), rowP = {};
       var label = /^round ?robin$/i.test(name) || !name ? "Gruppspel" : name.replace(/^(pool|group)\s*/i, "Grupp ");
       for (var i = 1; i < g.length; i++){ var pc = g[i] && g[i][0] && g[i][0].ParticipantCell; if (pc && Array.isArray(pc.Players)) rowP[i] = pairOf(pc.Players, pc.Seed); }
-      var grp = {name:label, rows:[], matches:[]};
+      var grp = {name:label, rows:[], matches:[]}, tally = {};
       (Array.isArray(pool.Standings) ? pool.Standings : []).forEach(function(s){
         var p = pairOf([s.DoublesPlayer1Model, s.DoublesPlayer2Model].filter(Boolean));
         if (p) grp.rows.push({pair:p.key, played:s.Played || 0, won:s.Wins || 0, lost:s.Losses || 0, diff:s.GamesDifference || 0, standing:s.Standing || 0});
@@ -2115,8 +2115,22 @@
         }
         mt.hasMe = !!((A && A.me) || (B && B.me));
         mt.meWon = !!(mt.w && mt[mt.w].pair && mt[mt.w].pair.me);
+        if (mt.w && A && B){   // own tally: played, won, lost, set difference (what RankedIn shows as +/-)
+          var sd = 0;
+          ((res.Score && res.Score.DetailedScoring) || []).forEach(function(x){ var f = Number(x && x.FirstParticipantScore), s2 = Number(x && x.SecondParticipantScore); if (f > s2) sd++; else if (s2 > f) sd--; });
+          [[A, mt.w === "a", sd], [B, mt.w === "b", -sd]].forEach(function(z){
+            var c = tally[z[0].key] = tally[z[0].key] || {played:0, won:0, lost:0, diff:0};
+            c.played++; if (z[1]) c.won++; else c.lost++; c.diff += z[2];
+          });
+        }
         grp.matches.push(mt);
       }
+      // RankedIn's standings can lag behind the results: when they do not add up, count ourselves.
+      var inSync = grp.rows.length && grp.rows.every(function(r){ return r.played === ((tally[r.pair] || {}).played || 0); });
+      if (!inSync) grp.rows = Object.keys(rowP).filter(function(k){ return rowP[k]; }).map(function(k){
+        var c = tally[rowP[k].key] || {played:0, won:0, lost:0, diff:0};
+        return {pair:rowP[k].key, played:c.played, won:c.won, lost:c.lost, diff:c.diff, standing:0};
+      });
       grp.matches.sort(function(x, y){ return (x.at ? +x.at : 9e15) - (y.at ? +y.at : 9e15); });
       return grp;
     });
@@ -2342,7 +2356,7 @@
     if (!x){
       var start = riDate(e.start) || new Date(e.windowFrom), partner = e.partner ? e.partner.split(" ")[0] : "";
       o.round = e.cls + (partner ? " · med " + partner : "");
-      o.big = dayOf(start) === dayOf(t) ? hm(start) : dayMon(start);
+      o.big = dayOf(start) === dayOf(t) ? hm(start) : dayMonD(start);
       if (t < start){ o.pill = start - t < 16 * HOUR ? "Om " + fmtLeft(start - t) : cap(dayLabel(start)); }
       else if (inWin(e)){ o.pill = "Pågår"; o.pcls = "live"; o.live = true; }
       else { o.pill = "Klar"; o.pcls = "done"; }
@@ -2353,10 +2367,10 @@
       o.vs = meTeamRow(mp) + oppRow({ph:ev.draws.length ? "Motståndare klara senare" : "Motståndare klara när lottningen kommer"}, ev);
     } else {
       var mt = x.mt, rl = dynRound(ev, x);
-      o.round = rl + " · " + e.cls; o.big = mt.t || dayMon(mt.at || riDate(e.start) || t);
+      o.round = rl + " · " + e.cls; o.big = mt.t || dayMonD(mt.at || riDate(e.start) || t);
       o.court = mt.c ? mt.c.replace(/^Bana\s*/, "") : "";
       if (st.next){
-        var tm = timing(mt.at, t, rl);
+        var tm = timing(mt.at, t, x.kind === "rr" ? "Gruppmatchen" : rl);
         o.pill = tm.pill; o.pcls = tm.pcls; o.live = tm.live; o.txt = tm.txt + (tm.live && mt.c ? " · " + mt.c : "");
         o.sub = x.rd.short + (mt.t ? " " + mt.t : "") + (tm.live ? " · pågår" : "");
       } else {
@@ -2422,9 +2436,9 @@
     o.h = m.ties.length > 1 ? "Lagmatcher" : "Lagmatch";
     o.meta = e.team + (e.division ? " · " + e.division : "");
     if (e.round){ o.court = String(e.round); o.clab = "Omg"; }
-    if (!cur){ o.big = dayMon(day); o.pill = cap(dayLabel(day)); o.txt = "Inga lagmatcher inlagda."; setHero(D, o); D.el.draw.innerHTML = ""; return; }
+    if (!cur){ o.big = dayMonD(day); o.pill = cap(dayLabel(day)); o.txt = "Inga lagmatcher inlagda."; setHero(D, o); D.el.draw.innerHTML = ""; return; }
     var tie = cur.tie, myMt = cur.mts.filter(function(x){ return x.hasMe; })[0] || null;
-    o.big = cur.start ? hm(cur.start) : dayMon(day);
+    o.big = cur.start ? hm(cur.start) : dayMonD(day);
     var allDone = m.ties.every(function(x){ return x.done; }), vsTxt = (tie.home ? "Hemma" : "Borta") + " mot " + tie.opp;
     if (allDone){
       o.pill = "Klart"; o.pcls = "done";
@@ -2582,7 +2596,7 @@
   function tourCard(e){
     var s = riDate(e.start) || new Date(e.windowFrom), en = riDate(e.end) || s, sd = loc(s), ed = loc(en), multi = dayOf(s) !== dayOf(en);
     var mon = MON[sd.getUTCMonth()] + (multi && ed.getUTCMonth() !== sd.getUTCMonth() ? "–" + MON[ed.getUTCMonth()] : "");
-    var facts = ["Start " + dayLabel(s) + " " + hm(s) + (e.closes && riDate(e.closes) && riDate(e.closes) > now() ? " · anmälan stänger " + dayMon(riDate(e.closes)) : "")];
+    var facts = ["Start " + dayLabel(s) + " " + hm(s) + (e.closes && riDate(e.closes) && riDate(e.closes) > now() ? " · anmälan stänger " + dayMonD(riDate(e.closes)) : "")];
     if (e.pairs) facts.push(e.pairs + " par anmälda i " + esc(e.cls));
     if (e.published) facts.push("Lottningen är klar" + (e.format === "groups" ? " · gruppspel" : e.format === "mixed" ? " · grupper och slutspel" : e.format === "knockout" ? " · utslagsspel" : ""));
     facts.push('<a href="' + esc(e.url || RI_WEB) + '" target="_blank" rel="noopener">Turneringen på RankedIn ↗︎</a>');
@@ -2614,7 +2628,7 @@
         if (seen[k]) return;
         seen[k] = true;
         var later = list.filter(function(x){ return x.kind === "teamleague" && x.leagueId === e.leagueId && x.teamId === e.teamId && x !== e; })
-          .map(function(x){ return dayMon(riDate(x.date + "T12:00")); });
+          .map(function(x){ return dayMonD(riDate(x.date + "T12:00")); });
         html.push(tlCard(e, later));
       } else html.push(tourCard(e));
       if (months.indexOf(m) < 0) months.push(m);
@@ -2625,6 +2639,8 @@
 
   /* ---- discovery straight against RankedIn (when the worker cannot be reached); same rules as worker/src/discover.js ---- */
   function clientDiscover(prev){
+    var seenP = {};   // both players in one tournament: fetch it once
+    function rg(path){ return seenP[path] || (seenP[path] = riGet(path)); }
     var t = now(), today = dayOf(t), DAY = 864e5, out = [], ended = {}, prevEv = (prev && prev.events) || [];
     function venueOf(info){
       var l = String(info.LocationName || "").split(",")[0].trim(), a = String(info.Address || "").split(",").map(function(s){ return s.trim(); }).filter(Boolean);
@@ -2633,7 +2649,7 @@
     function hhmmT(s){ var m = /(\d\d):(\d\d)(?::\d\d)?$/.exec(String(s || "").trim()); return m && m[1] + m[2] !== "0000" ? m[1] + ":" + m[2] : ""; }
     function tournament(p, e){
       var info, where, found = [];
-      return riGet("/tournament/GetInfoAsync?id=" + e.Id + "&language=en").then(function(x){
+      return rg("/tournament/GetInfoAsync?id=" + e.Id + "&language=en").then(function(x){
         info = (x && x.TournamentSidebarModel) || {};
         var endDay = String(info.EndDate || info.StartDate || e.StartDate).slice(0, 10);
         if (endDay < today || [2, 4].indexOf(info.EventState) >= 0){ ended["t" + e.Id] = 1; return null; }
@@ -2641,7 +2657,7 @@
         var old = prevEv.filter(function(x){ return x.kind === "tournament" && x.who === p.who && x.tournamentId === e.Id && x.classId; });
         if (old.length) found = old.map(function(x){ return {classId:x.classId, cls:x.cls, partner:x.partner, partnerId:x.partnerId, pairs:x.pairs, seed:x.seed}; });
         else return Promise.all((info.Classes || []).map(function(c){
-          return riGet("/tournament/GetPlayersForClassAsync?tournamentId=" + e.Id + "&tournamentClassId=" + c.Id + "&language=en").then(function(pl){
+          return rg("/tournament/GetPlayersForClassAsync?tournamentId=" + e.Id + "&tournamentClassId=" + c.Id + "&language=en").then(function(pl){
             var parts = (pl && pl.Participants) || [];
             parts.forEach(function(x){
               var pp = x.Participant || {}, a = pp.FirstPlayer || {}, b = pp.SecondPlayer || {};
@@ -2653,7 +2669,7 @@
         }));
       }).then(function(){
         if (!info || !found.length) return;
-        return riGet("/tournament/GetClassesAndDrawNamesAsync/?tournamentId=" + e.Id).catch(function(){ return []; }).then(function(names){
+        return rg("/tournament/GetClassesAndDrawNamesAsync/?tournamentId=" + e.Id).catch(function(){ return []; }).then(function(names){
           found.forEach(function(f){
             var row = (Array.isArray(names) ? names : []).filter(function(x){ return x.Id === f.classId; })[0], draws = null;
             if (row && row.TournamentDraws && row.TournamentDraws.length){
@@ -2673,14 +2689,14 @@
     }
     function teamleague(p, e){
       var h, team;
-      return riGet("/teamleague/GetHeaderAsync?id=" + e.Id + "&language=en").then(function(x){
+      return rg("/teamleague/GetHeaderAsync?id=" + e.Id + "&language=en").then(function(x){
         h = x || {};
         if ((h.EndDate && String(h.EndDate).slice(0, 10) < today) || [2, 4].indexOf(h.EventState) >= 0){ ended["l" + e.Id] = 1; return null; }
-        return riGet("/teamleague/GetTeamLeagueTeamDetailsAsync?language=en&teamLeagueId=" + e.Id + "&participantId=" + p.pid);
+        return rg("/teamleague/GetTeamLeagueTeamDetailsAsync?language=en&teamLeagueId=" + e.Id + "&participantId=" + p.pid);
       }).then(function(teams){
         team = Array.isArray(teams) && teams[0];
         if (!team) return null;
-        return riGet("/teamleague/GetTeamMatchesAsync?teamid=" + team.teamId + "&language=en");
+        return rg("/teamleague/GetTeamMatchesAsync?teamid=" + team.teamId + "&language=en");
       }).then(function(tm){
         if (!tm || !team) return;
         var days = {};
@@ -2702,7 +2718,7 @@
     }
     return Promise.all(["thea", "kian"].map(function(who){
       var p = {who:who, pid:WHO[who].pid, me:WHO[who].me};
-      return riGet("/player/ParticipatedEventsAsync?playerId=" + p.pid + "&language=en&skip=0&take=100").then(function(pe){
+      return rg("/player/ParticipatedEventsAsync?playerId=" + p.pid + "&language=en&skip=0&take=100").then(function(pe){
         return Promise.all(((pe && pe.Payload) || []).map(function(e){
           if ([3, 4].indexOf(e.Type) < 0 || [2, 4].indexOf(e.State) >= 0) return null;
           var s = riDate(e.StartDate);
