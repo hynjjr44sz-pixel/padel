@@ -33,13 +33,14 @@ writeFileSync(dir + ".dev.vars", [
   "FIXTURE_URL=http://127.0.0.1:" + P + "/rankedin?classId={classId}&stage={stage}", "NOW=2026-09-27T12:00:00+02:00"].join("\n") + "\n");
 const persist = mkdtempSync(join(tmpdir(), "padel-kv-"));
 const wr = spawn("npx", ["wrangler", "dev", "--test-scheduled", "--port", String(W), "--ip", "127.0.0.1", "--persist-to", persist, "--show-interactive-dev-session=false"],
-  { cwd: dir, env: { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1" } });
+  { cwd: dir, stdio: ["ignore", "pipe", "pipe"], detached: true,
+    env: { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1", NO_PROXY: "127.0.0.1,localhost", no_proxy: "127.0.0.1,localhost" } });
 let log = "";
 wr.stdout.on("data", d => { log += d; }); wr.stderr.on("data", d => { log += d; });
 const base = "http://127.0.0.1:" + W;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const results = [];
-const ok = (name, cond, info) => { results.push((cond ? "PASS " : "FAIL ") + name + (cond ? "" : "  -> " + JSON.stringify(info))); };
+const ok = (name, cond, info) => { if (process.env.DEBUG) console.error(cond ? "ok" : "FAIL", name); results.push((cond ? "PASS " : "FAIL ") + name + (cond ? "" : "  -> " + JSON.stringify(info))); };
 try {
   for (let i = 0; i < 120; i++) { try { if ((await fetch(base + "/health")).ok) break; } catch (e) {} await sleep(500); }
   const h = await (await fetch(base + "/health")).json();
@@ -92,7 +93,7 @@ try {
 } catch (e) {
   results.push("FAIL exception " + e.stack);
 } finally {
-  wr.kill("SIGTERM");
+  try { process.kill(-wr.pid, "SIGTERM"); } catch (e) { wr.kill("SIGTERM"); }   // npx + wrangler + workerd
   srv.close();
   rmSync(dir + ".dev.vars", { force: true });
   rmSync(persist, { recursive: true, force: true });
