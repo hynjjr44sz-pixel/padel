@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-d16S7hOpH9FNRDCg9ZfEtIT3TgfByyF9oLoq4t32v0I='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-RKY66sX9IXXeRyp+zov/nOflVLItuLFRjGyGKy1on8Y='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -348,6 +348,15 @@
   }
   @keyframes holo{ from{ background-position:0 0, 0 0, 0% 30%; } to{ background-position:0 0, 0 0, 100% 70%; } }
   @media (prefers-reduced-motion: reduce){ .pc{ transition:none; } }
+  /* Phones (no hover): a light sweep crosses the card now and then; with the motion sensor on (html.gyro) the
+     card tilts with the phone and the sheen follows it instead. */
+  @property --sx{ syntax:"<percentage>"; inherits:true; initial-value:30%; }
+  @keyframes sweep{ 0%{ --sx:-30%; } 28%, 100%{ --sx:130%; } }
+  @media (hover: none) and (prefers-reduced-motion: no-preference){
+    html:not(.gyro) .pc::after{ animation:sweep 5.5s cubic-bezier(.45,.05,.35,1) 1.2s infinite; }
+    .pc::after{ background:linear-gradient(112deg, transparent calc(var(--sx, 30%) - 18%), rgba(255,255,255,.5) var(--sx, 30%), transparent calc(var(--sx, 30%) + 18%)); }
+    html.gyro .pc{ transition:transform .12s linear; }
+  }
   .glass{
     display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
     font:600 11px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase;
@@ -4643,6 +4652,43 @@
       if (!pc || (e.relatedTarget && pc.contains(e.relatedTarget))) return;
       pc.style.removeProperty("--rx"); pc.style.removeProperty("--ry");
     }, {passive:true});
+
+    // Phones: the motion sensor tilts the card (on :root, the cards inherit it). The neutral position follows the
+    // way the phone is held, so only the small movements show. iOS asks once, on the first tap on a card.
+    if (!window.DeviceOrientationEvent || !(window.matchMedia && matchMedia("(hover: none)").matches)) return;
+    var root = document.documentElement, base = null, cur = null, raf = 0, seen = false;
+    function clamp(v, m){ return Math.max(-m, Math.min(m, v)); }
+    function paint(){
+      raf = 0;
+      if (!cur) return;
+      var rx = clamp((cur.b - base.b) * -.35, 7), ry = clamp((cur.g - base.g) * .45, 9);
+      root.style.setProperty("--rx", rx.toFixed(2) + "deg");
+      root.style.setProperty("--ry", ry.toFixed(2) + "deg");
+      root.style.setProperty("--sx", (50 + ry * 7).toFixed(1) + "%");
+    }
+    function onTilt(e){
+      if (e.beta == null || e.gamma == null) return;
+      var o = {b:e.beta, g:e.gamma};
+      if (!base) base = {b:o.b, g:o.g};
+      base.b += (o.b - base.b) * .02; base.g += (o.g - base.g) * .02;   // slowly re-centre
+      cur = o;
+      if (!seen){ seen = true; root.classList.add("gyro"); }
+      if (!raf) raf = requestAnimationFrame(paint);
+    }
+    function listen(){ window.addEventListener("deviceorientation", onTilt, {passive:true}); }
+    var ask = typeof DeviceOrientationEvent.requestPermission === "function";
+    if (!ask){ listen(); return; }
+    if (store.get("padel.gyro") === "1"){
+      // granted before: iOS keeps the answer for the site, but a call still needs a tap
+      document.addEventListener("touchend", function once(){ document.removeEventListener("touchend", once);
+        DeviceOrientationEvent.requestPermission().then(function(r){ if (r === "granted") listen(); }).catch(function(){}); }, {passive:true});
+      return;
+    }
+    document.addEventListener("click", function tap(e){
+      if (!(e.target.closest && e.target.closest(".pc")) || (e.target.closest && e.target.closest("button, a"))) return;
+      document.removeEventListener("click", tap);
+      DeviceOrientationEvent.requestPermission().then(function(r){ if (r === "granted"){ store.set("padel.gyro", "1"); listen(); } }).catch(function(){});
+    });
   })();
 
   document.addEventListener("click", function(e){
