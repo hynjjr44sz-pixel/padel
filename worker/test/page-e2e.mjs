@@ -246,7 +246,7 @@ try {
   const av = await page.$$eval("#plist a", a => Object.fromEntries(a.map(x => { const i = x.querySelector(".av img"); return [x.getAttribute("href").slice(1), i ? i.getAttribute("src") + (i.naturalWidth ? "" : " (not loaded)") : "ini:" + x.querySelector(".av").textContent]; })));
   ok("photos: Sanna (no own photo) gets her RankedIn thumbnail in the player list", /^https:\/\/rankedin-prod-cdn-adavg8d3dwfegkbd\.z01\.azurefd\.net\/images\/upload\/player\/900001thumb\.png$/.test(av.sanna), av.sanna);
   ok("photos: Lisa (RankedIn placeholder) keeps initials", av.lisa === "ini:LB", av.lisa);
-  ok("photos: Kian's own avatar wins over his RankedIn photo", av.kian === "img/av/kian-avatar.jpg", av.kian);
+  ok("photos: Kian's own avatar wins over his RankedIn photo", av.kian === "img/av/kian-borgstrom.webp", av.kian);
   ok("photos: Oliver's broken RankedIn photo falls back to initials", av.oliver === "ini:OL" && await page.$eval('#plist a[href="#oliver"] .av', e => e.classList.contains("ini")), av.oliver);
   ok("photos: the rest keep initials", ["jones", "tobias", "anton"].every(k => /^ini:/.test(av[k])), av);
   await shot(page, "photos-home");

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-z+rqaBx5nZZ6UoZxokY4M0FmUW/nUneKdXigTbrxpnY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-d16S7hOpH9FNRDCg9ZfEtIT3TgfByyF9oLoq4t32v0I='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1142,7 +1142,7 @@
   function avatar(n){
     var s = slug(n), me = BYNAME[s], ph = PHOTOS[s], rin = me && rinPhoto(me, true);
     if (rin) return '<span class="av" title="' + esc(n) + '" data-ini="' + esc(initials(n)) + '"><img class="rin" src="' + esc(rin) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" width="36" height="36"></span>';
-    if (me) return me.avatar ? '<span class="av" title="' + esc(n) + '"><img src="' + esc(me.avatar) + '" alt="" loading="lazy" decoding="async" width="36" height="36" style="object-position:50% 30%"></span>' :
+    if (me) return me.avatar ? '<span class="av" title="' + esc(n) + '"><img src="' + esc(me.avatar) + '" alt="" loading="lazy" decoding="async" width="36" height="36"></span>' :
       '<span class="av ini" title="' + esc(n) + '" aria-hidden="true">' + esc(initials(n)) + '</span>';
     // img/av/: 150 px squares already cropped at pos (worker/avatars.py)
     if (ph) return '<span class="av" title="' + esc(n) + '"><img src="img/av/' + (ph.src || s) + '.jpg" alt="" loading="lazy" decoding="async" width="36" height="36"></span>';
