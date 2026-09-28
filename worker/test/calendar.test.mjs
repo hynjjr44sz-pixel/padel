@@ -177,3 +177,15 @@ test("SPF eligibility: the pair cap decides; own class and one above; the class 
   assert.deepEqual(suggestFor(cal, P, t, [1]).map(x => x.id), [2], "entered per the page's own list");
   assert.equal(suggestFor(cal, P, t, [], 1).length, 1);
 });
+
+test("calendar runs every 6 hours: 03:23, 09:23, 15:23, 21:23 local, each a new run", async () => {
+  const { calendarDue, runOf } = await import("../src/calendar.js");
+  const at = s => new Date(s);
+  assert.equal(calendarDue(at("2026-09-28T09:25:00+02:00")), true);
+  assert.equal(calendarDue(at("2026-09-28T15:30:00+02:00")), true);
+  assert.equal(calendarDue(at("2026-09-28T21:24:00+02:00")), true);
+  assert.equal(calendarDue(at("2026-09-28T12:25:00+02:00")), false);
+  assert.equal(calendarDue(at("2026-09-28T09:27:00+02:00")), false, "never a discovery minute");
+  assert.notEqual(runOf(at("2026-09-28T03:30:00+02:00")), runOf(at("2026-09-28T09:30:00+02:00")));
+  assert.equal(runOf(at("2026-09-28T09:23:00+02:00")), runOf(at("2026-09-28T09:38:00+02:00")));
+});

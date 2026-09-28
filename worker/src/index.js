@@ -8,7 +8,7 @@ import { discover, drawPath, rubbersPath, namesPath, drawsOf, ratingPath, skillO
 import { parseTie, snapshotTie, tieNotes, tieSummary } from "./teamleague.js";
 import { b64u, vapidKey, send } from "./webpush.js";
 import { dayOf, localToDate, offsetAt } from "./tz.js";
-import { calendarDue, calendarStep, sameCalendar, registrations } from "./calendar.js";
+import { calendarDue, calendarStep, sameCalendar, registrations, runOf } from "./calendar.js";
 
 // Push services we are willing to POST to (no open relay). PUSH_HOST_ANY=1 is for local tests only.
 const PUSH_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(fcm\.googleapis\.com|android\.googleapis\.com|push\.services\.mozilla\.com|push\.apple\.com|notify\.windows\.com)(:\d+)?\//;
@@ -403,15 +403,17 @@ async function loadCal(env) {
   CAL = { v: v && Array.isArray(v.events) ? v : null, at: Date.now() };
   return CAL.v;
 }
-// One step of the night's calendar (03:23-03:38 local, a step per tick until done): at most 40 RankedIn calls, and
+// One step of the calendar (every 6 h from 03:23 local, a step per tick until done): at most 40 RankedIn calls, and
 // never more than the tick has left (5 kept for pushes). KV: "calw" written when the step got somewhere, "cal" when
 // the finished calendar differs from the stored one.
 export async function runCalendar(env, t, budget, rec, log = {}) {
   let w = null, prev = null;
   try { w = JSON.parse((await env.PUSH.get("calw")) || "null"); } catch (e) { w = null; }
-  if (w && w.done && w.day === dayOf(t)) return null;
+  if (w && w.done && w.day === dayOf(t) && (w.run || w.day + "@3") === runOf(t)) return null;
   try { prev = JSON.parse((await env.PUSH.get("cal")) || "null"); } catch (e) { prev = null; }
-  const mine = { left: Math.max(0, Math.min(40, budget.left - 5)) }, start = mine.left, was = JSON.stringify(w);
+  // On a live day the calendar steps small (10 calls a tick) so live polling keeps its budget; it finishes within its window.
+  const cap = activeEvents(t, merge((rec && rec.events) || [])).length ? 10 : 40;
+  const mine = { left: Math.max(0, Math.min(cap, budget.left - 5)) }, start = mine.left, was = JSON.stringify(w);
   const r = await calendarStep(getter(env, mine), t, w, prev, rec);
   budget.left -= start - mine.left;
   log.cal = start - mine.left;

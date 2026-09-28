@@ -84,18 +84,25 @@ export function registrations(disc, ids) {
   return [...out.values()];
 }
 
-// Local 03:23-03:38: a new night's calendar (a step per tick until done). CAL_ANY=1 (local tests): any minute.
+// Every 6 hours (local 03:23, 09:23, 15:23, 21:23, a step per tick until done), so a newly published tournament
+// shows the same day. CAL_ANY=1 (local tests): any minute.
+const CAL_HOURS = [3, 9, 15, 21];
 export function calendarDue(t, env = {}) {
   if (env.CAL_ANY === "1") return true;
   const l = new Date(+t + offsetAt(+t) * 3600e3), m = l.getUTCMinutes();
-  return l.getUTCHours() === 3 && m >= 23 && m <= 38 && m % 10 !== 7;   // never on a discovery minute
+  return CAL_HOURS.includes(l.getUTCHours()) && m >= 23 && m <= 38 && m % 10 !== 7;   // never on a discovery minute
+}
+// The run a tick belongs to: the day plus the 6-hour slot (a new run starts at each slot).
+export function runOf(t) {
+  const h = new Date(+t + offsetAt(+t) * 3600e3).getUTCHours();
+  return dayOf(t) + "@" + Math.max(...CAL_HOURS.filter(x => x <= h).concat([-1]));
 }
 
 // One step. get(path) -> JSON (throws; err.budget = out of subrequests). w: the work in progress (KV "calw"),
 // prev: the last calendar (KV "cal"), disc: the discovery record. Returns {w, cal} (cal only when finished).
 export async function calendarStep(get, t, w, prev, disc) {
-  const today = dayOf(t);
-  if (!w || w.day !== today) w = { day: today, list: null, info: {}, cls: {}, band: {}, bi: 0, caps: null };
+  const today = dayOf(t), run = runOf(t);
+  if (!w || w.day !== today || (w.run || today + "@3") !== run) w = { day: today, run, list: null, info: {}, cls: {}, band: {}, bi: 0, caps: null };
   if (w.done) return { w, cal: null };
   const old = new Map(((prev && prev.events) || []).map(e => [e.id, e]));
   try {
