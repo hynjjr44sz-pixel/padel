@@ -140,7 +140,7 @@ const noHScroll = page => page.evaluate(() => document.documentElement.scrollWid
 
 {
   const OUT = process.env.OUT;
-  const shots = [["", "#secTop", "top"], ["#thea", "#p-thea .hero", "h2h"], ["#thea", "#p-thea .m.next", "h2h-card"], ["#thea", "#pa-thea", "partners"], ["#cassandra", "#pa-cassandra", "partners-cass"]];
+  const shots = [["", "#secTop", "top"], ["#thea", "#p-thea .vs", "h2h"], ["#thea", "#p-thea .m.next", "h2h-card"], ["#thea", "#pa-thea", "partners"], ["#cassandra", "#pa-cassandra", "partners-cass"]];
   const bad = [];
   for (const w of [360, 390]) for (const dark of [false, true]) {
     const { page, ctx, errors } = await newPage({ width: w, dark });
