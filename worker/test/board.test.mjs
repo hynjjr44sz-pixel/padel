@@ -140,3 +140,12 @@ test("discovery from a stale isolate copy keeps the standings and skills the ran
   for (const pid of Object.keys(after.board)) for (const k of ["sk", "rk", "rp", "rd", "up"]) if (k in after.board[pid]) assert.equal(disc.board[pid][k], after.board[pid][k], pid + " " + k);
   assert.equal(disc.bat, after.bat);
 });
+
+test("checkedAt: the last 10-min round while the record is fresh, else the record's time", async () => {
+  const { checkedAt } = await import("../src/index.js");
+  const t = new Date("2026-09-28T20:41:00Z");
+  assert.equal(checkedAt({ at: "2026-09-28T18:57:04.808Z" }, t), "2026-09-28T20:37:00.000Z");
+  assert.equal(checkedAt({ at: "2026-09-28T20:39:00.000Z" }, t), "2026-09-28T20:39:00.000Z");
+  assert.equal(checkedAt({ at: "2026-09-28T13:00:00.000Z" }, t), "2026-09-28T13:00:00.000Z");
+  assert.equal(checkedAt(null, t), null);
+});

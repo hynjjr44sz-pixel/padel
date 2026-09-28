@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-HjalR6JaJcB4x4fVTbl+R4tRkGaQiiP+Ue6XF3oDaC4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-NGdP4J52OkNz+1dGnJjdE68eoPmRJoDo0KQlFLUgxOQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -795,6 +795,8 @@
   footer{ margin-top:48px; padding-top:18px; border-top:2px solid var(--ink); display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
   footer b{ font:900 22px/1 "Big Shoulders Display", sans-serif; letter-spacing:.12em; text-transform:uppercase; }
   footer span{ font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); }
+  #dataAt{ display:block; margin-top:6px; }
+  #dataAt:empty{ display:none; }
 
   @media (min-width:640px){
     .board{ margin-left:0; margin-right:0; border-radius:0 0 22px 22px; }
@@ -1100,7 +1102,7 @@
 
   <footer>
     <b>Nynäs Padel Club</b>
-    <span>Data: RankedIn / Svenska Padelförbundet · <a href="integritet.html" id="privacy" style="color:inherit" data-i18n>Integritet &amp; kontakt</a></span>
+    <span>Data: RankedIn / Svenska Padelförbundet · <a href="integritet.html" id="privacy" style="color:inherit" data-i18n>Integritet &amp; kontakt</a><span id="dataAt"></span></span>
   </footer>
 </div>
 
@@ -1407,6 +1409,7 @@
     "Rankinglistan":"La lista de ranking",
     "Rankingpoäng":"Puntos",
     "Resultat ":"Resultado ",
+    "Resultat från RankedIn: ":"Resultados de RankedIn: ",
     "Resultatet finns på RankedIn.":"El resultado está en RankedIn.",
     "Räknar matcher …":"Contando partidos …",
     "S":"J",
@@ -1414,6 +1417,7 @@
     "SPF, 12 mån":"SPF, 12 meses",
     "SPF-listan ":"Lista SPF ",
     "SPF-ranking":"Ranking SPF",
+    "SPF-ranking ":"Ranking SPF ",
     "SPT (Swedish Padel Tour) är förbundets elittour. Sex deltävlingar per år och en avslutande Masters. 16 par per klass: 12 in på poäng, 4 via kval på fredagen.":"El SPT (Swedish Padel Tour) es el circuito de élite de la federación sueca. Seis pruebas al año y un Masters final. 16 parejas por categoría: 12 entran por puntos y 4 por la previa del viernes.",
     "SPT 300 ger 300 rankingpoäng till vinnaren, SPT 360 ger 360 och Masters 400. Challenger ger 100.":"El SPT 300 da 300 puntos de ranking al ganador, el SPT 360 da 360 y el Masters 400. Un Challenger da 100.",
     "Sedan ":"Desde ",
@@ -3856,10 +3860,21 @@
     });
   }
 
+  // Footer: when RankedIn was last looked at (the worker's last round, or this device's own look-up) and the
+  // date of the SPF ranking list the page shows.
+  function renderDataAt(){
+    var el = document.getElementById("dataAt");
+    if (!el || !DISC) return;
+    var at = DISC.checked || DISC.at ? new Date(DISC.checked || DISC.at) : null, rd = "";
+    ROSTER.forEach(function(P){ var d = boardOf(P).rd; if (typeof d === "string" && d > rd) rd = d; });
+    var when = at && !isNaN(at) ? (dayOf(at) === dayOf(now()) ? _("idag") + " " + hm(at) : dayLabel(at) + " " + hm(at)) : "";
+    el.textContent = [when ? _("Resultat från RankedIn: ") + when.replace(/ (?=\d)/g, "\u00a0") : "", rd ? _("SPF-ranking ") + dayMon(rd).replace(" ", "\u00a0") : ""].filter(Boolean).join(" · ");
+  }
   /* ---- load: cache -> worker -> RankedIn directly (opened player only); every 30 min ---- */
   function applyDisc(d){
     if (!d || !Array.isArray(d.events)) return;
     DISC = d;
+    try { renderDataAt(); } catch (e){}
     try { rinHeroes(); } catch (e){ warn("Profilbilder", e); }
     if (d.src === "worker"){
       var l = store.json(PUSH_CLS_KEY);

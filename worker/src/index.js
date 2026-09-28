@@ -115,7 +115,7 @@ async function handle(req, env) {
     // photos: roster players' RankedIn profile photos {pid: {url, thumb, placeholder}} (the page: only without own photo)
     // board: the club leaderboard per pid {sk skill, w/l/y this year's W–L, rk/rp/rd SPF standing/points/list date, up places
     // gained on that list} (home view: Topplistan; kept in "disc", so it costs no extra KV read)
-    return json({ at: rec ? rec.at : null, src: "worker", events, past, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {},
+    return json({ at: rec ? rec.at : null, checked: checkedAt(rec, t), src: "worker", events, past, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {},
       board: (rec && rec.board) || {} }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
   if (route === "GET /live") return liveRoute(req, env, url, h);
@@ -193,6 +193,14 @@ async function covers(env) {
 // Every 10 minutes (minute 7, 17, ...) a batch of players, or everyone when nothing is stored yet.
 // The batch rotates with the clock (no state needed), so each player is looked up every 40-50 minutes.
 // No KV write unless the list changed (or 6 h passed, which also refreshes "at").
+// When RankedIn was last looked at: the discovery runs every 10 min (minute 7, 17, ...) but writes only on a change or
+// after 6 h. A record written within the last 6 h 20 min shows the rounds run, so the last round's time is given; an
+// older one (rounds failing) gives its own time.
+export function checkedAt(rec, t) {
+  if (!rec || !rec.at) return null;
+  const at = +new Date(rec.at), slot = Math.floor((+t - 7 * 60e3) / 600e3) * 600e3 + 7 * 60e3;
+  return +t - at < 6 * H + 20 * 60e3 ? new Date(Math.max(at, slot)).toISOString() : rec.at;
+}
 export function discoveryDue(rec, t) {
   if (Date.now() - MEM.tryAt < 5 * 60e3 && rec) return false;
   return !rec || t.getUTCMinutes() % 10 === 7;
