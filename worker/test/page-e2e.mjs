@@ -64,7 +64,7 @@ assert.ok(EVENTS_WEEK.board["1675246"].rk === 150, "board kept through later dis
 const ROSTER = JSON.parse(readFileSync(new URL("../../players.json", import.meta.url), "utf8"));
 // Players the photo tests expect to have no photo of their own (initials, RankedIn photo or placeholder).
 const NO_PHOTO = ["lisa", "oliver", "jones", "tobias", "anton", "sanna"];
-const ROSTER_T = ROSTER.map(p => NO_PHOTO.includes(p.key) ? { ...p, img: null, avatar: null, imgW: null, imgH: null, hasPhoto: false, faceVisible: false } : p);
+const ROSTER_T = ROSTER.map(p => NO_PHOTO.includes(p.key) ? { ...p, img: null, cut: null, avatar: null, imgW: null, imgH: null, hasPhoto: false, faceVisible: false } : p);
 // Thea's earlier tournaments (seed list in index.html, stage 0): three with a draw, the rest none.
 const drawOf = cid => "/tournament/GetDrawsForStageAndStrengthAsync?tournamentClassId=" + cid + "&drawStrength=0&drawStage=0&isReadonly=true&language=en";
 const FX = n => JSON.parse(readFileSync(new URL("./fixtures/" + n, import.meta.url), "utf8"));
@@ -200,7 +200,7 @@ try {
   await page.waitForSelector('#p-thea [data-mid="6872156"]');
   await page.waitForTimeout(600);
   ok("deep link #thea/m6872156: Thea's page, match flashed", await page.$eval('#p-thea [data-mid="6872156"]', e => e.classList.contains("flash") || !!e.closest("#p-thea:not([hidden])")));
-  ok("Thea: hero photo", await page.$eval("#p-thea .hero .pmed img", i => i.getAttribute("src")) === "img/thea.jpg");
+  ok("Thea: hero photo (cut-out)", await page.$eval("#p-thea .hero .pmed img", i => i.getAttribute("src")) === "img/cut/thea-holmberg-loving.webp");
   ok("Thea: chips show followed first and Thea current", (await page.$$eval("#chips .pchip", a => a.map(x => x.getAttribute("href") + (x.getAttribute("aria-current") ? "*" : "")))).slice(0, 2).join() === "#thea*,#kian");
   ok("Thea: trend numbers", /#\d+/.test(await page.textContent("#tv-thea-rank")));
   // ---- the player card (hero): rating, class, tier, stats from the data ----
@@ -262,7 +262,7 @@ try {
   ok("photos: Oliver's hero falls back to initials (OL), no img", (await page.textContent("#p-oliver .hero .ini-big")) === "OL" && !(await page.$("#p-oliver .hero .pmed > img")));
   await page.goto(url("#kian"));
   await page.waitForSelector("#p-kian:not([hidden]) .hero .pmed > img");
-  ok("photos: Kian's hero stays img/kian.jpg", await page.$eval("#p-kian .hero .pmed > img", i => i.getAttribute("src")) === "img/kian.jpg");
+  ok("photos: Kian's hero stays his own cut-out photo", await page.$eval("#p-kian .hero .pmed > img", i => i.getAttribute("src")) === "img/cut/kian-borgstrom.webp");
   ok("photos: only roster photos are requested from the CDN (no placeholder logo)", api.img.length > 0 && api.img.every(u => CDN_RE.test(u) && !/rin_logo|121978/.test(u)), api.img);
   ok("photos: no CSP violations", (await page.evaluate(() => window.__csp)).length === 0, await page.evaluate(() => window.__csp));
 

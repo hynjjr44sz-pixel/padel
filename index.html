@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-YO93W9QCGMSLeeEaQSkBoRRBYOGdaFvc+mLH3NkPVXM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-z+rqaBx5nZZ6UoZxokY4M0FmUW/nUneKdXigTbrxpnY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -254,6 +254,10 @@
     -webkit-mask-image:linear-gradient(180deg, #000 45%, rgba(0,0,0,.25) 92%); mask-image:linear-gradient(180deg, #000 45%, rgba(0,0,0,.25) 92%);
   }
   .noimg .pmed::after{ display:none; }
+  /* cut-out photo (no background): the player stands on the metal, fading out before the name */
+  .cut .pmed{ height:74%; -webkit-mask-image:linear-gradient(180deg, #000 50%, transparent 80%); mask-image:linear-gradient(180deg, #000 50%, transparent 80%); }
+  .cut .pmed::after{ display:none; }
+  .cut .pmed img{ object-position:50% 0; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28)); }
 
   /* left column: rating (skill, big integer + small decimal), class, crest */
   .prate{ position:absolute; z-index:2; left:5.5%; top:6.4%; width:23%; display:flex; flex-direction:column; align-items:center; text-align:center; }
@@ -3804,10 +3808,12 @@
       '<section aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">Bra att veta</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>';
   }
   var WATCHING = false;   // panel built by ensureWatch (hidden): its photo waits until the page is shown
-  function heroCls(P){ return "hero t-" + cardTier(P) + (P.img ? "" : rinPhoto(P) ? " rin" : " noimg"); }
+  function heroCls(P){ return "hero t-" + cardTier(P) + (P.cut ? " cut" : P.img ? "" : rinPhoto(P) ? " rin" : " noimg"); }
   function heroMedia(P){
     var rin = rinPhoto(P);
     if (rin) return '<img class="rin" src="' + esc(rin) + '" alt="' + esc(P.name) + '" decoding="async" referrerpolicy="no-referrer" data-ini="' + esc(initials(P.name)) + '"' +
+      (WATCHING ? ' loading="lazy"' : ' fetchpriority="high"') + '>';
+    if (P.cut) return '<img src="' + esc(P.cut) + '" width="800" height="1000" alt="' + esc(P.o.alt || P.name) + '"' +
       (WATCHING ? ' loading="lazy"' : ' fetchpriority="high"') + '>';
     if (P.img) return '<img src="' + esc(P.img) + '" width="' + (P.imgW || 800) + '" height="' + (P.imgH || 1000) + '" alt="' + esc(P.o.alt || P.name) + '"' +
       (WATCHING ? ' loading="lazy"' : ' fetchpriority="high"') + '>';
