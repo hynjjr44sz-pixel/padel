@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-c0pw4b4/sI/aWzKKwGEu6ePVcn+LqHz5BpVHZb8V3NA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bdkCOie3Gy8De0LVhiqrOFnZrqdxq5OUp2fXqwdX9SY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -761,6 +761,60 @@
   .prow .star path, .pchip .star path{ fill:currentColor; }
   .tblload{ font-size:13px; color:var(--dim); margin:14px 0 0; }
   @media (min-width:640px){ .club{ margin-left:0; margin-right:0; border-radius:22px; } }
+
+  /* ---------- Topplistan (home): club leaderboard ---------- */
+  .topctl{ display:flex; flex-wrap:wrap; align-items:flex-start; gap:0 8px; }
+  .topctl .seg[hidden]{ display:none; }
+  .toplist ol{ list-style:none; margin:0; padding:2px 12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; }
+  .toplist li + li{ border-top:1px solid var(--line); }
+  .toplist li.fol{ margin:0 -12px; padding:0 12px; background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent); }
+  .toplist li:first-child.fol{ border-radius:13px 13px 0 0; }
+  .toplist li:last-child.fol{ border-radius:0 0 13px 13px; }
+  .trow{ --s:34px; --ring:var(--surface); display:grid; grid-template-columns:26px auto minmax(0,1fr) auto; gap:10px; align-items:center; padding:9px 0; color:var(--ink); text-decoration:none; }
+  li.fol .trow{ --ring:var(--accent-soft); }
+  .trow .tpos{ width:26px; height:26px; display:flex; align-items:center; justify-content:center; border-radius:50%; font:900 18px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; color:var(--dim); }
+  .trow.first .tpos{ background:var(--ball); color:#0A1733; font-size:16px; }
+  .trow .tn{ min-width:0; }
+  .trow .tn b{ display:block; font-weight:700; font-size:14px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .trow .tn span{ display:block; font:500 10.5px/1.35 "Chivo Mono", monospace; color:var(--dim); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .trow .tv{ text-align:right; }
+  .trow .tv b{ display:block; font:900 22px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; }
+  .trow .tv b.up{ color:var(--up); }
+  .trow .tv span{ display:block; font:500 10.5px/1.2 "Chivo Mono", monospace; color:var(--dim); margin-top:3px; white-space:nowrap; }
+  .topfoot{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:8px; font-size:12.5px; line-height:1.4; color:var(--dim); }
+  .morebtn{ appearance:none; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:9px; padding:7px 11px; font:600 12.5px/1 "Instrument Sans", sans-serif; cursor:pointer; white-space:nowrap; }
+  .morebtn:hover{ border-color:var(--ink); }
+
+  /* ---------- Partners (player page) ---------- */
+  .partners{ padding:2px 14px; }
+  .partners > * + *{ border-top:1px solid var(--line); }
+  .parow{ --s:34px; --ring:var(--surface); display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:12px; align-items:center; padding:10px 0; color:var(--ink); text-decoration:none; }
+  .parow.best{ margin:0 -14px; padding:10px 14px; background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent); --ring:var(--accent-soft); }
+  .partners > .parow.best:first-child{ border-radius:15px 15px 0 0; }
+  .parow .pn{ min-width:0; }
+  .parow .pn b{ display:block; font-weight:700; font-size:14px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .parow .pn span{ display:block; font:500 10.5px/1.35 "Chivo Mono", monospace; color:var(--dim); margin-top:2px; }
+  .parow .bar{ display:block; height:4px; max-width:170px; margin-top:6px; border-radius:2px; background:var(--surface-2); overflow:hidden; }
+  .parow .bar i{ display:block; height:100%; border-radius:2px; background:var(--accent); }
+  .parow .pv{ text-align:right; }
+  .parow .pv b{ display:block; font:900 22px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; }
+  .parow .pv span{ display:block; font:500 10.5px/1.2 "Chivo Mono", monospace; color:var(--dim); margin-top:3px; white-space:nowrap; }
+  .parow .pv .pb{ display:inline-flex; height:20px; padding:0 6px; margin-top:4px; font-size:12px; color:#0A1733; }
+  .partners > .parow.best:last-child{ border-radius:0 0 15px 15px; }
+  .partners > .parow.best:only-child{ border-radius:15px; }
+  .bk.h2{ --slot:196px; }   /* cards with a "Tidigare möten" line */
+  .panote{ font-size:12.5px; line-height:1.4; color:var(--dim); margin:8px 0 0; }
+
+  /* ---------- inbördes möten (hero on the board, bracket cards) ---------- */
+  .h2h{ display:grid; gap:3px; padding:10px 0 12px; border-top:1px dashed var(--board-line); }
+  .h2h .k{ font:600 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--racket); }
+  .h2h .v{ font:600 14px/1.3 "Instrument Sans", sans-serif; color:var(--board-ink); overflow-wrap:anywhere; }
+  .h2h .v b{ font:900 24px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; color:var(--ball); margin-right:6px; vertical-align:-2px; }
+  .h2h .i{ font:500 11.5px/1.35 "Chivo Mono", monospace; color:var(--board-dim); overflow-wrap:anywhere; }
+  .mf{ padding:5px 10px 6px; border-top:1px dashed var(--line); font:500 10.5px/1.2 "Chivo Mono", monospace; color:var(--dim); letter-spacing:.02em; }
+  .mf b{ color:var(--ink); font-weight:600; }
+  .res .mf{ padding-left:12px; padding-right:12px; }
+  .hrow .ev .mt{ white-space:nowrap; color:var(--ink); font-weight:600; }
 </style>
 </head>
 <body>
@@ -819,6 +873,20 @@
     <section aria-labelledby="h-kom">
       <div class="sh"><h2 id="h-kom">Kommande</h2><div class="meta" id="agendaMeta"></div></div>
       <div class="agenda" id="agenda"><p class="empty">Hämtar …</p></div>
+    </section>
+
+    <section aria-labelledby="h-top" id="secTop">
+      <div class="sh"><h2 id="h-top">Topplistan</h2><div class="meta" id="topMeta"></div></div>
+      <div class="topctl">
+        <div class="seg" role="group" aria-label="Välj topplista" id="topTabs">
+          <button type="button" data-top="skill" aria-pressed="true">Skill</button><button type="button" data-top="rank" aria-pressed="false">Ranking</button><button type="button" data-top="wins" aria-pressed="false">Vinster</button><button type="button" data-top="climb" aria-pressed="false">Klättrare</button>
+        </div>
+        <div class="seg" role="group" aria-label="Damer eller herrar" id="topGender">
+          <button type="button" data-g="F" aria-pressed="true">Damer</button><button type="button" data-g="M" aria-pressed="false">Herrar</button>
+        </div>
+      </div>
+      <div class="toplist" id="topList" aria-live="polite"></div>
+      <div class="topfoot"><span id="topNote"></span><button class="morebtn" type="button" id="topMore" hidden></button></div>
     </section>
 
     <section aria-labelledby="h-lag">
@@ -985,7 +1053,7 @@
   function followChanged(){
     syncFollowBtns();
     renderChips(VIEW.who);
-    try { renderPlayerList(); renderNow(); renderLatest(); } catch (e){}
+    try { renderPlayerList(); renderNow(); renderLatest(); renderTop(); } catch (e){}
     if (pushOn()) enablePush();   // the server sends only what this device follows
     ensureWatch();
   }
@@ -1113,11 +1181,12 @@
         if (r > 0) html += '<span class="in' + (mt.hasMe && (mt.a.via || mt.b.via) ? " hot" : "") + '"></span>';
         if (!last){ var hot = mt.meWon ? " hot" : ""; html += '<span class="out' + hot + '"></span><span class="vl' + hot + '"></span>'; }
         html += '<div class="' + mcls + '"' + midAttr(mt) + '><div class="mh"><span>' + esc([mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : "")) + '</span>' + statusLabel(ev, mt, isNext) + '</div>' +
-          entrantRow(mt, "a") + entrantRow(mt, "b") + '</div></div>';
+          entrantRow(mt, "a") + entrantRow(mt, "b") + h2hMini(ev, mt) + '</div></div>';
       });
       html += '</div></div>';
     });
     html += '</div>';
+    if (html.indexOf('class="mf"') >= 0) html = html.replace('<div class="bk">', '<div class="bk h2">');
     sc.innerHTML = html;
     wrap.appendChild(sc);
     host.appendChild(wrap);
@@ -1139,7 +1208,7 @@
         }).join("") + '</tbody></table>' +
         (g.matches && g.matches.length ? '<div class="gm">' + g.matches.map(function(mt){
           var st = matchState(ev, mt), lab = st === "done" ? (mt.note || "Klar") : st === "live" ? "Pågår" : st === "nr" ? "Ej rapporterad" : "";
-          return '<div class="res' + (mt.hasMe ? " mine" : "") + '"' + midAttr(mt) + '><div class="mh"><span>' + esc([mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : "")) + '</span><span class="st' + (st === "live" ? " nx" : st === "nr" ? " nr" : "") + '">' + esc(lab) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
+          return '<div class="res' + (mt.hasMe ? " mine" : "") + '"' + midAttr(mt) + '><div class="mh"><span>' + esc([mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : "")) + '</span><span class="st' + (st === "live" ? " nx" : st === "nr" ? " nr" : "") + '">' + esc(lab) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + h2hMini(ev, mt) + '</div>';
         }).join("") + '</div>' : "");
       host.appendChild(d);
     });
@@ -1256,8 +1325,16 @@
     if (!host) return;
     var lv = MLIVE[who], all = (lv ? lv.rows : []).concat((MHIST[who] || []).filter(function(x){ return !lv || x.ev !== lv.ev; }));
     document.getElementById("hs-" + who).hidden = !all.length;
+    // Record against the same pair (12 months), when the player's matches are counted already (never fetched for this)
+    var P = BYKEY[who], cnt = null, sigA = function(names){ return names.map(function(n){ return slug(abbr(n)); }).sort().join("+"); };
+    if (P && all.length && mhGet(P).t){
+      cnt = {};
+      mhMatches(P).forEach(function(m){ var c = cnt[sigA(m.o)] = cnt[sigA(m.o)] || {w:0, l:0}; if (m.w) c.w++; else c.l++; });
+    }
     host.innerHTML = all.map(function(x){
-      return '<div class="hrow ' + (x.r === "W" ? "w" : "l") + (x.isNew ? " new" : "") + '"><div><div class="o">' + esc(x.opp) + '</div><div class="ev">' + esc(x.ev) + (x.partner ? ' · med ' + esc(x.partner) : "") + '</div></div>' +
+      var c = cnt && cnt[x.opp.split(" / ").map(function(n){ return slug(n); }).sort().join("+")];
+      return '<div class="hrow ' + (x.r === "W" ? "w" : "l") + (x.isNew ? " new" : "") + '"><div><div class="o">' + esc(x.opp) + '</div><div class="ev">' + esc(x.ev) + (x.partner ? ' · med ' + esc(x.partner) : "") +
+        (c && c.w + c.l > 1 ? ' · <span class="mt">mot paret ' + c.w + "–" + c.l + '</span>' : "") + '</div></div>' +
         '<div class="r"><b>' + (x.r === "W" ? "Vinst" : "Förlust") + (x.s ? " " + esc(x.s) : "") + '</b>' + esc(x.date) + '</div></div>';
     }).join("");
     document.getElementById("histMeta-" + who).textContent = all.length + " matcher";
@@ -2041,6 +2118,12 @@
     }
     store.set(TD_IDX, JSON.stringify(idx));
   }
+  // GetClassesAndDrawNamesAsync -> the class's draws [[stage, strength], ...]
+  function drawList(names, cid){
+    var r = (Array.isArray(names) ? names : []).filter(function(x){ return x && String(x.Id) === String(cid); })[0], out = [], seen = {};
+    ((r && r.TournamentDraws) || []).forEach(function(d){ var q = (d.Stage || 0) + ":" + (d.Strength || 0); if (!seen[q]){ seen[q] = 1; out.push([d.Stage || 0, d.Strength || 0]); } });
+    return out.sort(function(x, y){ return x[0] - y[0] || x[1] - y[1]; });
+  }
   // row: {cid, tid | u, st (draws), c (class), d (day), live}. -> Promise {ev, st, sum, place, pts}
   function loadTour(who, row){
     var k = who + ":" + row.cid, W = WHO[who], ongoing = !!row.live && row.b === "Pågår";
@@ -2053,11 +2136,7 @@
     if (m && m.datas && (!ongoing || Date.now() - m.at < 60000)){ TD_MEM[k] = m; return Promise.resolve(done(m)); }
     if (m && m.p) return m.p;
     var tid = row.tid || (/tournament\/(\d+)/.exec(row.u || "") || [])[1];
-    var draws = row.st ? Promise.resolve(row.st) : riGet("/tournament/GetClassesAndDrawNamesAsync/?tournamentId=" + tid).then(function(names){
-      var r = (Array.isArray(names) ? names : []).filter(function(x){ return x && String(x.Id) === String(row.cid); })[0], out = [], seen = {};
-      ((r && r.TournamentDraws) || []).forEach(function(d){ var q = (d.Stage || 0) + ":" + (d.Strength || 0); if (!seen[q]){ seen[q] = 1; out.push([d.Stage || 0, d.Strength || 0]); } });
-      return out.sort(function(x, y){ return x[0] - y[0] || x[1] - y[1]; });
-    });
+    var draws = row.st ? Promise.resolve(row.st) : riGet("/tournament/GetClassesAndDrawNamesAsync/?tournamentId=" + tid).then(function(names){ return drawList(names, row.cid); });
     var p = draws.then(function(ds){
       var res = riGet("/tournament/GetResultsAsync?tournamentId=" + tid + "&classId=" + row.cid + "&rankingId=1917&language=en").then(function(x){
         var hit = ((x && x.Data) || []).filter(function(d){ return d.Player1ParticipantId === W.pid || d.Player2ParticipantId === W.pid; })[0];
@@ -2337,7 +2416,7 @@
       var ms = meSide(mt), right = null;
       if (!st.next && mt.w) right = '<span class="tag">' + (mt.meWon ? "Vinst" : "Förlust") + '<b>' + esc(mePersp(mt) || mt.note || "") + '</b></span>';
       var opx = mt[ms === "a" ? "b" : "a"];
-      o.vs = meTeamRow(mt[ms].pair) + oppRow(opx, ev, right) + (opx && opx.pair ? cmpHtml(mt[ms].pair, opx.pair) : "");
+      o.vs = meTeamRow(mt[ms].pair) + oppRow(opx, ev, right) + (opx && opx.pair ? cmpHtml(mt[ms].pair, opx.pair) + (st.next ? h2hHtml(D.who, opx.pair, ev.rid) : "") : "");
       var L = st.next && st.last;
       if (L){
         var lop = L.mt[meSide(L.mt) === "a" ? "b" : "a"];
@@ -2428,7 +2507,7 @@
     if (myMt){
       var ms = meSide(myMt), right = myMt.w ? '<span class="tag">' + (myMt.meWon ? "Vinst" : "Förlust") + '<b>' + esc(mePersp(myMt) || myMt.note || "") + '</b></span>' : null;
       var opt = myMt[ms === "a" ? "b" : "a"];
-      o.vs = meTeamRow(myMt[ms].pair) + oppRow(opt, null, right) + (opt && opt.pair ? cmpHtml(myMt[ms].pair, opt.pair) : "");
+      o.vs = meTeamRow(myMt[ms].pair) + oppRow(opt, null, right) + (opt && opt.pair ? cmpHtml(myMt[ms].pair, opt.pair) + (!myMt.w ? h2hHtml(D.who, opt.pair, opt.pair.rid) : "") : "");
     } else {
       o.vs = '<div class="team me"><span></span><div class="tname">' + esc(e.team) + '<small>' + esc(W.name + (cur.rubbers.length ? " spelar inte den här matchen" : " · laguppställningen kommer senare")) + '</small></div><span class="seed">' + (tie.home ? "Hemma" : "Borta") + '</span></div>' +
         '<div class="team opp"><span></span><div class="tname" ' + OPP_NAME + '>' + esc(tie.opp) + '<small>' + esc(tie.venue || "Plats inte klar") + '</small></div><span></span></div>';
@@ -2570,7 +2649,7 @@
       m.ties.forEach(function(x){ x.mts.forEach(function(mt){ if (!mine && mt.hasMe) mine = {mt:mt, x:x}; }); });
       if (mine){
         var ms = meSide(mine.mt), op = mine.mt[ms === "a" ? "b" : "a"];
-        h += '<div class="vs">' + meTeamRow(mine.mt[ms].pair) + oppRow(op, null) + (op && op.pair ? cmpHtml(mine.mt[ms].pair, op.pair) : "") + '</div>';
+        h += '<div class="vs">' + meTeamRow(mine.mt[ms].pair) + oppRow(op, null) + (op && op.pair ? cmpHtml(mine.mt[ms].pair, op.pair) + (!mine.mt.w ? h2hHtml(D.who, op.pair, op.pair.rid) : "") : "") + '</div>';
         h += '<div class="nd">Första match <b>' + esc([mine.x.start ? dayLabel(mine.x.start) + " " + hm(mine.x.start) : "", "mot " + mine.x.tie.opp].filter(Boolean).join(" · ")) + '</b></div>';
       } else h += '<div class="nd">Laguppställningen ej klar</div>';
       return h;
@@ -2580,7 +2659,7 @@
     wantSkills(Object.keys(ev.pairs).map(function(k){ return ev.pairs[k]; }));
     if (ev.draws.length && st.next){
       var x = st.next, mt = x.mt, ms2 = meSide(mt), op2 = mt[ms2 === "a" ? "b" : "a"];
-      h += '<div class="vs">' + meTeamRow(mt[ms2].pair) + oppRow(op2, ev) + (op2 && op2.pair ? cmpHtml(mt[ms2].pair, op2.pair) : "") + '</div>';
+      h += '<div class="vs">' + meTeamRow(mt[ms2].pair) + oppRow(op2, ev) + (op2 && op2.pair ? cmpHtml(mt[ms2].pair, op2.pair) + h2hHtml(D.who, op2.pair, ev.rid) : "") + '</div>';
       h += '<div class="nd">Första match <b>' + esc([mt.at ? dayLabel(mt.at) + " " + hm(mt.at) : mt.t, mt.c].filter(Boolean).join(" · ")) + '</b>' + (x.kind === "rr" ? " · " + esc(x.rd.label) : "") + '</div>';
     } else if (ev.draws.length) h += '<div class="nd">Lottningen är klar.</div>';
     else {
@@ -2980,7 +3059,7 @@
     CLIENT_AT[P.key] = Date.now();
     clientDiscover(DISC, [P]).then(function(r){
       var keep = (DISC.events || []).filter(function(e){ return !(e.kind === "tournament" && (e.who === P.key || e.pid === P.pid)) && !(e.kind === "teamleague" && r.events.some(function(x){ return x.key === e.key; })); });
-      var d = {at:r.at, src:"client", events:keep.concat(r.events).sort(function(a, b){ return String(a.windowFrom).localeCompare(String(b.windowFrom)); }), past:DISC.past || [], latest:DISC.latest || [], live:DISC.live || {}, wins:DISC.wins || [], photos:DISC.photos || {}};
+      var d = {at:r.at, src:"client", events:keep.concat(r.events).sort(function(a, b){ return String(a.windowFrom).localeCompare(String(b.windowFrom)); }), past:DISC.past || [], latest:DISC.latest || [], live:DISC.live || {}, wins:DISC.wins || [], photos:DISC.photos || {}, board:DISC.board || {}};
       d.savedAt = DISC.savedAt || Date.now();
       store.set(EV_KEY, JSON.stringify(d));
       applyDisc(d);
@@ -3056,6 +3135,7 @@
     try { renderWins(); } catch (e){ warn("Veckans vinnare", e); }
     try { renderLatest(); } catch (e){ warn("Senaste resultat", e); }
     try { renderAgenda(); } catch (e){ warn("Kommande", e); }
+    try { renderTop(); } catch (e){ warn("Topplistan", e); }
     try { renderTeams(); } catch (e){ warn("Lagen", e); }
     try { renderPlayerList(); } catch (e){ warn("Spelare", e); }
   }
@@ -3171,6 +3251,75 @@
         '<span class="wm">' + esc([w.cls, w.name].filter(Boolean).join(" · ") + (w.s ? " · " + w.s : "") + (w.opp ? " mot " + w.opp : "")) + '</span></span>' + winAvatars(w, "sm") + '</a></li>';
     }).join("") + '</ul>' : "");
   }
+  /* ================= Topplistan: the club's leaderboard ================= */
+  // From GET /events ("board": the worker keeps it up to date during its own rounds), else players.json. The home
+  // view makes no RankedIn calls for it. The chosen list and Damer/Herrar are remembered on this device.
+  var TOP_KEY = "padel.top.v1", TOP = (function(){ var x = store.json(TOP_KEY); return x && typeof x === "object" ? x : {}; })();
+  var TOP_TABS = ["skill", "rank", "wins", "climb"], TOP_N = 5;
+  function boardOf(P){ var b = DISC && DISC.board && DISC.board[P.pid]; return b && typeof b === "object" ? b : {}; }
+  function num(v){ return typeof v === "number" && isFinite(v) ? v : null; }
+  // -> {rows:[{P, v, big, sub, up}], latest: date of the newest SPF list, unranked: count}
+  function topRows(tab, g){
+    var year = +dayOf(now()).slice(0, 4), latest = "", rows = [], unranked = 0;
+    ROSTER.forEach(function(P){ var d = boardOf(P).rd; if (typeof d === "string" && d > latest) latest = d; });
+    ROSTER.forEach(function(P){
+      var b = boardOf(P), sk = num(b.sk) != null ? b.sk : num(P.skill), rk = num(b.rk) != null ? b.rk : num(P.rank), rp = num(b.rp) != null ? b.rp : num(P.points);
+      if (tab === "skill"){ if (P.gender === g && sk != null) rows.push({P:P, v:-sk, big:sk.toFixed(2), sub:rk != null ? "#" + rk : ""}); }
+      else if (tab === "rank"){
+        if (P.gender !== g) return;
+        if (rk == null){ unranked++; return; }
+        rows.push({P:P, v:rk, big:"#" + rk, sub:rp != null ? fmtPts(rp) + " p" : ""});
+      } else if (tab === "wins"){
+        var w = num(b.w), l = num(b.l);
+        if (b.y === year && w) rows.push({P:P, v:-w - (l != null ? 1 / (2 + l) : 0), big:String(w), sub:w + "–" + (l != null ? l : "?")});
+      } else {
+        var up = num(b.up);
+        if (latest && b.rd === latest && up > 0) rows.push({P:P, v:-up, big:"+" + up, sub:rk != null ? "nu #" + rk : "", up:true});
+      }
+    });
+    rows.sort(function(a, b){ return a.v - b.v || a.P.name.localeCompare(b.P.name); });
+    return {rows:rows, latest:latest, unranked:unranked, year:year};
+  }
+  function renderTop(){
+    var sec = document.getElementById("secTop"), host = document.getElementById("topList");
+    if (!sec || !host || !ROSTER.length) return;
+    var tab = TOP_TABS.indexOf(TOP.tab) >= 0 ? TOP.tab : "skill", g = TOP.g === "M" ? "M" : "F", per = tab === "skill" || tab === "rank";
+    [].forEach.call(document.querySelectorAll("#topTabs button"), function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-top") === tab ? "true" : "false"); });
+    [].forEach.call(document.querySelectorAll("#topGender button"), function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-g") === g ? "true" : "false"); });
+    document.getElementById("topGender").hidden = !per;
+    var r = topRows(tab, g), f = follows(), all = !!TOP.all, list = all ? r.rows : r.rows.slice(0, TOP_N);
+    var gl = g === "F" ? "Damer" : "Herrar", meta = document.getElementById("topMeta"), note = document.getElementById("topNote"), more = document.getElementById("topMore");
+    meta.textContent = tab === "skill" ? "SPF skill · " + gl : tab === "rank" ? (r.latest ? "SPF-listan " + dayMon(r.latest) : "SPF-ranking") + " · " + gl :
+      tab === "wins" ? "Årets vinster " + r.year : "Veckans klättrare";
+    var what = tab === "skill" ? "skill" : tab === "rank" ? "ranking" : tab === "wins" ? "vinster" : "klättring";
+    host.innerHTML = list.length ? '<ol aria-label="' + esc("Topplistan, " + what + (per ? ", " + gl.toLowerCase() : "")) + '">' + list.map(function(x, i){
+      var P = x.P, fol = f.indexOf(P.pid) >= 0;
+      return '<li' + (fol ? ' class="fol"' : "") + '><a class="trow' + (i === 0 ? " first" : "") + '" href="#' + esc(P.key) + '"><span class="tpos">' + (i + 1) + '</span>' +
+        '<span class="avs">' + avatar(P.name) + '</span><span class="tn"><b>' + esc(P.name) + (fol ? '<span class="sr"> (följer)</span>' : "") + '</b><span>' + esc(P.team || "") + '</span></span>' +
+        '<span class="tv"><b' + (x.up ? ' class="up"' : "") + '>' + esc(x.big) + (x.up ? '<span class="sr"> platser</span>' : "") + '</b>' + (x.sub ? '<span>' + esc(x.sub) + '</span>' : "") + '</span></a></li>';
+    }).join("") + '</ol>' : '<p class="empty">' + esc(tab === "wins" ? "Inga vunna matcher inlagda i år än." : tab === "climb" ? "Ingen i klubben klättrade på veckans lista." :
+      tab === "rank" ? "Ingen rankad just nu." : "Ingen skill inlagd än.") + '</p>';
+    note.textContent = tab === "climb" ? (list.length ? "Flest platser uppåt på SPF-listan" + (r.latest ? " " + dayMon(r.latest) : "") + "." : "") :
+      tab === "wins" ? "Vunna dubbelmatcher i år, alla tävlingar." : tab === "rank" && r.unranked ? r.unranked + (r.unranked === 1 ? " spelare" : " spelare") + " utan ranking." : "";
+    more.hidden = r.rows.length <= TOP_N;
+    more.textContent = all ? "Visa färre" : "Visa alla " + r.rows.length;
+    more.setAttribute("aria-expanded", all ? "true" : "false");
+  }
+  (function(){
+    var sec = document.getElementById("secTop");
+    if (!sec) return;
+    sec.addEventListener("click", function(e){
+      var b = e.target && e.target.closest && e.target.closest("button");
+      if (!b) return;
+      if (b.hasAttribute("data-top")){ TOP.tab = b.getAttribute("data-top"); TOP.all = false; }
+      else if (b.hasAttribute("data-g")){ TOP.g = b.getAttribute("data-g"); TOP.all = false; }
+      else if (b.id === "topMore") TOP.all = !TOP.all;
+      else return;
+      store.set(TOP_KEY, JSON.stringify(TOP));
+      try { renderTop(); } catch (er){ warn("Topplistan", er); }
+    });
+  })();
+
   // Upcoming: one row per class (all club players in it) and per team play day (not per player)
   function upcomingRows(){
     if (!DISC) return [];
@@ -3296,6 +3445,7 @@
         '<div class="formrow" id="formrow-' + k + '" hidden><div class="k"><span>Form, senaste matcherna</span><span>RankedIn</span></div><div class="form" id="form-' + k + '"></div></div>' +
       '</section>' +
       '<section aria-labelledby="h-tt-' + k + '"><div class="sh"><h2 id="h-tt-' + k + '">Senaste tävlingar</h2><div class="meta"></div></div><p class="tsum" id="' + k + 'Sum"></p><div class="card tours" id="' + k + 'Tours"></div></section>' +
+      '<section aria-labelledby="h-pa-' + k + '" id="pa-' + k + '"><div class="sh"><h2 id="h-pa-' + k + '">Partners</h2><div class="meta" id="paMeta-' + k + '">12 mån</div></div><div class="card partners" id="paList-' + k + '"></div><p class="panote" id="paNote-' + k + '"></p></section>' +
       '<section aria-labelledby="h-hist-' + k + '" id="hs-' + k + '" hidden><div class="sh"><h2 id="h-hist-' + k + '">Senaste matcher</h2><div class="meta" id="histMeta-' + k + '"></div></div><div class="card hist" id="hist-' + k + '"></div></section>' +
       '<section aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">Kommande</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div></section>' +
       '<section aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">Bra att veta</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>';
@@ -3356,6 +3506,11 @@
     try { renderUps(P.key); } catch (e){ warn("Kommande", e); }
     try { renderTours(P.key); } catch (e){ warn("Tävlingar", e); }
     try { renderMHist(P.key); } catch (e){ warn("Matcher", e); }
+    try { renderPartners(P.key); } catch (e){ warn("Partners", e); }
+    // Partners on screen (or close): the matches are counted (nothing while the page is hidden or not shown)
+    var pa = m.querySelector("#pa-" + P.key);
+    if (pa && "IntersectionObserver" in window) new IntersectionObserver(function(es){ if (es.some(function(x){ return x.isIntersecting; })) mhSoon(P); }, {rootMargin:"200px"}).observe(pa);
+    else mhSoon(P);
     return m;
   }
   function openPlayer(P){
@@ -3594,8 +3749,225 @@
       }
       renderTours(P.key);
       return Promise.all([one(), one()]).then(function(){ store.set(HIST_PRE + P.pid, JSON.stringify(HIST[P.key])); });
-    }).catch(function(){}).then(function(){ HIST_BUSY[P.key] = false; renderTours(P.key); });
+    }).catch(function(){}).then(function(){ HIST_BUSY[P.key] = false; renderTours(P.key); if (MH_WANT[P.key]) mhSoon(P); });
   }
+
+  /* ================= Inbördes möten och partners: the player's own tournament matches, last 12 months ================= */
+  // Computed from the draws of the player's finished tournaments (the classes Senaste tävlingar lists: seed list, the
+  // worker's past events, loadHistory), one class at a time, and only when the player page needs it: the hero has a next
+  // opponent, or the Partners section comes on screen. Never while the page is hidden. A finished class never changes:
+  // kept for good (at most 16 per player); the list of classes is looked at again after 24 h (only new ones are fetched).
+  // Draws already on this device (an opened row in Senaste tävlingar, the live view's copy) cost nothing.
+  var MH_PRE = "padel.mh.v1.", MHC = {}, MH_BUSY = {}, MH_WANT = {}, MH_T = {}, YEAR_MS = 365 * 864e5;
+  function mhGet(P){
+    var r = MHC[P.key];
+    if (!r){
+      r = CACHE_OFF ? null : store.json(MH_PRE + P.pid);
+      if (!r || !r.cls || typeof r.cls !== "object") r = {t:0, cls:{}};
+      MHC[P.key] = r;
+    }
+    return r;
+  }
+  function mhSave(P){
+    var r = mhGet(P), t = now(), cls = {};
+    Object.keys(r.cls).filter(function(c){ return +t - Date.parse(r.cls[c].d + "T12:00:00Z") < 400 * 864e5; })
+      .sort(function(a, b){ return String(r.cls[b].d).localeCompare(String(r.cls[a].d)); }).slice(0, 16).forEach(function(c){ cls[c] = r.cls[c]; });
+    r.cls = cls;
+    if (!CACHE_OFF) store.set(MH_PRE + P.pid, JSON.stringify(r));
+  }
+  function mhClasses(P){
+    var t = now(), today = dayOf(t);
+    return tourRows(P.key).filter(function(r){ return r.cid && r.d && r.d < today && +t - Date.parse(r.d + "T12:00:00Z") < YEAR_MS; });
+  }
+  // Raw draws of a class: this device's copies first (any player's), else RankedIn.
+  function mhDatas(P, r){
+    var cid = String(r.cid), m = null;
+    Object.keys(TD_MEM).forEach(function(k){ if (!m && k.split(":")[1] === cid && TD_MEM[k] && TD_MEM[k].datas) m = TD_MEM[k]; });
+    if (!m && !CACHE_OFF){
+      (store.json(TD_IDX) || []).forEach(function(k){ if (!m && String(k).split(":")[1] === cid) m = store.json(TD_PRE + k); });
+      var dc = store.json("padel.dyn.c" + cid);
+      if (!m && dc && Array.isArray(dc.datas)) m = dc;
+    }
+    if (m && Array.isArray(m.datas)) return Promise.resolve(m.datas);
+    var tid = r.tid || (/tournament\/(\d+)/.exec(r.u || "") || [])[1];
+    var ds = r.st ? Promise.resolve(r.st) : riGet("/tournament/GetClassesAndDrawNamesAsync/?tournamentId=" + tid).then(function(names){ return drawList(names, cid); });
+    return ds.then(function(list){ return Promise.all(list.map(function(d){ return riGet(drawPath(cid, d[0], d[1])); })); });
+  }
+  // The player's decided matches in a draw model: {d, w, s (own view), p/pi partner, o/oi opponents}. A walkover is no meeting.
+  function mhFromEv(P, ev, dflt){
+    var out = [], me = slug(P.name);
+    tourState(ev).played.forEach(function(x){
+      var mt = x.mt, ms = meSide(mt), mp = mt[ms].pair, op = mt[ms === "a" ? "b" : "a"].pair;
+      if (!mp || !op || (mt.note && !mt.s)) return;
+      var pn = [], pi = [];
+      mp.n.forEach(function(n, i){ if (mp.ids[i] !== P.pid && slug(n) !== me){ pn.push(n); pi.push(mp.ids[i] || null); } });
+      out.push({d:mt.at ? dayOf(mt.at) : dflt, w:mt.meWon ? 1 : 0, s:mePersp(mt) || "", p:pn, pi:pi, o:op.n.slice(), oi:(op.ids || []).slice()});
+    });
+    return out;
+  }
+  function mhSoon(P){
+    if (!P) return;
+    MH_WANT[P.key] = true;
+    if (!MH_T[P.key]) MH_T[P.key] = setTimeout(function(){ MH_T[P.key] = null; mhRun(P); }, 0);
+  }
+  function mhRun(P){
+    var rec = mhGet(P), key = P.key;
+    if (MH_BUSY[key]) return;
+    if (rec.t && Date.now() - rec.t < 24 * HOUR){ MH_WANT[key] = false; return; }
+    // stays wanted: the page on screen, Senaste tävlingar's lookup finished and the tab visible call again
+    if (!PANELS[key] || PANELS[key].hidden || HIST_BUSY[key] || document.visibilityState === "hidden" || !window.fetch) return;
+    MH_WANT[key] = false; MH_BUSY[key] = true;
+    var todo = mhClasses(P).filter(function(r){ return !rec.cls[r.cid]; }), failed = false, paused = false;
+    function one(){
+      var r = todo.shift();
+      if (!r) return Promise.resolve();
+      if (document.visibilityState === "hidden"){ todo.length = 0; paused = true; return Promise.resolve(); }
+      return mhDatas(P, r).then(function(datas){
+        rec.cls[r.cid] = {d:r.d, n:r.n || "", m:mhFromEv(P, buildTour({cls:r.c || "", me:P.name, pid:P.pid, rating:ratingFor(r.c)}, datas), r.d)};
+        mhSave(P);
+        mhChanged(P, false);
+      }, function(){ failed = true; }).then(one);
+    }
+    Promise.all([one(), one()]).then(function(){
+      MH_BUSY[key] = false;
+      if (paused){ MH_WANT[key] = true; return; }
+      rec.t = failed ? Date.now() - 23 * HOUR : Date.now();   // a failed class: another try in an hour
+      mhSave(P);
+      mhChanged(P, true);
+    });
+  }
+  // What depends on the matches: Partners, the history rows, the hero and the draw (its cards).
+  function mhChanged(P, all){
+    try { renderPartners(P.key); } catch (e){ warn("Partners", e); }
+    if (!all) return;
+    try { renderMHist(P.key); } catch (e){ warn("Matcher", e); }
+    var D = DYN[P.key];
+    if (D && !D.dead){ if (D.el && D.el.draw) D.el.draw._model = null; try { dynRender(D); } catch (e){ warn("Visning", e); } }
+  }
+  // Stored matches of the last 12 months plus the decided ones of the event on now (not stored: the class is still on).
+  function mhMatches(P){
+    var rec = mhGet(P), t = now(), out = [], D = DYN[P.key];
+    Object.keys(rec.cls).forEach(function(c){ (rec.cls[c].m || []).forEach(function(x){ if (+t - Date.parse(x.d + "T12:00:00Z") < YEAR_MS) out.push(x); }); });
+    if (D && D.e && D.e.kind === "tournament" && D.model && D.model.draws && !rec.cls[D.e.classId]){
+      if (D.mhModel !== D.model){ D.mhModel = D.model; D.mhList = mhFromEv(P, D.model, dayOf(t)); }
+      out = out.concat(D.mhList);
+    }
+    return out;
+  }
+  function mhCount(list, test){ var w = 0, l = 0; list.forEach(function(x){ if (test(x)){ if (x.w) w++; else l++; } }); return {w:w, l:l}; }
+  function h2hPair(P, names){ var sig = pairSig(names); return mhCount(mhMatches(P), function(x){ return pairSig(x.o) === sig; }); }
+
+  // Each opponent on their own: RankedIn's real record (every rated match, all time), one POST for the pair,
+  // kept 24 h per player + rating + opponent. Only for the next match in the hero.
+  var H2H_KEY = "padel.h2h.v1", H2H = null, H2H_BUSY = {}, H2H_FAIL = {};
+  function h2hStore(){ if (!H2H){ H2H = store.json(H2H_KEY); if (!H2H || typeof H2H !== "object") H2H = {}; } return H2H; }
+  function h2hOne(pid, rid, id){ var x = id && h2hStore()[pid + ":" + (rid || 0) + ":" + id]; return x && Date.now() - x[2] < 7 * 864e5 ? x : null; }   // [matches, wins, at]
+  function riPost(path, body){
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    try {
+      return withTimeout(fetch(RI_API + path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), cache:"no-store", credentials:"omit", signal:ctl ? ctl.signal : undefined})
+        .then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), LIVE_TIMEOUT, ctl);
+    } catch (e){ return Promise.reject(e); }
+  }
+  function h2hFetch(P, rid, ids){
+    var s = h2hStore(), need = (ids || []).filter(function(id){ var x = id && s[P.pid + ":" + (rid || 0) + ":" + id]; return id && (!x || Date.now() - x[2] > 24 * HOUR); });
+    var k = P.pid + ":" + (rid || 0) + ":" + need.join(",");
+    if (!need.length || H2H_BUSY[k] || (H2H_FAIL[k] && Date.now() - H2H_FAIL[k] < 10 * 60000) || !window.fetch) return;
+    if (!PANELS[P.key] || PANELS[P.key].hidden || document.visibilityState === "hidden") return;
+    H2H_BUSY[k] = true;
+    riPost("/rating/GetPlayerSelectedOpponentsStatsAsync", {participantId:P.pid, ratingId:rid || null, participantIds:need, language:"en"}).then(function(a){
+      if (!Array.isArray(a)) throw new Error("no stats");
+      var t = Date.now(), keep = {};
+      need.forEach(function(id){
+        var x = a.filter(function(r){ return r && Number(r.ParticipantId) === Number(id); })[0], all = x && x.All;
+        s[P.pid + ":" + (rid || 0) + ":" + id] = [all && all.Total || 0, all && all.Wins || 0, t];
+      });
+      Object.keys(s).sort(function(x, y){ return s[y][2] - s[x][2]; }).slice(0, 150).forEach(function(q){ if (t - s[q][2] < 7 * 864e5) keep[q] = s[q]; });
+      H2H = keep;
+      store.set(H2H_KEY, JSON.stringify(keep));
+      var D = DYN[P.key];
+      if (D && !D.dead) try { dynRender(D); } catch (e){}
+    }).catch(function(){ H2H_FAIL[k] = Date.now(); }).then(function(){ H2H_BUSY[k] = false; });
+  }
+  // The hero's "Tidigare möten" (on the board): the record against the pair (12 months, tournaments) and against
+  // each of them (RankedIn, all rated matches). Nothing until one of them is known.
+  function h2hHtml(who, op, rid){
+    var P = BYKEY[who];
+    if (!P || !op || !op.n || !op.n.length) return "";
+    setTimeout(function(){ try { h2hFetch(P, rid, op.ids); } catch (e){} }, 0);
+    mhSoon(P);
+    var ready = !!mhGet(P).t, pr = ready ? h2hPair(P, op.n) : null;
+    var ind = op.n.map(function(n, i){ var x = h2hOne(P.pid, rid, (op.ids || [])[i]); return x ? {n:surname(n), t:x[0], w:x[1]} : null; });
+    var known = ind.every(Boolean), met = ind.filter(function(x){ return x && x.t; });
+    if (!ready && !(known && !met.length)) return "";   // the pair's record first (no flicker); no meeting at all: known at once
+    var line = met.length ? "Var för sig: " + met.map(function(x){ return x.n + " " + x.w + "–" + (x.t - x.w); }).join(" · ") : "";
+    var v;
+    if (pr && pr.w + pr.l) v = '<b>' + pr.w + "–" + pr.l + '</b>mot ' + esc(short(op)) + '<span class="sr"> (' + pr.w + (pr.w === 1 ? " vinst" : " vinster") + ", " + pr.l + (pr.l === 1 ? " förlust" : " förluster") + ')</span>';
+    else if (met.length) v = "Första mötet mot paret";
+    else v = "Första mötet";
+    return '<div class="h2h" data-r2="h2h"><span class="k">Tidigare möten</span><span class="v">' + v + '</span>' + (line ? '<span class="i">' + esc(line) + '</span>' : "") + '</div>';
+  }
+  // A card in the draw (a match still to play with a club player): the record against that pair, when that player's
+  // matches are already on this device. Never fetches.
+  function h2hMini(ev, mt){
+    if (!mt || mt.w || !mt.a || !mt.b || !mt.a.pair || !mt.b.pair) return "";
+    var hit = null;
+    ["a", "b"].forEach(function(sd){
+      if (hit) return;
+      var p = mt[sd].pair, Q = p.me && ev && ev.e && ev.e.pid ? BYPID[ev.e.pid] : null;
+      if (!Q) p.n.some(function(n){ Q = BYNAME[slug(n)]; return !!Q; });
+      if (Q && mhGet(Q).t) hit = {Q:Q, op:mt[sd === "a" ? "b" : "a"].pair};
+    });
+    if (!hit) return "";
+    var r = h2hPair(hit.Q, hit.op.n);
+    return '<div class="mf">' + (r.w + r.l ? "Tidigare möten <b>" + r.w + "–" + r.l + "</b>" : "Första mötet") + '</div>';
+  }
+
+  // Partners: matches, W–L and win % with each partner; the best (at least 3 matches) marked.
+  function partnerStats(P){
+    var by = {}, list = mhMatches(P);
+    list.forEach(function(x){
+      var n = (x.p || [])[0];
+      if (!n) return;
+      var k = slug(n), o = by[k] = by[k] || {n:n, w:0, l:0};
+      if (x.w) o.w++; else o.l++;
+    });
+    var rows = Object.keys(by).map(function(k){ var o = by[k]; o.m = o.w + o.l; o.pct = Math.round(100 * o.w / o.m); return o; });
+    rows.sort(function(a, b){ return b.m - a.m || b.w / b.m - a.w / a.m || a.n.localeCompare(b.n); });
+    var best = rows.filter(function(o){ return o.m >= 3; }).sort(function(a, b){ return b.w / b.m - a.w / a.m || b.m - a.m; })[0] || null;
+    return {rows:rows, best:best, total:list.length};
+  }
+  var PA_OPEN = {};
+  function renderPartners(who){
+    var host = document.getElementById("paList-" + who), meta = document.getElementById("paMeta-" + who), P = BYKEY[who];
+    if (!host || !P) return;
+    var ready = !!mhGet(P).t, st = partnerStats(P);
+    if (meta) meta.textContent = "12 mån" + (st.total ? " · " + st.total + " matcher" : "");
+    if (!st.rows.length){
+      host.innerHTML = '<p class="empty" style="padding:12px 0" role="status">' + (ready ? "Inga turneringsmatcher det senaste året." : "Räknar matcher …") + '</p>';
+      return;
+    }
+    var all = !!PA_OPEN[who], list = all ? st.rows : st.rows.slice(0, 6);
+    host.innerHTML = list.map(function(o){
+      var Q = BYNAME[slug(o.n)], best = o === st.best, tag = Q ? "a" : "div";
+      return '<' + tag + ' class="parow' + (best ? " best" : "") + '"' + (Q ? ' href="#' + esc(Q.key) + '"' : "") + '>' + '<span class="avs">' + avatar(o.n) + '</span>' +
+        '<span class="pn"><b>' + esc(o.n) + '</b><span>' + o.m + (o.m === 1 ? " match" : " matcher") + " · " + o.pct + ' % vinster</span><span class="bar" aria-hidden="true"><i style="width:' + o.pct + '%"></i></span></span>' +
+        '<span class="pv"><b>' + o.w + "–" + o.l + '</b>' + (best ? '<span class="pb win">Bäst</span>' : '<span>V–F</span>') + '</span></' + tag + '>';
+    }).join("") + (st.rows.length > 6 ? '<div style="padding:10px 0"><button class="morebtn" type="button" data-pa="' + esc(who) + '" aria-expanded="' + (all ? "true" : "false") + '">' + (all ? "Visa färre" : "Visa alla " + st.rows.length) + '</button></div>' : "");
+    var note = document.getElementById("paNote-" + who);
+    if (note) note.textContent = st.best ? "Bäst ihop med " + st.best.n.split(" ")[0] + ": " + st.best.w + "–" + st.best.l + " (" + st.best.pct + " %). Turneringsmatcher, de senaste 12 månaderna." :
+      "Turneringsmatcher, de senaste 12 månaderna. Bäst ihop visas från 3 matcher.";
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target && e.target.closest && e.target.closest("[data-pa]");
+    if (!b) return;
+    var w = b.getAttribute("data-pa");
+    PA_OPEN[w] = !PA_OPEN[w];
+    renderPartners(w);
+  });
+  document.addEventListener("visibilitychange", function(){
+    if (document.visibilityState !== "hidden" && VIEW.name === "player" && MH_WANT[VIEW.who]) mhSoon(BYKEY[VIEW.who]);
+  });
 
   /* ================= info ================= */
   var SRC = {

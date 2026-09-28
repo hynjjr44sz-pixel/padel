@@ -5,8 +5,9 @@ import assert from "node:assert/strict";
 import worker, { tick, _resetMemory, rankingChecks, runDiscovery } from "../src/index.js";
 import { discover, wlOf, skillOf, PLAYERS } from "../src/discover.js";
 import { install, wlFor, climbOf } from "./fake-rankedin.mjs";
+import { readFileSync } from "node:fs";
 
-const ROSTER = PLAYERS;
+const ROSTER = PLAYERS, RJ = JSON.parse(readFileSync(new URL("../../players.json", import.meta.url), "utf8"));
 function kv() {
   const m = new Map(), ops = { get: 0, put: 0 }, puts = [];
   return { m, ops, puts,
@@ -48,7 +49,7 @@ test("discover: this year's W–L per player from the profile (no extra call), t
 test("discovery: the board goes into disc; unchanged W–L -> no write; a new result -> one write", async () => {
   install({});
   const PUSH = kv(), t0 = new Date("2026-09-30T10:07:00Z");
-  let rec = await runDiscovery({ PUSH }, t0, { left: 45 }, null, {});
+  let rec = await runDiscovery({ PUSH }, t0, { left: 500 }, null, {}, 500);   // everyone at once (the real first run is budgeted)
   assert.equal(Object.keys(rec.board).length, ROSTER.filter(p => p.rin).length, "first run: everyone");
   const puts = PUSH.ops.put;
   for (let k = 1; k <= 5; k++) { _resetMemory(); rec = await runDiscovery({ PUSH }, new Date(+t0 + k * 600e3), { left: 45 }, rec, {}); }
@@ -66,23 +67,24 @@ test("ranking check: standing, climb and skill into the board; backfill from ran
   const PUSH = kv(), env = { PUSH, ORIGIN: "x" };
   PUSH.m.set("disc", JSON.stringify({ at: "2026-09-28T01:07:00Z", events: [], board: {} }));
   // Known before the deploy: Thea's standing (the board has no ranking yet)
-  PUSH.m.set("rank:1675246", JSON.stringify({ d: "2026-09-21", s: 150, p: 68.695 }));
+  PUSH.m.set("rank:1675246", JSON.stringify({ d: "2026-09-14", s: 168, p: 60.1 }));
   PUSH.m.set("rankdate:4:83", "2026-09-21"); PUSH.m.set("rankdate:3:82", "2026-09-21");
   const t = new Date("2026-09-28T03:52:00Z"), log = {};
   await rankingChecks(env, t, { left: 45 }, log);
   let b = JSON.parse(PUSH.m.get("disc")).board;
-  assert.deepEqual(b["1675246"], { rk: 150, rp: 68.695, rd: "2026-09-21", up: null }, "canary list unchanged: backfilled from rank:<pid>");
-  assert.deepEqual(b["1849853"], { rd: null }, "nothing known yet: noted once, not read again");
+  assert.deepEqual(b["1675246"], { rk: 168, rp: 60.1, rd: "2026-09-14", up: null }, "canary list unchanged: backfilled from rank:<pid>");
+  assert.deepEqual(b["1849853"], { rk: 281, rp: 37.965, rd: "2026-09-21", up: -3 }, "the list's canary (first player) looked up");
+  assert.deepEqual(b["1702723"], { rd: null }, "nothing known yet: noted once, not read again");
   const skilled = Object.keys(b).filter(pid => "sk" in b[pid]);
   assert.equal(skilled.length, 6, "6 skills an hour");
-  skilled.forEach(pid => assert.equal(b[pid].sk, ROSTER.find(p => String(p.pid) === pid) && JSON.parse(JSON.stringify(b[pid])).sk));
+  skilled.forEach(pid => assert.equal(b[pid].sk, RJ.find(p => String(p.pid) === pid).skill ?? null, pid));
   assert.equal(st.calls.filter(c => /GetPlayerRatingAsync/.test(c)).length, 6);
   // Same hour again: nothing new -> no write, and the rank keys are not read again
   const puts = PUSH.ops.put, gets = PUSH.ops.get;
   _resetMemory();
   await rankingChecks(env, t, { left: 45 }, {});
   assert.equal(PUSH.ops.put, puts, "unchanged: no KV write");
-  assert.ok(PUSH.ops.get - gets <= 4, "no backfill reads the second time: " + (PUSH.ops.get - gets));
+  assert.ok(PUSH.ops.get - gets <= 5, "no backfill reads the second time: " + (PUSH.ops.get - gets));
   // Three hours: the whole roster has a skill
   for (let h = 1; h <= 2; h++) await rankingChecks(env, new Date(+t + h * 3600e3), { left: 45 }, {});
   b = JSON.parse(PUSH.m.get("disc")).board;
@@ -106,7 +108,7 @@ test("ranking check: standing, climb and skill into the board; backfill from ran
 test("GET /events serves the board; the tick at :52 fills it next to the notiser", async () => {
   install({});
   const PUSH = kv(), env = { PUSH, ORIGIN: "x", NOW: "2026-09-30T10:07:00Z" };
-  await tick(env);
+  for (const m of ["07", "17", "27", "37", "47"]) { _resetMemory(); env.NOW = "2026-09-30T10:" + m + ":00Z"; await tick(env); }
   _resetMemory();
   env.NOW = "2026-09-30T10:52:00Z";
   await tick(env);

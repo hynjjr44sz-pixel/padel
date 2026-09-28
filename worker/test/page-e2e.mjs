@@ -28,7 +28,7 @@ await tick({ PUSH, NOW: "2026-09-27T11:07:00Z", ORIGIN: "x" });
 // Discovery rounds of 4 players (during the live day): each looks at its players' RankedIn profile photos too.
 for (const m of ["11:17", "11:27", "11:37", "11:47"]) { _resetMemory(); await tick({ PUSH, NOW: "2026-09-27T" + m + ":00Z", ORIGIN: "x", RANK_OFF: "1" }); }
 _resetMemory();
-await tick({ PUSH, NOW: "2026-09-27T11:52:00Z", ORIGIN: "x", RANK_OFF: "1" });
+await tick({ PUSH, NOW: "2026-09-27T11:52:00Z", ORIGIN: "x" });   // minute 52: ranking + 6 skills into the leaderboard
 const EVENTS = await (await worker.fetch(new Request("https://w/events"), { PUSH, NOW: "2026-09-27T11:52:00Z", ORIGIN: "x" })).json();
 // The week after (Veckans vinnare): the real final (Thea and Cassandra 6-1 6-4) seen by the live tick, then a full
 // round of discovery on Tuesday (Järfälla moves to "past"), GET /events on Tuesday.
@@ -45,11 +45,20 @@ assert.deepEqual(EVENTS_WEEK.wins.map(w => w.id + " " + w.s), ["164681:1 6-1 6-4
 assert.ok(EVENTS_WEEK.past.some(e => e.classId === 164681) && !EVENTS_WEEK.events.some(e => e.classId === 164681), "Järfälla in past");
 assert.ok(EVENTS.live["1675246"], "worker live view for Thea");
 assert.equal(EVENTS.photos["1055851"].placeholder, false, "worker photos: Sanna has a RankedIn photo");
+assert.deepEqual([EVENTS.board["1675246"].w, EVENTS.board["1675246"].rk, EVENTS.board["1680004"].up], [32, 150, 41], "worker board: W–L, standing, climb");
+assert.ok(EVENTS_WEEK.board["1675246"].rk === 150, "board kept through later discovery rounds");
 
 // What the page reads besides the discovery (ranking, skill, profile, SPL table): made up from players.json.
 const ROSTER = JSON.parse(readFileSync(new URL("../../players.json", import.meta.url), "utf8"));
-function pageApi(path, over) {
+// Thea's earlier tournaments (seed list in index.html, stage 0): three with a draw, the rest none.
+const drawOf = cid => "/tournament/GetDrawsForStageAndStrengthAsync?tournamentClassId=" + cid + "&drawStrength=0&drawStage=0&isReadonly=true&language=en";
+const FX = n => JSON.parse(readFileSync(new URL("./fixtures/" + n, import.meta.url), "utf8"));
+const PAST = { [drawOf(164475)]: FX("dc_loses_qf.json"), [drawOf(166356)]: FX("vista_rr_new.json"), [drawOf(164806)]: FX("dc_final.json") };
+// Each opponent on their own (POST, real endpoint's shape): made up per id.
+const oppStats = ids => ids.map(id => ({ ParticipantId: id, FirstName: "X", LastName: "Y", All: { Total: id % 5, Wins: Math.floor((id % 5) / 2), WinPercentage: 50 } }));
+function pageApi(path, over, req) {
   const u = new URL("https://x" + path), q = k => u.searchParams.get(k), p = u.pathname.toLowerCase();
+  if (p.endsWith("/rating/getplayerselectedopponentsstatsasync")) return req && req.method() === "POST" ? oppStats(JSON.parse(req.postData() || "{}").participantIds || []) : null;
   const byPid = id => ROSTER.find(x => String(x.pid) === String(id));
   if (p.endsWith("/ranking/searchrankingplayersasync")) {
     const r = ROSTER.find(x => x.name === q("searchTerm"));
@@ -83,13 +92,14 @@ async function newPage(opts = {}) {
     colorScheme: opts.dark ? "dark" : "light", serviceWorkers: "block" });
   await ctx.grantPermissions(["notifications"], { origin: new URL(BASE).origin });
   const page = await ctx.newPage();
-  const errors = [], api = { ri: 0, posts: [], img: [] };
+  const errors = [], api = { ri: 0, posts: [], img: [], paths: [] };
   // The one expected load error: Oliver's gone RankedIn photo (the page shows initials instead).
   page.on("console", m => { if (m.type() === "error" && !/\/900002/.test((m.location() || {}).url || "")) errors.push(m.text()); });
   page.on("pageerror", e => errors.push(String(e)));
   await page.route("https://api.rankedin.com/**", r => {
     api.ri++;
-    const u = r.request().url(), body = pageApi(u.slice("https://api.rankedin.com/v1".length), opts.over || {});
+    const u = r.request().url(), body = pageApi(u.slice("https://api.rankedin.com/v1".length), { ...PAST, ...(opts.over || {}) }, r.request());
+    api.paths.push(r.request().method() + " " + u.slice("https://api.rankedin.com/v1".length).split("&language")[0]);
     if (process.env.DEBUG) (globalThis.RI_LOG = globalThis.RI_LOG || []).push((body == null ? "404 " : "200 ") + u.slice(27).split("&language")[0]);
     return r.fulfill({ status: body == null ? 404 : 200, contentType: "application/json", body: JSON.stringify(body ?? {}), headers: { "Access-Control-Allow-Origin": "*" } });
   });
@@ -258,6 +268,96 @@ try {
   await touch("touchEnd");
   await page.waitForTimeout(500);
   ok("swipe right -> back to Thea", new URL(page.url()).hash === "#thea", page.url());
+
+  // ---- statistics: Topplistan (home), inbördes möten (hero + draw), Partners ----
+  const SP = "/tmp/claude-0/-home-user-padel/e0bacc1b-df2c-5dc3-aa35-2abf1c7370b5/scratchpad/";
+  for (const dark of [false, true]) {
+    const tag = dark ? "dark" : "light";
+    ({ page, ctx, errors, api } = await newPage({ dark }));
+    await page.goto(url(""));
+    await page.waitForSelector("#topList .trow");
+    const rows = async () => page.$$eval("#topList .trow", a => a.map(x => x.querySelector(".tn b").firstChild.textContent + "=" + x.querySelector(".tv b").firstChild.textContent));
+    let r = await rows();
+    if (!dark) {
+      ok("Topplistan: skill, damer by default, Thea first (15.94)", /^Thea Holmberg Löving=15\.94$/.test(r[0]) && r.length === 5, r);
+      await page.click('#topGender [data-g="M"]');
+      r = await rows();
+      ok("Topplistan: herrar skill, Victor first", /^Victor/.test(r[0]) && r.every(x => !/Thea/.test(x)), r);
+      await page.click('#topTabs [data-top="rank"]');
+      r = await rows();
+      ok("Topplistan: ranking herrar, #118 first (Tobias)", r[0] === "Tobias Strandberg=#118" || /=#118$/.test(r[0]), r);
+      ok("Topplistan: ranking note counts unranked", /utan ranking/.test(await page.textContent("#topNote")));
+      await page.click('#topTabs [data-top="wins"]');
+      r = await rows();
+      ok("Topplistan: årets vinster, everyone, Thea 32 first", /^Thea Holmberg Löving=32$/.test(r[0]) && await page.$eval("#topGender", g => g.hidden), r);
+      await page.click("#topMore");
+      ok("Topplistan: Visa alla shows everyone with a record", (await rows()).length > 5, await rows());
+      await page.click('#topTabs [data-top="climb"]');
+      r = await rows();
+      ok("Topplistan: veckans klättrare, Kian +41 first, only climbers", /^Kian Borgström=\+41$/.test(r[0]) && r.every(x => /=\+\d+$/.test(x)), r);
+      ok("Topplistan: remembered on this device", (await page.evaluate(() => JSON.parse(localStorage.getItem("padel.top.v1")).tab)) === "climb");
+      ok("Topplistan: no RankedIn calls on home", api.ri <= 2, api.paths);
+      ok("Topplistan: no horizontal scroll at 390", await noHScroll(page));
+      await page.click('#topTabs [data-top="skill"]');
+      await page.click('#topGender [data-g="F"]');
+    }
+    await (await page.$("#secTop")).screenshot({ path: SP + "stats-top-" + tag + ".png" });
+    await page.click('#topTabs [data-top="climb"]');
+    await (await page.$("#secTop")).screenshot({ path: SP + "stats-top-climb-" + tag + ".png" });
+    // Thea: next match QF vs Pettersson Österberg / Ekeland; she beat them at UNO July (fixture)
+    const before = api.paths.length;
+    await page.goto(url("#thea"));
+    await page.waitForSelector("#p-thea .h2h .v", { timeout: 10000 }).catch(() => {});
+    await page.waitForFunction(() => /\d–\d mot|Första/.test(document.querySelector("#p-thea .h2h")?.textContent || "") && /Var för sig/.test(document.querySelector("#p-thea .h2h")?.textContent || ""), null, { timeout: 10000 }).catch(() => {});
+    const h2h = (await page.textContent("#p-thea .h2h").catch(() => "")).replace(/\s+/g, " ");
+    await page.waitForSelector("#paList-thea .parow", { timeout: 8000 }).catch(() => {});
+    const calls = api.paths.slice(before);
+    if (!dark) {
+      ok("hero: Tidigare möten vs the next pair from Thea's earlier draws", /Tidigare möten/.test(h2h) && /1–0/.test(h2h) && /Pettersson Österberg \/ Ekeland/.test(h2h), h2h);
+      ok("hero: each opponent on their own (RankedIn opponent stats, one POST)", /Var för sig:/.test(h2h) && calls.filter(c => /^POST .*SelectedOpponentsStats/.test(c)).length === 1, [h2h, calls]);
+      ok("draw: the next match's card shows the record", /Tidigare möten 1–0/.test(await page.$eval("#p-thea .m.next", m => m.textContent).catch(() => "")), await page.$eval("#p-thea .m.next", m => m.textContent).catch(() => ""));
+      const clip = await page.$eval("#p-thea .m.next .mf", el => { const r = el.getBoundingClientRect(), m = el.closest(".m").getBoundingClientRect(), sc = el.closest(".bk-scroll").getBoundingClientRect(), sl = el.closest(".slot").getBoundingClientRect();
+        return { mf: [r.top, r.bottom], m: [m.top, m.bottom], sc: [sc.top, sc.bottom], slot: [sl.top, sl.bottom], ok: r.bottom <= m.bottom + 0.5 && r.bottom <= sc.bottom && m.bottom <= sl.bottom + 1 && m.top >= sl.top - 1 }; }).catch(e => ({ ok: false, e: String(e) }));
+      ok("draw: the record line fits in the card and its slot", clip.ok, clip);
+      const pa = await page.$$eval("#paList-thea .parow", a => a.map(x => x.querySelector(".pn b").textContent + "=" + x.querySelector(".pv b").textContent + (x.classList.contains("best") ? "*" : "")));
+      ok("Partners: Cassandra with W–L, marked best (3+ matches)", pa.length >= 1 && /^Cassandra Ersson=\d+–\d+\*$/.test(pa[0]), pa);
+      ok("Partners: note names the best partner", /Bäst ihop med Cassandra/.test(await page.textContent("#paNote-thea")));
+      const draws = calls.filter(c => /GetDrawsForStage/.test(c) && !/164681/.test(c));
+      ok("Thea page: earlier draws fetched once each (8 classes, stage 0)", draws.length <= 8 && new Set(draws).size === draws.length, calls);
+      ok("Thea page: history rows show the record vs the same pair", /mot paret \d+–\d+/.test(await page.textContent("#hist-thea").catch(() => "")), await page.textContent("#hist-thea").catch(() => ""));
+      ok("Thea page: no horizontal scroll", await noHScroll(page));
+      // Again (new page view, same device): matches and opponent stats from the cache, no fetch
+      const b2 = api.paths.length;
+      await page.reload();
+      await page.waitForSelector("#p-thea .h2h .v", { timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(800);
+      const again = api.paths.slice(b2).filter(c => /SelectedOpponents|GetDrawsForStage.*tournamentClassId=(164475|166356|164806)/.test(c));
+      ok("second view: no refetch of earlier draws or opponent stats (24 h cache)", again.length === 0, again);
+    }
+    await (await page.$("#p-thea .board")).screenshot({ path: SP + "stats-h2h-" + tag + ".png" });
+    const nx = await page.$("#p-thea .m.next");
+    if (nx) { await nx.evaluate(e => e.scrollIntoView({ block: "center", behavior: "instant" })); await page.waitForTimeout(700); await nx.screenshot({ path: SP + "stats-h2h-card-" + tag + ".png" }); }
+    const pas = await page.$("#pa-thea");
+    await pas.scrollIntoViewIfNeeded();
+    await pas.screenshot({ path: SP + "stats-partners-" + tag + ".png" });
+    ok("stats " + tag + ": no CSP violations", (await page.evaluate(() => window.__csp)).length === 0, await page.evaluate(() => window.__csp));
+    ok("stats " + tag + ": no console errors", errors.length === 0, errors);
+    await ctx.close();
+  }
+  // Hidden page: the matches are not counted (nothing fetched) until it is visible again
+  ({ page, ctx, errors, api } = await newPage());
+  await page.addInitScript(() => { Object.defineProperty(document, "visibilityState", { configurable: true, get: () => window.__vis || "visible" }); window.__vis = "hidden"; });
+  await page.goto(url("#kian"));
+  await page.waitForSelector("#p-kian:not([hidden]) .hero");
+  await page.waitForTimeout(1200);
+  ok("hidden tab: no draws or opponent stats fetched for Kian", !api.paths.some(c => /SelectedOpponents|GetDrawsForStage.*(164472|166357|161449|153541)/.test(c)), api.paths);
+  await page.evaluate(() => document.getElementById("pa-kian").scrollIntoView());
+  await page.waitForTimeout(600);
+  ok("hidden tab: Partners on screen still waits", !(await page.evaluate(() => !!localStorage.getItem("padel.mh.v1.1680004"))));
+  await page.evaluate(() => { window.__vis = "visible"; document.dispatchEvent(new Event("visibilitychange")); });
+  await page.waitForTimeout(1500);
+  ok("visible again: Kian's matches are counted", /Partners|Inga turneringsmatcher|matcher/.test(await page.textContent("#pa-kian")) && await page.evaluate(() => !!localStorage.getItem("padel.mh.v1.1680004")));
+  await ctx.close();
 
   // ---- dark mode, 360 wide ----
   await ctx.close();
