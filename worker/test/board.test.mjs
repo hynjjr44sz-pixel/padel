@@ -72,13 +72,14 @@ test("ranking check: standing, climb and skill into the board; backfill from ran
   const t = new Date("2026-09-28T03:52:00Z"), log = {};
   await rankingChecks(env, t, { left: 45 }, log);
   let b = JSON.parse(PUSH.m.get("disc")).board;
-  assert.deepEqual(b["1675246"], { rk: 168, rp: 60.1, rd: "2026-09-14", up: null }, "canary list unchanged: backfilled from rank:<pid>");
-  assert.deepEqual(b["1849853"], { rk: 281, rp: 37.965, rd: "2026-09-21", up: -3 }, "the list's canary (first player) looked up");
-  assert.deepEqual(b["1702723"], { rd: null }, "nothing known yet: noted once, not read again");
+  const noSk = x => { const { sk, ...r } = x || {}; return r; };
+  assert.deepEqual(noSk(b["1675246"]), { rk: 168, rp: 60.1, rd: "2026-09-14", up: null }, "canary list unchanged: backfilled from rank:<pid>");
+  assert.deepEqual(noSk(b["1849853"]), { rk: 281, rp: 37.965, rd: "2026-09-21", up: -3 }, "the list's canary (first player) looked up");
+  assert.deepEqual(noSk(b["1702723"]), { rd: null }, "nothing known yet: noted once, not read again");
   const skilled = Object.keys(b).filter(pid => "sk" in b[pid]);
-  assert.equal(skilled.length, 6, "6 skills an hour");
+  assert.equal(skilled.length, Math.min(20, RJ.filter(p => p.rid).length), "the whole roster's skill every hour");
   skilled.forEach(pid => assert.equal(b[pid].sk, RJ.find(p => String(p.pid) === pid).skill ?? null, pid));
-  assert.equal(st.calls.filter(c => /GetPlayerRatingAsync/.test(c)).length, 6);
+  assert.equal(st.calls.filter(c => /GetPlayerRatingAsync/.test(c)).length, Math.min(20, RJ.filter(p => p.rid).length));
   // Same hour again: nothing new -> no write, and the rank keys are not read again
   const puts = PUSH.ops.put, gets = PUSH.ops.get;
   _resetMemory();
@@ -116,7 +117,7 @@ test("GET /events serves the board; the tick at :52 fills it next to the notiser
   const body = await (await worker.fetch(new Request("https://w/events"), env)).json();
   const thea = body.board["1675246"];
   assert.deepEqual([thea.w, thea.l, thea.y, thea.rk, thea.rp, thea.up], [32, 4, 2026, 150, 68.695, 18]);
-  assert.equal(Object.values(body.board).filter(x => typeof x.sk === "number").length, 6);
+  assert.ok(Object.values(body.board).filter(x => typeof x.sk === "number").length >= 12);
 });
 
 test("discovery from a stale isolate copy keeps the standings and skills the ranking check wrote meanwhile", async () => {
