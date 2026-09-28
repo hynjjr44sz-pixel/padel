@@ -42,11 +42,43 @@ function ranking(name) {
     ParticipantPoints: { RankingDate: r.rankDate + "T00:00:00", Standing: r.rank, Points: r.points } }] : [] };
 }
 
+// "Förslag på tävlingar" (fixtures/cal, saved 2026-09-28): the SPF calendar (45 events), each event's info and classes,
+// and the ranking list's boundary rows. Radius filters: the event's own coordinates, else its town's (made up here,
+// as RankedIn's server has them).
+const C = n => JSON.parse(readFileSync(new URL("./fixtures/cal/" + n + ".json", import.meta.url)));
+export const TOWN = { 73353: [59.40, 18.03], 69142: [55.72, 13.02], 73575: [55.79, 13.11], 74476: [57.71, 11.97], 73208: [58.59, 16.19],
+  73832: [58.41, 15.62], 73468: [59.14, 18.13], 73211: [57.71, 11.97], 73406: [57.77, 12.27], 73585: [56.67, 12.86], 74299: [55.64, 13.07],
+  71858: [59.27, 15.21], 73041: [59.38, 13.50], 73214: [57.16, 13.41], 74469: [57.78, 14.16], 74584: [63.83, 20.26], 73334: [57.66, 12.12],
+  73802: [59.36, 18.00], 74668: [65.58, 22.15], 73212: [59.14, 18.13], 74167: [59.27, 15.21], 73742: [59.40, 18.08], 74337: [59.37, 16.51],
+  74394: [56.05, 12.69], 74479: [57.30, 13.54], 73829: [59.20, 17.63] };
+export function kmFromHome(id) {
+  const i = C("info_" + id).TournamentSidebarModel, [la, lo] = i.Latitude ? [i.Latitude, i.Longtitude] : TOWN[id], r = x => x * Math.PI / 180;
+  const h = Math.sin(r(la - 58.903) / 2) ** 2 + Math.cos(r(58.903)) * Math.cos(r(la)) * Math.sin(r(lo - 17.947) / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
+const CAP_ROW = { "3:61": ["rank_m61", 2], "3:201": ["rank_m201", 2], "3:1201": ["rank_m1201", 2], "4:51": ["rank_w51", 0], "4:161": ["rank_w161", 0], "4:701": ["rank_w701", 2] };
+function calRoute(p, q) {
+  if (p.endsWith("/organization/getorganisationeventsasync")) {
+    if (!q("take")) return null;
+    const all = C("org_window"), r = Number(q("radiusKm"));
+    return r ? { payload: all.payload.filter(e => kmFromHome(e.eventId) <= r), totalCount: 0 } : all;
+  }
+  if (p.endsWith("/tournament/getclassessectionasync")) { try { return C("classes_" + q("tournamentId")); } catch (e) { return null; } }
+  if (p.endsWith("/tournament/getinfoasync") && q("language") === "sv") { try { return C("info_" + q("id")); } catch (e) { return null; } }
+  if (p.endsWith("/ranking/searchrankingplayersasync") && q("searchTerm") === "") {
+    const x = CAP_ROW[q("rankingType") + ":" + (Number(q("skip")) + 1)];
+    return x ? { Payload: [C(x[0]).Payload[x[1]]] } : { Payload: [] };
+  }
+  return undefined;
+}
+
 // Routes a RankedIn API path (with query) to a response body. Unknown paths -> 404.
 export function route(path, over = {}) {
   const u = new URL("https://x" + path), q = k => u.searchParams.get(k), p = u.pathname.toLowerCase();
   if (over[path] !== undefined) return over[path];
   for (const k of Object.keys(over)) if (k.endsWith("*") && path.startsWith(k.slice(0, -1))) return over[k];
+  const cal = calRoute(p, q);
+  if (cal !== undefined) return cal;
   // Thea and Cassandra (same pair in Damer C, same SPL team), Kian and Andreas (Herrar C, SPL team); others: nothing.
   if (p.endsWith("/player/participatedeventsasync")) {
     const pid = q("playerId");

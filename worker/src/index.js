@@ -8,6 +8,7 @@ import { discover, drawPath, rubbersPath, namesPath, drawsOf, ratingPath, skillO
 import { parseTie, snapshotTie, tieNotes, tieSummary } from "./teamleague.js";
 import { b64u, vapidKey, send } from "./webpush.js";
 import { dayOf, localToDate, offsetAt } from "./tz.js";
+import { calendarDue, calendarStep, sameCalendar, registrations } from "./calendar.js";
 
 // Push services we are willing to POST to (no open relay). PUSH_HOST_ANY=1 is for local tests only.
 const PUSH_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(fcm\.googleapis\.com|android\.googleapis\.com|push\.services\.mozilla\.com|push\.apple\.com|notify\.windows\.com)(:\d+)?\//;
@@ -80,6 +81,15 @@ async function handle(req, env) {
     return json({ at: rec ? rec.at : null, src: "worker", events, past, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {},
       board: (rec && rec.board) || {} }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
+  if (route === "GET /cal") {
+    // "Förslag på tävlingar": sanctioned tournaments within 200 km, next 8 weeks (built nightly), with the roster's
+    // entries as the discovery record has them now. Separate from /events (which stays small), cached an hour.
+    const cal = await loadCal(env), rec = await loadRecord(env);
+    const out = cal ? { ...cal, events: cal.events.map(e => ({ ...e })) } : { v: 1, at: null, caps: null, events: [] };
+    const regs = registrations(rec, out.events.map(e => e.id));
+    if (rec) out.events.forEach(e => { e.regs = regs.filter(r => r.tid === e.id).map(r => ({ pid: r.pid, classId: r.classId })); });
+    return json(out, 200, { ...h, "Cache-Control": "public, max-age=3600" });
+  }
   if (route === "POST /subscribe") {
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
@@ -115,7 +125,7 @@ const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8;
 
 /* ---- discovered events: KV "disc" = {at, events, ended, none, past, photos, board}. Read at most every 5 min per isolate. ---- */
 let MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 };
-export function _resetMemory() { MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 }; LV = { at: 0, v: null }; }
+export function _resetMemory() { MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 }; LV = { at: 0, v: null }; CAL = { v: undefined, at: 0 }; }
 async function loadRecord(env) {
   if (MEM.rec !== undefined && Date.now() - MEM.readAt < 5 * 60e3) return MEM.rec;
   let rec = null;
@@ -384,6 +394,37 @@ function mergeForDevice(list) {
 }
 export function _internals() { return { dedupe, mergeForDevice, pidsOfEv, teamRoster }; }
 
+/* ---- "Förslag på tävlingar": KV "cal" (built nightly by calendar.js, written only when it changed), "calw" (work in progress) ---- */
+let CAL = { v: undefined, at: 0 };
+async function loadCal(env) {
+  if (CAL.v !== undefined && Date.now() - CAL.at < 10 * 60e3 && !env.NOW) return CAL.v;
+  let v = null;
+  try { v = JSON.parse((await env.PUSH.get("cal")) || "null"); } catch (e) { v = null; }
+  CAL = { v: v && Array.isArray(v.events) ? v : null, at: Date.now() };
+  return CAL.v;
+}
+// One step of the night's calendar (03:23-03:38 local, a step per tick until done): at most 40 RankedIn calls, and
+// never more than the tick has left (5 kept for pushes). KV: "calw" written when the step got somewhere, "cal" when
+// the finished calendar differs from the stored one.
+export async function runCalendar(env, t, budget, rec, log = {}) {
+  let w = null, prev = null;
+  try { w = JSON.parse((await env.PUSH.get("calw")) || "null"); } catch (e) { w = null; }
+  if (w && w.done && w.day === dayOf(t)) return null;
+  try { prev = JSON.parse((await env.PUSH.get("cal")) || "null"); } catch (e) { prev = null; }
+  const mine = { left: Math.max(0, Math.min(40, budget.left - 5)) }, start = mine.left, was = JSON.stringify(w);
+  const r = await calendarStep(getter(env, mine), t, w, prev, rec);
+  budget.left -= start - mine.left;
+  log.cal = start - mine.left;
+  if (r.cal && !sameCalendar(prev, r.cal)) {
+    await env.PUSH.put("cal", JSON.stringify(r.cal));
+    log.writes = (log.writes || 0) + 1; log.calWritten = 1;
+    CAL = { v: r.cal, at: Date.now() };
+  }
+  const next = JSON.stringify(r.cal ? { day: r.w.day, done: 1 } : r.w);
+  if (next !== was) { await env.PUSH.put("calw", next); log.writes = (log.writes || 0) + 1; }
+  return r.cal;
+}
+
 /* ---- class winners ("Veckans vinnare"): KV "wins" = {at, list}, written only when an entry is added or corrected ---- */
 // Entry per class and place: 1 = a roster player's pair won the class, 2 = lost the final. Kept 30 days (max 40).
 // {id: "<classId>:<place>", place, classId, tournamentId, name, cls, url, date (last match day), d, pids (roster players
@@ -506,9 +547,12 @@ export async function tick(env, events) {
   if (mm === (env.WINS_MINUTE != null ? +env.WINS_MINUTE : WINS_MINUTE)) {   // WINS_MINUTE: local tests only
     try { await winsBackfill(env, t, list.concat((rec && rec.past) || []), log); } catch (e) { console.warn("wins backfill", e.message); }
   }
+  if (!events && env.CAL_OFF !== "1" && calendarDue(t, env)) {   // CAL_OFF / CAL_ANY: local tests only
+    try { await runCalendar(env, t, budget, rec, log); } catch (e) { console.warn("calendar", e.message); }
+  }
   const evs = activeEvents(t, list);
   if (!evs.length && !pubMsgs.length) {
-    if (log.discovered != null || log.writes) return { active: 0, discovered: log.discovered, refreshed: log.refreshed, writes: log.writes };
+    if (log.discovered != null || log.writes || log.cal != null) return { active: 0, discovered: log.discovered, refreshed: log.refreshed, writes: log.writes, ...(log.cal != null ? { cal: log.cal } : {}) };
     return { active: 0 };
   }
   log.active = evs.length;
@@ -687,6 +731,6 @@ async function testPush(env) {
 export default {
   fetch: (req, env) => handle(req, env).catch(e => json({ error: "server error" }, 500, cors(req, env))),
   scheduled(controller, env, ctx) {
-    ctx.waitUntil(tick(env).then(r => { if (r.active || r.discovered != null) console.log("tick", JSON.stringify(r)); }));
+    ctx.waitUntil(tick(env).then(r => { if (r.active || r.discovered != null || r.cal != null) console.log("tick", JSON.stringify(r)); }));
   }
 };
