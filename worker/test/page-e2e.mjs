@@ -296,7 +296,7 @@ try {
         ok("thea: distance (Jordbro inom 3 mil, own coordinates to one decimal)", list.some(x => /inom 3 mil/.test(x.what)) || list.some(x => /\d,\d mil/.test(x.what)), list.map(x => x.what));
       } else {
         const vista = list.find(x => x.id === 73554);
-        ok("kian: Vista suggested with Nynäs-spelare anmälda: Thea, Cassandra; Herr C/B classes", vista && /Nynäs-spelare anmälda: Thea, Cassandra/.test(vista.facts) &&
+        ok("kian: Vista suggested with Nynäs-spelare anmälda: Thea, Nathalie (her partner); Herr C/B classes", vista && /Nynäs-spelare anmälda: Thea, Nathalie/.test(vista.facts) &&
           list.every(x => x.chips.every(c => /^(Herr|Herrar|HERR|HERRAR)\b.*\b[BC]\b/i.test(c.replace("*", "")))), list);
         ok("kian: Du får spela C", /^Du får spela C och uppåt/.test(note), note);
       }
