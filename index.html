@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-1B3LH3+UXBsbDqk3a2/Hb8WjXIntdoxXpbrFs9FJAFk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bwPEbec01WvU4LgMCo99iOGXPYPlp8dy27TtwAi4z+k='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -906,7 +906,7 @@
   .tcard h3{ margin:0; font:900 24px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; }
   .tcard .tl{ font:500 11px/1.35 "Chivo Mono", monospace; color:var(--dim); margin-top:4px; }
   .capw{ position:relative; display:inline-flex; }
-  .cap{ position:absolute; right:-3px; bottom:-2px; width:17px; height:17px; border-radius:50%; background:var(--ball); color:#0A1733; border:2px solid var(--surface); font:800 10px/13px "Instrument Sans", sans-serif; font-style:normal; text-align:center; box-sizing:border-box; }
+  .capw .cap{ position:absolute; right:-3px; bottom:-2px; width:17px; height:17px; border-radius:50%; background:var(--ball); color:#0A1733; border:2px solid var(--surface); font:800 10px/13px "Instrument Sans", sans-serif; font-style:normal; text-align:center; box-sizing:border-box; }
   .troster{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:8px 6px; }
   .troster a{ --s:38px; --ring:var(--surface); display:flex; flex-direction:column; align-items:center; gap:4px; min-width:52px; max-width:84px; color:var(--ink); text-decoration:none; font:600 11px/1.1 "Instrument Sans", sans-serif; text-align:center; }
   .troster a span{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -3723,7 +3723,7 @@
       '<section aria-labelledby="h-pa-' + k + '" id="pa-' + k + '"><div class="sh"><h2 id="h-pa-' + k + '">Partners</h2><div class="meta" id="paMeta-' + k + '">12 mån</div></div><div class="card partners" id="paList-' + k + '"></div><p class="panote" id="paNote-' + k + '"></p></section>' +
       '<section aria-labelledby="h-hist-' + k + '" id="hs-' + k + '" hidden><div class="sh"><h2 id="h-hist-' + k + '">Senaste matcher</h2><div class="meta" id="histMeta-' + k + '"></div></div><div class="card hist" id="hist-' + k + '"></div></section>' +
       '<section aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">Kommande</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div></section>' +
-      '<section aria-labelledby="h-sg-' + k + '" id="sg-' + k + '"><div class="sh"><h2 id="h-sg-' + k + '">Förslag på tävlingar</h2><div class="meta">Inom 20 mil</div></div>' +
+      '<section aria-labelledby="h-sg-' + k + '" id="sg-' + k + '"><div class="sh"><h2 id="h-sg-' + k + '">Förslag på tävlingar</h2><div class="meta">Inom&nbsp;20&nbsp;mil</div></div>' +
         '<p class="sgnote" id="sgNote-' + k + '" hidden></p><div class="ups" id="sgList-' + k + '"><p class="empty">Hämtar förslag …</p></div></section>' +
       '<section aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">Bra att veta</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>';
   }
