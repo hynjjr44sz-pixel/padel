@@ -41,6 +41,23 @@ test("Thea wins, loses, wins the class", () => {
   assert.deepEqual(c.map(x => x.title), ["Thea och Cassandra vann Damer C!"]);
 });
 
+test("Spanish wording alongside (es): result, next opponent, knockout exit, group placing", () => {
+  const opp = step(DC, "dc_1031.json", "dc_1112.json")[0];
+  assert.deepEqual(opp.es, { title: "Thea y Cassandra contra Pettersson Österberg / Ekeland",
+    body: "Ganaron la ronda 1 7-6 7-6 contra Lundström / Callero. Cuartos de final 12:45 · Pista 1" });
+  const w = step(DC, "dc_1112.json", "dc_wins_qf.json").at(-1);
+  assert.deepEqual(w.es, { title: "Thea y Cassandra ganaron los cuartos de final 6-2 7-5",
+    body: "Contra Pettersson Österberg / Ekeland. Siguiente: semifinal 15:30, Pista 4 contra Wallerman / Lundberg Aguilera." });
+  const l = step(DC, "dc_1112.json", "dc_mtb.json").at(-1);
+  assert.deepEqual(l.es, { title: "Thea y Cassandra perdieron los cuartos de final 3-6 6-4 MTB", body: "Contra Lundström / Callero. Fuera en cuartos. Top 8, bien jugado." });
+  assert.equal(step(DC, "dc_in_final.json", "dc_champ.json")[0].es.title, "¡Thea y Cassandra ganaron Damer C!");
+  const m = parse([F("rr_uno.json")]), before = snapshot(m);
+  delete before["6773468"];
+  const g = notes({ who: "kian", me: "Kian Borgström", cls: "Herr C", classId: 166357 }, m, before);
+  assert.deepEqual(g.map(x => x.es.title), ["Kian y Andreas perdieron el partido de grupo 3-6 2-6", "Kian y Andreas terminaron 4.º en el grupo"]);
+  assert.equal(g[1].es.body, g[1].body, "standings: no words to translate");
+});
+
 test("other results in the class are never pushed", () => {
   const n = step(DC, "dc_1031.json", "dc_wins_qf.json");
   assert.ok(n.length > 0 && n.every(x => /^Thea och Cassandra /.test(x.title)), JSON.stringify(n, null, 1));

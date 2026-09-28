@@ -105,6 +105,61 @@ test("fan-out by follow: Thea and Cassandra in one class; each device gets its p
   assert.match(got.thea[0].url, /^\.\/#(thea|cassandra)\/m6872156$/);
 });
 
+test("fan-out by language: an es device gets the Spanish title/body, an sv device the Swedish one, in the same tick; es is never sent", async () => {
+  const st = install({}), v = await makeVapid(), PUSH = kv();
+  const env = { PUSH, ...v, VAPID_SUBJECT: ORIGIN, ORIGIN, NOW: "2026-09-27T12:00:00+02:00", ADMIN_KEY: "adm" };
+  const devs = {};
+  for (const k of ["sv", "es", "other"]) devs[k] = await makeSubscription("https://fcm.googleapis.com/fcm/send/lang-" + k);
+  await post(env, { subscription: devs.sv.sub, prefs: { follow: [THEA] } });
+  await post(env, { subscription: devs.es.sub, prefs: { follow: [THEA], lang: "es" } });
+  await post(env, { subscription: devs.other.sub, prefs: { follow: [THEA], lang: "de" } });
+  const ev = { cls: "Damer C", classId: 164681, tournamentId: 66374, name: "Järfälla Padel Open no 11", draws: [[0, 0]], key: "t164681-thea", who: "thea",
+    me: "Thea Holmberg Löving", pid: THEA, windowFrom: "2026-09-27T07:00:00+02:00", windowTo: "2026-09-27T23:00:00+02:00", kind: "tournament", cover: ["164681"] };
+  st.over = { "/tournament/GetDrawsForStageAndStrengthAsync*": F("dc_1031.json") };
+  await tick(env, [ev]);
+  st.over = { "/tournament/GetDrawsForStageAndStrengthAsync*": F("dc_1112.json") };
+  const r = await tick(env, [ev]);
+  assert.equal(r.sent, 3);
+  const got = await received(st, devs);
+  assert.deepEqual(got.sv.map(m => [m.title, m.body]), [["Thea och Cassandra möter Pettersson Österberg / Ekeland", "Vann omgång 1 7-6 7-6 mot Lundström / Callero. Kvartsfinal 12:45 · Bana 1"]]);
+  assert.deepEqual(got.es.map(m => [m.title, m.body]), [["Thea y Cassandra contra Pettersson Österberg / Ekeland", "Ganaron la ronda 1 7-6 7-6 contra Lundström / Callero. Cuartos de final 12:45 · Pista 1"]]);
+  assert.deepEqual(got.other, got.sv, "an unknown language: Swedish");
+  assert.deepEqual([got.es[0].tag, got.es[0].url], [got.sv[0].tag, got.sv[0].url], "same tag and link");
+  assert.deepEqual(Object.keys(got.es[0]).sort(), ["body", "tag", "title", "url"], "no es field in the payload");
+  // Admin test push: each device in its language
+  st.pushes.length = 0;
+  const res = await worker.fetch(new Request("https://w/test", { method: "POST", headers: { "X-Admin-Key": "adm" } }), env);
+  assert.equal(res.status, 200);
+  const t = await received(st, devs);
+  assert.deepEqual(t.sv.map(m => m.title), ["Testnotis från Nynäs Padel"]);
+  assert.deepEqual(t.es.map(m => [m.title, m.body]), [["Notificación de prueba de Nynäs Padel", "Las notificaciones funcionan. Los próximos resultados llegarán aquí."]]);
+  assert.ok(!("es" in t.es[0]));
+});
+
+test("many pushes folded into one notis per device: the summary in the device's language", async () => {
+  const st = install({}), v = await makeVapid(), PUSH = kv();
+  const env = { PUSH, ...v, VAPID_SUBJECT: ORIGIN, ORIGIN, NOW: "2026-11-08T12:00:00+01:00" };
+  const devs = {};
+  for (const k of ["a", "b", "c", "d", "es"]) {
+    devs[k] = await makeSubscription("https://fcm.googleapis.com/fcm/send/fold-" + k);
+    await post(env, { subscription: devs[k].sub, prefs: { follow: [REB], ...(k === "es" ? { lang: "es" } : {}) } });
+  }
+  const ev = { key: "l947-3355655-2026-11-08", kind: "teamleague", who: "thea", pid: THEA, pids: ROSTER.filter(p => p.teamId === 3355655).map(p => p.pid),
+    me: "Thea Holmberg Löving", team: "Nynäs Damlag", name: "SPL Damer", round: 2, ties: [{ id: 127649, home: true, opp: "Padelverket Damlag", time: "10:00", venue: "Padelverket" }],
+    windowFrom: "2026-11-08T07:00:00+01:00", windowTo: "2026-11-08T23:00:00+01:00", cover: ["tm127649"] };
+  const partial = A("tm_127649_matches");
+  partial[0].matches.matches.forEach(m => { m.matchResult = null; m.state = 2; });
+  st.over = { "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=127649&language=en": partial };
+  await tick(env, [ev]);
+  st.over = { "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=127649&language=en": A("tm_127649_matches") };
+  await tick(env, [ev]);   // two notiser for each of 5 devices: more than 8, so folded
+  const got = await received(st, devs);
+  assert.deepEqual(got.a.map(m => [m.title, m.body, m.tag]), [["2 nya resultat",
+    "Thea och Rebecca vann sin match 6-3 6-2\nNynäs Damlag förlorade mot Padelverket Damlag 1–2", "padel-sammanfattning"]]);
+  assert.deepEqual(got.es.map(m => [m.title, m.body, m.tag]), [["2 resultados nuevos",
+    "Thea y Rebecca ganaron su partido 6-3 6-2\nNynäs Damlag perdió contra Padelverket Damlag 1–2", "padel-sammanfattning"]]);
+});
+
 test("SPL tie: each pair's own rubber to its followers, the tie result to the whole team (merged per device)", async () => {
   const roster = ROSTER.filter(p => p.teamId === 3355655).map(p => ({ who: p.key, pid: p.pid }));
   const ev = { who: "thea", pid: THEA, team: "Nynäs Damlag", name: "SPL Damer", round: 2, roster };

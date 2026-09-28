@@ -163,6 +163,29 @@ test("subscribe stores the record as KV metadata; an old record without it is re
   assert.equal(PUSH.meta.get(k).r, PUSH.m.get(k));
 });
 
+test("subscribe: lang \"es\" is kept in prefs; without it (or any other value) the record is exactly as before; a change is written", async () => {
+  _resetMemory();
+  const v = await makeVapid(), PUSH = kv(), env = { PUSH, ...v, ORIGIN: "https://padel.holmberg.st" };
+  const s = await makeSubscription("https://fcm.googleapis.com/fcm/send/lang");
+  const sub = prefs => worker.fetch(new Request("https://w/subscribe", { method: "POST", headers: { Origin: "https://padel.holmberg.st" }, body: JSON.stringify({ subscription: s.sub, prefs }) }), env);
+  const plain = JSON.stringify({ sub: s.sub, prefs: { follow: [1675246] } });
+  assert.equal((await sub({ follow: [1675246] })).status, 200);
+  const [k] = [...PUSH.m.keys()];
+  assert.equal(PUSH.m.get(k), plain, "no lang: the record as before");
+  let p0 = PUSH.ops.put;
+  for (const lang of ["sv", "fr", 1, null]) await sub({ follow: [1675246], lang });
+  assert.equal(PUSH.ops.put, p0, "sv or anything that is not es: Swedish, same record, no write");
+  await sub({ follow: [1675246], lang: "es" });
+  assert.equal(PUSH.ops.put, p0 + 1, "lang changed: one write");
+  assert.deepEqual(JSON.parse(PUSH.m.get(k)).prefs, { follow: [1675246], lang: "es" });
+  assert.equal(PUSH.meta.get(k).r, PUSH.m.get(k), "kept as metadata too");
+  p0 = PUSH.ops.put;
+  await sub({ follow: [1675246], lang: "es" });
+  assert.equal(PUSH.ops.put, p0, "same again: no write");
+  await sub({ follow: [1675246] });
+  assert.equal(PUSH.m.get(k), plain, "back to Swedish: the plain record again");
+});
+
 test("subscribe: a record near 1000 chars (escaped quotes push the metadata past KV's 1024 bytes) is stored without metadata", async () => {
   _resetMemory();
   const v = await makeVapid(), PUSH = kv(), env = { PUSH, ...v, ORIGIN: "https://padel.holmberg.st" };

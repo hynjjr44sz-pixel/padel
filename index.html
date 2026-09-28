@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-RKY66sX9IXXeRyp+zov/nOflVLItuLFRjGyGKy1on8Y='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-HjalR6JaJcB4x4fVTbl+R4tRkGaQiiP+Ue6XF3oDaC4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -136,6 +136,12 @@
   .brand img{ height:24px; width:auto; flex:none; }
   .brand span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
   @media (max-width:379px){ .bell{ width:30px; padding:0; justify-content:center; } .bell span{ display:none; } }
+  /* language: SV | ES, the chosen one filled */
+  .lang{ display:inline-flex; align-items:center; height:28px; padding:2px; gap:2px; flex:none; border-radius:99px; border:1px solid var(--line); background:var(--surface); }
+  .lang button{ appearance:none; border:0; background:none; height:22px; min-width:28px; padding:0 7px; border-radius:99px; cursor:pointer; color:var(--dim); font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.08em; }
+  .lang button:hover{ color:var(--ink); }
+  .lang button[aria-pressed="true"]{ background:var(--solid); color:var(--solid-ink); cursor:default; }
+  @media (max-width:469px){ .today{ display:none; } }
   .nhint{
     margin:8px 0 0; padding:9px 12px; border-radius:12px; background:var(--surface); border:1px solid var(--line);
     font-size:13px; line-height:1.4; color:var(--ink); cursor:pointer; box-shadow:var(--shadow);
@@ -1009,14 +1015,15 @@
         <a class="brand" href="#/" aria-label="Nynäs idag, startsidan"><img src="img/nynas-logo.png" width="78" height="100" alt=""><span>Nynäs Padel</span></a>
         <div class="tools">
           <div class="today" id="today"></div>
+          <div class="lang" id="lang" role="group" aria-label="Språk"><button type="button" data-lang="sv" aria-pressed="true" lang="sv" aria-label="Svenska">SV</button><button type="button" data-lang="es" aria-pressed="false" lang="es" aria-label="Español">ES</button></div>
           <button class="bell" id="bell" type="button" aria-pressed="false" aria-label="Notiser för spelarna du följer" title="Notis när spelarna du följer får ett resultat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8.5a6 6 0 0 1 12 0c0 6.5 2.5 8.5 2.5 8.5h-17S6 15 6 8.5"/><path d="M10.2 20.5a2 2 0 0 0 3.6 0"/><circle class="bd" cx="18.5" cy="4.5" r="2.6" fill="#FFD84A" stroke="none"/></svg>
-            <span>Notiser</span>
+            <span data-i18n>Notiser</span>
           </button>
         </div>
       </div>
       <nav class="pnav" id="pnav" aria-label="Spelare" hidden>
-        <a class="back" href="#/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Nynäs idag</span></a>
+        <a class="back" href="#/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span data-i18n>Nynäs idag</span></a>
         <div class="chips" id="chips"></div>
       </nav>
       <p class="nhint" id="nHint" role="status" aria-live="polite" hidden></p>
@@ -1025,8 +1032,8 @@
 
   <div class="appbar" id="appbar" hidden>
     <img src="icons/icon-192.png" width="36" height="36" alt="">
-    <div class="t"><b>Installera appen</b><span></span></div>
-    <button class="go" type="button" hidden>Installera</button>
+    <div class="t"><b data-i18n>Installera appen</b><span></span></div>
+    <button class="go" type="button" hidden data-i18n>Installera</button>
     <button class="x" type="button" aria-label="Stäng">×</button>
   </div>
 
@@ -1035,37 +1042,37 @@
     <div class="club">
       <svg class="court" viewBox="0 0 390 230" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1"><path d="M20 229 L110 20 H280 L370 229 Z"/><path d="M58 140 H332"/><path d="M195 140 V229"/><path d="M92 62 H298" stroke-dasharray="3 5"/></svg>
       <img src="img/nynas-logo.png" width="78" height="100" alt="Nynäs Padel Club">
-      <div><h1 id="h-home">Nynäs idag</h1><p id="clubMeta">Nynäs Padel Club</p></div>
+      <div><h1 id="h-home" data-i18n>Nynäs idag</h1><p id="clubMeta">Nynäs Padel Club</p></div>
     </div>
 
     <section aria-labelledby="h-now" id="secNow">
-      <div class="sh"><h2 id="h-now">Spelar nu</h2><div class="meta" id="nowMeta"></div></div>
-      <div class="nowlist" id="nowList"><p class="empty">Hämtar …</p></div>
+      <div class="sh"><h2 id="h-now" data-i18n>Spelar nu</h2><div class="meta" id="nowMeta"></div></div>
+      <div class="nowlist" id="nowList"><p class="empty" data-i18n>Hämtar …</p></div>
     </section>
 
     <section aria-labelledby="h-win" id="secWin" hidden>
-      <div class="sh"><h2 id="h-win">Veckans vinnare</h2><div class="meta" id="winMeta"></div></div>
+      <div class="sh"><h2 id="h-win" data-i18n>Veckans vinnare</h2><div class="meta" id="winMeta"></div></div>
       <div class="winlist" id="winList"></div>
     </section>
 
     <section aria-labelledby="h-res" id="secRes" hidden>
-      <div class="sh"><h2 id="h-res">Senaste resultat</h2><div class="meta" id="resMeta"></div></div>
+      <div class="sh"><h2 id="h-res" data-i18n>Senaste resultat</h2><div class="meta" id="resMeta"></div></div>
       <div class="recent homerec" id="homeRecent"></div>
     </section>
 
     <section aria-labelledby="h-kom">
-      <div class="sh"><h2 id="h-kom">Kommande</h2><div class="meta" id="agendaMeta"></div></div>
-      <div class="agenda" id="agenda"><p class="empty">Hämtar …</p></div>
+      <div class="sh"><h2 id="h-kom" data-i18n>Kommande</h2><div class="meta" id="agendaMeta"></div></div>
+      <div class="agenda" id="agenda"><p class="empty" data-i18n>Hämtar …</p></div>
     </section>
 
     <section aria-labelledby="h-top" id="secTop">
-      <div class="sh"><h2 id="h-top">Topplistan</h2><div class="meta" id="topMeta"></div></div>
+      <div class="sh"><h2 id="h-top" data-i18n>Topplistan</h2><div class="meta" id="topMeta"></div></div>
       <div class="topctl">
         <div class="seg" role="group" aria-label="Välj topplista" id="topTabs">
-          <button type="button" data-top="skill" aria-pressed="true">Skill</button><button type="button" data-top="rank" aria-pressed="false">Ranking</button><button type="button" data-top="wins" aria-pressed="false">Vinster</button><button type="button" data-top="climb" aria-pressed="false">Klättrare</button>
+          <button type="button" data-top="skill" aria-pressed="true">Skill</button><button type="button" data-top="rank" aria-pressed="false">Ranking</button><button type="button" data-top="wins" aria-pressed="false" data-i18n>Vinster</button><button type="button" data-top="climb" aria-pressed="false" data-i18n>Klättrare</button>
         </div>
         <div class="seg" role="group" aria-label="Damer eller herrar" id="topGender">
-          <button type="button" data-g="F" aria-pressed="true">Damer</button><button type="button" data-g="M" aria-pressed="false">Herrar</button>
+          <button type="button" data-g="F" aria-pressed="true" data-i18n>Damer</button><button type="button" data-g="M" aria-pressed="false" data-i18n>Herrar</button>
         </div>
       </div>
       <div class="toplist" id="topList" aria-live="polite"></div>
@@ -1073,15 +1080,15 @@
     </section>
 
     <section aria-labelledby="h-lag">
-      <div class="sh"><h2 id="h-lag">Lagen</h2><div class="meta">SPL 2026-27</div></div>
+      <div class="sh"><h2 id="h-lag" data-i18n>Lagen</h2><div class="meta">SPL 2026-27</div></div>
       <div class="teams" id="teams"></div>
     </section>
 
     <section aria-labelledby="h-sp">
-      <div class="sh"><h2 id="h-sp">Spelare</h2><div class="meta" id="plMeta"></div></div>
+      <div class="sh"><h2 id="h-sp" data-i18n>Spelare</h2><div class="meta" id="plMeta"></div></div>
       <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input type="search" id="q" placeholder="Sök spelare" aria-label="Sök spelare" autocomplete="off" enterkeyhint="search"></label>
       <ul class="plist" id="plist"></ul>
-      <p class="empty" id="plEmpty" hidden>Ingen spelare matchar.</p>
+      <p class="empty" id="plEmpty" hidden data-i18n>Ingen spelare matchar.</p>
     </section>
   </main>
 
@@ -1093,7 +1100,7 @@
 
   <footer>
     <b>Nynäs Padel Club</b>
-    <span>Data: RankedIn / Svenska Padelförbundet · <a href="integritet.html" style="color:inherit">Integritet &amp; kontakt</a></span>
+    <span>Data: RankedIn / Svenska Padelförbundet · <a href="integritet.html" id="privacy" style="color:inherit" data-i18n>Integritet &amp; kontakt</a></span>
   </footer>
 </div>
 
@@ -1121,6 +1128,460 @@
     set:function(k, v){ try { window.localStorage.setItem(k, v); return true; } catch (e){ return false; } },
     json:function(k){ try { return JSON.parse(store.get(k)); } catch (e){ return null; } }
   };
+  // Language: Swedish unless Spanish was chosen on this device (the button at the top). _("svensk text") gives the
+  // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
+  var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
+  var ES = {
+    " % vinster":" % victorias",
+    " (följer)":" (sigues)",
+    " (kapten)":" (capitán)",
+    " (paret högst ":" (pareja máx. ",
+    " (öppnas i ny flik), ":" (se abre en otra pestaña), ",
+    " Bäst ihop visas från 3 matcher.":" La mejor pareja aparece a partir de 3 partidos.",
+    " Mot ":" Contra ",
+    " Nästa: ":" Siguiente: ",
+    " Några tävlingar kunde inte hämtas, nytt försök om en timme.":" Algunos torneos no se pudieron cargar; nuevo intento en una hora.",
+    " Vid anmälan räknas parets sammanlagda poäng. Ni får alltid spela en högre klass, aldrig en lägre.":" Al inscribiros cuenta la suma de puntos de la pareja. Siempre podéis jugar una categoría superior, nunca una inferior.",
+    " börjar i ":" empiezan en ",
+    " börjar om ":" empieza en ",
+    " delade ":" empataron ",
+    " följs":" seguidos",
+    " förlorade ":" perdieron ",
+    " förlorade mot ":" perdió contra ",
+    " förlorade sin match ":" perdieron su partido ",
+    " förlust":" derrota",
+    " förluster":" derrotas",
+    " går med en partner på högst ":" es posible con una pareja de máx. ",
+    " i ":" en ",
+    " i matcher":" en partidos",
+    " kl ":" a las ",
+    " klasser":" categorías",
+    " kvar":" pendientes",
+    " lag i SPL":" equipos en la SPL",
+    " match":" partido",
+    " matcher":" partidos",
+    " mot ":" contra ",
+    " möter ":" contra ",
+    " och ":" y ",
+    " och uppåt":" o superior",
+    " omgång ":" jornada ",
+    " par":" parejas",
+    " platser":" puestos",
+    " poäng":" puntos",
+    " poäng sedan förra veckan":" puntos desde la semana pasada",
+    " pågår":" en juego",
+    " sedan förra matchen":" desde el último partido",
+    " semifinal":" semifinal",
+    " semifinaler":" semifinales",
+    " slutade ":" terminaron ",
+    " spelar ":" juegan ",
+    " spelar inte den här matchen":" no juega este partido",
+    " spelare":" jugador",
+    " spelare ":" jugadores ",
+    " till dem":" a su favor",
+    " till er":" a vuestro favor",
+    " titel":" título",
+    " titlar":" títulos",
+    " tävling":" torneo",
+    " tävlingar":" torneos",
+    " utan ranking.":" sin ranking.",
+    " vann":" ganaron",
+    " vann ":" ganaron ",
+    " vann mot ":" ganó a ",
+    " vann plate":" ganaron la plate",
+    " vann sin match ":" ganaron su partido ",
+    " vidare":" pasan",
+    " vinst, ":" victoria, ",
+    " vinster, ":" victorias, ",
+    " · anmälan stänger ":" · inscripción cierra ",
+    " · grupper och slutspel":" · grupos y eliminatorias",
+    " · gruppspel":" · fase de grupos",
+    " · hämtar resultat":" · cargando resultados",
+    " · idag":" · hoy",
+    " · inga matcher spelade än":" · sin partidos jugados",
+    " · klart":" · terminado",
+    " · laguppställningen kommer senare":" · alineación por confirmar",
+    " · med ":" · con ",
+    " · omg ":" · jor. ",
+    " · pågår":" · en juego",
+    " · tid inte klar":" · hora por confirmar",
+    " · tid inte satt":" · sin hora",
+    " · uppdaterad ":" · actualizado ",
+    " · utslagsspel":" · eliminatorias",
+    " · vinnare":" · título",
+    " är slut. Väntar på resultat från RankedIn.":" terminado. Esperando el resultado de RankedIn.",
+    ", bättre":", mejor",
+    ", din klass":", tu categoría",
+    ", en klass upp":", una categoría más",
+    ", får spela {cls}-klass":", puede jugar categoría {cls}",
+    ", match ":", partido ",
+    ", reservlista":", lista de espera",
+    ", svep i sidled":", desliza de lado",
+    ", sämre":", peor",
+    ", tid inte klar":", hora por confirmar",
+    ". Lagserie, inte SPT.":". Liga por equipos, no SPT.",
+    ". Lagserie.":". Liga por equipos.",
+    ". Ställning: ":". Marcador: ",
+    ". Visa matcher och lottning":". Ver partidos y cuadro",
+    "1 klass":"1 categoría",
+    "12 mån":"12 meses",
+    "3:e plats":"3.er puesto",
+    "Anmäl på RankedIn":"Inscríbete en RankedIn",
+    "Anmälan öppen":"Inscripción abierta",
+    "Bana":"Pista",
+    "Bana ":"Pista ",
+    "Borta":"Fuera",
+    "Bra att veta":"Bueno saber",
+    "Bäst":"Mejor",
+    "Bäst ihop med ":"Mejor pareja: ",
+    "C":"C",
+    "Dagar":"Días",
+    "Dagen är slut.":"Fin del día.",
+    "Dagen är slut. Bra kämpat, {names}.":"Fin del día. Bien jugado, {names}.",
+    "Dam":"Femenino",
+    "Dam huvudlista":"Lista principal femenina",
+    "Damer":"Mujeres",
+    "Damer 51–160 är B-klass, 161–700 är C-klass.":"En mujeres, del 51 al 160 es categoría B y del 161 al 700 categoría C.",
+    "Damer eller herrar":"Mujeres u hombres",
+    "Dela → Lägg till på hemskärmen":"Compartir → Añadir a pantalla de inicio",
+    "Den här webbläsaren kan inte visa notiser.":"Este navegador no puede mostrar notificaciones.",
+    "Din klass styrs av din rankingplacering. ":"Tu categoría depende de tu puesto en el ranking. ",
+    "Du får spela ":"Puedes jugar ",
+    "Du följer inte längre {name}.":"Ya no sigues a {name}.",
+    "Du följer {name}. ":"Sigues a {name}. ",
+    "Egna":"Propios",
+    "Ej rapporterad":"Sin resultado",
+    "F":"P",
+    "Final":"Final",
+    "Finaler":"Finales",
+    "Flest platser uppåt på SPF-listan":"Más puestos ganados en la lista SPF",
+    "Form, senaste matcherna":"Forma, últimos partidos",
+    "Följ":"Seguir",
+    "Följ en spelare först. Tryck Följ på spelarens sida.":"Sigue primero a un jugador. Pulsa Seguir en su página.",
+    "Följ {name}":"Seguir a {name}",
+    "Följer":"Siguiendo",
+    "Föregående rond":"Ronda anterior",
+    "Förlorade":"Perdidos",
+    "Förlust":"Derrota",
+    "Förlust mot ":"Derrota contra ",
+    "Förslag på tävlingar":"Torneos sugeridos",
+    "Första match ":"Primer partido ",
+    "Första mötet":"Primer duelo",
+    "Första mötet mot paret":"Primer duelo contra la pareja",
+    "Försök igen":"Reintentar",
+    "Förut ":"Antes: ",
+    "Grupp":"Grupo",
+    "Grupper":"Grupos",
+    "Gruppmatchen":"Partido de grupo",
+    "Gruppspel":"Fase de grupos",
+    "Hemma":"En casa",
+    "Herr":"Masculino",
+    "Herrar":"Hombres",
+    "Herrar 61–200 är B-klass, 201–1200 är C-klass.":"En hombres, del 61 al 200 es categoría B y del 201 al 1200 categoría C.",
+    "Herrar huvudlista":"Lista principal masculina",
+    "Hämtar förslag …":"Cargando sugerencias …",
+    "Hämtar matcher och lottning …":"Cargando partidos y cuadro …",
+    "Hämtar resultatet …":"Cargando el resultado …",
+    "Hämtar tabellen …":"Cargando la clasificación …",
+    "Hämtar tävlingar …":"Cargando torneos …",
+    "Hämtar …":"Cargando …",
+    "Idag":"Hoy",
+    "Inför start":"Antes del inicio",
+    "Inga avslutade tävlingar det senaste året.":"Ningún torneo terminado en el último año.",
+    "Inga fler omgångar inlagda.":"No hay más jornadas.",
+    "Inga förslag just nu.":"Sin sugerencias por ahora.",
+    "Inga lagmatcher inlagda.":"Sin partidos de equipo.",
+    "Inga matcher inlagda.":"Sin partidos todavía.",
+    "Inga notiser. Du kan slå på dem senare.":"Sin notificaciones. Puedes activarlas más tarde.",
+    "Inga resultat inlagda än. De finns på RankedIn när lagen rapporterat.":"Aún no hay resultados. Estarán en RankedIn cuando los equipos los envíen.",
+    "Inga turneringsmatcher det senaste året.":"Ningún partido de torneo en el último año.",
+    "Inga vunna matcher inlagda i år än.":"Aún no hay victorias este año.",
+    "Ingen i klubben klättrade på veckans lista.":"Nadie del club subió en la lista de esta semana.",
+    "Ingen lottning publicerad":"Cuadro sin publicar",
+    "Ingen rankad just nu.":"Nadie en el ranking ahora.",
+    "Ingen skill inlagd än.":"Aún no hay skill.",
+    "Ingen skill än":"Sin skill aún",
+    "Ingen spelar just nu.":"Nadie juega ahora.",
+    "Ingen spelare matchar.":"Ningún jugador coincide.",
+    "Ingen tabell än.":"Aún no hay clasificación.",
+    "Inget inbokat":"Nada previsto",
+    "Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva.":"Nada previsto por ahora. Las nuevas inscripciones aparecerán aquí solas.",
+    "Inom&nbsp;20&nbsp;mil":"A&nbsp;200&nbsp;km",
+    "Installera":"Instalar",
+    "Installera appen":"Instala la app",
+    "Inte publicerad":"Sin publicar",
+    "Inte rankad":"Sin ranking",
+    "Integritet & kontakt":"Privacidad y contacto",
+    "KF":"Cuartos",
+    "KF, sen vann 5–8":"cuartos, luego ganó 5.º–8.º",
+    "Kapten":"Capitán",
+    "Karriär":"Carrera",
+    "Klar":"Terminado",
+    "Klart":"Terminado",
+    "Klart för dagen · ":"Día terminado · ",
+    "Klart för den här gången. Bra kämpat, {names}.":"Hasta aquí esta vez. Bien jugado, {names}.",
+    "Klart.":"Terminado.",
+    "Klass":"Nivel",
+    "Klasser":"Categorías",
+    "Klättrare":"Suben",
+    "Kommande":"Próximamente",
+    "Kunde inte hämta just nu.":"No se pudo cargar ahora.",
+    "Kunde inte hämta tävlingarna just nu. Försöker igen om en stund.":"No se pudieron cargar los torneos. Se reintentará en un momento.",
+    "Kunde inte hämta – visar senast kända":"No se pudo cargar: se muestra lo último conocido",
+    "Kunde inte ladda spelarna. Kontrollera nätet och ladda om sidan.":"No se pudieron cargar los jugadores. Revisa la conexión y recarga la página.",
+    "Kvartsfinal":"Cuartos de final",
+    "Kvartsfinalen blev slutstation. Topp åtta, bra kämpat.":"Fuera en cuartos. Top 8, bien jugado.",
+    "Lag":"Equipo",
+    "Lagen":"Los equipos",
+    "Laget":"El equipo",
+    "Laget: ":"Equipo: ",
+    "Lagmatch":"Partido de equipo",
+    "Lagmatchen":"El partido de equipo",
+    "Lagmatchen pågår · ":"Partido de equipo en juego · ",
+    "Lagmatcher":"Partidos de equipo",
+    "Lagserie":"Liga por equipos",
+    "Laguppställningarna är inte publicerade än.":"Las alineaciones aún no están publicadas.",
+    "Laguppställningen ej klar":"Alineación por confirmar",
+    "Lottning":"Cuadro",
+    "Lottningen ej klar":"Cuadro sin publicar",
+    "Lottningen klar i ":"Cuadro publicado: ",
+    "Lottningen klar: ":"Cuadro publicado: ",
+    "Lottningen är inte klar än. Start {when}.":"El cuadro aún no está. Inicio {when}.",
+    "Lottningen är inte publicerad än. Den dyker upp här när arrangören lägger ut den.":"El cuadro aún no está publicado. Aparecerá aquí cuando el organizador lo publique.",
+    "Lottningen är klar":"Cuadro publicado",
+    "Lottningen är klar.":"Cuadro publicado.",
+    "Lottningen är klar. {name} har inga matcher inlagda än.":"Cuadro publicado. {name} aún no tiene partidos.",
+    "Match":"Partido",
+    "Match ":"Partido ",
+    "Matcher":"Partidos",
+    "Matchskillnad":"Diferencia de partidos",
+    "Med ":"Con ",
+    "Mixed":"Mixto",
+    "Mot ":"Contra ",
+    "Mot vinnaren av":"Contra el ganador de",
+    "Motståndare klara när lottningen kommer":"Rivales cuando salga el cuadro",
+    "Motståndare klara senare":"Rivales por confirmar",
+    "Mött dem var för sig":"Se han enfrentado por separado",
+    "Ner ":"Baja ",
+    "Ner från plats ":"Baja desde el puesto ",
+    "Notis när spelarna du följer får ett resultat":"Aviso cuando los jugadores que sigues tengan un resultado",
+    "Notiser":"Avisos",
+    "Notiser av.":"Notificaciones desactivadas.",
+    "Notiser för spelarna du följer":"Notificaciones de los jugadores que sigues",
+    "Notiser för {gen} matcher.":"Notificaciones de los partidos de {name}.",
+    "Notiser på för {who}, även när appen är stängd.":"Notificaciones activadas para {who}, incluso con la app cerrada.",
+    "Notiser på för {who}. Funkar medan appen är öppen.":"Notificaciones activadas para {who}. Funcionan con la app abierta.",
+    "Notiser är blockerade för sidan. Tillåt dem i webbläsarens inställningar.":"Las notificaciones están bloqueadas para esta página. Permítelas en los ajustes del navegador.",
+    "Ny bana: ":"Nueva pista: ",
+    "Ny tid: ":"Nueva hora: ",
+    "Nynäs Padel ett tryck bort.":"Nynäs Padel a un toque.",
+    "Nynäs idag":"Nynäs hoy",
+    "Nynäs idag, startsidan":"Nynäs hoy, inicio",
+    "Nynäs-spelare anmälda: ":"Jugadores de Nynäs inscritos: ",
+    "Nästa":"Siguiente",
+    "Nästa omgångar: ":"Próximas jornadas: ",
+    "Nästa rond":"Ronda siguiente",
+    "Nästa tävling":"Próximo torneo",
+    "Nästa: ":"Siguiente: ",
+    "O":"E",
+    "Oavgjorda":"Empatados",
+    "Oavgjort":"Empate",
+    "Oavgjort mot ":"Empate contra ",
+    "Om ":"En ",
+    "Omg":"Jor.",
+    "Omgång 1":"Ronda 1",
+    "Omgångar":"Jornadas",
+    "P":"Pts",
+    "PF":"FP",
+    "Par":"Pareja",
+    "Partners":"Parejas",
+    "Paus":"Pausa",
+    "Placering ":"Puesto ",
+    "Plate":"Plate",
+    "Plate-final":"Final de Plate",
+    "Plats inte klar":"Lugar por confirmar",
+    "Poäng":"Puntos",
+    "På iPhone kommer notiser bara när sidan ligger på hemskärmen. Tryck Dela → Lägg till på hemskärmen och öppna den därifrån.":"En iPhone las notificaciones solo llegan si la página está en la pantalla de inicio. Pulsa Compartir → Añadir a pantalla de inicio y ábrela desde ahí.",
+    "Pågår":"En juego",
+    "Rankingen räknar dina 12 bästa tävlingar de senaste 12 månaderna. Poängen faller bort efter ett år. Listan uppdateras varje natt mellan söndag och måndag.":"El ranking cuenta tus 12 mejores torneos de los últimos 12 meses. Los puntos caducan al año. La lista se actualiza cada noche de domingo a lunes.",
+    "Rankinglistan":"La lista de ranking",
+    "Rankingpoäng":"Puntos",
+    "Resultat ":"Resultado ",
+    "Resultatet finns på RankedIn.":"El resultado está en RankedIn.",
+    "Räknar matcher …":"Contando partidos …",
+    "S":"J",
+    "SF":"SF",
+    "SPF, 12 mån":"SPF, 12 meses",
+    "SPF-listan ":"Lista SPF ",
+    "SPF-ranking":"Ranking SPF",
+    "SPT (Swedish Padel Tour) är förbundets elittour. Sex deltävlingar per år och en avslutande Masters. 16 par per klass: 12 in på poäng, 4 via kval på fredagen.":"El SPT (Swedish Padel Tour) es el circuito de élite de la federación sueca. Seis pruebas al año y un Masters final. 16 parejas por categoría: 12 entran por puntos y 4 por la previa del viernes.",
+    "SPT 300 ger 300 rankingpoäng till vinnaren, SPT 360 ger 360 och Masters 400. Challenger ger 100.":"El SPT 300 da 300 puntos de ranking al ganador, el SPT 360 da 360 y el Masters 400. Un Challenger da 100.",
+    "Sedan ":"Desde ",
+    "Semi":"Semi",
+    "Semifinal":"Semifinal",
+    "Semifinalen blev slutstation. Topp fyra, starkt jobbat.":"Fuera en semifinales. Top 4, muy buen trabajo.",
+    "Senaste matcher":"Últimos partidos",
+    "Senaste resultat":"Últimos resultados",
+    "Senaste tävlingar":"Últimos torneos",
+    "Senaste tävlingen":"Último torneo",
+    "Serien på RankedIn ↗︎":"La liga en RankedIn ↗︎",
+    "Sista anmälan ":"Inscripción hasta ",
+    "Skill efter varje match, ":"Skill tras cada partido, ",
+    "Slut":"Final",
+    "Slutspel":"Eliminatorias",
+    "Slå på Notiser för att få {gen} resultat.":"Activa las notificaciones para recibir los resultados de {name}.",
+    "Slår på notiser …":"Activando notificaciones …",
+    "Snitt skill · +":"Skill media · +",
+    "Snitt skill · jämnt":"Skill media · igualado",
+    "Som junior spelar du i 18-årsklassen och får även spela seniorklasser. Du har både junior- och seniorranking. När du blir senior följer 25 procent av poängen med.":"Como júnior juegas en la categoría sub-18 y también puedes jugar categorías absolutas. Tienes ranking júnior y absoluto. Al pasar a absoluto conservas el 25 % de los puntos.",
+    "Spelade":"Jugados",
+    "Spelar nu":"Jugando ahora",
+    "Spelare":"Jugadores",
+    "Spelare i ":"Jugadores de ",
+    "Spelarkort, ":"Carta de jugador, ",
+    "Spelträd":"Cuadro",
+    "Spelträd ":"Cuadro ",
+    "Start ":"Inicio ",
+    "Ställning":"Marcador",
+    "Ställning mot ":"Marcador contra ",
+    "Stäng":"Cerrar",
+    "Svep för nästa rond →":"Desliza a la siguiente ronda →",
+    "Säsong ":"Temporada ",
+    "Så funkar rankingen":"Cómo funciona el ranking",
+    "Sök spelare":"Buscar jugador",
+    "TIT":"TÍT",
+    "Tabell":"Clasificación",
+    "Tabell och matcher →":"Clasificación y partidos →",
+    "Tabellen gick inte att hämta just nu.":"No se pudo cargar la clasificación.",
+    "Tid kommer":"Hora por confirmar",
+    "Tid och plats inte klart":"Hora y lugar por confirmar",
+    "Tidigare möten":"Duelos anteriores",
+    "Timmar":"Horas",
+    "Topplistan":"Clasificación",
+    "Topplistan, ":"Clasificación, ",
+    "Turnering":"Torneo",
+    "Turneringen på RankedIn ↗︎":"El torneo en RankedIn ↗︎",
+    "Turneringsmatcher ":"Partidos de torneo ",
+    "Tvåa i {cls}. Silver efter en stark dag.":"Segundo puesto en {cls}. Plata tras un gran día.",
+    "Tvåa i {cls}. Silver, starkt jobbat.":"Segundo puesto en {cls}. Plata, muy buen trabajo.",
+    "Tävlingsbestämmelser":"Reglamento de competición",
+    "Tävlingsklasser":"Categorías de competición",
+    "Upp ":"Sube ",
+    "Upp från plats ":"Sube desde el puesto ",
+    "Uppgivet":"Abandono",
+    "Utveckling":"Evolución",
+    "V":"G",
+    "VIN%":"VIC%",
+    "Vad är SPT?":"¿Qué es el SPT?",
+    "Vann ":"Ganaron ",
+    "Vann gruppen ":"Ganaron el grupo ",
+    "Vann {cls}":"Ganó {cls}",
+    "Var för sig: ":"Por separado: ",
+    "Veckans klättrare":"Los que más suben",
+    "Veckans vinnare":"Ganadores de la semana",
+    "Vid vinst":"Si ganan",
+    "Vidare":"Pasa",
+    "Vinnare":"Título",
+    "Vinnare ":"Ganador ",
+    "Vinnare av ":"Ganador de ",
+    "Vinst":"Victoria",
+    "Vinster":"Victorias",
+    "Visa alla ":"Ver todos ",
+    "Visa färre":"Ver menos",
+    "Vunna":"Ganados",
+    "Vunna dubbelmatcher i år, alla tävlingar.":"Partidos de dobles ganados este año, todos los torneos.",
+    "Vunna klasser i år":"Categorías ganadas este año",
+    "Vunna matcher i år, procent":"Partidos ganados este año, porcentaje",
+    "Vägen genom tävlingen":"El camino en el torneo",
+    "Välj lottning":"Elige cuadro",
+    "Välj topplista":"Elige clasificación",
+    "Väntar":"Esperando",
+    "Väntar på resultat":"Esperando resultado",
+    "V–F":"G–P",
+    "borta":"fuera",
+    "börjar om ":"empieza en ",
+    "de senaste 12 månaderna":"de los últimos 12 meses",
+    "dubbel · ":"dobles · ",
+    "ej rankad":"sin ranking",
+    "eller":"o",
+    "fullt":"completo",
+    "följer":"sigues",
+    "förlorade ":"perdieron ",
+    "förlust":"derrota",
+    "första C-tävlingen, KF":"primer torneo C, cuartos",
+    "gruppen":"el grupo",
+    "gruppmatchen":"el partido de grupo",
+    "gruppspel":"fase de grupos",
+    "hemma":"en casa",
+    "idag":"hoy",
+    "inget set förlorat":"sin perder un set",
+    "kapten":"capitán",
+    "klart":"terminado",
+    "klassen":"la categoría",
+    "klättring":"subida",
+    "mot ":"contra ",
+    "mot paret ":"contra la pareja ",
+    "nu":"ahora",
+    "nu #":"ahora #",
+    "om ":"en ",
+    "om 1 dag":"en 1 día",
+    "om {n} dagar":"en {n} días",
+    "plate: 8-10 i avgörandet":"plate: 8-10 en el desempate",
+    "poäng kommer":"puntos pendientes",
+    "på {n} tävlingar":"en {n} torneos",
+    "pågår":"en juego",
+    "sedan ":"desde ",
+    "senaste året":"último año",
+    "snitt ":"media ",
+    "topp ":"máx. ",
+    "tvåa":"2.º puesto",
+    "vann ":"ganaron ",
+    "vinst":"victoria",
+    "vinster":"victorias",
+    "{gen} matcher":"Partidos de {name}",
+    "{gen} skill de {n} senaste matcherna: {a} den {d}, topp {top}, nu {now}":"Skill de {name} en los últimos {n} partidos: {a} el {d}, máximo {top}, ahora {now}",
+    "{gen} väg":"Camino de {name}",
+    "{names} vann {cls}!":"¡{names} ganaron {cls}!",
+    "{names} vann {cls}. Grattis!":"{names} ganaron {cls}. ¡Enhorabuena!",
+    "{name} finns inte på SPF-rankingen just nu.":"{name} no está en el ranking de la SPF ahora mismo.",
+    "{name} ligger på plats {rank} och är {lvl}-spelare.":"{name} está en el puesto {rank} y es jugador de nivel {lvl}.",
+    "{n} par anmälda i {cls}":"{n} parejas inscritas en {cls}",
+    "{place} i {where}. Bra kämpat, {names}.":"{place} en {where}. Bien jugado, {names}.",
+    "Årets vinster ":"Victorias ",
+    "Åttondelsfinal":"Octavos de final"
+  };
+  function _(s, a){
+    var r = LANG !== "es" || s == null ? s : ES[s] != null ? ES[s] : esAuto(String(s));
+    return a ? r.replace(/\{(\w+)\}/g, function(m, k){ return a[k] != null ? a[k] : m; }) : r;
+  }
+  // Spanish for values that come as data (badges, round and group names, dates): ordinals, months, a few words.
+  var ES_MON = {jan:"ene", apr:"abr", maj:"may", aug:"ago", okt:"oct", dec:"dic"};
+  function esAuto(s){
+    return s.replace(/(\d+):[ae]\b/g, "$1.º").replace(/\bOmg(ång)?\b/g, "Ronda").replace(/^Bana\b/, "Pista").replace(/^Grupp\b/, "Grupo").replace(/\bdelad\b/, "compartido").replace(/^Plats\b/, "Puesto").replace(/^Match (\d)/, "Partido $1").replace(/\bKF\b/, "CF").replace(/\bplats\b/, "puesto")
+      .replace(/\b(\d{1,2}) (jan|apr|maj|aug|okt|dec)\b/g, function(m, d, mo){ return d + " " + ES_MON[mo]; });
+  }
+  // The page's fixed texts: [data-i18n] elements, and aria-label/title/placeholder where Spanish exists.
+  (function(){
+    var sw = document.getElementById("lang");
+    if (sw){
+      [].forEach.call(sw.querySelectorAll("button"), function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-lang") === LANG ? "true" : "false"); });
+      sw.setAttribute("aria-label", LANG === "es" ? "Idioma" : "Språk");
+      sw.addEventListener("click", function(e){
+        var b = e.target && e.target.closest && e.target.closest("button[data-lang]"), l = b && b.getAttribute("data-lang");
+        if (!l || l === LANG) return;
+        store.set("padel.lang", l);
+        location.reload();   // every view, date and notice is built in the chosen language; push follows on the next start
+      });
+    }
+    if (LANG !== "es") return;
+    document.documentElement.lang = "es";
+    [].forEach.call(document.querySelectorAll("[data-i18n]"), function(el){ el.textContent = _(el.textContent.trim()); });
+    [].forEach.call(document.querySelectorAll("[aria-label], [title], [placeholder]"), function(el){
+      ["aria-label", "title", "placeholder"].forEach(function(a){ var v = el.getAttribute(a); if (v && ES[v] != null) el.setAttribute(a, ES[v]); });
+    });
+    var pv = document.getElementById("privacy");
+    if (pv) pv.setAttribute("href", "privacidad.html");
+  })();
   var UA = navigator.userAgent || "";
   var IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   function standalone(){
@@ -1195,7 +1656,7 @@
   function gen(n){ return /[sxz]$/i.test(n) ? n : n + "s"; }
   function namesOf(list){
     var n = list.map(function(p){ return p.short; });
-    return n.length > 1 ? n.slice(0, -1).join(", ") + " och " + n[n.length - 1] : (n[0] || "");
+    return n.length > 1 ? n.slice(0, -1).join(", ") + _(" och ") + n[n.length - 1] : (n[0] || "");
   }
   function avatarsOf(list, size){ return '<span class="avs ' + (size || "") + '">' + list.map(function(p){ return avatar(p.name); }).join("") + '</span>'; }
   var STAR = '<svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg>';
@@ -1223,14 +1684,14 @@
   }
   function followBtnHtml(P){
     var on = isFollowed(P.pid);
-    return '<button class="follow" type="button" data-follow="' + P.pid + '" aria-pressed="' + (on ? "true" : "false") + '" aria-label="Följ ' + esc(P.name) + '">' +
-      STAR_O + '<span>' + (on ? "Följer" : "Följ") + '</span></button>';
+    return '<button class="follow" type="button" data-follow="' + P.pid + '" aria-pressed="' + (on ? "true" : "false") + '" aria-label="' + esc(_("Följ {name}", {name:P.name})) + '">' +
+      STAR_O + '<span>' + (on ? _("Följer") : _("Följ")) + '</span></button>';
   }
   function syncFollowBtns(){
     [].forEach.call(document.querySelectorAll("[data-follow]"), function(b){
       var on = isFollowed(b.getAttribute("data-follow"));
       b.setAttribute("aria-pressed", on ? "true" : "false");
-      b.querySelector("span").textContent = on ? "Följer" : "Följ";
+      b.querySelector("span").textContent = on ? _("Följer") : _("Följ");
     });
   }
   function followChanged(){
@@ -1263,13 +1724,13 @@
     var a = avgSkill(v);
     return (a != null && v.length > 1 ? "<b>" + a.toFixed(2) + "</b> " : "") + esc(fmtSkill(v));
   }
-  function skillLabel(v){ var a = avgSkill(v); return v ? (a != null && v.length > 1 ? "snitt " + a.toFixed(2) + " (" + fmtSkill(v) + ")" : "skill " + fmtSkill(v)) : ""; }
+  function skillLabel(v){ var a = avgSkill(v); return v ? (a != null && v.length > 1 ? _("snitt ") + a.toFixed(2) + " (" + fmtSkill(v) + ")" : "skill " + fmtSkill(v)) : ""; }
   // Hero: "Thea & Cassandra 14.92 – 12.97 Pettersson Österberg & Ekeland" with a bar for the difference
   function cmpHtml(me, op){
     var a = avgSkill(pskill(me)), b = avgSkill(pskill(op));
     if (a == null || b == null || !me || !op) return "";
     var d = a - b, w = Math.min(Math.abs(d) / 3, 1) * 50;
-    var note = Math.abs(d) < 0.005 ? "Snitt skill · jämnt" : "Snitt skill · +" + Math.abs(d).toFixed(2) + (d > 0 ? " till er" : " till dem");
+    var note = Math.abs(d) < 0.005 ? _("Snitt skill · jämnt") : _("Snitt skill · +") + Math.abs(d).toFixed(2) + (d > 0 ? _(" till er") : _(" till dem"));
     return '<div class="cmp" data-r2="cmp"><div class="cmp-row">' +
       '<div class="cmp-side me"><small>' + esc(me.n.map(function(n){ return n.split(" ")[0]; }).join(" & ")) + '</small><b>' + a.toFixed(2) + '</b></div><i aria-hidden="true">–</i>' +
       '<div class="cmp-side op"><small>' + esc(op.n.map(surname).join(" & ")) + '</small><b>' + b.toFixed(2) + '</b></div></div>' +
@@ -1291,10 +1752,10 @@
           else if (r > 0){
             var src = draw.rounds[r-1].matches[2*i + k];
             if (src.w) ent = {pair:src[src.w].pair, via:true};
-            else if (src.a.pair && src.b.pair) ent = {ph:"Vinnare av " + short(src.a.pair) + " – " + short(src.b.pair), from:[src.a.pair, src.b.pair]};
+            else if (src.a.pair && src.b.pair) ent = {ph:_("Vinnare av ") + short(src.a.pair) + " – " + short(src.b.pair), from:[src.a.pair, src.b.pair]};
             else {
               var pr = draw.rounds[r-1], no = 2*i + k + 1;
-              ent = {ph:/^R\d/.test(pr.short) ? "Vinnare " + pr.label.toLowerCase() + ", match " + no : "Vinnare " + pr.short + no};
+              ent = {ph:/^R\d/.test(pr.short) ? _("Vinnare ") + _(pr.label).toLowerCase() + _(", match ") + no : _("Vinnare ") + (LANG === "es" ? pr.short.replace("KF", "CF") : pr.short) + no};
             }
           } else ent = {ph:"–"};
           mt[side] = ent;
@@ -1332,15 +1793,15 @@
     }
     var p = e.pair;
     if (p.me) cls += " me";
-    var right = mt.s ? '<span class="sc">' + sideScores(mt, side) + '</span>' : (mt.w === side ? '<span class="wmark">' + (mt.note === "W.O." ? "W.O." : "Vidare") + '</span>' : "<span></span>");
+    var right = mt.s ? '<span class="sc">' + sideScores(mt, side) + '</span>' : (mt.w === side ? '<span class="wmark">' + (mt.note === "W.O." ? "W.O." : _("Vidare")) + '</span>' : "<span></span>");
     return '<div class="' + cls + '">' + avatars(p, "sm") + '<span class="n" title="' + esc(p.n.join(" / ")) + '">' + esc(short(p)) + (p.seed ? '<span class="sd">' + esc(p.seed) + '</span>' : "") + (pskill(p) ? '<small class="sk" aria-label="' + esc(skillLabel(pskill(p))) + '">' + skillHtml(pskill(p)) + '</small>' : "") + '</span>' + right + '</div>';
   }
   function statusLabel(ev, mt, isNext){
     var st = matchState(ev, mt);
-    if (st === "done") return '<span class="st">' + (mt.note ? esc(mt.note) : "Klar") + '</span>';
-    if (st === "live") return '<span class="st nx">Pågår</span>';
-    if (st === "nr") return '<span class="st nr">Ej rapporterad</span>';
-    return isNext ? '<span class="st nx">Nästa</span>' : '<span class="st"></span>';
+    if (st === "done") return '<span class="st">' + (mt.note ? esc(_(mt.note)) : _("Klar")) + '</span>';
+    if (st === "live") return '<span class="st nx">' + _("Pågår") + '</span>';
+    if (st === "nr") return '<span class="st nr">' + _("Ej rapporterad") + '</span>';
+    return isNext ? '<span class="st nx">' + _("Nästa") + '</span>' : '<span class="st"></span>';
   }
 
   // Match id used by deep links ("#thea/m6872156"): RankedIn's MatchId, else a stable id for the static draw.
@@ -1350,13 +1811,13 @@
     var n1 = draw.rounds[0].matches.length;
     var wrap = document.createElement("div"); wrap.className = "bk-wrap";
     var sc = document.createElement("div"); sc.className = "bk-scroll"; sc.tabIndex = 0;
-    sc.setAttribute("aria-label", "Spelträd " + draw.label + ", svep i sidled");
+    sc.setAttribute("aria-label", _("Spelträd ") + _(draw.label) + _(", svep i sidled"));
     var html = '<div class="bk">';
     draw.rounds.forEach(function(rd, r){
       var last = r === draw.rounds.length - 1;
       var f = rd.matches[0];
       var times = rd.matches.map(function(x){ return x.dl ? x.dl + " " + x.t : x.t; }).filter(function(v, i, a){ return v && a.indexOf(v) === i; });
-      html += '<div class="bk-col"><div class="bk-hd"><b>' + esc(rd.label) + '</b><span>' + (r + 1) + '/' + draw.rounds.length + ' · ' + times.join(", ") + '</span></div><div class="bk-body" style="--n:' + n1 + '">';
+      html += '<div class="bk-col"><div class="bk-hd"><b>' + esc(_(rd.label)) + '</b><span>' + (r + 1) + '/' + draw.rounds.length + ' · ' + times.join(", ") + '</span></div><div class="bk-body" style="--n:' + n1 + '">';
       rd.matches.forEach(function(mt, i){
         var isNext = mt === nextMatch;
         var mcls = "m" + (isNext ? " next" : (mt.hasMe ? " path" : ""));
@@ -1382,7 +1843,7 @@
     (draw.groups || []).forEach(function(g){
       var d = document.createElement("div"); d.className = "card grp";
       var rows = g.rows.slice().sort(function(a, b){ return (a.standing || 99) - (b.standing || 99) || b.won - a.won || b.diff - a.diff; });
-      d.innerHTML = '<h3>' + esc(g.name) + '</h3><table class="gt"><thead><tr><th>Par</th><th>S</th><th>V</th><th>F</th><th>+/-</th></tr></thead><tbody>' +
+      d.innerHTML = '<h3>' + esc(_(g.name)) + '</h3><table class="gt"><thead><tr><th>' + _("Par") + '</th><th>' + _("S") + '</th><th>' + _("V") + '</th><th>' + _("F") + '</th><th>+/-</th></tr></thead><tbody>' +
         rows.map(function(x){
           var p = ev.pairs[x.pair];
           if (!p) return "";
@@ -1390,7 +1851,7 @@
           return '<tr' + (p.me ? ' class="me"' : '') + '><td>' + esc(short(p)) + (sk ? '<small class="gsk" aria-label="' + esc(skillLabel(sk)) + '">' + skillHtml(sk) + '</small>' : '') + '</td><td>' + x.played + '</td><td>' + x.won + '</td><td>' + x.lost + '</td><td>' + (x.diff > 0 ? "+" : "") + x.diff + '</td></tr>';
         }).join("") + '</tbody></table>' +
         (g.matches && g.matches.length ? '<div class="gm">' + g.matches.map(function(mt){
-          var st = matchState(ev, mt), lab = st === "done" ? (mt.note || "Klar") : st === "live" ? "Pågår" : st === "nr" ? "Ej rapporterad" : "";
+          var st = matchState(ev, mt), lab = _(st === "done" ? (mt.note || "Klar") : st === "live" ? "Pågår" : st === "nr" ? "Ej rapporterad" : "");
           return '<div class="res' + (mt.hasMe ? " mine" : "") + '"' + midAttr(mt) + '><div class="mh"><span>' + esc([mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : "")) + '</span><span class="st' + (st === "live" ? " nx" : st === "nr" ? " nr" : "") + '">' + esc(lab) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + h2hMini(ev, mt) + '</div>';
         }).join("") + '</div>' : "");
       host.appendChild(d);
@@ -1403,10 +1864,10 @@
   function renderEvent(ev, host, nextMatch, who, sel){
     sel = sel && sel < ev.draws.length ? sel : 0;
     REG = host._rs = [];
-    var seg = document.createElement("div"); seg.className = "seg"; seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Välj lottning");
+    var seg = document.createElement("div"); seg.className = "seg"; seg.setAttribute("role", "group"); seg.setAttribute("aria-label", _("Välj lottning"));
     var views = [];
     ev.draws.forEach(function(d, i){
-      var b = document.createElement("button"); b.type = "button"; b.textContent = d.label; b.setAttribute("aria-pressed", i === sel ? "true" : "false");
+      var b = document.createElement("button"); b.type = "button"; b.textContent = _(d.label); b.setAttribute("aria-pressed", i === sel ? "true" : "false");
       seg.appendChild(b);
       var box = document.createElement("div"); box.hidden = i !== sel; box.setAttribute("data-view", i);
       if ((d.format || ev.format) === "groups") renderGroups(ev, d, box); else renderKnockout(ev, d, box, nextMatch);
@@ -1421,8 +1882,8 @@
     views.forEach(function(v){ host.appendChild(v); });
     var note = document.createElement("div"); note.className = "bk-note";
     if (!ev.draws.some(function(d){ return (d.format || ev.format) !== "groups"; })) note.hidden = true;
-    note.innerHTML = '<span><i></i>' + esc(gen(who)) + ' väg</span><span class="swipe">Svep för nästa rond →</span>' +
-      '<span class="bk-nav"><button type="button" aria-label="Föregående rond">←</button><button type="button" aria-label="Nästa rond">→</button></span>';
+    note.innerHTML = '<span><i></i>' + esc(_("{gen} väg", {gen:gen(who), name:who})) + '</span><span class="swipe">' + _("Svep för nästa rond →") + '</span>' +
+      '<span class="bk-nav"><button type="button" aria-label="' + _("Föregående rond") + '">←</button><button type="button" aria-label="' + _("Nästa rond") + '">→</button></span>';
     host.appendChild(note);
     var nav = note.querySelectorAll(".bk-nav button");
     function cur(){ for (var k = 0; k < views.length; k++) if (!views[k].hidden) return views[k].querySelector(".bk-scroll"); return null; }
@@ -1456,13 +1917,13 @@
   /* ================= own match helpers ================= */
   function meSide(mt){ return mt.a.pair && mt.a.pair.me ? "a" : "b"; }
   function mePersp(mt){ return mt.s ? (mt.w === meSide(mt) ? mt.s : flip(mt.s)) : ""; }
-  function roundName(x){ return x.di === 0 ? x.rd.label : x.d.label.replace(/\s*\d.*$/, "") + " · " + x.rd.label; }
-  function defForm(label){ return /final$/i.test(label) ? label + "en" : label; }
+  function roundName(x){ return x.di === 0 ? _(x.rd.label) : _(x.d.label.replace(/\s*\d.*$/, "")) + " · " + _(x.rd.label); }
+  function defForm(label){ return LANG === "es" ? label : /final$/i.test(label) ? label + "en" : label; }
   function fmtLeft(ms){
     var min = Math.max(1, Math.round(ms / 60000)), h = Math.floor(min / 60), mm = min % 60;
     return h ? h + " h " + (mm ? mm + " min" : "") : mm + " min";
   }
-  function chips(list){ return list.map(function(r){ return '<div class="chip ' + (r === "W" ? "w" : "l") + '" title="' + (r === "W" ? "Vinst" : "Förlust") + '">' + (r === "W" ? "V" : "F") + '</div>'; }).join(""); }
+  function chips(list){ return list.map(function(r){ return '<div class="chip ' + (r === "W" ? "w" : "l") + '" title="' + (r === "W" ? _("Vinst") : _("Förlust")) + '">' + (r === "W" ? _("V") : _("F")) + '</div>'; }).join(""); }
   /* ================= recent matches ================= */
   // Seed list (Thea's, checked on RankedIn) plus the player's own finished matches in the draw on view;
   // the draw replaces the seed rows of the same tournament.
@@ -1488,7 +1949,7 @@
   function abbr(n){ if (SHORT[n]) return SHORT[n]; var p = String(n).split(" "); return p.length > 1 ? p[0][0] + ". " + p.slice(1).join(" ") : n; }
   function liveMHist(who, e, ev){
     if (!inWin(e)) return;
-    var me = slug(e.me || ""), rows = [], name = e.name || "Turnering";
+    var me = slug(e.me || ""), rows = [], name = e.name || _("Turnering");
     ev.draws.forEach(function(d){
       (d.format === "groups" ? d.groups : d.rounds).forEach(function(rd){ rd.matches.forEach(function(mt){
         if (!mt.hasMe || !mt.w) return;
@@ -1516,11 +1977,11 @@
     }
     host.innerHTML = all.map(function(x){
       var c = cnt && cnt[x.opp.split(" / ").map(function(n){ return slug(n); }).sort().join("+")];
-      return '<div class="hrow ' + (x.r === "W" ? "w" : "l") + (x.isNew ? " new" : "") + '"><div><div class="o">' + esc(x.opp) + '</div><div class="ev">' + esc(x.ev) + (x.partner ? ' · med ' + esc(x.partner) : "") +
-        (c && c.w + c.l > 1 ? ' · <span class="mt">mot paret ' + c.w + "–" + c.l + '</span>' : "") + '</div></div>' +
-        '<div class="r"><b>' + (x.r === "W" ? "Vinst" : "Förlust") + (x.s ? " " + esc(x.s) : "") + '</b>' + esc(x.date) + '</div></div>';
+      return '<div class="hrow ' + (x.r === "W" ? "w" : "l") + (x.isNew ? " new" : "") + '"><div><div class="o">' + esc(x.opp) + '</div><div class="ev">' + esc(x.ev) + (x.partner ? _(" · med ") + esc(x.partner) : "") +
+        (c && c.w + c.l > 1 ? ' · <span class="mt">' + _("mot paret ") + c.w + "–" + c.l + '</span>' : "") + '</div></div>' +
+        '<div class="r"><b>' + (x.r === "W" ? _("Vinst") : _("Förlust")) + (x.s ? " " + esc(x.s) : "") + '</b>' + esc(_(x.date)) + '</div></div>';
     }).join("");
-    document.getElementById("histMeta-" + who).textContent = all.length + " matcher";
+    document.getElementById("histMeta-" + who).textContent = all.length + _(" matcher");
   }
   /* ================= recent tournaments ================= */
   // b = placement badge. Seed rows for Thea and Kian (checked on RankedIn); everyone else (and anything newer)
@@ -1550,11 +2011,12 @@
       {d:"2026-01-09", n:"Vista Padel January Open", u:RI + "60766/vista-padel-2026-january-open-sanktionerad-herr-dam-b-c-d-mix", c:"Herr D", p:"Andreas Mickos", b:"7:e", x:"gruppspel", w:3, l:3, pts:0.85, cid:142012, st:[[0,0],[1,0]]}
     ]
   };
-  var MON = ["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
+  var MON = LANG === "es" ? ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"] : ["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
   function dayMon(iso){ var p = iso.split("-"); return +p[2] + " " + MON[+p[1] - 1]; }
   function badge(b){
     var c = b === "Vinnare" ? "win" : (b === "Final" || b === "Semi" ? "hi" : (b === "Pågår" ? "now" : ""));
-    return '<span class="pb ' + c + (b.length > 7 ? " long" : "") + '">' + (c === "now" ? "<i></i>" : "") + esc(b) + '</span>';
+    var t = _(b);
+    return '<span class="pb ' + c + (t.length > 7 ? " long" : "") + '">' + (c === "now" ? "<i></i>" : "") + esc(t) + '</span>';
   }
   // Rows: the seed list, the player's finished tournaments (loadHistory) and finished events found by the
   // discovery (worker "past", this device's archive), newest first.
@@ -1591,7 +2053,7 @@
     if (!host) return;
     var list = tourRows(who), keep = {};
     if (!list.length){
-      host.innerHTML = '<p class="empty" style="padding:12px 0">' + (HIST_BUSY[who] ? "Hämtar tävlingar …" : "Inga avslutade tävlingar det senaste året.") + '</p>';
+      host.innerHTML = '<p class="empty" style="padding:12px 0">' + (HIST_BUSY[who] ? _("Hämtar tävlingar …") : _("Inga avslutade tävlingar det senaste året.")) + '</p>';
       sum.innerHTML = "";
       return;
     }
@@ -1607,12 +2069,12 @@
       }
       item._row = r;
       var wl = r.w == null ? "–" : r.w + "–" + r.l;
-      var pts = r.pts == null ? (r.b === "Pågår" ? "pågår" : "– p") : String(r.pts) + " p";
+      var pts = r.pts == null ? (r.b === "Pågår" ? _("pågår") : "– p") : String(r.pts) + " p";
       item.firstChild.innerHTML = '<div>' + badge(r.b) + '<span class="dt">' + esc(dayMon(r.d)) + '</span></div>' +
         '<div><span class="tn">' + esc(r.n) + '</span>' +
-        '<div class="tm">' + esc(r.c + (r.p ? " · med " + r.p : "") + (r.x ? " · " + r.x : "")) + '</div></div>' +
+        '<div class="tm">' + esc(r.c + (r.p ? _(" · med ") + r.p : "") + (r.x ? " · " + _(r.x) : "")) + '</div></div>' +
         '<div class="wl"><b>' + esc(wl) + '</b><span>' + esc(pts) + '</span><span class="chev" aria-hidden="true"></span></div>';
-      item.firstChild.setAttribute("aria-label", r.n + ", " + r.c + ", " + (r.b || "") + ". Visa matcher och lottning");
+      item.firstChild.setAttribute("aria-label", r.n + ", " + r.c + ", " + _(r.b || "") + _(". Visa matcher och lottning"));
       if (host.children[i] !== item) host.insertBefore(item, host.children[i] || null);
       if (TOPEN[who + ":" + key] && item.firstChild.getAttribute("aria-expanded") !== "true") toggleTour(who, item, true);
     });
@@ -1622,10 +2084,10 @@
     var done = list.filter(function(r){ return r.b !== "Pågår"; });
     var W = list.reduce(function(a, r){ return a + (r.w || 0); }, 0), L = list.reduce(function(a, r){ return a + (r.l || 0); }, 0);
     var t = done.filter(function(r){ return r.b === "Vinnare"; }).length, sf = done.filter(function(r){ return r.b === "Semi" || r.b === "Final" || r.b === "Vinnare"; }).length;
-    var tail = (W + L ? " · " + W + "–" + L + " i matcher" : "");
-    sum.innerHTML = t ? '<b>' + t + (t === 1 ? " titel" : " titlar") + '</b><span>på ' + done.length + ' tävlingar' + tail + '</span>' :
-      sf ? '<b>' + sf + (sf === 1 ? " semifinal" : " semifinaler") + '</b><span>på ' + done.length + ' tävlingar' + tail + '</span>' :
-      '<b>' + done.length + (done.length === 1 ? " tävling" : " tävlingar") + '</b><span>senaste året' + tail + '</span>';
+    var tail = (W + L ? " · " + W + "–" + L + _(" i matcher") : "");
+    sum.innerHTML = t ? '<b>' + t + (t === 1 ? _(" titel") : _(" titlar")) + '</b><span>' + _("på {n} tävlingar", {n:done.length}) + tail + '</span>' :
+      sf ? '<b>' + sf + (sf === 1 ? _(" semifinal") : _(" semifinaler")) + '</b><span>' + _("på {n} tävlingar", {n:done.length}) + tail + '</span>' :
+      '<b>' + done.length + (done.length === 1 ? _(" tävling") : _(" tävlingar")) + '</b><span>' + _("senaste året") + tail + '</span>';
     updateCard(who);
   }
   // Expand a row: placement, own matches (scores, opponents' skill) and the full draw, fetched from RankedIn once.
@@ -1637,33 +2099,33 @@
     }
     btn.setAttribute("aria-expanded", "true"); box.hidden = false; TOPEN[who + ":" + item.getAttribute("data-key")] = true;
     if (box._done && !(r.live && r.b === "Pågår")) return;
-    if (!box._done) box.innerHTML = '<p class="tx-note" role="status">Hämtar matcher och lottning …</p>';
+    if (!box._done) box.innerHTML = '<p class="tx-note" role="status">' + _("Hämtar matcher och lottning …") + '</p>';
     loadTour(who, r).then(function(det){
       if (!btn.isConnected) return;
       renderTourBox(who, r, det, box);
       box._done = true;
     }).catch(function(){
       if (box._done) return;
-      box.innerHTML = '<p class="tx-note" role="status">Kunde inte hämta just nu. <button type="button">Försök igen</button></p>';
+      box.innerHTML = '<p class="tx-note" role="status">' + _("Kunde inte hämta just nu.") + ' <button type="button">' + _("Försök igen") + '</button></p>';
       box.querySelector("button").addEventListener("click", function(){ box._done = false; toggleTour(who, item, true); });
     });
   }
-  function ordinal(n){ return n + (n === 1 || n === 2 ? ":a" : ":e"); }
+  function ordinal(n){ return LANG === "es" ? n + ".º" : n + (n === 1 || n === 2 ? ":a" : ":e"); }
   function renderTourBox(who, r, det, box){
     var ev = det.ev, st = tourState(ev), W = WHO[who], sm = det.sum;
     wantSkills(Object.keys(ev.pairs).map(function(x){ return ev.pairs[x]; }));   // only for a draw on screen
-    var place = det.place ? (det.place === 1 ? "<b>Vinnare</b>" : "Placering <b>" + esc(ordinal(det.place)) + "</b>") : "Resultat <b>" + esc(sm.label) + "</b>";
-    var h = '<div class="tx-top"><span>' + place + (det.pts != null ? " · <b>" + esc(String(det.pts)) + "</b> poäng" : "") + " · " + sm.w + "–" + sm.l + ' i matcher</span>' +
+    var place = det.place ? (det.place === 1 ? "<b>" + _("Vinnare") + "</b>" : _("Placering ") + "<b>" + esc(ordinal(det.place)) + "</b>") : '<span class="rlx">' + _("Resultat ") + "<b>" + esc(_(sm.label)) + "</b></span>";
+    var h = '<div class="tx-top"><span>' + place + (det.pts != null ? " · <b>" + esc(String(det.pts)) + "</b>" + _(" poäng") : "") + " · " + sm.w + "–" + sm.l + _(" i matcher") + '</span>' +
       '<a href="' + esc(r.u || RI_WEB) + '" target="_blank" rel="noopener">RankedIn ↗︎</a></div>';
     var mine = st.played.concat(st.next ? [st.next] : []);
     if (!ev.draws.length){
-      box.innerHTML = h.replace(/Resultat <b>[^<]*<\/b> · [^<]*<\/span>/, "Ingen lottning publicerad</span>");
+      box.innerHTML = h.replace(/<span class="rlx">.*<\/span>(?=<a )/, _("Ingen lottning publicerad") + "</span>");
       return;
     }
-    h += mine.length ? '<h4>' + esc(gen(W.name)) + ' matcher</h4><div class="results">' + mine.map(function(x){
+    h += mine.length ? '<h4>' + esc(_("{gen} matcher", {gen:gen(W.name), name:W.name})) + '</h4><div class="results">' + mine.map(function(x){
       return resCard(dynRound(ev, x) + (x.mt.dl ? " · " + x.mt.dl : ""), x.mt, true);
-    }).join("") + '</div>' : '<p class="tx-note">Inga matcher inlagda.</p>';
-    box.innerHTML = h + (ev.draws.length ? '<h4>' + (ev.draws.some(function(d){ return d.format !== "groups"; }) ? "Lottning" : "Grupper") + '</h4><div class="txd"></div>' : "");
+    }).join("") + '</div>' : '<p class="tx-note">' + _("Inga matcher inlagda.") + '</p>';
+    box.innerHTML = h + (ev.draws.length ? '<h4>' + (ev.draws.some(function(d){ return d.format !== "groups"; }) ? _("Lottning") : _("Grupper")) + '</h4><div class="txd"></div>' : "");
     var host = box.querySelector(".txd");
     if (host){
       var x = st.last || st.next;
@@ -1680,29 +2142,29 @@
   function tourCard(e){
     var s = riDate(e.start) || new Date(e.windowFrom), en = riDate(e.end) || s, sd = loc(s), ed = loc(en), multi = dayOf(s) !== dayOf(en);
     var mon = MON[sd.getUTCMonth()] + (multi && ed.getUTCMonth() !== sd.getUTCMonth() ? "–" + MON[ed.getUTCMonth()] : "");
-    var facts = ["Start " + dayLabel(s) + " " + hm(s) + (e.closes && riDate(e.closes) && riDate(e.closes) > now() ? " · anmälan stänger " + dayMonD(riDate(e.closes)) : "")];
-    if (e.pairs) facts.push(e.pairs + " par anmälda i " + esc(e.cls));
-    if (e.published) facts.push("Lottningen är klar" + (e.format === "groups" ? " · gruppspel" : e.format === "mixed" ? " · grupper och slutspel" : e.format === "knockout" ? " · utslagsspel" : ""));
-    facts.push('<a href="' + esc(e.url || RI_WEB) + '" target="_blank" rel="noopener">Turneringen på RankedIn ↗︎</a>');
+    var facts = [_("Start ") + dayLabel(s) + " " + hm(s) + (e.closes && riDate(e.closes) && riDate(e.closes) > now() ? _(" · anmälan stänger ") + dayMonD(riDate(e.closes)) : "")];
+    if (e.pairs) facts.push(_("{n} par anmälda i {cls}", {n:e.pairs, cls:esc(e.cls)}));
+    if (e.published) facts.push(_("Lottningen är klar") + (e.format === "groups" ? _(" · gruppspel") : e.format === "mixed" ? _(" · grupper och slutspel") : e.format === "knockout" ? _(" · utslagsspel") : ""));
+    facts.push('<a href="' + esc(e.url || RI_WEB) + '" target="_blank" rel="noopener">' + _("Turneringen på RankedIn ↗︎") + '</a>');
     return upCard({dow:multi ? cap(DOW[sd.getUTCDay()]) + "–" + DOW[ed.getUTCDay()] : cap(DOW[sd.getUTCDay()]), day:multi ? sd.getUTCDate() + "–" + ed.getUTCDate() : String(sd.getUTCDate()), mon:mon,
-      title:e.name || "Turnering", cls:e.cls, what:esc([e.partner ? "Med " + e.partner : "", [e.venue, e.address].filter(Boolean).join(", ")].filter(Boolean).join(" · ")), facts:facts.join("<br>")});
+      title:e.name || _("Turnering"), cls:e.cls, what:esc([e.partner ? _("Med ") + e.partner : "", [e.venue, e.address].filter(Boolean).join(", ")].filter(Boolean).join(" · ")), facts:facts.join("<br>")});
   }
   function tlCard(e, later){
     var d = loc(riDate(e.date + "T12:00")), spl = /^SPL/.test(e.name || "");
     var span = function(s){ return ' <span class="mono" style="color:var(--dim);font-size:11.5px">· ' + esc(s) + '</span>'; };
     var times = (e.ties || []).map(function(t){ return t.time; }).filter(Boolean);
-    var facts = [times.length ? "Start " + times[0] : "Tid och plats inte klart"];
-    if (e.players && e.players.length) facts.push("Laget: " + e.players.map(function(n){ var p = BYNAME[slug(n)]; return p ? '<a href="#' + esc(p.key) + '">' + esc(n) + '</a>' : esc(n); }).join(", "));
-    if (later.length) facts.push("Nästa omgångar: " + esc(later.join(", ")));
-    facts.push('<a href="' + esc(e.url || RI_WEB) + '" target="_blank" rel="noopener">Serien på RankedIn ↗︎</a>');
-    return upCard({dow:cap(DOW[d.getUTCDay()]), day:String(d.getUTCDate()), mon:MON[d.getUTCMonth()], title:e.name || "Lagserie",
-      what:esc((spl ? "Swedish Padel League · " : "") + e.team + (e.division ? " · " + e.division : "") + (spl ? ". Lagserie, inte SPT." : ". Lagserie.")),
+    var facts = [times.length ? _("Start ") + times[0] : _("Tid och plats inte klart")];
+    if (e.players && e.players.length) facts.push(_("Laget: ") + e.players.map(function(n){ var p = BYNAME[slug(n)]; return p ? '<a href="#' + esc(p.key) + '">' + esc(n) + '</a>' : esc(n); }).join(", "));
+    if (later.length) facts.push(_("Nästa omgångar: ") + esc(later.join(", ")));
+    facts.push('<a href="' + esc(e.url || RI_WEB) + '" target="_blank" rel="noopener">' + _("Serien på RankedIn ↗︎") + '</a>');
+    return upCard({dow:cap(DOW[d.getUTCDay()]), day:String(d.getUTCDate()), mon:MON[d.getUTCMonth()], title:e.name || _("Lagserie"),
+      what:esc((spl ? "Swedish Padel League · " : "") + e.team + (e.division ? " · " + e.division : "") + (spl ? _(". Lagserie, inte SPT.") : _(". Lagserie."))),
       list:(e.ties || []).map(function(t){ return esc(t.home ? e.team + " – " + t.opp : t.opp + " – " + e.team) + (t.time ? span(t.time) : "") + (t.venue ? span(t.venue) : ""); }),
       facts:facts.join("<br>")});
   }
 
   function resCard(label, mt, mark){
-    var st = mt.w ? (mt.meWon ? "Vinst" : "Förlust") : "";
+    var st = mt.w ? (mt.meWon ? _("Vinst") : _("Förlust")) : "";
     return '<div class="res' + (mark && mt.hasMe ? " mine" : "") + '"' + midAttr(mt) + '><div class="mh"><span>' + esc([label, mt.t, mt.c].filter(Boolean).join(" · ")) + '</span><span class="st">' + st + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
   }
   /* ================= RankedIn: shared helpers ================= */
@@ -1717,7 +2179,7 @@
     var cs = String(mv.CancellationStatus || "").trim();
     if (!cs && !mv.HasCancellation) return null;
     if (/w\.?\s*o/i.test(cs)) return "W.O.";
-    if (/ret|upp/i.test(cs)) return "Uppgivet";
+    if (/ret|upp/i.test(cs)) return _("Uppgivet");
     return cs || "W.O.";
   }
   // Score from the winner's side, as in the static data. A match tie-break arrives as 1-0 + LoserTiebreak.
@@ -1746,9 +2208,9 @@
     bar.hidden = false;
     bar.className = "livebar" + (state === "ok" ? " on" : (state === "err" ? " stale" : " wait"));
     var known = L.okAt || L.cachedAt;
-    var txt = state === "ok" ? "<b>Live</b> · uppdaterad " + esc(hhmm(L.okAt)) :
-      state === "err" ? "Kunde inte hämta – visar senast kända" + (known ? " (" + esc(hhmm(known)) + ")" : "") :
-      "<b>Live</b> · hämtar resultat";
+    var txt = state === "ok" ? "<b>Live</b>" + _(" · uppdaterad ") + esc(hhmm(L.okAt)) :
+      state === "err" ? _("Kunde inte hämta – visar senast kända") + (known ? " (" + esc(hhmm(known)) + ")" : "") :
+      "<b>Live</b>" + _(" · hämtar resultat");
     bar.querySelector(".ltxt").innerHTML = txt;
   }
   function withTimeout(p, ms, ctl){
@@ -1758,7 +2220,7 @@
     });
   }
   var CACHE_OFF = params.has("mock");
-  function firstNames(p){ return p.n.map(function(n){ return n.split(" ")[0]; }).join(" och "); }
+  function firstNames(p){ return p.n.map(function(n){ return n.split(" ")[0]; }).join(_(" och ")); }
 
   /* ================= notiser ================= */
   var NOTI_KEY = "padel.notify", SEEN_KEY = "padel.notified", seenMem = {};
@@ -1811,7 +2273,7 @@
           return reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64uBytes(key)});
         });
       })
-      .then(function(sub){ return api("/subscribe", {subscription:sub.toJSON(), prefs:{follow:follows()}}); })
+      .then(function(sub){ return api("/subscribe", {subscription:sub.toJSON(), prefs:LANG === "es" ? {follow:follows(), lang:"es"} : {follow:follows()}}); })
       .then(function(){ store.set(PUSH_KEY, "1"); return true; })
       .catch(function(e){ store.set(PUSH_KEY, "0"); if (window.console) console.warn("Push gick inte att slå på:", e && e.message); return false; });
   }
@@ -1834,7 +2296,7 @@
     if (!notiOn() || notified(id)) return;
     markNotified(id);
     if (pushOn() && pushCovers(id)) return;   // the push server sends this one (same tag), even when the app is closed
-    var opt = {body:body, icon:"icons/icon-192.png", badge:"icons/icon-192.png", tag:tag || "padel-" + id, lang:"sv", data:{url:"./" + (hash || "")}};
+    var opt = {body:body, icon:"icons/icon-192.png", badge:"icons/icon-192.png", tag:tag || "padel-" + id, lang:LANG, data:{url:"./" + (hash || "")}};
     function fallback(){
       try {
         var n = new Notification(title, opt);
@@ -1873,14 +2335,14 @@
   function loc(d){ return new Date(+d + sthOff(+d) * HOUR); }   // read with getUTC*
   function dayOf(d){ return loc(d).toISOString().slice(0, 10); }
   function isoDay(s){ var m = /^(\d\d)\/(\d\d)\/(\d{4})/.exec(String(s || "")); return m ? m[3] + "-" + m[2] + "-" + m[1] : String(s || "").slice(0, 10); }
-  var DOW = ["sön","mån","tis","ons","tor","fre","lör"];
+  var DOW = LANG === "es" ? ["dom","lun","mar","mié","jue","vie","sáb"] : ["sön","mån","tis","ons","tor","fre","lör"];
   function dayLabel(d){ var x = loc(d); return DOW[x.getUTCDay()] + " " + x.getUTCDate() + " " + MON[x.getUTCMonth()]; }
   function dayMonD(d){ var x = loc(d); return x.getUTCDate() + " " + MON[x.getUTCMonth()]; }
   function hm(d){ var x = loc(d); return ("0" + x.getUTCHours()).slice(-2) + ":" + ("0" + x.getUTCMinutes()).slice(-2); }
   function cap(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
   function inWin(e, t){ t = t || now(); return t >= new Date(e.windowFrom) && t <= new Date(e.windowTo); }
   function hhmmOf(d){ var m = /^(\d{4})-\d\d-\d\dT(\d\d):(\d\d)/.exec(d || ""); return m && +m[1] > 2000 ? m[2] + ":" + m[3] : ""; }
-  function courtName(c){ c = String(c || "").trim(); return /^\d+$/.test(c) ? "Bana " + c : c; }
+  function courtName(c){ c = String(c || "").trim(); return /^\d+$/.test(c) ? _("Bana ") + c : LANG === "es" ? c.replace(/^Bana\b/, "Pista") : c; }
   try { document.getElementById("today").textContent = cap(dayLabel(now())); } catch (e){}
 
   /* ---- RankedIn ---- */
@@ -2026,7 +2488,7 @@
   function unpackSnap(v){ var p = String(v || "").split(","); return {a:p[0] || "", b:p[1] || "", w:p[2] || "", tc:p.length > 3 ? p.slice(3).join(",") : null}; }
   // Same helpers as worker/src/rankedin.js (time@court in snapshots, weekday, court name, deep link)
   function tcOf(m){ return String(m.date || "").slice(0, 16) + "@" + String(m.c || "").replace(/,/g, " ").trim(); }
-  function dowOf(d){ var m = /^(\d{4})-(\d\d)-(\d\d)/.exec(d || ""); return m && +m[1] > 2000 ? ["sön","mån","tis","ons","tor","fre","lör"][new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()] : ""; }
+  function dowOf(d){ var m = /^(\d{4})-(\d\d)-(\d\d)/.exec(d || ""); return m && +m[1] > 2000 ? DOW[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()] : ""; }
   function linkTo(who, mid){ return "./#" + who + (mid ? "/m" + mid : ""); }
   // Same wording, ids and tags as the worker's notes(), so the OS never shows the same result twice.
   function tNotes(ev, matches, before){
@@ -2039,10 +2501,11 @@
     var next = pending[0] || null, last = played[played.length - 1] || null;
     var lostMain = played.filter(function(m){ return m.di === 0 && !m.meWon; })[0] || null;
     var champ = !!(last && last.kind === "ko" && last.di === 0 && last.r === last.R - 1 && last.meWon);
-    var rName = function(m){ return m.kind === "rr" || m.di === 0 ? m.label : m.dlabel + " · " + m.label; };
+    var rName = function(m){ return m.kind === "rr" || m.di === 0 ? _(m.label) : _(m.dlabel) + " · " + _(m.label); };
     var rDef = function(m){
-      if (m.kind === "rr") return "gruppmatchen";
-      var l = m.label.toLowerCase();
+      if (m.kind === "rr") return _("gruppmatchen");
+      var l = _(m.label).toLowerCase();
+      if (LANG === "es") return (/^(cuartos|octavos)/.test(l) ? "los " : "la ") + l + (m.di > 0 && !/plate/.test(l) ? " de Plate" : "");
       if (/final$/.test(l)) l += "en";
       return m.di > 0 && !/^plate/.test(l) ? "plate " + l : l;
     };
@@ -2050,17 +2513,17 @@
     var nextText = function(){
       if (!next) return "";
       var op = next[next.ms === "a" ? "b" : "a"];
-      return " Nästa: " + [rName(next).toLowerCase(), when(next).join(", ")].filter(Boolean).join(" ") + (op ? " mot " + short(op) : "") + ".";
+      return _(" Nästa: ") + [rName(next).toLowerCase(), when(next).join(", ")].filter(Boolean).join(" ") + (op ? _(" mot ") + short(op) : "") + ".";
     };
     var outCopy2 = function(mp){
       var names = firstNames(mp);
-      if (champ) return names + " vann " + cls + ". Grattis!";
-      if (last && last.di !== 0) return "Dagen är slut. Bra kämpat, " + names + ".";
-      if (!lostMain) return "Dagen är slut.";
-      if (lostMain.kind === "ko" && lostMain.r === R - 1) return "Tvåa i " + cls + ". Silver efter en stark dag.";
-      if (lostMain.kind === "ko" && lostMain.r === R - 2) return "Semifinalen blev slutstation. Topp fyra, starkt jobbat.";
-      if (lostMain.kind === "ko" && lostMain.r === R - 3) return "Kvartsfinalen blev slutstation. Topp åtta, bra kämpat.";
-      return "Dagen är slut. Bra kämpat, " + names + ".";
+      if (champ) return _("{names} vann {cls}. Grattis!", {names:names, cls:cls});
+      if (last && last.di !== 0) return _("Dagen är slut. Bra kämpat, {names}.", {names:names});
+      if (!lostMain) return _("Dagen är slut.");
+      if (lostMain.kind === "ko" && lostMain.r === R - 1) return _("Tvåa i {cls}. Silver efter en stark dag.", {cls:cls});
+      if (lostMain.kind === "ko" && lostMain.r === R - 2) return _("Semifinalen blev slutstation. Topp fyra, starkt jobbat.");
+      if (lostMain.kind === "ko" && lostMain.r === R - 3) return _("Kvartsfinalen blev slutstation. Topp åtta, bra kämpat.");
+      return _("Dagen är slut. Bra kämpat, {names}.", {names:names});
     };
     var mine = [], covered = {}, others = [];
     matches.forEach(function(m){
@@ -2070,17 +2533,17 @@
       if (m.hasMe){
         var mp = m[m.ms], op = m[m.ms === "a" ? "b" : "a"];
         var sc = (m.s ? (m.meWon ? m.s : flip(m.s)) : "") || m.note || "";
-        var title = m.di === 0 && fin && m.meWon ? firstNames(mp) + " vann " + cls + "!" : firstNames(mp) + (m.meWon ? " vann " : " förlorade ") + rDef(m) + (sc ? " " + sc : "");
-        var body = op ? "Mot " + short(op) + "." : "";
+        var title = m.di === 0 && fin && m.meWon ? _("{names} vann {cls}!", {names:firstNames(mp), cls:cls}) : firstNames(mp) + (m.meWon ? _(" vann ") : _(" förlorade ")) + rDef(m) + (sc ? " " + sc : "");
+        var body = op ? _("Mot ") + short(op) + "." : "";
         if (m.meWon) body += nextText();
         else if (!next && m.kind === "ko") body += " " + outCopy2(mp);
         if (m.meWon && next) covered[next.id] = true;
         mine.push({id:id, title:title, body:body.trim(), mid:m.id});
       } else if (wp){
         var res = m.s || m.note || "";
-        var t2 = rName(m) + ": " + short(wp) + (m.kind === "rr" ? " vann" : fin ? (m.di === 0 ? " vann " + cls : " vann plate") : " vidare");
-        others.push({id:id, wk:wp.id, title:t2, body:(res + (lp ? " mot " + short(lp) : "")).trim() + " · " + cls,
-          how:lp ? ("Vann " + rDef(m) + " " + res + " mot " + short(lp)).replace(/\s+/g, " ").trim() : ""});
+        var t2 = rName(m) + ": " + short(wp) + (m.kind === "rr" ? _(" vann") : fin ? (m.di === 0 ? _(" vann ") + cls : _(" vann plate")) : _(" vidare"));
+        others.push({id:id, wk:wp.id, title:t2, body:(res + (lp ? _(" mot ") + short(lp) : "")).trim() + " · " + cls,
+          how:lp ? (_("Vann ") + rDef(m) + " " + res + _(" mot ") + short(lp)).replace(/\s+/g, " ").trim() : ""});
       }
     });
     if (next){
@@ -2088,7 +2551,7 @@
       if (op2 && !was2[os] && !covered[next.id]){
         var how = "";
         others = others.filter(function(o){ if (o.wk !== op2.id) return true; how = o.how; return false; });
-        mine.push({id:cid + ":opp:m" + next.id + ":" + op2.id, title:firstNames(next[next.ms]) + " möter " + short(op2),
+        mine.push({id:cid + ":opp:m" + next.id + ":" + op2.id, title:firstNames(next[next.ms]) + _(" möter ") + short(op2),
           body:(how ? how + ". " : "") + [rName(next), when(next).join(" · ")].filter(Boolean).join(" "), mid:next.id});
         covered[next.id] = true;
       }
@@ -2099,11 +2562,11 @@
         var op3 = next[os];
         var moved = od !== String(next.date || "").slice(0, 16), otherDay = od.slice(0, 10) !== String(next.date || "").slice(0, 10);
         mine.push({id:cid + ":tid:m" + next.id + ":" + slug(tc), tag:cid + ":tid:m" + next.id, mid:next.id,
-          title:(moved ? "Ny tid: " : "Ny bana: ") + firstNames(next[next.ms]) + " spelar " + rDef(next) + " " + [(otherDay ? dowOf(next.date) + " " : "") + next.t, courtName(next.c)].filter(Boolean).join(", "),
-          body:("Förut " + [(otherDay ? dowOf(od) + " " : "") + hhmmOf(od + ":00"), courtName(oc)].filter(function(x){ return String(x).trim(); }).join(", ") + "." + (op3 ? " Mot " + short(op3) + "." : "")).trim()});
+          title:(moved ? _("Ny tid: ") : _("Ny bana: ")) + firstNames(next[next.ms]) + _(" spelar ") + rDef(next) + " " + [(otherDay ? dowOf(next.date) + " " : "") + next.t, courtName(next.c)].filter(Boolean).join(", "),
+          body:(_("Förut ") + [(otherDay ? dowOf(od) + " " : "") + hhmmOf(od + ":00"), courtName(oc)].filter(function(x){ return String(x).trim(); }).join(", ") + "." + (op3 ? _(" Mot ") + short(op3) + "." : "")).trim()});
       }
     }
-    var ORD = ["etta", "tvåa", "trea", "fyra", "femma", "sexa", "sjua", "åtta"];
+    var ORD = LANG === "es" ? [] : ["etta", "tvåa", "trea", "fyra", "femma", "sexa", "sjua", "åtta"];
     (matches.pools || []).forEach(function(pl){
       var ms = matches.filter(function(m){ return m.kind === "rr" && m.di === pl.di; });
       if (!ms.length || !ms.some(function(m){ return m.hasMe; }) || ms.some(function(m){ return !m.w; }) || ms.every(function(m){ return unpack(before[m.id]).w; })) return;
@@ -2116,9 +2579,9 @@
       var mi = -1;
       rows.forEach(function(r, i){ if (mi < 0 && r.n.some(function(n){ return slug(n) === me; })) mi = i; });
       if (mi < 0) return;
-      var place = rows[mi].standing || mi + 1, where = pl.label === "Gruppspel" ? "gruppen" : pl.label;
+      var place = rows[mi].standing || mi + 1, where = pl.label === "Gruppspel" ? _("gruppen") : (LANG === "es" ? "el " : "") + _(pl.label);
       var lastMine = ms.filter(function(m){ return m.hasMe; }).sort(cmp).pop();
-      mine.push({id:cid + ":grupp:" + slug(pl.label), title:firstNames(rows[mi]) + " slutade " + (ORD[place - 1] || place + ":a") + " i " + where,
+      mine.push({id:cid + ":grupp:" + slug(pl.label), title:firstNames(rows[mi]) + _(" slutade ") + (ORD[place - 1] || ordinal(place)) + _(" i ") + where,
         body:rows.slice(0, 5).map(function(r, i){ return (r.standing || i + 1) + ". " + short(r) + " " + r.wins + "–" + r.losses; }).join("\n"), mid:lastMine && lastMine.id});
     });
     var out = [];
@@ -2132,7 +2595,7 @@
     var cmp = function(x, y){ return (x.date < y.date ? -1 : x.date > y.date ? 1 : 0) || x.di - y.di || x.r - y.r; };
     var mine = matches.filter(function(m){ return isMe(m.a) || isMe(m.b); }).sort(cmp), open = mine.filter(function(m){ return !m.w; }), first = (open.length ? open : mine)[0];
     var tag = "padel-" + ev.classId + ":lottning", where = [ev.name, ev.cls].filter(Boolean).join(", "), title, body;
-    if (!first) return {id:ev.classId + ":lottning", title:"Lottningen klar i " + ev.cls, body:where ? where + "." : "", tag:tag, url:linkTo(ev.who)};
+    if (!first) return {id:ev.classId + ":lottning", title:_("Lottningen klar i ") + ev.cls, body:where ? where + "." : "", tag:tag, url:linkTo(ev.who)};
     var ms = isMe(first.a) ? "a" : "b", mp = first[ms], op = first[ms === "a" ? "b" : "a"];
     var when = [[dowOf(first.date), first.t].filter(Boolean).join(" "), courtName(first.c)].filter(Boolean).join(", ");
     if (first.kind === "rr"){
@@ -2141,12 +2604,13 @@
         var p = m[sd];
         if (p && !isMe(p) && !seen[p.id]){ seen[p.id] = 1; others.push(short(p)); }
       }); });
-      title = "Lottningen klar: " + firstNames(mp) + " i " + (first.label === "Gruppspel" ? "gruppen" : first.label);
-      body = (others.length ? "Med " + others.join(", ") + ". " : "") + (when ? "Första match " + when + ". " : "") + where + (where ? "." : "");
+      title = _("Lottningen klar: ") + firstNames(mp) + _(" i ") + (first.label === "Gruppspel" ? _("gruppen") : (LANG === "es" ? "el " : "") + _(first.label));
+      body = (others.length ? _("Med ") + others.join(", ") + ". " : "") + (when ? _("Första match ") + when + ". " : "") + where + (where ? "." : "");
     } else {
-      var rd = first.label.toLowerCase();
-      if (/final$/.test(rd)) rd += "en";
-      title = "Lottningen klar: " + firstNames(mp) + (op ? " möter " + short(op) : " börjar i " + rd);
+      var rd = _(first.label).toLowerCase();
+      if (LANG === "es") rd = (/^(cuartos|octavos)/.test(rd) ? "los " : "la ") + rd;
+      else if (/final$/.test(rd)) rd += "en";
+      title = _("Lottningen klar: ") + firstNames(mp) + (op ? _(" möter ") + short(op) : _(" börjar i ") + rd);
       body = (when ? when.charAt(0).toUpperCase() + when.slice(1) + ". " : "") + where + (where ? "." : "");
     }
     return {id:ev.classId + ":lottning", title:title, body:body.trim(), tag:tag, url:linkTo(ev.who, first.id)};
@@ -2279,21 +2743,21 @@
       lostMain:played.filter(function(x){ return x.kind === "ko" && x.di === ev.mainIdx && !x.mt.meWon; })[0] || null,
       champ:!!(last && last.kind === "ko" && last.di === ev.mainIdx && last.r === R - 1 && last.mt.meWon)};
   }
-  function dynRound(ev, x){ return x.kind === "rr" || x.di === ev.mainIdx ? x.rd.label : x.d.label.replace(/\s*\d.*$/, "") + " · " + x.rd.label; }
+  function dynRound(ev, x){ return x.kind === "rr" || x.di === ev.mainIdx ? _(x.rd.label) : _(x.d.label.replace(/\s*\d.*$/, "")) + " · " + _(x.rd.label); }
   function mePair(mt){ return mt[meSide(mt)].pair; }
   function dynOutCopy(ev, st){
     var e = ev.e, x = st.last, names = x ? firstNames(mePair(x.mt)) : "";
-    if (st.champ) return names + " vann " + e.cls + ". Grattis!";
+    if (st.champ) return _("{names} vann {cls}. Grattis!", {names:names, cls:e.cls});
     var R = st.R, lm = st.lostMain;
-    if (lm && lm.r === R - 1) return "Tvåa i " + e.cls + ". Silver, starkt jobbat.";
-    if (lm && lm.r === R - 2) return "Semifinalen blev slutstation. Topp fyra, starkt jobbat.";
-    if (lm && lm.r === R - 3) return "Kvartsfinalen blev slutstation. Topp åtta, bra kämpat.";
+    if (lm && lm.r === R - 1) return _("Tvåa i {cls}. Silver, starkt jobbat.", {cls:e.cls});
+    if (lm && lm.r === R - 2) return _("Semifinalen blev slutstation. Topp fyra, starkt jobbat.");
+    if (lm && lm.r === R - 3) return _("Kvartsfinalen blev slutstation. Topp åtta, bra kämpat.");
     if (x && x.kind === "rr" && ev.mainIdx < 0){
       var g = x.d.groups.filter(function(gg){ return gg.name === x.rd.label; })[0], row = g && g.rows.filter(function(r){ var p = ev.pairs[r.pair]; return p && p.me; })[0];
-      var ORD = ["etta", "tvåa", "trea", "fyra", "femma", "sexa"];
-      if (row && row.standing && g.matches.every(function(m){ return m.w; })) return cap(ORD[row.standing - 1] || row.standing + ":a") + " i " + (g.name === "Gruppspel" ? "gruppen" : g.name) + ". Bra kämpat, " + names + ".";
+      var ORD = LANG === "es" ? [] : ["etta", "tvåa", "trea", "fyra", "femma", "sexa"];
+      if (row && row.standing && g.matches.every(function(m){ return m.w; })) return _("{place} i {where}. Bra kämpat, {names}.", {place:cap(ORD[row.standing - 1] || ordinal(row.standing)), where:g.name === "Gruppspel" ? _("gruppen") : (LANG === "es" ? "el " : "") + _(g.name), names:names});
     }
-    return names ? "Klart för den här gången. Bra kämpat, " + names + "." : "Klart.";
+    return names ? _("Klart för den här gången. Bra kämpat, {names}.", {names:names}) : _("Klart.");
   }
 
   /* ---- tournament details: one class of one tournament, fetched when needed (Senaste tävlingar, result hero) ---- */
@@ -2499,14 +2963,14 @@
       var was = unpackSnap(before[r.id]);
       if (!r.w || was.w) return;
       var ours = r[us], theirs = r[them], won = r.w === us, sc = score(r), id = cid + ":r" + r.id;
-      if (isMe(ours)) mine.push({id:id, mid:r.id, title:firstNames(ours) + (won ? " vann sin match " : " förlorade sin match ") + sc, body:("Mot " + short(theirs) + ". Ställning: " + tieScore + ".").trim()});
-      else others.push({id:id, title:ev.team + ": " + short(ours) + (won ? " vann " : " förlorade ") + sc, body:"Mot " + short(theirs) + " · " + tieScore});
+      if (isMe(ours)) mine.push({id:id, mid:r.id, title:firstNames(ours) + (won ? _(" vann sin match ") : _(" förlorade sin match ")) + sc, body:(_("Mot ") + short(theirs) + _(". Ställning: ") + tieScore + ".").trim()});
+      else others.push({id:id, title:ev.team + ": " + short(ours) + (won ? _(" vann ") : _(" förlorade ")) + sc, body:_("Mot ") + short(theirs) + " · " + tieScore});
     });
     rubbers.forEach(function(r){
       if (r.w || !isMe(r[us]) || !r[them]) return;
       if (unpackSnap(before[r.id])[them]) return;
-      mine.push({id:cid + ":opp:r" + r.id + ":" + r[them].id, mid:r.id, title:firstNames(r[us]) + " möter " + short(r[them]),
-        body:[ev.name, ev.team + " mot " + tie.opp, tie.time, tie.venue].filter(Boolean).join(" · ")});
+      mine.push({id:cid + ":opp:r" + r.id + ":" + r[them].id, mid:r.id, title:firstNames(r[us]) + _(" möter ") + short(r[them]),
+        body:[ev.name, ev.team + _(" mot ") + tie.opp, tie.time, tie.venue].filter(Boolean).join(" · ")});
     });
     var out = [];
     // Only the player's own matches notify; everything else is shown on the page only.
@@ -2514,9 +2978,9 @@
     var done = rubbers.length && rubbers.every(function(r){ return r.w; });
     var wasDone = before._done || (rubbers.length && rubbers.every(function(r){ return unpackSnap(before[r.id]).w; }));
     if (done && !wasDone){
-      var t = W > L ? ev.team + " vann mot " + tie.opp + " " + W + "–" + L : W < L ? ev.team + " förlorade mot " + tie.opp + " " + W + "–" + L : ev.team + " och " + tie.opp + " delade " + W + "–" + L;
+      var t = W > L ? ev.team + _(" vann mot ") + tie.opp + " " + W + "–" + L : W < L ? ev.team + _(" förlorade mot ") + tie.opp + " " + W + "–" + L : ev.team + _(" och ") + tie.opp + _(" delade ") + W + "–" + L;
       var myR = rubbers.filter(function(r){ return isMe(r[us]); })[0];
-      var body = [ev.name + (ev.round ? " omgång " + ev.round : ""), myR ? firstNames(myR[us]) + (myR.w === us ? " vann sin match " : " förlorade sin match ") + score(myR) : ""].filter(Boolean).join(". ") + ".";
+      var body = [ev.name + (ev.round ? _(" omgång ") + ev.round : ""), myR ? firstNames(myR[us]) + (myR.w === us ? _(" vann sin match ") : _(" förlorade sin match ")) + score(myR) : ""].filter(Boolean).join(". ") + ".";
       out.push({id:cid + ":klar", title:t, body:body, tag:"padel-" + cid + ":klar", url:linkTo(ev.who, myR && myR.id)});
     }
     return out;
@@ -2528,7 +2992,7 @@
       rubbers.forEach(function(r){ if (r.w){ if (r.w === us) W++; else L++; } if (!start && hhmmOf(r.date) && hhmmOf(r.date) !== "00:00") start = riDate(r.date); });
       var mts = rubbers.map(function(r){
         var rid = TL_RID[r.type] || null;
-        function P(x){ return x ? {pair:{key:x.id, n:x.n, ids:x.ids, rid:rid, me:x.ids.map(String).indexOf(String(e.pid)) >= 0}} : {ph:"Inte publicerad"}; }
+        function P(x){ return x ? {pair:{key:x.id, n:x.n, ids:x.ids, rid:rid, me:x.ids.map(String).indexOf(String(e.pid)) >= 0}} : {ph:_("Inte publicerad")}; }
         var mt = {t:start ? hm(start) : "", c:"", a:P(r.a), b:P(r.b), w:r.w, note:r.note, s:r.s ? (r.w === "b" ? flip(r.s) : r.s) : null, r:r, at:start};
         mt.hasMe = !!((mt.a.pair && mt.a.pair.me) || (mt.b.pair && mt.b.pair.me));
         mt.meWon = !!(mt.w && mt[mt.w].pair && mt[mt.w].pair.me);
@@ -2546,33 +3010,33 @@
     return '<div class="livebar" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div><div class="recent" data-r="recent" hidden></div>' +
       '<div class="' + heroCls(P) + '">' + cardHtml(P) +
       '<div class="strip"><div class="st-row"><span class="glass" data-r="pill"><span class="dot"></span><span>–</span></span><a class="glass" data-r="link" target="_blank" rel="noopener"></a></div>' +
-      '<div class="st-main"><div class="eyebrow" data-r="round"></div><div class="timeline-big"><div class="bigtime" data-r="time">–</div><div class="court-no" data-r="cno"><small data-r="clab">Bana</small><b data-r="court"></b></div></div></div></div></div>' +
+      '<div class="st-main"><div class="eyebrow" data-r="round"></div><div class="timeline-big"><div class="bigtime" data-r="time">–</div><div class="court-no" data-r="cno"><small data-r="clab">' + _("Bana") + '</small><b data-r="court"></b></div></div></div></div></div>' +
       '<div class="board" aria-live="polite"><div class="countdown" data-r="cd"><span class="l"><span class="dot"></span><span data-r="cdt">–</span></span><a data-r="rl" target="_blank" rel="noopener">RankedIn ↗︎</a></div>' +
       '<div class="lastres" data-r="last" hidden></div><div class="vs" data-r="vs"></div><div class="nextev" data-r="next" hidden></div></div>' +
-      '<ol class="route" data-r="route" aria-label="Vägen genom tävlingen" hidden></ol>' +
-      '<section data-r="sec" aria-labelledby="dh-' + who + '"><div class="sh"><h2 id="dh-' + who + '" data-r="h">Spelträd</h2><div class="meta" data-r="meta"></div></div><div data-r="draw"></div></section>';
+      '<ol class="route" data-r="route" aria-label="' + _("Vägen genom tävlingen") + '" hidden></ol>' +
+      '<section data-r="sec" aria-labelledby="dh-' + who + '"><div class="sh"><h2 id="dh-' + who + '" data-r="h">' + _("Spelträd") + '</h2><div class="meta" data-r="meta"></div></div><div data-r="draw"></div></section>';
   }
   function meTeamRow(p, right){
-    var sv = pskill(p), info = p.n.map(function(n){ return n.split(" ")[0]; }).join(" och ") + (sv ? " · skill " + fmtSkill(sv) : "");
+    var sv = pskill(p), info = p.n.map(function(n){ return n.split(" ")[0]; }).join(_(" och ")) + (sv ? " · skill " + fmtSkill(sv) : "");
     return '<div class="team me">' + avatars(p, "") + '<div class="tname">' + esc(short(p)) + '<small>' + esc(info) + '</small></div>' + (right || (p.seed ? '<span class="seed">[' + esc(p.seed) + ']</span>' : '<span></span>')) + '</div>';
   }
   var OPP_NAME = 'style="font:800 21px/1.02 \'Big Shoulders Display\',sans-serif;text-transform:uppercase;color:var(--board-ink);letter-spacing:.02em"';
   function oppRow(op, ev, right){
     if (op && op.pair){
       var sv = pskill(op.pair);
-      return '<div class="team opp">' + avatars(op.pair, "") + '<div class="tname" ' + OPP_NAME + '>' + esc(short(op.pair)) + '<small>' + esc(op.pair.n.map(function(n){ return n.split(" ")[0]; }).join(" och ") + (sv ? " · skill " + fmtSkill(sv) : "")) + '</small></div>' +
+      return '<div class="team opp">' + avatars(op.pair, "") + '<div class="tname" ' + OPP_NAME + '>' + esc(short(op.pair)) + '<small>' + esc(op.pair.n.map(function(n){ return n.split(" ")[0]; }).join(_(" och ")) + (sv ? " · skill " + fmtSkill(sv) : "")) + '</small></div>' +
         (right || (op.pair.seed ? '<span class="seed">[' + esc(op.pair.seed) + ']</span>' : '<span></span>')) + '</div>';
     }
     if (op && op.from){
-      return '<div class="team opp"><span></span><div class="tname">Mot vinnaren av<div class="opts">' + op.from.map(function(pp, i){
-        return (i ? '<div class="opt"><i>eller</i></div>' : "") + '<div class="opt">' + avatars(pp, "md") + '<span>' + esc(short(pp)) + (pskill(pp) ? '<small class="osk">' + skillHtml(pskill(pp)) + '</small>' : '') + '</span></div>';
+      return '<div class="team opp"><span></span><div class="tname">' + _("Mot vinnaren av") + '<div class="opts">' + op.from.map(function(pp, i){
+        return (i ? '<div class="opt"><i>' + _("eller") + '</i></div>' : "") + '<div class="opt">' + avatars(pp, "md") + '<span>' + esc(short(pp)) + (pskill(pp) ? '<small class="osk">' + skillHtml(pskill(pp)) + '</small>' : '') + '</span></div>';
       }).join("") + '</div></div><span></span></div>';
     }
-    return '<div class="team opp"><span></span><div class="tname">' + esc((op && op.ph) || "Motståndare klara senare") + '</div>' + (right || "<span></span>") + '</div>';
+    return '<div class="team opp"><span></span><div class="tname">' + esc((op && op.ph) || _("Motståndare klara senare")) + '</div>' + (right || "<span></span>") + '</div>';
   }
   function tilesFor(mt){
     var side = meSide(mt), ss = sets(mt.s);
-    if (!ss.length) return '<span class="rs">' + esc(mt.note || (mt.meWon ? "Vinst" : "Förlust")) + '</span>';
+    if (!ss.length) return '<span class="rs">' + esc(_(mt.note) || (mt.meWon ? _("Vinst") : _("Förlust"))) + '</span>';
     return '<span class="tiles" aria-label="' + esc(mePersp(mt)) + '">' + ss.map(function(p){
       var mine = mt.w === side ? p[0] : p[1], th = mt.w === side ? p[1] : p[0];
       var mw = typeof mine === "number" ? mine > th : mt.w === side, tw = typeof th === "number" ? th > mine : mt.w !== side;
@@ -2589,7 +3053,7 @@
     // Long words ("Kvartsfinal") must fit on one line even in the fallback font (web font not loaded yet)
     el.time.style.fontSize = o.word && String(o.big).length > 7 ? "min(60px, 12.5vw, calc((100vw - 40px) / " + (String(o.big).length * 0.63).toFixed(2) + "))" : "";
     el.time.parentNode.className = "timeline-big" + (o.word ? " wrap" : "");
-    el.cno.hidden = !o.court; el.clab.textContent = o.clab || "Bana"; el.court.textContent = o.court || "";
+    el.cno.hidden = !o.court; el.clab.textContent = o.clab || _("Bana"); el.court.textContent = o.court || "";
     el.pill.className = "glass" + (o.pcls ? " " + o.pcls : "");
     el.pill.innerHTML = '<span class="dot"></span><span>' + esc(o.pill || "–") + '</span>';
     el.cd.className = "countdown" + (o.live ? " live" : "");
@@ -2600,56 +3064,56 @@
     el.next.hidden = !o.next; el.next.innerHTML = o.next || "";
     el.recent.hidden = !o.recent; el.recent.innerHTML = o.recent || "";
     el.sec.hidden = !!o.nosec;
-    el.h.textContent = o.h || "Spelträd"; el.meta.textContent = o.meta || "";
+    el.h.textContent = o.h || _("Spelträd"); el.meta.textContent = o.meta || "";
   }
   function timing(s, t, rl){   // -> pill, txt, live, pcls
-    if (!s) return {pill:"Nästa", txt:rl + " · tid inte satt"};
+    if (!s) return {pill:_("Nästa"), txt:rl + _(" · tid inte satt")};
     if (t < s){
       var same = s - t < 16 * HOUR;
-      return {pill:same ? "Om " + fmtLeft(s - t) : cap(dayLabel(s)), txt:same ? rl + " börjar om " + fmtLeft(s - t) : rl + " " + dayLabel(s) + " " + hm(s)};
+      return {pill:same ? _("Om ") + fmtLeft(s - t) : cap(dayLabel(s)), txt:same ? rl + _(" börjar om ") + fmtLeft(s - t) : rl + " " + dayLabel(s) + " " + hm(s)};
     }
-    if (t < new Date(+s + 90 * 60000)) return {pill:"Pågår", pcls:"live", live:true, txt:defForm(rl) + " pågår"};
-    return {pill:"Väntar", pcls:"done", txt:defForm(rl) + " är slut. Väntar på resultat från RankedIn."};
+    if (t < new Date(+s + 90 * 60000)) return {pill:_("Pågår"), pcls:"live", live:true, txt:defForm(rl) + _(" pågår")};
+    return {pill:_("Väntar"), pcls:"done", txt:defForm(rl) + _(" är slut. Väntar på resultat från RankedIn.")};
   }
 
   function renderDynTour(D){
-    var e = D.e, ev = D.model || buildTour(e, []), st = tourState(ev), x = st.next || st.last, t = now(), W = WHO[D.who], o = {link:e.name || "Turnering", url:e.url};
+    var e = D.e, ev = D.model || buildTour(e, []), st = tourState(ev), x = st.next || st.last, t = now(), W = WHO[D.who], o = {link:e.name || _("Turnering"), url:e.url};
     wantSkills(Object.keys(ev.pairs).map(function(k){ return ev.pairs[k]; }));
     var npairs = Object.keys(ev.pairs).length || e.pairs || 0;
-    o.h = !ev.draws.length ? "Lottning" : ev.draws.some(function(d){ return d.format !== "groups"; }) ? "Spelträd" : "Grupper";
-    o.meta = e.cls + (npairs ? " · " + npairs + " par" : "");
+    o.h = !ev.draws.length ? _("Lottning") : ev.draws.some(function(d){ return d.format !== "groups"; }) ? _("Spelträd") : _("Grupper");
+    o.meta = e.cls + (npairs ? " · " + npairs + _(" par") : "");
     if (!x){
       var start = riDate(e.start) || new Date(e.windowFrom), partner = e.partner ? e.partner.split(" ")[0] : "";
-      o.round = e.cls + (partner ? " · med " + partner : "");
+      o.round = e.cls + (partner ? _(" · med ") + partner : "");
       o.big = dayOf(start) === dayOf(t) ? hm(start) : dayMonD(start);
-      if (t < start){ o.pill = start - t < 16 * HOUR ? "Om " + fmtLeft(start - t) : cap(dayLabel(start)); }
-      else if (inWin(e)){ o.pill = "Pågår"; o.pcls = "live"; o.live = true; }
-      else { o.pill = "Klar"; o.pcls = "done"; }
-      o.txt = ev.draws.length ? "Lottningen är klar. " + W.name + " har inga matcher inlagda än." : "Lottningen är inte klar än. Start " + dayLabel(start) + " " + hm(start) + ".";
-      o.sub = e.cls + " · " + (inWin(e) ? "idag" : dayLabel(start));
+      if (t < start){ o.pill = start - t < 16 * HOUR ? _("Om ") + fmtLeft(start - t) : cap(dayLabel(start)); }
+      else if (inWin(e)){ o.pill = _("Pågår"); o.pcls = "live"; o.live = true; }
+      else { o.pill = _("Klar"); o.pcls = "done"; }
+      o.txt = ev.draws.length ? _("Lottningen är klar. {name} har inga matcher inlagda än.", {name:W.name}) : _("Lottningen är inte klar än. Start {when}.", {when:dayLabel(start) + " " + hm(start)});
+      o.sub = e.cls + " · " + (inWin(e) ? _("idag") : dayLabel(start));
       var mp = {n:[e.me, e.partner].filter(Boolean), ids:[e.pid, e.partnerId || null], rid:ev.rid, me:true, seed:e.seed || ""};
       wantSkills([mp]);
-      o.vs = meTeamRow(mp) + oppRow({ph:ev.draws.length ? "Motståndare klara senare" : "Motståndare klara när lottningen kommer"}, ev);
+      o.vs = meTeamRow(mp) + oppRow({ph:ev.draws.length ? _("Motståndare klara senare") : _("Motståndare klara när lottningen kommer")}, ev);
     } else {
       var mt = x.mt, rl = dynRound(ev, x);
       o.round = rl + " · " + e.cls; o.big = mt.t || dayMonD(mt.at || riDate(e.start) || t);
-      o.court = mt.c ? mt.c.replace(/^Bana\s*/, "") : "";
+      o.court = mt.c ? mt.c.replace(/^(Bana|Pista)\s*/, "") : "";
       if (st.next){
-        var tm = timing(mt.at, t, x.kind === "rr" ? "Gruppmatchen" : rl);
+        var tm = timing(mt.at, t, x.kind === "rr" ? _("Gruppmatchen") : rl);
         o.pill = tm.pill; o.pcls = tm.pcls; o.live = tm.live; o.txt = tm.txt + (tm.live && mt.c ? " · " + mt.c : "");
-        o.sub = x.rd.short + (mt.t ? " " + mt.t : "") + (tm.live ? " · pågår" : "");
+        o.sub = _(x.rd.short) + (mt.t ? " " + mt.t : "") + (tm.live ? _(" · pågår") : "");
       } else {
-        o.pill = st.champ ? "Vinnare" : "Klar"; o.pcls = st.champ ? "live" : "done";
-        o.txt = dynOutCopy(ev, st); o.sub = st.champ ? "Vann " + e.cls : e.cls + " · klart";
+        o.pill = st.champ ? _("Vinnare") : _("Klar"); o.pcls = st.champ ? "live" : "done";
+        o.txt = dynOutCopy(ev, st); o.sub = st.champ ? _("Vann ") + e.cls : e.cls + _(" · klart");
       }
       var ms = meSide(mt), right = null;
-      if (!st.next && mt.w) right = '<span class="tag">' + (mt.meWon ? "Vinst" : "Förlust") + '<b>' + esc(mePersp(mt) || mt.note || "") + '</b></span>';
+      if (!st.next && mt.w) right = '<span class="tag">' + (mt.meWon ? _("Vinst") : _("Förlust")) + '<b>' + esc(mePersp(mt) || mt.note || "") + '</b></span>';
       var opx = mt[ms === "a" ? "b" : "a"];
       o.vs = meTeamRow(mt[ms].pair) + oppRow(opx, ev, right) + (opx && opx.pair ? cmpHtml(mt[ms].pair, opx.pair) + (st.next ? h2hHtml(D.who, opx.pair, ev.rid) : "") : "");
       var L = st.next && st.last;
       if (L){
         var lop = L.mt[meSide(L.mt) === "a" ? "b" : "a"];
-        o.last = '<span>' + esc(L.rd.label) + ': <b>' + (L.mt.meWon ? "vinst" : "förlust") + '</b> mot ' + esc(lop.pair ? short(lop.pair) : "–") + '</span><span class="sc">' + esc(mePersp(L.mt) || L.mt.note || "") + '</span>';
+        o.last = '<span>' + esc(_(L.rd.label)) + ': <b>' + (L.mt.meWon ? _("vinst") : _("förlust")) + '</b>' + _(" mot ") + esc(lop.pair ? short(lop.pair) : "–") + '</span><span class="sc">' + esc(mePersp(L.mt) || L.mt.note || "") + '</span>';
       }
       o.route = dynRouteHtml(ev, st);
     }
@@ -2662,7 +3126,7 @@
     var host = D.el.draw, W = WHO[D.who], x = st.next || st.last;
     if (!ev.draws.length){
       dropResize(host); host._model = null;
-      host.innerHTML = '<p class="empty">Lottningen är inte publicerad än. Den dyker upp här när arrangören lägger ut den.</p>';
+      host.innerHTML = '<p class="empty">' + _("Lottningen är inte publicerad än. Den dyker upp här när arrangören lägger ut den.") + '</p>';
       return;
     }
     var nm = st.next && st.next.mt, sel = 0, has = !!host.querySelector(".seg");
@@ -2680,8 +3144,8 @@
         if (!mt.hasMe) return;
         n++;
         var op = mt[meSide(mt) === "a" ? "b" : "a"], cls = mt.w ? (mt.meWon ? "done" : "lost") : (st.next && st.next.mt === mt ? "next" : "");
-        var st2 = matchState(ev, mt), right = mt.w ? tilesFor(mt) : '<span class="rs">' + (st2 === "live" ? "Pågår" : st2 === "nr" ? "Väntar på resultat" : cls === "next" ? "Nästa" : "") + '</span>';
-        h += '<li class="' + cls + '"><span class="node"></span><div><div class="rn">' + esc((g.name === "Gruppspel" ? "Grupp" : g.name) + " · " + n) + '</div><div class="rm">' + esc("mot " + (op.pair ? short(op.pair) : "–") + (whenText(mt) ? " · " + whenText(mt) : "")) + '</div></div>' + right + '</li>';
+        var st2 = matchState(ev, mt), right = mt.w ? tilesFor(mt) : '<span class="rs">' + (st2 === "live" ? _("Pågår") : st2 === "nr" ? _("Väntar på resultat") : cls === "next" ? _("Nästa") : "") + '</span>';
+        h += '<li class="' + cls + '"><span class="node"></span><div><div class="rn">' + esc(_(g.name === "Gruppspel" ? "Grupp" : g.name) + " · " + n) + '</div><div class="rm">' + esc(_("mot ") + (op.pair ? short(op.pair) : "–") + (whenText(mt) ? " · " + whenText(mt) : "")) + '</div></div>' + right + '</li>';
       }); });
     });
     var main = ev.draws[ev.mainIdx];
@@ -2691,10 +3155,10 @@
       main.rounds.forEach(function(rd, r){
         var mt = rd.matches.filter(function(m){ return m.hasMe; })[0], slot = rd.matches[Math.max(0, i0) >> r] || rd.matches[0], cls = "", right, meta = whenText(slot);
         if (mt && mt.w){ cls = mt.meWon ? "done" : "lost"; right = tilesFor(mt); meta = whenText(mt); }
-        else if (mt){ cls = "next"; var s3 = matchState(ev, mt); right = '<span class="rs">' + (s3 === "live" ? "Pågår" : s3 === "nr" ? "Väntar på resultat" : "Nästa") + '</span>'; meta = whenText(mt); }
+        else if (mt){ cls = "next"; var s3 = matchState(ev, mt); right = '<span class="rs">' + (s3 === "live" ? _("Pågår") : s3 === "nr" ? _("Väntar på resultat") : _("Nästa")) + '</span>'; meta = whenText(mt); }
         else if (out){ cls = "out"; right = '<span class="rs"></span>'; }
-        else right = '<span class="rs">Vid vinst</span>';
-        h += '<li class="' + cls + '"><span class="node"></span><div><div class="rn">' + esc(rd.label) + '</div><div class="rm">' + esc(meta || "Tid kommer") + '</div></div>' + right + '</li>';
+        else right = '<span class="rs">' + _("Vid vinst") + '</span>';
+        h += '<li class="' + cls + '"><span class="node"></span><div><div class="rn">' + esc(_(rd.label)) + '</div><div class="rm">' + esc(meta || _("Tid kommer")) + '</div></div>' + right + '</li>';
       });
     }
     return h;
@@ -2706,42 +3170,42 @@
     var day = riDate(e.date + "T12:00"), pairs = [];
     m.ties.forEach(function(x){ x.mts.forEach(function(mt){ ["a", "b"].forEach(function(sd){ if (mt[sd].pair) pairs.push(mt[sd].pair); }); }); });
     wantSkills(pairs);
-    o.round = e.name + (e.round ? " · omgång " + e.round : "");
-    o.h = m.ties.length > 1 ? "Lagmatcher" : "Lagmatch";
+    o.round = e.name + (e.round ? " ·" + _(" omgång ") + e.round : "");
+    o.h = m.ties.length > 1 ? _("Lagmatcher") : _("Lagmatch");
     o.meta = e.team + (e.division ? " · " + e.division : "");
-    if (e.round){ o.court = String(e.round); o.clab = "Omg"; }
-    if (!cur){ o.big = dayMonD(day); o.pill = cap(dayLabel(day)); o.txt = "Inga lagmatcher inlagda."; setHero(D, o); D.el.draw.innerHTML = ""; return; }
+    if (e.round){ o.court = String(e.round); o.clab = _("Omg"); }
+    if (!cur){ o.big = dayMonD(day); o.pill = cap(dayLabel(day)); o.txt = _("Inga lagmatcher inlagda."); setHero(D, o); D.el.draw.innerHTML = ""; return; }
     var tie = cur.tie, myMt = cur.mts.filter(function(x){ return x.hasMe; })[0] || null;
     o.big = cur.start ? hm(cur.start) : dayMonD(day);
-    var allDone = m.ties.every(function(x){ return x.done; }), vsTxt = (tie.home ? "Hemma" : "Borta") + " mot " + tie.opp;
+    var allDone = m.ties.every(function(x){ return x.done; }), vsTxt = (tie.home ? _("Hemma") : _("Borta")) + _(" mot ") + tie.opp;
     if (allDone){
-      o.pill = "Klart"; o.pcls = "done";
-      o.txt = m.ties.map(function(x){ return x.W > x.L ? e.team + " vann mot " + x.tie.opp + " " + x.W + "–" + x.L : x.W < x.L ? "Förlust mot " + x.tie.opp + " " + x.W + "–" + x.L : "Oavgjort mot " + x.tie.opp + " " + x.W + "–" + x.L; }).join(". ") + ".";
-      o.sub = e.name + " · klart";
+      o.pill = _("Klart"); o.pcls = "done";
+      o.txt = m.ties.map(function(x){ return x.W > x.L ? e.team + _(" vann mot ") + x.tie.opp + " " + x.W + "–" + x.L : x.W < x.L ? _("Förlust mot ") + x.tie.opp + " " + x.W + "–" + x.L : _("Oavgjort mot ") + x.tie.opp + " " + x.W + "–" + x.L; }).join(". ") + ".";
+      o.sub = e.name + _(" · klart");
     } else if (cur.start && t < cur.start){
       var same = cur.start - t < 16 * HOUR;
-      o.pill = same ? "Om " + fmtLeft(cur.start - t) : cap(dayLabel(cur.start));
-      o.txt = vsTxt + " · " + (same ? "börjar om " + fmtLeft(cur.start - t) : dayLabel(cur.start) + " " + hm(cur.start)) + (tie.venue ? " · " + tie.venue : "");
+      o.pill = same ? _("Om ") + fmtLeft(cur.start - t) : cap(dayLabel(cur.start));
+      o.txt = vsTxt + " · " + (same ? _("börjar om ") + fmtLeft(cur.start - t) : dayLabel(cur.start) + " " + hm(cur.start)) + (tie.venue ? " · " + tie.venue : "");
       o.sub = e.name + " · " + (same ? hm(cur.start) : dayLabel(cur.start));
     } else if (inWin(e) && (cur.start || cur.rubbers.some(function(r){ return r.w; }))){
-      o.pill = "Pågår"; o.pcls = "live"; o.live = true;
-      o.txt = "Lagmatchen pågår · " + vsTxt + (tie.venue ? " · " + tie.venue : "");
-      o.sub = e.name + " · pågår";
+      o.pill = _("Pågår"); o.pcls = "live"; o.live = true;
+      o.txt = _("Lagmatchen pågår · ") + vsTxt + (tie.venue ? " · " + tie.venue : "");
+      o.sub = e.name + _(" · pågår");
     } else if (inWin(e)){
-      o.pill = "Idag"; o.txt = vsTxt + " · tid inte klar" + (tie.venue ? " · " + tie.venue : ""); o.sub = e.name + " · idag";
+      o.pill = _("Idag"); o.txt = vsTxt + _(" · tid inte klar") + (tie.venue ? " · " + tie.venue : ""); o.sub = e.name + _(" · idag");
     } else {
-      o.pill = cap(dayLabel(day)); o.txt = vsTxt + " · " + dayLabel(day) + (tie.time ? " " + tie.time : ", tid inte klar") + (tie.venue ? " · " + tie.venue : "");
+      o.pill = cap(dayLabel(day)); o.txt = vsTxt + " · " + dayLabel(day) + (tie.time ? " " + tie.time : _(", tid inte klar")) + (tie.venue ? " · " + tie.venue : "");
       o.sub = e.name + " · " + dayLabel(day);
     }
     if (myMt){
-      var ms = meSide(myMt), right = myMt.w ? '<span class="tag">' + (myMt.meWon ? "Vinst" : "Förlust") + '<b>' + esc(mePersp(myMt) || myMt.note || "") + '</b></span>' : null;
+      var ms = meSide(myMt), right = myMt.w ? '<span class="tag">' + (myMt.meWon ? _("Vinst") : _("Förlust")) + '<b>' + esc(mePersp(myMt) || myMt.note || "") + '</b></span>' : null;
       var opt = myMt[ms === "a" ? "b" : "a"];
       o.vs = meTeamRow(myMt[ms].pair) + oppRow(opt, null, right) + (opt && opt.pair ? cmpHtml(myMt[ms].pair, opt.pair) + (!myMt.w ? h2hHtml(D.who, opt.pair, opt.pair.rid) : "") : "");
     } else {
-      o.vs = '<div class="team me"><span></span><div class="tname">' + esc(e.team) + '<small>' + esc(W.name + (cur.rubbers.length ? " spelar inte den här matchen" : " · laguppställningen kommer senare")) + '</small></div><span class="seed">' + (tie.home ? "Hemma" : "Borta") + '</span></div>' +
-        '<div class="team opp"><span></span><div class="tname" ' + OPP_NAME + '>' + esc(tie.opp) + '<small>' + esc(tie.venue || "Plats inte klar") + '</small></div><span></span></div>';
+      o.vs = '<div class="team me"><span></span><div class="tname">' + esc(e.team) + '<small>' + esc(W.name + (cur.rubbers.length ? _(" spelar inte den här matchen") : _(" · laguppställningen kommer senare"))) + '</small></div><span class="seed">' + (tie.home ? _("Hemma") : _("Borta")) + '</span></div>' +
+        '<div class="team opp"><span></span><div class="tname" ' + OPP_NAME + '>' + esc(tie.opp) + '<small>' + esc(tie.venue || _("Plats inte klar")) + '</small></div><span></span></div>';
     }
-    if (cur.W + cur.L) o.last = '<span>Ställning mot ' + esc(tie.opp) + '</span><span class="sc"><b>' + cur.W + "–" + cur.L + '</b></span>';
+    if (cur.W + cur.L) o.last = '<span>' + _("Ställning mot ") + esc(tie.opp) + '</span><span class="sc"><b>' + cur.W + "–" + cur.L + '</b></span>';
     if (inWin(e)) o.recent = recentHtml(D.who, tieFinished(m));
     setHero(D, o);
     D.el.draw.innerHTML = tlListHtml(e, m, day);
@@ -2769,8 +3233,8 @@
   function tlTableHtml(e, d){
     var mine = function(r){ return (e.teamId && String(r.participantUrl || "").indexOf("/" + e.teamId) >= 0) || r.participantName === e.team; };
     var played = d.rows.some(function(r){ return r.played > 0; });
-    return '<div class="card tbl"><div class="tblhd"><b>Tabell</b><span>' + esc(e.division) + (played ? "" : " · inga matcher spelade än") + '</span></div>' +
-      '<table class="gt"><thead><tr><th>Lag</th><th title="Spelade">S</th><th title="Vunna">V</th><th title="Oavgjorda">O</th><th title="Förlorade">F</th><th title="Matchskillnad">+/-</th><th title="Poäng">P</th></tr></thead><tbody>' +
+    return '<div class="card tbl"><div class="tblhd"><b>' + _("Tabell") + '</b><span>' + esc(e.division) + (played ? "" : _(" · inga matcher spelade än")) + '</span></div>' +
+      '<table class="gt"><thead><tr><th>' + _("Lag") + '</th><th title="' + _("Spelade") + '">' + _("S") + '</th><th title="' + _("Vunna") + '">' + _("V") + '</th><th title="' + _("Oavgjorda") + '">' + _("O") + '</th><th title="' + _("Förlorade") + '">' + _("F") + '</th><th title="' + _("Matchskillnad") + '">+/-</th><th title="' + _("Poäng") + '">' + _("P") + '</th></tr></thead><tbody>' +
       d.rows.map(function(r){
         var gd = r.gamesDifference || 0;
         return '<tr' + (mine(r) ? ' class="me"' : '') + '><td><span class="tpos">' + r.standing + '</span>' + esc(r.participantName) + '</td><td>' + r.played + '</td><td>' + r.wins + '</td><td>' + r.draws + '</td><td>' + r.losses + '</td><td>' + (gd > 0 ? "+" : "") + gd + '</td><td><b>' + r.matchPoints + '</b></td></tr>';
@@ -2784,13 +3248,13 @@
   function tlListHtml(e, m, day){
     return m.ties.map(function(x){
       var tt = x.tie, home = tt.home ? e.team : tt.opp, away = tt.home ? tt.opp : e.team;
-      var meta = [x.start ? dayLabel(x.start) + " " + hm(x.start) : dayLabel(day), tt.venue, tt.home ? "hemma" : "borta"].filter(Boolean).join(" · ");
+      var meta = [x.start ? dayLabel(x.start) + " " + hm(x.start) : dayLabel(day), tt.venue, tt.home ? _("hemma") : _("borta")].filter(Boolean).join(" · ");
       return '<div class="tie"><div class="tiehd"><div><div class="tt">' + esc(home) + ' <i>–</i> ' + esc(away) + '</div><div class="tm">' + esc(meta) + '</div></div>' +
-        (x.W + x.L ? '<div class="ts">' + x.W + '–' + x.L + '<small>' + (x.done ? "Slut" : "Ställning") + '</small></div>' : '<div></div>') + '</div>' +
+        (x.W + x.L ? '<div class="ts">' + x.W + '–' + x.L + '<small>' + (x.done ? _("Slut") : _("Ställning")) + '</small></div>' : '<div></div>') + '</div>' +
         (x.mts.length ? '<div class="results">' + x.mts.map(function(mt){
           var r = mt.r, st2 = mt.w ? (mt.w === x.us ? "Vinst" : "Förlust") : (inWin(e) && x.start && now() >= x.start ? "Pågår" : "");
-          return '<div class="res' + (mt.hasMe ? " mine" : "") + '" data-mid="' + esc(r.id) + '"><div class="mh"><span>' + esc("Match " + r.k + (r.kind ? " · " + r.kind : "")) + '</span><span class="st' + (st2 === "Pågår" ? " nx" : "") + '">' + esc(st2) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
-        }).join("") + '</div>' : '<p class="empty">Laguppställningarna är inte publicerade än.</p>') + '</div>';
+          return '<div class="res' + (mt.hasMe ? " mine" : "") + '" data-mid="' + esc(r.id) + '"><div class="mh"><span>' + esc(_("Match ") + r.k + (r.kind ? " · " + _(r.kind) : "")) + '</span><span class="st' + (st2 === "Pågår" ? " nx" : "") + '">' + esc(_(st2)) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
+        }).join("") + '</div>' : '<p class="empty">' + _("Laguppställningarna är inte publicerade än.") + '</p>') + '</div>';
     }).join("");
   }
   function dynRender(D){
@@ -2804,9 +3268,9 @@
   function recentHtml(who, items){
     items = items.slice(0, 4);
     if (!items.length) return "";
-    return '<div class="rk" aria-hidden="true">Senaste resultat</div><ol aria-label="Senaste resultat">' + items.map(function(x){
+    return '<div class="rk" aria-hidden="true">' + _("Senaste resultat") + '</div><ol aria-label="' + _("Senaste resultat") + '">' + items.map(function(x){
       return '<li><a href="#' + who + '/m' + esc(x.mid) + '"' + (x.mine ? ' class="mine"' : "") + '><div class="rh"><b>' + esc(x.lab) + '</b><span>' + esc(x.when) + '</span></div>' +
-        '<div class="rw">' + esc(x.win) + '</div><div class="rl">' + esc(((x.score ? x.score + " " : "") + (x.lose ? "mot " + x.lose : "")).trim()) + '</div></a></li>';
+        '<div class="rw">' + esc(x.win) + '</div><div class="rl">' + esc(((x.score ? x.score + " " : "") + (x.lose ? _("mot ") + x.lose : "")).trim()) + '</div></a></li>';
     }).join("") + '</ol>';
   }
   function finItem(mt, lab, whenTxt, key){
@@ -2820,13 +3284,13 @@
     ev.draws.forEach(function(d, di){
       if (d.format === "groups") d.groups.forEach(function(g){ g.matches.forEach(function(mt){
         if (!mt.w) return;
-        var it = finItem(mt, g.name === "Gruppspel" ? "Grupp" : g.name, [mt.dl, mt.t].filter(Boolean).join(" "), [mt.at ? +mt.at : 0, 0, di]);
+        var it = finItem(mt, _(g.name === "Gruppspel" ? "Grupp" : g.name), [mt.dl, mt.t].filter(Boolean).join(" "), [mt.at ? +mt.at : 0, 0, di]);
         if (it) out.push(it);
       }); });
       else d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(mt){
         if (!mt.w) return;
         var at0 = mt.at ? +mt.at : dateOf && mt.t ? +dateOf(mt.t) : 0;
-        var it = finItem(mt, (d.places > 1 || /^Plate/.test(d.label) ? "Plate " : "") + rd.short, [mt.dl, mt.t].filter(Boolean).join(" "), [at0, r, di]);
+        var it = finItem(mt, (d.places > 1 || /^Plate/.test(d.label) ? "Plate " : "") + (LANG === "es" ? rd.short.replace("KF", "CF") : rd.short), [mt.dl, mt.t].filter(Boolean).join(" "), [at0, r, di]);
         if (it) out.push(it);
       }); });
     });
@@ -2837,17 +3301,17 @@
     m.ties.forEach(function(x, ti){ x.mts.forEach(function(mt){
       if (!mt.w) return;
       var wp = mt[mt.w].pair, lp = mt[mt.w === "a" ? "b" : "a"].pair;
-      if (wp) out.push({mid:mt.r.id, lab:"Match " + mt.r.k, when:x.tie.opp, win:short(wp), lose:lp ? short(lp) : "", score:mt.s || mt.note || "", mine:!!mt.hasMe, key:[ti, mt.r.k]});
+      if (wp) out.push({mid:mt.r.id, lab:_("Match ") + mt.r.k, when:x.tie.opp, win:short(wp), lose:lp ? short(lp) : "", score:mt.s || mt.note || "", mine:!!mt.hasMe, key:[ti, mt.r.k]});
     }); });
     return out.sort(function(a, b){ return b.key[0] - a.key[0] || b.key[1] - a.key[1]; });
   }
   /* ---- between events: the result of the event that just ended (2 days), then the next one ---- */
   function fmtUntil(ms){
-    if (ms <= 0) return "nu";
+    if (ms <= 0) return _("nu");
     var min = Math.round(ms / 60000), h = min / 60, d = Math.floor(h / 24), rh = Math.floor(h - d * 24);
-    if (h < 24) return "om " + fmtLeft(ms);
-    if (d < 2) return "om 1 dag" + (rh ? " " + rh + " h" : "");
-    return "om " + d + " dagar";
+    if (h < 24) return _("om ") + fmtLeft(ms);
+    if (d < 2) return _("om 1 dag") + (rh ? " " + rh + " h" : "");
+    return _("om {n} dagar", {n:d});
   }
   function dateRange(e){
     var s1 = riDate(e.start) || new Date(e.windowFrom), s2 = riDate(e.end) || s1;
@@ -2868,33 +3332,33 @@
   function nextBlock(D, withName){
     var e = D.e, W = WHO[D.who], t = now(), h = "", s0 = nextStart(D);
     // withName: under the result of the last event. Otherwise the hero above already has name, countdown and venue.
-    h += '<div class="nk">' + (withName ? "Nästa tävling" : "Inför start") + (withName ? '<span>' + esc(cap(fmtUntil(s0 - t))) + '</span>' : "") + '</div>';
-    if (withName) h += '<h3>' + esc(e.name || (e.kind === "teamleague" ? "Lagserie" : "Turnering")) + '</h3>';
+    h += '<div class="nk">' + (withName ? _("Nästa tävling") : _("Inför start")) + (withName ? '<span>' + esc(cap(fmtUntil(s0 - t))) + '</span>' : "") + '</div>';
+    if (withName) h += '<h3>' + esc(e.name || (e.kind === "teamleague" ? _("Lagserie") : _("Turnering"))) + '</h3>';
     if (e.kind === "teamleague"){
       var m = D.model || buildTL(e, []), day = riDate(e.date + "T12:00");
       h += '<div class="nf">' + esc(cap(dayLabel(day))) + (e.ties && e.ties[0] && e.ties[0].venue ? " · " + esc(e.ties[0].venue) : "") + '<br><b>' + esc(e.team) + '</b>' + (e.division ? " · " + esc(e.division) : "") + '</div>';
-      h += '<div class="nf">' + (e.ties || []).map(function(tt){ return esc((tt.home ? "Hemma" : "Borta") + " mot " + tt.opp + (tt.time ? " " + tt.time : "")); }).join("<br>") + '</div>';
+      h += '<div class="nf">' + (e.ties || []).map(function(tt){ return esc((tt.home ? _("Hemma") : _("Borta")) + _(" mot ") + tt.opp + (tt.time ? " " + tt.time : "")); }).join("<br>") + '</div>';
       var mine = null;
       m.ties.forEach(function(x){ x.mts.forEach(function(mt){ if (!mine && mt.hasMe) mine = {mt:mt, x:x}; }); });
       if (mine){
         var ms = meSide(mine.mt), op = mine.mt[ms === "a" ? "b" : "a"];
         h += '<div class="vs">' + meTeamRow(mine.mt[ms].pair) + oppRow(op, null) + (op && op.pair ? cmpHtml(mine.mt[ms].pair, op.pair) + (!mine.mt.w ? h2hHtml(D.who, op.pair, op.pair.rid) : "") : "") + '</div>';
-        h += '<div class="nd">Första match <b>' + esc([mine.x.start ? dayLabel(mine.x.start) + " " + hm(mine.x.start) : "", "mot " + mine.x.tie.opp].filter(Boolean).join(" · ")) + '</b></div>';
-      } else h += '<div class="nd">Laguppställningen ej klar</div>';
+        h += '<div class="nd">' + _("Första match ") + '<b>' + esc([mine.x.start ? dayLabel(mine.x.start) + " " + hm(mine.x.start) : "", _("mot ") + mine.x.tie.opp].filter(Boolean).join(" · ")) + '</b></div>';
+      } else h += '<div class="nd">' + _("Laguppställningen ej klar") + '</div>';
       return h;
     }
     var ev = D.model || buildTour(e, []), st = tourState(ev), partner = e.partner || "";
-    h += '<div class="nf">' + esc(dateRange(e)) + (e.venue && withName ? " · " + esc(e.venue) : "") + '<br><b>' + esc(e.cls || "") + '</b>' + (partner ? " · med " + esc(partner) : "") + '</div>';
+    h += '<div class="nf">' + esc(dateRange(e)) + (e.venue && withName ? " · " + esc(e.venue) : "") + '<br><b>' + esc(e.cls || "") + '</b>' + (partner ? _(" · med ") + esc(partner) : "") + '</div>';
     wantSkills(Object.keys(ev.pairs).map(function(k){ return ev.pairs[k]; }));
     if (ev.draws.length && st.next){
       var x = st.next, mt = x.mt, ms2 = meSide(mt), op2 = mt[ms2 === "a" ? "b" : "a"];
       h += '<div class="vs">' + meTeamRow(mt[ms2].pair) + oppRow(op2, ev) + (op2 && op2.pair ? cmpHtml(mt[ms2].pair, op2.pair) + h2hHtml(D.who, op2.pair, ev.rid) : "") + '</div>';
-      h += '<div class="nd">Första match <b>' + esc([mt.at ? dayLabel(mt.at) + " " + hm(mt.at) : mt.t, mt.c].filter(Boolean).join(" · ")) + '</b>' + (x.kind === "rr" ? " · " + esc(x.rd.label) : "") + '</div>';
-    } else if (ev.draws.length) h += '<div class="nd">Lottningen är klar.</div>';
+      h += '<div class="nd">' + _("Första match ") + '<b>' + esc([mt.at ? dayLabel(mt.at) + " " + hm(mt.at) : mt.t, mt.c].filter(Boolean).join(" · ")) + '</b>' + (x.kind === "rr" ? " · " + esc(_(x.rd.label)) : "") + '</div>';
+    } else if (ev.draws.length) h += '<div class="nd">' + _("Lottningen är klar.") + '</div>';
     else {
       var mp = {n:[e.me, e.partner].filter(Boolean), ids:[e.pid, e.partnerId || null], rid:ev.rid, me:true, seed:e.seed || ""};
       wantSkills([mp]);
-      h += '<div class="nd">Lottningen ej klar</div>';
+      h += '<div class="nd">' + _("Lottningen ej klar") + '</div>';
     }
     return h;
   }
@@ -2909,64 +3373,64 @@
         var m = buildTL(rc, datas), W = 0, L = 0, tw = 0, tl = 0;
         m.ties.forEach(function(x){ if (x.W > x.L) tw++; else if (x.W < x.L) tl++; x.mts.forEach(function(mt){ if (mt.hasMe && mt.w){ if (mt.meWon) W++; else L++; } }); });
         var first = m.ties[0];
-        if (!m.ties.some(function(x){ return x.W + x.L; })) return {label:"Klart", b:"klart", w:null, l:null, text:"Inga resultat inlagda än. De finns på RankedIn när lagen rapporterat."};
-        var label = !first || !first.done ? "Klart" : m.ties.length > 1 ? (tw + "–" + tl + " i matcher") : first.W > first.L ? "Vinst" : first.W < first.L ? "Förlust" : "Oavgjort";
-        var text = m.ties.map(function(x){ return x.W > x.L ? rc.team + " vann mot " + x.tie.opp + " " + x.W + "–" + x.L : x.W < x.L ? rc.team + " förlorade mot " + x.tie.opp + " " + x.W + "–" + x.L : rc.team + " och " + x.tie.opp + " delade " + x.W + "–" + x.L; }).join(". ") + ".";
-        return {label:label, b:label, w:W, l:L, text:text, clab:"Egna"};
+        if (!m.ties.some(function(x){ return x.W + x.L; })) return {label:"Klart", b:"klart", w:null, l:null, text:_("Inga resultat inlagda än. De finns på RankedIn när lagen rapporterat.")};
+        var label = !first || !first.done ? "Klart" : m.ties.length > 1 ? (tw + "–" + tl + _(" i matcher")) : first.W > first.L ? "Vinst" : first.W < first.L ? "Förlust" : "Oavgjort";
+        var text = m.ties.map(function(x){ return x.W > x.L ? rc.team + _(" vann mot ") + x.tie.opp + " " + x.W + "–" + x.L : x.W < x.L ? rc.team + _(" förlorade mot ") + x.tie.opp + " " + x.W + "–" + x.L : rc.team + _(" och ") + x.tie.opp + _(" delade ") + x.W + "–" + x.L; }).join(". ") + ".";
+        return {label:label, b:label, w:W, l:L, text:text, clab:_("Egna")};
       });
     } else {
       var st = riDate(rc.start) || new Date(rc.windowFrom);
       p = loadTour(who, {cid:rc.classId, tid:rc.tournamentId, st:rc.draws || null, c:rc.cls, d:dayOf(st), u:rc.url}).then(function(det){ return det.sum; });
     }
     p.then(function(sum){ if (D.dead || D.sumFor !== rc.key) return; D.sum = sum; dynRender(D); },
-      function(){ if (D.dead || D.sumFor !== rc.key) return; D.sum = {label:"Klart", b:"Klart", w:null, l:null, text:"Resultatet finns på RankedIn."}; dynRender(D); });
+      function(){ if (D.dead || D.sumFor !== rc.key) return; D.sum = {label:"Klart", b:"Klart", w:null, l:null, text:_("Resultatet finns på RankedIn.")}; dynRender(D); });
   }
   function renderBetween(D){
     var who = D.who, W = WHO[who], e = D.e, rc = D.recent, t = now(), o = {};
     if (rc){
       loadRecent(D);
       var sum = D.sum, end = new Date(rc.windowTo);
-      o.link = rc.name || "Senaste tävlingen"; o.url = rc.url;
-      o.round = "Senaste tävlingen · " + (rc.kind === "teamleague" ? rc.team : rc.cls);
+      o.link = rc.name || _("Senaste tävlingen"); o.url = rc.url;
+      o.round = _("Senaste tävlingen") + " · " + (rc.kind === "teamleague" ? rc.team : rc.cls);
       if (sum){
-        o.pill = sum.label === "Vinnare" ? "Vinnare" : "Klart"; o.pcls = sum.label === "Vinnare" ? "live" : "done";
-        o.big = sum.label; o.word = true;
-        if (sum.w != null){ o.court = sum.w + "–" + sum.l; o.clab = sum.clab || "Matcher"; }
+        o.pill = sum.label === "Vinnare" ? _("Vinnare") : _("Klart"); o.pcls = sum.label === "Vinnare" ? "live" : "done";
+        o.big = _(sum.label); o.word = true;
+        if (sum.w != null){ o.court = sum.w + "–" + sum.l; o.clab = sum.clab || _("Matcher"); }
         o.txt = sum.text;
-        o.sub = (rc.kind === "teamleague" ? rc.name : rc.cls) + " · " + (sum.b || "klart");
+        o.sub = (rc.kind === "teamleague" ? rc.name : rc.cls) + " · " + _(sum.b || "klart");
       } else if (rc.kind === "tournament" && wonClass(BYKEY[who], rc)){   // known from the worker before the draw is loaded
-        o.pill = "Vinnare"; o.pcls = "live"; o.big = "Vinnare"; o.word = true; o.txt = "Hämtar resultatet …"; o.sub = rc.cls + " · vinnare";
+        o.pill = _("Vinnare"); o.pcls = "live"; o.big = _("Vinnare"); o.word = true; o.txt = _("Hämtar resultatet …"); o.sub = rc.cls + _(" · vinnare");
       } else {
-        o.pill = "Klart"; o.pcls = "done"; o.big = dayMonD(end); o.txt = "Hämtar resultatet …"; o.sub = (rc.cls || rc.name || "") + " · klart";
+        o.pill = _("Klart"); o.pcls = "done"; o.big = dayMonD(end); o.txt = _("Hämtar resultatet …"); o.sub = (rc.cls || rc.name || "") + _(" · klart");
       }
       if (e) o.next = nextBlock(D, true);
     } else if (e){
       var s0 = nextStart(D), left = s0 - t, hrs = Math.round(left / 60000) / 60;
-      o.link = e.name || "Nästa tävling"; o.url = e.url;
+      o.link = e.name || _("Nästa tävling"); o.url = e.url;
       o.pill = cap(fmtUntil(left));
-      o.round = "Nästa tävling · " + (e.kind === "teamleague" ? e.team : e.cls + (e.partner ? " · med " + e.partner.split(" ")[0] : ""));
+      o.round = _("Nästa tävling") + " · " + (e.kind === "teamleague" ? e.team : e.cls + (e.partner ? _(" · med ") + e.partner.split(" ")[0] : ""));
       o.big = dayMonD(e.kind === "teamleague" ? riDate(e.date + "T12:00") : (riDate(e.start) || new Date(e.windowFrom)));
-      if (left > 0){ o.court = String(hrs >= 24 ? Math.floor(hrs / 24) : hrs >= 1 ? Math.floor(hrs) : Math.max(1, Math.round(left / 60000))); o.clab = hrs >= 24 ? "Dagar" : hrs >= 1 ? "Timmar" : "Min"; }
+      if (left > 0){ o.court = String(hrs >= 24 ? Math.floor(hrs / 24) : hrs >= 1 ? Math.floor(hrs) : Math.max(1, Math.round(left / 60000))); o.clab = hrs >= 24 ? _("Dagar") : hrs >= 1 ? _("Timmar") : "Min"; }
       o.txt = e.kind === "teamleague" ? cap(dayLabel(riDate(e.date + "T12:00"))) + ((e.ties || [])[0] && e.ties[0].time ? " " + e.ties[0].time : "") + ((e.ties || [])[0] && e.ties[0].venue ? " · " + e.ties[0].venue : "")
-        : "Start " + dayLabel(riDate(e.start) || new Date(e.windowFrom)) + " " + hm(riDate(e.start) || new Date(e.windowFrom)) + (e.venue ? " · " + e.venue : "");
+        : _("Start ") + dayLabel(riDate(e.start) || new Date(e.windowFrom)) + " " + hm(riDate(e.start) || new Date(e.windowFrom)) + (e.venue ? " · " + e.venue : "");
       o.next = nextBlock(D, false);
       o.sub = (e.kind === "teamleague" ? e.name : e.cls) + " · " + dayLabel(s0);
     } else {
-      o.link = W.name; o.url = RI_WEB; o.pill = "Paus"; o.pcls = "done"; o.round = "Inget inbokat"; o.big = "–";
-      o.txt = "Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva."; o.sub = "Inget inbokat";
+      o.link = W.name; o.url = RI_WEB; o.pill = _("Paus"); o.pcls = "done"; o.round = _("Inget inbokat"); o.big = "–";
+      o.txt = _("Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva."); o.sub = _("Inget inbokat");
     }
     if (!e){ o.nosec = true; setHero(D, o); D.el.draw.innerHTML = ""; return; }
     if (e.kind === "teamleague"){
       var m = D.model || buildTL(e, []);
-      o.h = m.ties.length > 1 ? "Lagmatcher" : "Lagmatch"; o.meta = e.team + (e.division ? " · " + e.division : "");
+      o.h = m.ties.length > 1 ? _("Lagmatcher") : _("Lagmatch"); o.meta = e.team + (e.division ? " · " + e.division : "");
       setHero(D, o);
       D.el.draw.innerHTML = tlListHtml(e, m, riDate(e.date + "T12:00"));
       tlTableInto(D.el.draw, e);
       return;
     }
     var ev = D.model || buildTour(e, []), st = tourState(ev), npairs = Object.keys(ev.pairs).length || e.pairs || 0;
-    o.h = !ev.draws.length ? "Lottning" : ev.draws.some(function(d){ return d.format !== "groups"; }) ? "Spelträd" : "Grupper";
-    o.meta = e.cls + (npairs ? " · " + npairs + " par" : "");
+    o.h = !ev.draws.length ? _("Lottning") : ev.draws.some(function(d){ return d.format !== "groups"; }) ? _("Spelträd") : _("Grupper");
+    o.meta = e.cls + (npairs ? " · " + npairs + _(" par") : "");
     setHero(D, o);
     renderTourDraw(D, ev, st);
   }
@@ -3187,7 +3651,7 @@
       } else html.push(tourCard(e));
       if (months.indexOf(m) < 0) months.push(m);
     });
-    host.innerHTML = html.length ? html.join("") : '<p class="empty">Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva.</p>';
+    host.innerHTML = html.length ? html.join("") : '<p class="empty">' + _("Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva.") + '</p>';
     if (meta) meta.textContent = months.length ? cap(months.slice(0, 3).join(" · ")) : "";
   }
 
@@ -3257,6 +3721,7 @@
   function fmtP(v){ return String(v >= 100 ? Math.round(v) : +v.toFixed(1)).replace(".", ","); }
   function milOf(e){
     if (typeof e.km !== "number") return "";
+    if (LANG === "es") return (e.approx ? "a menos de " + Math.round(e.km / 10) * 10 : Math.max(1, Math.round(e.km))) + " km";
     return e.approx ? "inom " + Math.round(e.km / 10) + " mil" : String(Math.max(0.1, Math.round(e.km) / 10).toFixed(1)).replace(".", ",") + " mil";
   }
   function sgCard(x, P, el){
@@ -3265,17 +3730,17 @@
     var where = [e.club, e.city && (e.club || "").toLowerCase().indexOf(e.city.toLowerCase()) < 0 ? e.city : "", milOf(e)].filter(Boolean).join(" · ");
     var chips = x.classes.map(function(c){
       var full = c.limit > 0 && c.players >= c.limit, own = c.level === el.base;
-      return '<li class="' + (own ? "mine" : "") + (full ? " full" : "") + '"><b>' + esc(c.name) + '</b><span>' + (full ? "fullt" : c.players + " par") + '</span>' +
-        '<span class="sr">' + (own ? ", din klass" : ", en klass upp") + (full ? ", reservlista" : "") + '</span></li>';
+      return '<li class="' + (own ? "mine" : "") + (full ? " full" : "") + '"><b>' + esc(c.name) + '</b><span>' + (full ? _("fullt") : c.players + _(" par")) + '</span>' +
+        '<span class="sr">' + (own ? _(", din klass") : _(", en klass upp")) + (full ? _(", reservlista") : "") + '</span></li>';
     }).join("");
-    var cl = riDate(e.closes), facts = [cl ? "Sista anmälan " + dayLabel(cl) + (dayOf(cl) === dayOf(now()) ? " kl " + hm(cl) : "") : "Anmälan öppen"];
+    var cl = riDate(e.closes), facts = [cl ? _("Sista anmälan ") + dayLabel(cl) + (dayOf(cl) === dayOf(now()) ? _(" kl ") + hm(cl) : "") : _("Anmälan öppen")];
     var names = x.mates.map(function(pid){ var Q = BYPID[pid]; return Q ? '<a href="#' + esc(Q.key) + '">' + esc(Q.short || Q.name) + '</a>' : ""; }).filter(Boolean);
-    if (names.length) facts.push("Nynäs-spelare anmälda: " + names.join(", "));
+    if (names.length) facts.push(_("Nynäs-spelare anmälda: ") + names.join(", "));
     return '<article class="card up sg" data-tid="' + esc(e.id) + '"><div class="date"><small>' + esc(multi ? cap(DOW[sd.getUTCDay()]) + "–" + DOW[ed.getUTCDay()] : cap(DOW[sd.getUTCDay()])) + '</small><b>' +
       esc(multi ? sd.getUTCDate() + "–" + ed.getUTCDate() : String(sd.getUTCDate())) + '</b><span>' + esc(mon) + '</span></div><div>' +
-      '<h3>' + esc(e.name || "Turnering") + '</h3>' + (where ? '<div class="what">' + esc(where) + '</div>' : "") +
-      '<ul class="sgc" aria-label="Klasser">' + chips + '</ul><div class="facts">' + facts.join("<br>") + '</div>' +
-      '<a class="sgbtn" href="' + esc(e.url || RI_WEB) + '" target="_blank" rel="noopener">Anmäl på RankedIn<span aria-hidden="true">↗︎</span><span class="sr"> (öppnas i ny flik), ' + esc(e.name || "") + '</span></a></div></article>';
+      '<h3>' + esc(e.name || _("Turnering")) + '</h3>' + (where ? '<div class="what">' + esc(where) + '</div>' : "") +
+      '<ul class="sgc" aria-label="' + _("Klasser") + '">' + chips + '</ul><div class="facts">' + facts.join("<br>") + '</div>' +
+      '<a class="sgbtn" href="' + esc(e.url || RI_WEB) + '" target="_blank" rel="noopener">' + _("Anmäl på RankedIn") + '<span aria-hidden="true">↗︎</span><span class="sr">' + _(" (öppnas i ny flik), ") + esc(e.name || "") + '</span></a></div></article>';
   }
   function renderSugg(who){
     var P = BYKEY[who], host = document.getElementById("sgList-" + who), note = document.getElementById("sgNote-" + who);
@@ -3284,13 +3749,13 @@
     var r = suggestions(P, 6), el = r.el;
     if (note){
       note.hidden = !el;
-      if (el) note.innerHTML = "Du får spela <b>" + el.base + "</b>" + (el.base === "A" ? "." : " och uppåt" + (el.cap ? " (paret högst " + esc(fmtP(el.cap)) + " p)" : "") + ".") +
-        (el.lower ? " " + el.lower.level + " går med en partner på högst " + esc(fmtP(el.lower.partnerMax)) + " p." : "");
+      if (el) note.innerHTML = _("Du får spela ") + "<b>" + el.base + "</b>" + (el.base === "A" ? "." : _(" och uppåt") + (el.cap ? _(" (paret högst ") + esc(fmtP(el.cap)) + " p)" : "") + ".") +
+        (el.lower ? " " + el.lower.level + _(" går med en partner på högst ") + esc(fmtP(el.lower.partnerMax)) + " p." : "");
     }
     var html = r.list.map(function(x){ return sgCard(x, P, el); }).join("");
     if (host._h === html && html) return;
     host._h = html;
-    host.innerHTML = html || '<p class="empty">Inga förslag just nu.</p>';
+    host.innerHTML = html || '<p class="empty">' + _("Inga förslag just nu.") + '</p>';
   }
 
   /* ---- discovery straight against RankedIn (when the worker cannot be reached); same rules as worker/src/discover.js ---- */
@@ -3507,48 +3972,48 @@
   function warn(what, e){ if (window.console) console.warn(what + ":", e && e.message); }
   // One row per player with an event on right now: next match (from the worker's live monitoring) or status
   function nowStatus(P, e){
-    var x = DISC && DISC.live && DISC.live[P.pid], t = now(), o = {pill:"Idag", pcls:"next", line:""};
+    var x = DISC && DISC.live && DISC.live[P.pid], t = now(), o = {pill:_("Idag"), pcls:"next", line:""};
     if (x && !(x.key === e.key || (e.kind === "tournament" && String(x.key).indexOf("t" + e.classId + "-") === 0))) x = null;
     if (x && x.st === "next"){
       var at0 = !x.t ? null : x.d ? riDate(x.d) : e.date ? riDate(e.date + "T" + x.t) : null;
-      var tm = timing(at0, t, x.lab || "Match");
-      o.pill = at0 ? tm.pill : "Nästa"; o.pcls = tm.live ? "live" : "next";
-      o.line = [x.lab, x.t, x.c].filter(Boolean).join(" · ") + (x.opp ? " mot " + x.opp : "") + (x.vs ? " · " + x.vs : "");
+      var tm = timing(at0, t, _(x.lab || "Match"));
+      o.pill = at0 ? tm.pill : _("Nästa"); o.pcls = tm.live ? "live" : "next";
+      o.line = [_(x.lab), x.t, x.c && x.c.replace(/^Bana /, _("Bana "))].filter(Boolean).join(" · ") + (x.opp ? _(" mot ") + x.opp : "") + (x.vs ? " · " + x.vs : "");
     } else if (x && x.st === "done"){
-      o.pill = x.champ ? "Vinnare" : "Klar"; o.pcls = x.champ ? "live" : "";
-      o.line = x.champ ? "Vann " + (x.cls || "klassen") : x.sc ? x.team + " " + x.sc + " mot " + x.opp : "Klart för dagen · " + (x.won ? "vann " : "förlorade ") + String(x.lab || "").toLowerCase();
+      o.pill = x.champ ? _("Vinnare") : _("Klar"); o.pcls = x.champ ? "live" : "";
+      o.line = x.champ ? _("Vann {cls}", {cls:x.cls || _("klassen")}) : x.sc ? x.team + " " + x.sc + _(" mot ") + x.opp : _("Klart för dagen · ") + (x.won ? _("vann ") : _("förlorade ")) + _(String(x.lab || "")).toLowerCase();
     } else if (e.kind === "teamleague"){
       var tie = (e.ties || [])[0], s = tie && tie.time ? riDate(e.date + "T" + tie.time) : null;
-      if (s){ var tm2 = timing(s, t, "Lagmatchen"); o.pill = tm2.pill; o.pcls = tm2.live ? "live" : "next"; }
-      o.line = (e.ties || []).map(function(x){ return (x.home ? "Hemma" : "Borta") + " mot " + x.opp + (x.time ? " " + x.time : ""); }).join(" · ");
+      if (s){ var tm2 = timing(s, t, _("Lagmatchen")); o.pill = tm2.pill; o.pcls = tm2.live ? "live" : "next"; }
+      o.line = (e.ties || []).map(function(x){ return (x.home ? _("Hemma") : _("Borta")) + _(" mot ") + x.opp + (x.time ? " " + x.time : ""); }).join(" · ");
     } else {
       var st = riDate(e.start) || new Date(e.windowFrom);
-      o.pill = st > t && st - t < 16 * HOUR ? "Om " + fmtLeft(st - t) : "Idag";
-      o.line = e.cls + (e.partner ? " · med " + e.partner : "");
+      o.pill = st > t && st - t < 16 * HOUR ? _("Om ") + fmtLeft(st - t) : _("Idag");
+      o.line = e.cls + (e.partner ? _(" · med ") + e.partner : "");
     }
     return o;
   }
   function renderNow(){
     var host = document.getElementById("nowList"), meta = document.getElementById("nowMeta");
     if (!host) return;
-    if (!DISC){ host.innerHTML = '<p class="empty">Hämtar …</p>'; return; }
-    if (DISC.failed && !DISC.events.length){ host.innerHTML = '<p class="empty">Kunde inte hämta tävlingarna just nu. Försöker igen om en stund.</p>'; return; }
+    if (!DISC){ host.innerHTML = '<p class="empty">' + _("Hämtar …") + '</p>'; return; }
+    if (DISC.failed && !DISC.events.length){ host.innerHTML = '<p class="empty">' + _("Kunde inte hämta tävlingarna just nu. Försöker igen om en stund.") + '</p>'; return; }
     var f = follows(), rows = [];
     ROSTER.forEach(function(P){
       var e = liveNow(P)[0];
       if (e) rows.push({P:P, e:e, fol:f.indexOf(P.pid) >= 0, s:nowStatus(P, e)});
     });
     rows.sort(function(a, b){ return (b.fol ? 1 : 0) - (a.fol ? 1 : 0) || (b.s.pcls === "live" ? 1 : 0) - (a.s.pcls === "live" ? 1 : 0); });
-    if (meta) meta.textContent = rows.length ? rows.length + (rows.length === 1 ? " spelare" : " spelare") : "";
+    if (meta) meta.textContent = rows.length ? rows.length + (rows.length === 1 ? _(" spelare") : _(" spelare ")) : "";
     if (!rows.length){
       var nx = upcomingRows()[0];
-      host.innerHTML = '<p class="empty">Ingen spelar just nu.' + (nx ? " Nästa: " + esc(nx.title) + " " + esc(dayLabel(nx.at)) + "." : "") + '</p>';
+      host.innerHTML = '<p class="empty">' + _("Ingen spelar just nu.") + (nx ? _(" Nästa: ") + esc(nx.title) + " " + esc(dayLabel(nx.at)) + "." : "") + '</p>';
       return;
     }
     host.innerHTML = rows.map(function(r){
       var e = r.e, P = r.P;
       return '<a class="nowrow' + (r.fol ? " fol" : "") + '" href="#' + esc(P.key) + '">' + '<span class="avs">' + avatar(P.name) + '</span>' +
-        '<span><b>' + esc(P.short) + (r.fol ? '<span class="sr"> (följer)</span>' : "") + '</b><span class="ne">' + esc([e.name, e.kind === "teamleague" ? e.team : e.cls].filter(Boolean).join(" · ")) + '</span>' +
+        '<span><b>' + esc(P.short) + (r.fol ? '<span class="sr">' + _(" (följer)") + '</span>' : "") + '</b><span class="ne">' + esc([e.name, e.kind === "teamleague" ? e.team : e.cls].filter(Boolean).join(" · ")) + '</span>' +
         (r.s.line ? '<span class="ns">' + esc(r.s.line) + '</span>' : "") + '</span>' +
         '<span class="pill ' + r.s.pcls + '">' + (r.s.pcls === "live" ? "<i></i>" : "") + esc(r.s.pill) + '</span></a>';
     }).join("");
@@ -3560,11 +4025,11 @@
     var list = ((DISC && DISC.latest) || []).filter(function(x){ return x && x.mid && x.win; }).slice(0, 8), f = follows();
     sec.hidden = !list.length;
     if (!list.length){ host.innerHTML = ""; return; }
-    host.innerHTML = '<ol aria-label="Senaste resultat">' + list.map(function(x){
+    host.innerHTML = '<ol aria-label="' + _("Senaste resultat") + '">' + list.map(function(x){
       var mine = (x.pids || []).some(function(p){ return f.indexOf(Number(p)) >= 0; }), who = x.who || (BYPID[(x.pids || [])[0]] || {}).key || "";
       var ev = x.team ? x.team + " – " + x.opp : [x.name, x.cls].filter(Boolean).join(" · ");
-      return '<li><a href="#' + esc(who) + '/m' + esc(x.mid) + '"' + (mine ? ' class="mine"' : "") + '><div class="rh"><b>' + esc(x.lab || "") + '</b><span>' + esc(whenOf(x.d)) + '</span></div>' +
-        '<div class="rw">' + esc(x.win) + '</div><div class="rl">' + esc(((x.s ? x.s + " " : "") + (x.lose ? "mot " + x.lose : "")).trim()) + '</div><div class="rv">' + esc(ev) + '</div></a></li>';
+      return '<li><a href="#' + esc(who) + '/m' + esc(x.mid) + '"' + (mine ? ' class="mine"' : "") + '><div class="rh"><b>' + esc(_(x.lab || "")) + '</b><span>' + esc(whenOf(x.d)) + '</span></div>' +
+        '<div class="rw">' + esc(x.win) + '</div><div class="rl">' + esc(((x.s ? x.s + " " : "") + (x.lose ? _("mot ") + x.lose : "")).trim()) + '</div><div class="rv">' + esc(ev) + '</div></a></li>';
     }).join("") + '</ol>';
   }
   // Veckans vinnare: club players who won a class (worker "wins", place 1) the week after, finals lost (place 2)
@@ -3600,20 +4065,20 @@
     var wins = weekWins(1).sort(order), fins = weekWins(2).sort(order);
     sec.hidden = !wins.length;
     if (!wins.length){ host.innerHTML = ""; if (meta) meta.textContent = ""; return; }
-    if (meta) meta.textContent = wins.length === 1 ? "1 klass" : wins.length + " klasser";
+    if (meta) meta.textContent = wins.length === 1 ? _("1 klass") : wins.length + _(" klasser");
     host.innerHTML = wins.map(function(w){
-      var P = winPlayers(w)[0], day = riDate(w.date + "T12:00"), res = w.rr ? "Vann gruppen " + (w.s || "") : (w.s || "");
-      return '<a class="wcard" href="#' + esc(P ? P.key : "") + '" aria-label="' + esc(pairLabel(w) + " vann " + (w.cls || "klassen") + (w.name ? " i " + w.name : "")) + '">' +
+      var P = winPlayers(w)[0], day = riDate(w.date + "T12:00"), res = w.rr ? _("Vann gruppen ") + (w.s || "") : (w.s || "");
+      return '<a class="wcard" href="#' + esc(P ? P.key : "") + '" aria-label="' + esc(pairLabel(w) + _(" vann ") + (w.cls || _("klassen")) + (w.name ? _(" i ") + w.name : "")) + '">' +
         '<svg class="court" viewBox="0 0 390 230" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1.4"><path d="M20 229 L110 20 H280 L370 229 Z"/><path d="M58 140 H332"/><path d="M195 140 V229"/></svg>' +
-        '<span><span class="wh"><span class="pb win">Vinnare</span>' + esc(day ? dayLabel(day) : "") + '</span>' +
+        '<span><span class="wh"><span class="pb win">' + _("Vinnare") + '</span>' + esc(day ? dayLabel(day) : "") + '</span>' +
         '<b>' + esc(pairLabel(w)) + '</b>' +
         '<span class="we">' + esc([w.cls, w.name].filter(Boolean).join(" · ")) + '</span>' +
-        (res.trim() || w.opp ? '<span class="ws">' + esc(res.trim()) + (w.opp && !w.rr ? ' <span>mot ' + esc(w.opp) + '</span>' : "") + '</span>' : "") + '</span>' +
+        (res.trim() || w.opp ? '<span class="ws">' + esc(res.trim()) + (w.opp && !w.rr ? ' <span>' + _("mot ") + esc(w.opp) + '</span>' : "") + '</span>' : "") + '</span>' +
         winAvatars(w) + '</a>';
-    }).join("") + (fins.length ? '<ul class="winfin" aria-label="Finaler">' + fins.map(function(w){
+    }).join("") + (fins.length ? '<ul class="winfin" aria-label="' + _("Finaler") + '">' + fins.map(function(w){
       var P = winPlayers(w)[0];
       return '<li><a href="#' + esc(P ? P.key : "") + '"><span class="pb hi">Final</span><span><b>' + esc(pairLabel(w)) + '</b>' +
-        '<span class="wm">' + esc([w.cls, w.name].filter(Boolean).join(" · ") + (w.s ? " · " + w.s : "") + (w.opp ? " mot " + w.opp : "")) + '</span></span>' + winAvatars(w, "sm") + '</a></li>';
+        '<span class="wm">' + esc([w.cls, w.name].filter(Boolean).join(" · ") + (w.s ? " · " + w.s : "") + (w.opp ? _(" mot ") + w.opp : "")) + '</span></span>' + winAvatars(w, "sm") + '</a></li>';
     }).join("") + '</ul>' : "");
   }
   /* ================= Topplistan: the club's leaderboard ================= */
@@ -3639,7 +4104,7 @@
         if (b.y === year && w) rows.push({P:P, v:-w - (l != null ? 1 / (2 + l) : 0), big:String(w), sub:w + "–" + (l != null ? l : "?")});
       } else {
         var up = num(b.up);
-        if (latest && b.rd === latest && up > 0) rows.push({P:P, v:-up, big:"+" + up, sub:rk != null ? "nu #" + rk : "", up:true});
+        if (latest && b.rd === latest && up > 0) rows.push({P:P, v:-up, big:"+" + up, sub:rk != null ? _("nu #") + rk : "", up:true});
       }
     });
     rows.sort(function(a, b){ return a.v - b.v || a.P.name.localeCompare(b.P.name); });
@@ -3653,21 +4118,21 @@
     [].forEach.call(document.querySelectorAll("#topGender button"), function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-g") === g ? "true" : "false"); });
     document.getElementById("topGender").hidden = !per;
     var r = topRows(tab, g), f = follows(), all = !!TOP.all, list = all ? r.rows : r.rows.slice(0, TOP_N);
-    var gl = g === "F" ? "Damer" : "Herrar", meta = document.getElementById("topMeta"), note = document.getElementById("topNote"), more = document.getElementById("topMore");
-    meta.textContent = tab === "skill" ? "SPF skill · " + gl : tab === "rank" ? (r.latest ? "SPF-listan " + dayMon(r.latest) : "SPF-ranking") + " · " + gl :
-      tab === "wins" ? "Årets vinster " + r.year : "Veckans klättrare";
-    var what = tab === "skill" ? "skill" : tab === "rank" ? "ranking" : tab === "wins" ? "vinster" : "klättring";
-    host.innerHTML = list.length ? '<ol aria-label="' + esc("Topplistan, " + what + (per ? ", " + gl.toLowerCase() : "")) + '">' + list.map(function(x, i){
+    var gl = g === "F" ? _("Damer") : _("Herrar"), meta = document.getElementById("topMeta"), note = document.getElementById("topNote"), more = document.getElementById("topMore");
+    meta.textContent = tab === "skill" ? "SPF skill · " + gl : tab === "rank" ? (r.latest ? _("SPF-listan ") + dayMon(r.latest) : _("SPF-ranking")) + " · " + gl :
+      tab === "wins" ? _("Årets vinster ") + r.year : _("Veckans klättrare");
+    var what = tab === "skill" ? "skill" : tab === "rank" ? "ranking" : tab === "wins" ? _("vinster") : _("klättring");
+    host.innerHTML = list.length ? '<ol aria-label="' + esc(_("Topplistan, ") + what + (per ? ", " + gl.toLowerCase() : "")) + '">' + list.map(function(x, i){
       var P = x.P, fol = f.indexOf(P.pid) >= 0;
       return '<li' + (fol ? ' class="fol"' : "") + '><a class="trow' + (i === 0 ? " first" : "") + '" href="#' + esc(P.key) + '"><span class="tpos">' + (i + 1) + '</span>' +
-        '<span class="avs">' + avatar(P.name) + '</span><span class="tn"><b>' + esc(P.name) + (fol ? '<span class="sr"> (följer)</span>' : "") + '</b><span>' + esc(P.team || "") + '</span></span>' +
-        '<span class="tv"><b' + (x.up ? ' class="up"' : "") + '>' + esc(x.big) + (x.up ? '<span class="sr"> platser</span>' : "") + '</b>' + (x.sub ? '<span>' + esc(x.sub) + '</span>' : "") + '</span></a></li>';
-    }).join("") + '</ol>' : '<p class="empty">' + esc(tab === "wins" ? "Inga vunna matcher inlagda i år än." : tab === "climb" ? "Ingen i klubben klättrade på veckans lista." :
-      tab === "rank" ? "Ingen rankad just nu." : "Ingen skill inlagd än.") + '</p>';
-    note.textContent = tab === "climb" ? (list.length ? "Flest platser uppåt på SPF-listan" + (r.latest ? " " + dayMon(r.latest) : "") + "." : "") :
-      tab === "wins" ? "Vunna dubbelmatcher i år, alla tävlingar." : tab === "rank" && r.unranked ? r.unranked + (r.unranked === 1 ? " spelare" : " spelare") + " utan ranking." : "";
+        '<span class="avs">' + avatar(P.name) + '</span><span class="tn"><b>' + esc(P.name) + (fol ? '<span class="sr">' + _(" (följer)") + '</span>' : "") + '</b><span>' + esc(P.team || "") + '</span></span>' +
+        '<span class="tv"><b' + (x.up ? ' class="up"' : "") + '>' + esc(x.big) + (x.up ? '<span class="sr">' + _(" platser") + '</span>' : "") + '</b>' + (x.sub ? '<span>' + esc(x.sub) + '</span>' : "") + '</span></a></li>';
+    }).join("") + '</ol>' : '<p class="empty">' + esc(_(tab === "wins" ? "Inga vunna matcher inlagda i år än." : tab === "climb" ? "Ingen i klubben klättrade på veckans lista." :
+      tab === "rank" ? "Ingen rankad just nu." : "Ingen skill inlagd än.")) + '</p>';
+    note.textContent = tab === "climb" ? (list.length ? _("Flest platser uppåt på SPF-listan") + (r.latest ? " " + dayMon(r.latest) : "") + "." : "") :
+      tab === "wins" ? _("Vunna dubbelmatcher i år, alla tävlingar.") : tab === "rank" && r.unranked ? r.unranked + (r.unranked === 1 ? _(" spelare") : _(" spelare ")) + _(" utan ranking.") : "";
     more.hidden = r.rows.length <= TOP_N;
-    more.textContent = all ? "Visa färre" : "Visa alla " + r.rows.length;
+    more.textContent = all ? _("Visa färre") : _("Visa alla ") + r.rows.length;
     more.setAttribute("aria-expanded", all ? "true" : "false");
   }
   (function(){
@@ -3694,21 +4159,21 @@
       if (e.kind === "teamleague"){
         var tie = (e.ties || [])[0];
         rows.push({kind:"tl", e:e, at:riDate(e.date + "T" + (tie && tie.time || "12:00")), time:tie && tie.time || "",
-          title:e.name + (e.round ? " · omg " + e.round : ""), href:"#lag/" + e.teamId,
-          sub:e.team + " mot " + (e.ties || []).map(function(x){ return x.opp; }).join(" och "), players:[]});
+          title:e.name + (e.round ? _(" · omg ") + e.round : ""), href:"#lag/" + e.teamId,
+          sub:e.team + _(" mot ") + (e.ties || []).map(function(x){ return x.opp; }).join(_(" och ")), players:[]});
         return;
       }
       var k = "c" + e.classId, r = byCls[k];
       if (!r){
         var s = riDate(e.start) || new Date(e.windowFrom);
-        r = byCls[k] = {kind:"t", e:e, at:s, time:hm(s) === "00:00" ? "" : hm(s), title:e.name || "Turnering", cls:e.cls, href:"#" + e.who, players:[]};
+        r = byCls[k] = {kind:"t", e:e, at:s, time:hm(s) === "00:00" ? "" : hm(s), title:e.name || _("Turnering"), cls:e.cls, href:"#" + e.who, players:[]};
         rows.push(r);
       }
       [e.pid, e.partnerId].forEach(function(pid){ var p = BYPID[pid]; if (p && r.players.indexOf(p) < 0) r.players.push(p); });
     });
     rows.forEach(function(r){
       if (r.kind === "t"){
-        var others = r.e.partnerId && !BYPID[r.e.partnerId] ? " · med " + r.e.partner : "";
+        var others = r.e.partnerId && !BYPID[r.e.partnerId] ? _(" · med ") + r.e.partner : "";
         r.sub = namesOf(r.players) + others;
       }
     });
@@ -3717,8 +4182,8 @@
   function renderAgenda(){
     var host = document.getElementById("agenda"), meta = document.getElementById("agendaMeta");
     if (!host) return;
-    if (!DISC){ host.innerHTML = '<p class="empty">Hämtar …</p>'; return; }
-    if (DISC.failed && !DISC.events.length){ host.innerHTML = '<p class="empty">Kunde inte hämta just nu.</p>'; return; }
+    if (!DISC){ host.innerHTML = '<p class="empty">' + _("Hämtar …") + '</p>'; return; }
+    if (DISC.failed && !DISC.events.length){ host.innerHTML = '<p class="empty">' + _("Kunde inte hämta just nu.") + '</p>'; return; }
     var lim = +now() + 45 * 864e5, teamSeen = {}, rows = upcomingRows().filter(function(r){
       if (r.kind === "tl"){ if (teamSeen[r.e.teamId]) return false; teamSeen[r.e.teamId] = 1; return true; }   // the next round per team
       return +r.at < lim;
@@ -3728,9 +4193,9 @@
     host.innerHTML = days.length ? days.map(function(d){
       return '<div class="aday"><h3>' + esc(cap(dayLabel(by[d][0].at))) + '</h3><ul>' + by[d].map(function(r){
         return '<li><a class="arow" href="' + esc(r.href) + '"><span class="at">' + esc(r.time || "–") + '</span><span><b>' + esc(r.title) + (r.cls ? '<span class="cl">' + esc(r.cls) + '</span>' : "") + '</b>' +
-          '<span class="am">' + esc(r.sub || "") + '</span></span>' + (r.players.length ? avatarsOf(r.players, "sm") : '<span class="pill">Lag</span>') + '</a></li>';
+          '<span class="am">' + esc(r.sub || "") + '</span></span>' + (r.players.length ? avatarsOf(r.players, "sm") : '<span class="pill">' + _("Lag") + '</span>') + '</a></li>';
       }).join("") + '</ul></div>';
-    }).join("") : '<p class="empty">Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva.</p>';
+    }).join("") : '<p class="empty">' + _("Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva.") + '</p>';
   }
   function nextTeamDay(T){
     if (!DISC) return null;
@@ -3744,11 +4209,11 @@
     host.innerHTML = TEAMS.map(function(T){
       var nx = nextTeamDay(T);
       return '<article class="card tcard"><div><h3>' + esc(T.name) + '</h3><div class="tl">' + esc(leagueName(T) + " · " + T.division) + '</div></div>' +
-        '<ul class="troster" aria-label="Spelare i ' + esc(T.name) + '">' + T.players.map(function(p){
-          return '<li><a href="#' + esc(p.key) + '" title="' + esc(p.name + (p.captain ? " (kapten)" : "")) + '"><span class="capw">' + avatar(p.name) + (p.captain ? '<i class="cap" aria-label="Kapten">C</i>' : '') + '</span><span>' + esc(p.short) + '</span></a></li>';
+        '<ul class="troster" aria-label="' + esc(_("Spelare i ") + T.name) + '">' + T.players.map(function(p){
+          return '<li><a href="#' + esc(p.key) + '" title="' + esc(p.name + (p.captain ? _(" (kapten)") : "")) + '"><span class="capw">' + avatar(p.name) + (p.captain ? '<i class="cap" aria-label="' + _("Kapten") + '">' + _("C") + '</i>' : '') + '</span><span>' + esc(p.short) + '</span></a></li>';
         }).join("") + '</ul>' +
-        (nx ? '<div class="tn">Nästa: <b>' + esc(cap(dayLabel(riDate(nx.date + "T12:00")))) + '</b> mot ' + esc((nx.ties || []).map(function(x){ return x.opp; }).join(" och ")) + '</div>' : "") +
-        '<a class="tlink" href="#lag/' + T.id + '">Tabell och matcher →</a></article>';
+        (nx ? '<div class="tn">' + _("Nästa: ") + '<b>' + esc(cap(dayLabel(riDate(nx.date + "T12:00")))) + '</b>' + _(" mot ") + esc((nx.ties || []).map(function(x){ return x.opp; }).join(_(" och "))) + '</div>' : "") +
+        '<a class="tlink" href="#lag/' + T.id + '">' + _("Tabell och matcher →") + '</a></article>';
     }).join("");
   }
   function norm(s){ return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
@@ -3758,12 +4223,12 @@
     var f = follows(), qn = norm(q && q.value).trim();
     var list = ROSTER.filter(function(p){ return !qn || norm(p.name + " " + p.team).indexOf(qn) >= 0; })
       .sort(function(a, b){ return (f.indexOf(b.pid) >= 0 ? 1 : 0) - (f.indexOf(a.pid) >= 0 ? 1 : 0); });
-    if (meta) meta.textContent = ROSTER.length + " spelare · " + f.length + " följs";
+    if (meta) meta.textContent = ROSTER.length + _(" spelare ") + "· " + f.length + _(" följs");
     host.innerHTML = list.map(function(p){
       var T = trendOf(p), fol = f.indexOf(p.pid) >= 0, sk = T.skill[0], rk = T.rank[0];
       return '<li><a class="prow' + (fol ? " fol" : "") + '" href="#' + esc(p.key) + '"><span class="avs">' + avatar(p.name) + '</span><span><b>' + esc(p.name) + '</b>' +
-        '<span class="pmeta">' + esc([sk != null ? "skill " + sk.toFixed(2) : "", rk != null ? "#" + rk : "ej rankad"].filter(Boolean).join(" · ")) + '</span></span>' +
-        (fol ? STAR + '<span class="sr">följer</span>' : "<span></span>") + '</a></li>';
+        '<span class="pmeta">' + esc([sk != null ? "skill " + sk.toFixed(2) : "", rk != null ? "#" + rk : _("ej rankad")].filter(Boolean).join(" · ")) + '</span></span>' +
+        (fol ? STAR + '<span class="sr">' + _("följer") + '</span>' : "<span></span>") + '</a></li>';
     }).join("");
     if (empty) empty.hidden = list.length > 0;
   }
@@ -3778,18 +4243,18 @@
       return tlCard(e, days.slice(i + 1, i + 4).map(function(x){ return dayMonD(riDate(x.date + "T12:00")); }));
     });
     box.innerHTML = '<div class="phead"><div class="pt"><h1 id="th-h">' + esc(T.name) + '</h1><div class="pm">' + esc(leagueName(T) + " · " + T.division) + '</div></div></div>' +
-      '<section aria-labelledby="h-tsp"><div class="sh"><h2 id="h-tsp">Laget</h2><div class="meta">' + T.players.length + ' spelare</div></div><ul class="plist">' +
+      '<section aria-labelledby="h-tsp"><div class="sh"><h2 id="h-tsp">' + _("Laget") + '</h2><div class="meta">' + T.players.length + _(" spelare ") + '</div></div><ul class="plist">' +
       T.players.map(function(p){
         var tr = trendOf(p);
         return '<li><a class="prow' + (isFollowed(p.pid) ? " fol" : "") + '" href="#' + esc(p.key) + '"><span class="avs">' + avatar(p.name) + '</span><span><b>' + esc(p.name) + '</b><span class="pmeta">' +
-          esc([p.captain ? "kapten" : "", tr.skill[0] != null ? "skill " + tr.skill[0].toFixed(2) : "", tr.rank[0] != null ? "#" + tr.rank[0] : ""].filter(Boolean).join(" · ")) + '</span></span></a></li>';
+          esc([p.captain ? _("kapten") : "", tr.skill[0] != null ? "skill " + tr.skill[0].toFixed(2) : "", tr.rank[0] != null ? "#" + tr.rank[0] : ""].filter(Boolean).join(" · ")) + '</span></span></a></li>';
       }).join("") + '</ul></section>' +
-      '<div id="teamTbl"><p class="tblload">Hämtar tabellen …</p></div>' +
-      '<section aria-labelledby="h-tom"><div class="sh"><h2 id="h-tom">Omgångar</h2><div class="meta">' + (days.length ? days.length + " kvar" : "") + '</div></div>' +
-      '<div class="ups">' + (cards.join("") || '<p class="empty">Inga fler omgångar inlagda.</p>') + '</div></section>';
+      '<div id="teamTbl"><p class="tblload">' + _("Hämtar tabellen …") + '</p></div>' +
+      '<section aria-labelledby="h-tom"><div class="sh"><h2 id="h-tom">' + _("Omgångar") + '</h2><div class="meta">' + (days.length ? days.length + _(" kvar") : "") + '</div></div>' +
+      '<div class="ups">' + (cards.join("") || '<p class="empty">' + _("Inga fler omgångar inlagda.") + '</p>') + '</div></section>';
     var host = document.getElementById("teamTbl");
-    tlTable(e0).then(function(d){ if (host.isConnected) host.innerHTML = d.rows.length ? tlTableHtml(e0, d) : '<p class="tblload">Ingen tabell än.</p>'; },
-      function(){ if (host.isConnected) host.innerHTML = '<p class="tblload">Tabellen gick inte att hämta just nu.</p>'; });
+    tlTable(e0).then(function(d){ if (host.isConnected) host.innerHTML = d.rows.length ? tlTableHtml(e0, d) : '<p class="tblload">' + _("Ingen tabell än.") + '</p>'; },
+      function(){ if (host.isConnected) host.innerHTML = '<p class="tblload">' + _("Tabellen gick inte att hämta just nu.") + '</p>'; });
   }
 
   /* ================= player page ================= */
@@ -3801,20 +4266,20 @@
     var k = P.key;
     return '<h1 class="sr" id="ph-' + k + '">' + esc(P.name) + '</h1>' +
       '<div class="dyn" id="dyn-' + k + '"><div class="' + heroCls(P) + '">' + cardHtml(P) + '</div>' +
-        '<div class="board"><div class="countdown"><span class="l"><span class="dot"></span><span>Hämtar tävlingar …</span></span></div></div></div>' +
-      '<section aria-labelledby="h-dev-' + k + '"><div class="sh"><h2 id="h-dev-' + k + '">Utveckling</h2><div class="meta">SPF-ranking</div></div>' +
-        '<div class="stats">' + statHtml(k, "rank", "Ranking", P.gender === "F" ? "Dam huvudlista" : "Herrar huvudlista") + statHtml(k, "pts", "Rankingpoäng", "SPF, 12 mån") + statHtml(k, "skill", "Skill", "") + '</div>' +
+        '<div class="board"><div class="countdown"><span class="l"><span class="dot"></span><span>' + _("Hämtar tävlingar …") + '</span></span></div></div></div>' +
+      '<section aria-labelledby="h-dev-' + k + '"><div class="sh"><h2 id="h-dev-' + k + '">' + _("Utveckling") + '</h2><div class="meta">' + _("SPF-ranking") + '</div></div>' +
+        '<div class="stats">' + statHtml(k, "rank", "Ranking", P.gender === "F" ? _("Dam huvudlista") : _("Herrar huvudlista")) + statHtml(k, "pts", _("Rankingpoäng"), _("SPF, 12 mån")) + statHtml(k, "skill", "Skill", "") + '</div>' +
         '<div class="card chart" id="chart-' + k + '" hidden><svg id="trend-' + k + '" viewBox="0 0 340 176" role="img"></svg><div class="cap"></div></div>' +
         '<div class="record" id="rec-' + k + '" hidden></div>' +
-        '<div class="formrow" id="formrow-' + k + '" hidden><div class="k"><span>Form, senaste matcherna</span><span>RankedIn</span></div><div class="form" id="form-' + k + '"></div></div>' +
+        '<div class="formrow" id="formrow-' + k + '" hidden><div class="k"><span>' + _("Form, senaste matcherna") + '</span><span>RankedIn</span></div><div class="form" id="form-' + k + '"></div></div>' +
       '</section>' +
-      '<section aria-labelledby="h-tt-' + k + '"><div class="sh"><h2 id="h-tt-' + k + '">Senaste tävlingar</h2><div class="meta"></div></div><p class="tsum" id="' + k + 'Sum"></p><div class="card tours" id="' + k + 'Tours"></div></section>' +
-      '<section aria-labelledby="h-pa-' + k + '" id="pa-' + k + '"><div class="sh"><h2 id="h-pa-' + k + '">Partners</h2><div class="meta" id="paMeta-' + k + '">12 mån</div></div><div class="card partners" id="paList-' + k + '"></div><p class="panote" id="paNote-' + k + '"></p></section>' +
-      '<section aria-labelledby="h-hist-' + k + '" id="hs-' + k + '" hidden><div class="sh"><h2 id="h-hist-' + k + '">Senaste matcher</h2><div class="meta" id="histMeta-' + k + '"></div></div><div class="card hist" id="hist-' + k + '"></div></section>' +
-      '<section aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">Kommande</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div></section>' +
-      '<section aria-labelledby="h-sg-' + k + '" id="sg-' + k + '"><div class="sh"><h2 id="h-sg-' + k + '">Förslag på tävlingar</h2><div class="meta">Inom&nbsp;20&nbsp;mil</div></div>' +
-        '<p class="sgnote" id="sgNote-' + k + '" hidden></p><div class="ups" id="sgList-' + k + '"><p class="empty">Hämtar förslag …</p></div></section>' +
-      '<section aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">Bra att veta</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>';
+      '<section aria-labelledby="h-tt-' + k + '"><div class="sh"><h2 id="h-tt-' + k + '">' + _("Senaste tävlingar") + '</h2><div class="meta"></div></div><p class="tsum" id="' + k + 'Sum"></p><div class="card tours" id="' + k + 'Tours"></div></section>' +
+      '<section aria-labelledby="h-pa-' + k + '" id="pa-' + k + '"><div class="sh"><h2 id="h-pa-' + k + '">' + _("Partners") + '</h2><div class="meta" id="paMeta-' + k + '">' + _("12 mån") + '</div></div><div class="card partners" id="paList-' + k + '"></div><p class="panote" id="paNote-' + k + '"></p></section>' +
+      '<section aria-labelledby="h-hist-' + k + '" id="hs-' + k + '" hidden><div class="sh"><h2 id="h-hist-' + k + '">' + _("Senaste matcher") + '</h2><div class="meta" id="histMeta-' + k + '"></div></div><div class="card hist" id="hist-' + k + '"></div></section>' +
+      '<section aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">' + _("Kommande") + '</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div></section>' +
+      '<section aria-labelledby="h-sg-' + k + '" id="sg-' + k + '"><div class="sh"><h2 id="h-sg-' + k + '">' + _("Förslag på tävlingar") + '</h2><div class="meta">' + _("Inom&nbsp;20&nbsp;mil") + '</div></div>' +
+        '<p class="sgnote" id="sgNote-' + k + '" hidden></p><div class="ups" id="sgList-' + k + '"><p class="empty">' + _("Hämtar förslag …") + '</p></div></section>' +
+      '<section aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">' + _("Bra att veta") + '</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>';
   }
   var WATCHING = false;   // panel built by ensureWatch (hidden): its photo waits until the page is shown
   function heroCls(P){ return "hero t-" + cardTier(P) + (P.cut ? " cut" : P.img ? "" : rinPhoto(P) ? " rin" : " noimg"); }
@@ -3874,7 +4339,7 @@
   function cardArrow(x, lowerIsBetter){
     if (!x || typeof x[0] !== "number" || typeof x[1] !== "number" || Math.abs(x[0] - x[1]) < 0.005) return "";
     var better = lowerIsBetter ? x[0] < x[1] : x[0] > x[1];
-    return '<span class="ar ' + (better ? "ar-up" : "ar-dn") + '" aria-hidden="true">' + (better ? "▲︎" : "▼︎") + '</span><span class="sr">' + (better ? ", bättre" : ", sämre") + '</span>';
+    return '<span class="ar ' + (better ? "ar-up" : "ar-dn") + '" aria-hidden="true">' + (better ? "▲︎" : "▼︎") + '</span><span class="sr">' + (better ? _(", bättre") : _(", sämre")) + '</span>';
   }
   function cardStat(key, abbr, full, val){ return '<div class="st" data-st="' + key + '"><dt><span aria-hidden="true">' + abbr + '</span><span class="sr">' + esc(full) + '</span></dt><dd>' + val + '</dd></div>'; }
   // Rating: skill cut (not rounded) to one decimal, so 15.96 reads 15.9 and never 16.0; the exact value is in SKL.
@@ -3884,33 +4349,33 @@
     var pts = num(T.pts[0]) != null ? T.pts[0] : num(b.rp) != null ? b.rp : num(P.points), cls = classOf(P, rk);
     var last = surname(P.name), first = P.name.split(" ")[0], champ = cardChamp(P), wl = yearWL(P), tit = titlesYear(P);
     var stats = [
-      cardStat("rnk", "RNK", "SPF-ranking", rk != null ? '<small>#</small>' + rk + cardArrow(T.rank, true) : "–"),
-      cardStat("pts", "PTS", "Rankingpoäng", pts != null ? fmtPts(pts) + cardArrow(T.pts) : "–"),
+      cardStat("rnk", "RNK", _("SPF-ranking"), rk != null ? '<small>#</small>' + rk + cardArrow(T.rank, true) : "–"),
+      cardStat("pts", "PTS", _("Rankingpoäng"), pts != null ? fmtPts(pts) + cardArrow(T.pts) : "–"),
       cardStat("skl", "SKL", "Skill", sk != null ? sk.toFixed(2) + cardArrow(T.skill) : "–"),
-      cardStat("vin", "VIN%", "Vunna matcher i år, procent", wl && wl[0] + wl[1] ? Math.round(100 * wl[0] / (wl[0] + wl[1])) + '<span class="sr"> (' + wl[0] + " vinster, " + wl[1] + " förluster)</span>" : "–")
+      cardStat("vin", _("VIN%"), _("Vunna matcher i år, procent"), wl && wl[0] + wl[1] ? Math.round(100 * wl[0] / (wl[0] + wl[1])) + '<span class="sr"> (' + wl[0] + _(" vinster, ") + wl[1] + _(" förluster") + ")</span>" : "–")
     ];
-    if (tit) stats.push(cardStat("tit", "TIT", "Vunna klasser i år", String(tit)));
+    if (tit) stats.push(cardStat("tit", _("TIT"), _("Vunna klasser i år"), String(tit)));
     // Form: the last five results (V filled, F red), a dot for a match not played yet; hidden without any results.
     var form = ((T.prof && T.prof.form) || []).filter(function(r){ return r === "W" || r === "L"; }).slice(0, 5);
     if (form.length){
       var nw = form.filter(function(r){ return r === "W"; }).length, pad = [];
       for (var i = form.length; i < 5; i++) pad.push('<i class="n"></i>');
       stats.push(cardStat("form", "FORM", "Form", '<span class="pips" aria-hidden="true">' + form.map(function(r){ return '<i class="' + (r === "W" ? "w" : "l") + '"></i>'; }).join("") + pad.join("") + '</span>' +
-        '<span class="sr">' + esc("Form: " + form.map(function(r){ return r === "W" ? "V" : "F"; }).join(" ") + " (" + nw + (nw === 1 ? " vinst, " : " vinster, ") + (form.length - nw) + (form.length - nw === 1 ? " förlust" : " förluster") + ")") + '</span>'));
+        '<span class="sr">' + esc("Form: " + form.map(function(r){ return r === "W" ? _("V") : _("F"); }).join(" ") + " (" + nw + (nw === 1 ? _(" vinst, ") : _(" vinster, ")) + (form.length - nw) + (form.length - nw === 1 ? _(" förlust") : _(" förluster")) + ")") + '</span>'));
     }
     var team = [P.team, P.division].filter(Boolean).join(" · "), wn = champ ? winEventName(champ) : "";
-    return '<p class="sr">' + esc((sk != null ? "Skill " + sk.toFixed(2).replace(".", ",") : "Ingen skill än") + ", får spela " + cls + "-klass" + (rk != null ? ", ranking " + rk : "") + ".") + '</p>' +
+    return '<p class="sr">' + esc((sk != null ? "Skill " + sk.toFixed(2).replace(".", ",") : _("Ingen skill än")) + _(", får spela {cls}-klass", {cls:cls}) + (rk != null ? ", ranking " + rk : "") + ".") + '</p>' +
       '<div class="prate" aria-hidden="true"><div class="ovr">' + (sk != null ? cardRating(sk) : "–") + '</div><div class="kl">Skill</div>' +
-        '<div class="cls">' + cls + '</div><div class="kl">Klass</div><hr><img class="crest" src="img/nynas-logo.png" alt="" width="78" height="100"></div>' +
+        '<div class="cls">' + cls + '</div><div class="kl">' + _("Klass") + '</div><hr><img class="crest" src="img/nynas-logo.png" alt="" width="78" height="100"></div>' +
       '<div class="pname">' +
-        (champ ? '<div class="pwin"><span>' + TROPHY + '<b>Vann ' + esc(champ.cls || "klassen") + '</b>' + (wn ? '<span class="wt"> · ' + esc(wn) + '</span>' : "") + '</span></div>' : "") +
-        '<span class="fn">' + esc(first + (P.captain ? " · kapten" : "")) + '</span><span class="ln" style="--n:' + Math.max(5, last.length) + '">' + esc(last) + '</span>' +
+        (champ ? '<div class="pwin"><span>' + TROPHY + '<b>' + esc(_("Vann {cls}", {cls:champ.cls || _("klassen")})) + '</b>' + (wn ? '<span class="wt"> · ' + esc(wn) + '</span>' : "") + '</span></div>' : "") +
+        '<span class="fn">' + esc(first + (P.captain ? " · " + _("kapten") : "")) + '</span><span class="ln" style="--n:' + Math.max(5, last.length) + '">' + esc(last) + '</span>' +
         (team ? '<span class="tm"><span>' + esc(team) + '</span></span>' : "") + '</div>' +
       '<dl class="pstats">' + stats.join("") + '</dl>' +
-      '<div class="ptip">' + (champ ? "Veckans vinnare" : "Nynäs Padel Club") + '</div>';
+      '<div class="ptip">' + (champ ? _("Veckans vinnare") : "Nynäs Padel Club") + '</div>';
   }
   function cardHtml(P){
-    return '<div class="cardwrap"><div class="pc" role="group" aria-label="' + esc("Spelarkort, " + P.name) + '"><div class="pmed">' + heroMedia(P) + '</div><div class="pfx" aria-hidden="true"></div>' +
+    return '<div class="cardwrap"><div class="pc" role="group" aria-label="' + esc(_("Spelarkort, ") + P.name) + '"><div class="pmed">' + heroMedia(P) + '</div><div class="pfx" aria-hidden="true"></div>' +
       '<div class="pface">' + cardFace(P) + '</div><div class="pfol">' + followBtnHtml(P) + '</div>' + CARD_EDGE + '</div></div>';
   }
   // New ranking, skill, profile, titles or wins: the card's text and tier (the photo and the follow button stay).
@@ -4033,25 +4498,25 @@
     ["rank", "pts", "skill"].forEach(function(k){
       var v = document.getElementById("tv-" + who + "-" + k), d = document.getElementById("td-" + who + "-" + k), x = T[k];
       if (!v || !d) return;
-      if (!x || typeof x[0] !== "number"){ v.textContent = "–"; d.hidden = true; if (k === "rank") document.getElementById("ts-" + who + "-rank").textContent = "Inte rankad"; return; }
+      if (!x || typeof x[0] !== "number"){ v.textContent = "–"; d.hidden = true; if (k === "rank") document.getElementById("ts-" + who + "-rank").textContent = _("Inte rankad"); return; }
       v.textContent = k === "rank" ? "#" + x[0] : k === "pts" ? fmtPts(x[0]) : x[0].toFixed(2);
       if (typeof x[1] !== "number" || Math.abs(x[0] - x[1]) < 0.005){ d.hidden = true; d.innerHTML = ""; return; }
       var better = k === "rank" ? x[0] < x[1] : x[0] > x[1], diff = x[0] - x[1];
       var txt = k === "rank" ? "(#" + x[1] + ")" : "(" + signed(diff, k === "pts" ? (Math.abs(diff) >= 0.1 ? 1 : 2) : 2) + ")";
-      var say = k === "rank" ? (better ? "Upp från plats " : "Ner från plats ") + x[1] :
-        (better ? "Upp " : "Ner ") + Math.abs(diff).toFixed(k === "pts" ? 1 : 2) + (k === "pts" ? " poäng sedan förra veckan" : " sedan förra matchen");
+      var say = k === "rank" ? (better ? _("Upp från plats ") : _("Ner från plats ")) + x[1] :
+        (better ? _("Upp ") : _("Ner ")) + Math.abs(diff).toFixed(k === "pts" ? 1 : 2) + (k === "pts" ? _(" poäng sedan förra veckan") : _(" sedan förra matchen"));
       d.innerHTML = '<span class="' + (better ? "up" : "down") + '" aria-hidden="true">' + (better ? "▲︎" : "▼︎") + " " + esc(txt) + '</span><span class="sr">' + esc(say) + '</span>';
       d.hidden = false;
     });
     var hist = T.hist || [], top = hist.length ? Math.max.apply(null, hist.map(function(h){ return h.v; })) : null;
     var ss = document.getElementById("ts-" + who + "-skill");
-    if (ss) ss.textContent = top != null ? "topp " + top.toFixed(2) : (P.gender === "F" ? "Dam" : "Herr");
+    if (ss) ss.textContent = top != null ? _("topp ") + top.toFixed(2) : (P.gender === "F" ? _("Dam") : _("Herr"));
     drawChart(who, hist);
     var rec = document.getElementById("rec-" + who), pr = T.prof, yr = loc(now()).getUTCFullYear();
     if (rec){
       rec.hidden = !(pr && (pr.season || pr.career));
-      if (pr) rec.innerHTML = '<div><div class="k">Säsong ' + yr + '</div><b>' + esc(String(pr.season || "–").replace("-", "–")) + '</b><span>dubbel · ' + esc(pr.sEv || "0") + ' tävlingar</span></div>' +
-        '<div><div class="k">Karriär</div><b>' + esc(String(pr.career || "–").replace("-", "–")) + '</b><span>' + esc(pr.cEv || "0") + ' tävlingar</span></div>';
+      if (pr) rec.innerHTML = '<div><div class="k">' + _("Säsong ") + yr + '</div><b>' + esc(String(pr.season || "–").replace("-", "–")) + '</b><span>' + _("dubbel · ") + esc(pr.sEv || "0") + _(" tävlingar") + '</span></div>' +
+        '<div><div class="k">' + _("Karriär") + '</div><b>' + esc(String(pr.career || "–").replace("-", "–")) + '</b><span>' + esc(pr.cEv || "0") + _(" tävlingar") + '</span></div>';
     }
     var fr = document.getElementById("formrow-" + who), fm = document.getElementById("form-" + who);
     if (fr && fm){
@@ -4097,7 +4562,7 @@
     if (peak !== last){
       var px = Math.max(L + 64, x(peak)), py = y(mx) - 22, pw = 74;
       el("rect", {x:px - pw + 10, y:py - 9, width:pw, height:18, rx:9, fill:"var(--panel)"});
-      el("text", {x:px - pw / 2 + 10, y:py + 3.5, "text-anchor":"middle", "font-size":10.5, "font-weight":600, fill:"#8EC5FF", "font-family":mono}, "topp " + mx.toFixed(2));
+      el("text", {x:px - pw / 2 + 10, y:py + 3.5, "text-anchor":"middle", "font-size":10.5, "font-weight":600, fill:"#8EC5FF", "font-family":mono}, _("topp ") + mx.toFixed(2));
     }
     el("text", {x:x(last), y:y(vals[last]) + 22, "text-anchor":"end", "font-size":12, "font-weight":600, fill:"var(--ink)", "font-family":mono}, vals[last].toFixed(2));
     var lab = pts.map(function(q){ return +q.d.slice(8, 10) + "/" + +q.d.slice(5, 7); }), groups = {};
@@ -4111,8 +4576,8 @@
       el("text", {x:px, y:H - 6, "text-anchor":c === 0 ? "start" : "middle", "font-size":10, fill:"var(--faint)", "font-family":mono}, l);
     });
     var P = BYKEY[who], d0 = pts[0].d, d1 = pts[last].d;
-    svg.setAttribute("aria-label", gen(P.short) + " skill de " + pts.length + " senaste matcherna: " + vals[0].toFixed(2) + " den " + dayMon(d0) + ", topp " + mx.toFixed(2) + ", nu " + vals[last].toFixed(2));
-    card.querySelector(".cap").textContent = "Skill efter varje match, " + dayMon(d0) + " – " + dayMon(d1);
+    svg.setAttribute("aria-label", _("{gen} skill de {n} senaste matcherna: {a} den {d}, topp {top}, nu {now}", {gen:gen(P.short), name:P.short, n:pts.length, a:vals[0].toFixed(2), d:dayMon(d0), top:mx.toFixed(2), now:vals[last].toFixed(2)}));
+    card.querySelector(".cap").textContent = _("Skill efter varje match, ") + dayMon(d0) + " – " + dayMon(d1);
     var len = Math.ceil(p.getTotalLength ? p.getTotalLength() : 600);
     p.style.setProperty("--len", len);
     if ("IntersectionObserver" in window){
@@ -4385,13 +4850,13 @@
     var ind = op.n.map(function(n, i){ var x = h2hOne(P.pid, rid, (op.ids || [])[i]); return x ? {n:surname(n), t:x[0], w:x[1]} : null; });
     var known = ind.every(Boolean), met = ind.filter(function(x){ return x && x.t; });
     if (!ready && !(known && !met.length)) return "";   // the pair's record first (no flicker); no meeting at all: known at once
-    var line = met.length ? "Var för sig: " + met.map(function(x){ return x.n + "\u00a0" + x.w + "–" + (x.t - x.w); }).join(" · ") : "";
+    var line = met.length ? _("Var för sig: ") + met.map(function(x){ return x.n + "\u00a0" + x.w + "–" + (x.t - x.w); }).join(" · ") : "";
     var v;
-    if (pr && pr.w + pr.l) v = '<b>' + pr.w + "–" + pr.l + '</b>mot ' + esc(short(op)) + '<span class="sr"> (' + pr.w + (pr.w === 1 ? " vinst" : " vinster") + ", " + pr.l + (pr.l === 1 ? " förlust" : " förluster") + ')</span>';
-    else if (met.length) v = mhGet(P).f ? "Mött dem var för sig" : "Första mötet mot paret";
-    else if (known || !mhGet(P).f) v = "Första mötet";
+    if (pr && pr.w + pr.l) v = '<b>' + pr.w + "–" + pr.l + '</b>' + _("mot ") + esc(short(op)) + '<span class="sr"> (' + pr.w + (pr.w === 1 ? _(" vinst") : _(" vinster")) + ", " + pr.l + (pr.l === 1 ? _(" förlust") : _(" förluster")) + ')</span>';
+    else if (met.length) v = mhGet(P).f ? _("Mött dem var för sig") : _("Första mötet mot paret");
+    else if (known || !mhGet(P).f) v = _("Första mötet");
     else return "";
-    return '<div class="h2h" data-r2="h2h"><span class="k">Tidigare möten</span><span class="v">' + v + '</span>' + (line ? '<span class="i">' + esc(line) + '</span>' : "") + '</div>';
+    return '<div class="h2h" data-r2="h2h"><span class="k">' + _("Tidigare möten") + '</span><span class="v">' + v + '</span>' + (line ? '<span class="i">' + esc(line) + '</span>' : "") + '</div>';
   }
   // A card in the draw (a match still to play with a club player): the record against that pair, when that player's
   // matches are already on this device. Never fetches.
@@ -4407,7 +4872,7 @@
     if (!hit) return "";
     var r = h2hPair(hit.Q, hit.op.n);
     if (!(r.w + r.l) && mhGet(hit.Q).f) return "";
-    return '<div class="mf">' + (r.w + r.l ? "Tidigare möten <b>" + r.w + "–" + r.l + "</b>" : "Första mötet") + '</div>';
+    return '<div class="mf">' + (r.w + r.l ? _("Tidigare möten") + " <b>" + r.w + "–" + r.l + "</b>" : _("Första mötet")) + '</div>';
   }
 
   // Partners: matches, W–L and win % with each partner; the best (at least 3 matches) marked.
@@ -4437,23 +4902,23 @@
     var host = document.getElementById("paList-" + who), meta = document.getElementById("paMeta-" + who), P = BYKEY[who];
     if (!host || !P) return;
     var ready = !!mhGet(P).t, st = partnerStats(P);
-    var since = mhSince(P), per = since ? "sedan " + since : "de senaste 12 månaderna";
+    var since = mhSince(P), per = since ? _("sedan ") + since : _("de senaste 12 månaderna");
     // no break inside "26 apr" or "7 matcher" (the meta wraps at 360 px)
-    if (meta) meta.textContent = ((since ? "Sedan " + since : "12 mån") + (st.total ? " · " + st.total + (st.total === 1 ? " match" : " matcher") : "")).replace(/(\d) /g, "$1\u00a0");
+    if (meta) meta.textContent = ((since ? _("Sedan ") + since : _("12 mån")) + (st.total ? " · " + st.total + (st.total === 1 ? _(" match") : _(" matcher")) : "")).replace(/(\d) /g, "$1\u00a0");
     if (!st.rows.length){
-      host.innerHTML = '<p class="empty" style="padding:12px 0" role="status">' + (ready ? "Inga turneringsmatcher det senaste året." : "Räknar matcher …") + '</p>';
+      host.innerHTML = '<p class="empty" style="padding:12px 0" role="status">' + (ready ? _("Inga turneringsmatcher det senaste året.") : _("Räknar matcher …")) + '</p>';
       return;
     }
     var all = !!PA_OPEN[who], list = all ? st.rows : st.rows.slice(0, 6);
     host.innerHTML = list.map(function(o){
       var Q = BYNAME[slug(o.n)], best = o === st.best, tag = Q ? "a" : "div";
       return '<' + tag + ' class="parow' + (best ? " best" : "") + '"' + (Q ? ' href="#' + esc(Q.key) + '"' : "") + '>' + '<span class="avs">' + avatar(o.n) + '</span>' +
-        '<span class="pn"><b>' + esc(o.n) + '</b><span>' + o.m + (o.m === 1 ? " match" : " matcher") + " · " + o.pct + ' % vinster</span><span class="bar" aria-hidden="true"><i style="width:' + o.pct + '%"></i></span></span>' +
-        '<span class="pv"><b>' + o.w + "–" + o.l + '</b>' + (best ? '<span class="pb win">Bäst</span>' : '<span>V–F</span>') + '</span></' + tag + '>';
-    }).join("") + (st.rows.length > 6 ? '<div style="padding:10px 0"><button class="morebtn" type="button" data-pa="' + esc(who) + '" aria-expanded="' + (all ? "true" : "false") + '">' + (all ? "Visa färre" : "Visa alla " + st.rows.length) + '</button></div>' : "");
+        '<span class="pn"><b>' + esc(o.n) + '</b><span>' + o.m + (o.m === 1 ? _(" match") : _(" matcher")) + " · " + o.pct + _(" % vinster") + '</span><span class="bar" aria-hidden="true"><i style="width:' + o.pct + '%"></i></span></span>' +
+        '<span class="pv"><b>' + o.w + "–" + o.l + '</b>' + (best ? '<span class="pb win">' + _("Bäst") + '</span>' : '<span>' + _("V–F") + '</span>') + '</span></' + tag + '>';
+    }).join("") + (st.rows.length > 6 ? '<div style="padding:10px 0"><button class="morebtn" type="button" data-pa="' + esc(who) + '" aria-expanded="' + (all ? "true" : "false") + '">' + (all ? _("Visa färre") : _("Visa alla ") + st.rows.length) + '</button></div>' : "");
     var note = document.getElementById("paNote-" + who);
-    if (note) note.textContent = (st.best ? "Bäst ihop med " + st.best.n.split(" ")[0] + ": " + st.best.w + "–" + st.best.l + " (" + st.best.pct + " %). Turneringsmatcher " + per + "." :
-      "Turneringsmatcher " + per + "." + (st.rows.length > 1 ? " Bäst ihop visas från 3 matcher." : "")) + (mhGet(P).f ? " Några tävlingar kunde inte hämtas, nytt försök om en timme." : "");
+    if (note) note.textContent = (st.best ? _("Bäst ihop med ") + st.best.n.split(" ")[0] + ": " + st.best.w + "–" + st.best.l + " (" + st.best.pct + " %). " + _("Turneringsmatcher ") + per + "." :
+      _("Turneringsmatcher ") + per + "." + (st.rows.length > 1 ? _(" Bäst ihop visas från 3 matcher.") : "")) + (mhGet(P).f ? _(" Några tävlingar kunde inte hämtas, nytt försök om en timme.") : "");
   }
   document.addEventListener("click", function(e){
     var b = e.target && e.target.closest && e.target.closest("[data-pa]");
@@ -4469,29 +4934,29 @@
   /* ================= info ================= */
   var SRC = {
     spt:'<a href="https://svenskpadel.se/spt-senior/" target="_blank" rel="noopener">svenskpadel.se/spt-senior</a>',
-    cls:'<a href="https://svenskpadel.se/tavling/spelare/tavlingsklasser/" target="_blank" rel="noopener">Tävlingsklasser</a><a href="https://svenskpadel.se/tavling/spelare/tavlingsbestammelser/" target="_blank" rel="noopener">Tävlingsbestämmelser</a>',
-    rank:'<a href="https://svenskpadel.se/tavling/spelare/ranking/" target="_blank" rel="noopener">Så funkar rankingen</a><a href="https://rankedin.com/se/ranking/1917" target="_blank" rel="noopener">Rankinglistan</a>'
+    cls:'<a href="https://svenskpadel.se/tavling/spelare/tavlingsklasser/" target="_blank" rel="noopener">' + _("Tävlingsklasser") + '</a><a href="https://svenskpadel.se/tavling/spelare/tavlingsbestammelser/" target="_blank" rel="noopener">' + _("Tävlingsbestämmelser") + '</a>',
+    rank:'<a href="https://svenskpadel.se/tavling/spelare/ranking/" target="_blank" rel="noopener">' + _("Så funkar rankingen") + '</a><a href="https://rankedin.com/se/ranking/1917" target="_blank" rel="noopener">' + _("Rankinglistan") + '</a>'
   };
   function info(items){
     return items.map(function(it){
       return '<details><summary>' + esc(it.t) + '<span class="pl" aria-hidden="true"></span></summary><div class="body">' + it.b + '<div class="src">' + it.s + '</div></div></details>';
     }).join("");
   }
-  var sptItem = {t:"Vad är SPT?", s:SRC.spt, b:
-    "<p>SPT (Swedish Padel Tour) är förbundets elittour. Sex deltävlingar per år och en avslutande Masters. 16 par per klass: 12 in på poäng, 4 via kval på fredagen.</p>" +
-    "<p>SPT 300 ger 300 rankingpoäng till vinnaren, SPT 360 ger 360 och Masters 400. Challenger ger 100.</p>"};
-  var rankBase = "<p>Rankingen räknar dina 12 bästa tävlingar de senaste 12 månaderna. Poängen faller bort efter ett år. Listan uppdateras varje natt mellan söndag och måndag.</p>";
-  var rankJunior = "<p>Som junior spelar du i 18-årsklassen och får även spela seniorklasser. Du har både junior- och seniorranking. När du blir senior följer 25 procent av poängen med.</p>";
+  var sptItem = {t:_("Vad är SPT?"), s:SRC.spt, b:
+    "<p>" + _("SPT (Swedish Padel Tour) är förbundets elittour. Sex deltävlingar per år och en avslutande Masters. 16 par per klass: 12 in på poäng, 4 via kval på fredagen.") + "</p>" +
+    "<p>" + _("SPT 300 ger 300 rankingpoäng till vinnaren, SPT 360 ger 360 och Masters 400. Challenger ger 100.") + "</p>"};
+  var rankBase = "<p>" + _("Rankingen räknar dina 12 bästa tävlingar de senaste 12 månaderna. Poängen faller bort efter ett år. Listan uppdateras varje natt mellan söndag och måndag.") + "</p>";
+  var rankJunior = "<p>" + _("Som junior spelar du i 18-årsklassen och får även spela seniorklasser. Du har både junior- och seniorranking. När du blir senior följer 25 procent av poängen med.") + "</p>";
   function renderInfo(P){
     var host = document.getElementById(P.key + "Info");
     if (!host) return;
     var rank = trendOf(P).rank[0], F = P.gender === "F";
     var lvl = rank == null ? "" : classOf(P, rank);
-    var me = rank == null ? P.short + " finns inte på SPF-rankingen just nu." : P.short + " ligger på plats " + rank + " och är " + lvl + "-spelare.";
+    var me = rank == null ? _("{name} finns inte på SPF-rankingen just nu.", {name:P.short}) : _("{name} ligger på plats {rank} och är {lvl}-spelare.", {name:P.short, rank:rank, lvl:lvl});
     host.innerHTML = info([sptItem,
-      {t:"Klasser", s:SRC.cls, b:"<p>Din klass styrs av din rankingplacering. " + (F ? "Damer 51–160 är B-klass, 161–700 är C-klass." : "Herrar 61–200 är B-klass, 201–1200 är C-klass.") +
-        " Vid anmälan räknas parets sammanlagda poäng. Ni får alltid spela en högre klass, aldrig en lägre.</p><p class=\"me\">" + esc(me) + "</p>"},
-      {t:"Så funkar rankingen", s:SRC.rank, b:rankBase + (P.o.junior ? rankJunior : "")}]);
+      {t:_("Klasser"), s:SRC.cls, b:"<p>" + _("Din klass styrs av din rankingplacering. ") + (F ? _("Damer 51–160 är B-klass, 161–700 är C-klass.") : _("Herrar 61–200 är B-klass, 201–1200 är C-klass.")) +
+        _(" Vid anmälan räknas parets sammanlagda poäng. Ni får alltid spela en högre klass, aldrig en lägre.") + "</p><p class=\"me\">" + esc(me) + "</p>"},
+      {t:_("Så funkar rankingen"), s:SRC.rank, b:rankBase + (P.o.junior ? rankJunior : "")}]);
   }
 
   /* ================= routing: #/ home, #<player>(/m<match>), #lag/<team> ================= */
@@ -4518,7 +4983,7 @@
     var f = follows(), fl = ROSTER.filter(function(p){ return f.indexOf(p.pid) >= 0; }), rest = ROSTER.filter(function(p){ return f.indexOf(p.pid) < 0; });
     function chip(p, fol){
       return '<a class="pchip" href="#' + esc(p.key) + '"' + (p.key === cur ? ' aria-current="page"' : "") + '>' + avatar(p.name) + '<span>' + esc(p.short) + '</span>' +
-        (fol ? STAR + '<span class="sr">följer</span>' : "") + '</a>';
+        (fol ? STAR + '<span class="sr">' + _("följer") + '</span>' : "") + '</a>';
     }
     host.innerHTML = fl.map(function(p){ return chip(p, true); }).join("") + (fl.length && rest.length ? '<span class="csep" aria-hidden="true"></span>' : "") +
       rest.map(function(p){ return chip(p, false); }).join("");
@@ -4700,7 +5165,7 @@
     if (fb){
       var pid = Number(fb.getAttribute("data-follow")), on = !isFollowed(pid), P = BYPID[pid];
       setFollowed(pid, on);
-      hint(on ? "Du följer " + P.short + ". " + (notiOn() ? "Notiser för " + gen(P.short) + " matcher." : "Slå på Notiser för att få " + gen(P.short) + " resultat.") : "Du följer inte längre " + P.short + ".");
+      hint(on ? _("Du följer {name}. ", {name:P.short}) + (notiOn() ? _("Notiser för {gen} matcher.", {gen:gen(P.short), name:P.short}) : _("Slå på Notiser för att få {gen} resultat.", {gen:gen(P.short), name:P.short})) : _("Du följer inte längre {name}.", {name:P.short}));
     }
   });
   window.addEventListener("hashchange", handleHash);
@@ -4723,7 +5188,7 @@
   }
   if (hintEl) hintEl.addEventListener("click", function(){ hintEl.hidden = true; });
   function bellState(){ if (bell) bell.setAttribute("aria-pressed", notiOn() ? "true" : "false"); }
-  function whoText(){ var n = followedPlayers().map(function(p){ return p.short; }); return n.length > 1 ? n.slice(0, -1).join(", ") + " och " + n[n.length - 1] : n[0] || ""; }
+  function whoText(){ var n = followedPlayers().map(function(p){ return p.short; }); return n.length > 1 ? n.slice(0, -1).join(", ") + _(" och ") + n[n.length - 1] : n[0] || ""; }
   function askPermission(){
     return new Promise(function(res){
       try {
@@ -4735,24 +5200,24 @@
   if (bell){
     bellState();
     bell.addEventListener("click", function(){
-      if (IOS && !standalone()){ hint("På iPhone kommer notiser bara när sidan ligger på hemskärmen. Tryck Dela → Lägg till på hemskärmen och öppna den därifrån."); return; }
-      if (!notiSupported()){ hint("Den här webbläsaren kan inte visa notiser."); return; }
-      if (notiOn()){ store.set(NOTI_KEY, "0"); disablePush(); bellState(); hint("Notiser av."); return; }
-      if (Notification.permission === "denied"){ hint("Notiser är blockerade för sidan. Tillåt dem i webbläsarens inställningar."); return; }
-      if (!follows().length){ hint("Följ en spelare först. Tryck Följ på spelarens sida."); return; }
+      if (IOS && !standalone()){ hint(_("På iPhone kommer notiser bara när sidan ligger på hemskärmen. Tryck Dela → Lägg till på hemskärmen och öppna den därifrån.")); return; }
+      if (!notiSupported()){ hint(_("Den här webbläsaren kan inte visa notiser.")); return; }
+      if (notiOn()){ store.set(NOTI_KEY, "0"); disablePush(); bellState(); hint(_("Notiser av.")); return; }
+      if (Notification.permission === "denied"){ hint(_("Notiser är blockerade för sidan. Tillåt dem i webbläsarens inställningar.")); return; }
+      if (!follows().length){ hint(_("Följ en spelare först. Tryck Följ på spelarens sida.")); return; }
       askPermission().then(function(p){
         if (p === "granted"){
           store.set(NOTI_KEY, "1");
-          var local = "Notiser på för " + whoText() + ". Funkar medan appen är öppen.";
+          var local = _("Notiser på för {who}. Funkar medan appen är öppen.", {who:whoText()});
           if (pushSupported()){
-            hint("Slår på notiser …");
+            hint(_("Slår på notiser …"));
             enablePush().then(function(ok){
-              hint(ok ? "Notiser på för " + whoText() + ", även när appen är stängd." : local);
+              hint(ok ? _("Notiser på för {who}, även när appen är stängd.", {who:whoText()}) : local);
               ensureWatch();
             });
           } else hint(local);
           ensureWatch();
-        } else hint("Inga notiser. Du kan slå på dem senare.");
+        } else hint(_("Inga notiser. Du kan slå på dem senare."));
         bellState();
       });
     });
@@ -4765,7 +5230,7 @@
     function show(mode){
       if (standalone() || store.get("padel.installHidden") === "1") return;
       go.hidden = mode !== "prompt";
-      txt.textContent = mode === "ios" ? "Dela → Lägg till på hemskärmen" : "Nynäs Padel ett tryck bort.";
+      txt.textContent = mode === "ios" ? _("Dela → Lägg till på hemskärmen") : _("Nynäs Padel ett tryck bort.");
       bar.hidden = false;
     }
     window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); deferred = e; show("prompt"); });
@@ -4794,7 +5259,7 @@
   function start(list){
     setRoster(list);
     var cm = document.getElementById("clubMeta");
-    if (cm) cm.textContent = ROSTER.length + " spelare · " + TEAMS.length + " lag i SPL";
+    if (cm) cm.textContent = ROSTER.length + _(" spelare ") + "· " + TEAMS.length + _(" lag i SPL");
     var q = document.getElementById("q");
     if (q) q.addEventListener("input", renderPlayerList);
     try { var cachedDisc = store.json(EV_KEY); if (cachedDisc) applyDisc(cachedDisc); } catch (e){}
@@ -4822,7 +5287,7 @@
   }
   function failed(){
     var h = document.getElementById("nowList");
-    if (h) h.innerHTML = '<p class="empty">Kunde inte ladda spelarna. Kontrollera nätet och ladda om sidan.</p>';
+    if (h) h.innerHTML = '<p class="empty">' + _("Kunde inte ladda spelarna. Kontrollera nätet och ladda om sidan.") + '</p>';
   }
   try {
     document.getElementById("today").textContent = cap(dayLabel(now()));

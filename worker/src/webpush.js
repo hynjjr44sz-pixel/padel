@@ -71,7 +71,9 @@ async function topic(tag) {
 export async function send(sub, msg, env, key, jwts = {}) {
   const aud = new URL(sub.endpoint).origin;
   const jwt = await (jwts[aud] = jwts[aud] || vapidJwt(aud, env.VAPID_SUBJECT, key));
-  // One aes128gcm record holds 3993 bytes of plaintext; keep well inside it.
+  // One aes128gcm record holds 3993 bytes of plaintext; keep well inside it. The Spanish wording (es) is chosen
+  // before this (index.js localize) and never sent.
+  if (msg.es) { const { es, ...rest } = msg; msg = rest; }
   let text = JSON.stringify(msg);
   if (te.encode(text).length > 3000) text = JSON.stringify({ ...msg, body: String(msg.body || "").slice(0, 600) + "…" });
   let body, tp;

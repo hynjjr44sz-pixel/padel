@@ -54,6 +54,8 @@ test("time/court change of Thea's next match: one notis, deep link, same tag for
   n = notes(DC, parse([move(base, 6872156, "2026-09-28T09:00:00", null)]), before);
   assert.equal(n[0].title, "Ny tid: Thea och Cassandra spelar kvartsfinalen mån 09:00, Bana 1");
   assert.equal(n[0].body, "Förut sön 12:45, Bana 1. Mot Pettersson Österberg / Ekeland.");
+  assert.deepEqual(n[0].es, { title: "Nueva hora: Thea y Cassandra juegan los cuartos de final lun 09:00, Pista 1",
+    body: "Antes: dom 12:45, Pista 1. Contra Pettersson Österberg / Ekeland." });
   // Nothing changed / a match that is not Thea's changed -> nothing
   assert.deepEqual(notes(DC, parse([base]), before), []);
   assert.deepEqual(notes(DC, parse([move(base, 6872151, "2026-09-27T16:00:00", "Bana 6")]), before), []);
@@ -81,18 +83,23 @@ test("time change: silent after a deploy (old KV record without schedule) and wh
 test("drawNote: knockout (first opponent, weekday, court) and groups (group mates, first match)", () => {
   const ko = drawNote({ ...DC, name: "Järfälla Padel Open no 11" }, parse([F("dc_1112.json")]));
   assert.deepEqual(ko, { title: "Lottningen klar: Thea och Cassandra möter Pettersson Österberg / Ekeland", body: "Sön 12:45, Bana 1. Järfälla Padel Open no 11, Damer C.",
-    tag: "padel-164681:lottning", url: "./#thea/m6872156" });
+    tag: "padel-164681:lottning", url: "./#thea/m6872156",
+    es: { title: "Cuadro publicado: Thea y Cassandra contra Pettersson Österberg / Ekeland", body: "Dom 12:45, Pista 1. Järfälla Padel Open no 11, Damer C." } });
   // Published late (first round already played): the first match still to play; opponent not known yet
   const late = drawNote({ ...DC, name: "Järfälla Padel Open no 11" }, parse([F("dc_1031.json")]));
   assert.deepEqual([late.title, late.url], ["Lottningen klar: Thea och Cassandra börjar i kvartsfinalen", "./#thea/m6872156"]);
+  assert.equal(late.es.title, "Cuadro publicado: Thea y Cassandra empiezan en los cuartos de final");
   const vista = { who: "thea", me: "Thea Holmberg Löving", cls: "Dam B", classId: 173729, name: "Vista Padel Autumn Smash Open" };
   const rr = drawNote(vista, parse([F("vista_rr_new.json")]));
   assert.equal(rr.title, "Lottningen klar: Thea och Nathalie i gruppen");
   assert.equal(rr.body, "Med P A / Lindgren, Dolfie / Öberg, Ahlin / Ivarsson. Första match lör 09:00, Bana 2. Vista Padel Autumn Smash Open, Dam B.");
   assert.equal(rr.url, "./#thea/m6773468");
   assert.equal(rr.tag, "padel-173729:lottning");
+  assert.deepEqual(rr.es, { title: "Cuadro publicado: Thea y Nathalie en el grupo",
+    body: "Con P A / Lindgren, Dolfie / Öberg, Ahlin / Ivarsson. Primer partido: sáb 09:00, Pista 2. Vista Padel Autumn Smash Open, Dam B." });
   const none = drawNote({ ...vista, me: "Någon Annan" }, parse([F("vista_rr_new.json")]));
   assert.deepEqual([none.title, none.url], ["Lottningen klar i Dam B", "./#thea"]);
+  assert.deepEqual([none.es.title, none.es.body], ["Cuadro publicado: Dam B", "Vista Padel Autumn Smash Open, Dam B."]);
 });
 
 const VISTA = { key: "t173729-thea", kind: "tournament", who: "thea", me: "Thea Holmberg Löving", pid: 1675246, tournamentId: 73554, classId: 173729,
@@ -259,5 +266,6 @@ test("ranking: baseline silent, new Monday list -> one notis per player, unchang
     assert.equal(n[0].m.title, "Ny ranking: Thea #142 ▲︎ 8 platser");
     assert.equal(n[0].m.body, "78.7 p (+10.0) · Dam huvudlista");
     assert.equal(n[0].m.url, "./#thea");
+    assert.deepEqual(n[0].m.es, { title: "Nuevo ranking: Thea #142 ▲︎ 8 puestos", body: "78.7 p (+10.0) · Lista principal femenina" }, "Spanish wording alongside");
   } finally { globalThis.fetch = orig; }
 });

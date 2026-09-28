@@ -133,8 +133,10 @@ async function handle(req, env) {
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
     const s = b && b.subscription;
     if (!(await validSub(s, env))) return json({ error: "bad subscription" }, 400, h);
-    const rec = JSON.stringify({ sub: { endpoint: s.endpoint, keys: { p256dh: s.keys.p256dh, auth: s.keys.auth } },
-      prefs: { follow: followOf((b && b.prefs) || {}) } });
+    // lang: "es" only (Swedish is the default, so the records of Swedish devices stay as they were)
+    const prefs = { follow: followOf((b && b.prefs) || {}) };
+    if (langOf(b && b.prefs) === "es") prefs.lang = "es";
+    const rec = JSON.stringify({ sub: { endpoint: s.endpoint, keys: { p256dh: s.keys.p256dh, auth: s.keys.auth } }, prefs });
     const key = await subKey(s.endpoint);
     // getWithMetadata: a record stored before the metadata existed is written once more (the page posts on every visit).
     let was, meta = true;
@@ -161,6 +163,14 @@ export function followOf(p) {
   p = p || {};
   if (Array.isArray(p.follow)) return [...new Set(p.follow.map(Number).filter(x => BY_PID.has(x)))].sort((a, b) => a - b).slice(0, 60);
   return [p.thea !== false && LEGACY.thea, p.kian !== false && LEGACY.kian].filter(Boolean).sort((a, b) => a - b);
+}
+// Language of a device's notiser: "sv" (default) or "es".
+export function langOf(p) { return p && p.lang === "es" ? "es" : "sv"; }
+// A message as one device gets it: the Spanish title/body for "es" (Swedish where one is missing); "es" itself is never sent.
+export function localize(m, lang) {
+  const { es, ...out } = m;
+  if (lang === "es" && es) { if (es.title) out.title = es.title; if (es.body != null) out.body = es.body; }
+  return out;
 }
 const now = env => env.NOW ? new Date(env.NOW) : new Date();   // NOW: local tests only
 const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8;
@@ -315,10 +325,13 @@ async function rankOne(env, p, cur, msgs, log) {
   log.writes = (log.writes || 0) + 1;
   if (!prev || prev.d >= cur.d) return cur;   // baseline or a correction of the same list: no notis
   const up = prev.s - cur.s, dp = cur.p - prev.p, f = v => v.toFixed(v >= 20 ? 1 : 2);
+  const move = (one, many, same) => up ? (up > 0 ? " \u25B2\uFE0E " : " \u25BC\uFE0E ") + Math.abs(up) + (Math.abs(up) === 1 ? one : many) : same;
+  const pts = f(cur.p) + " p" + (dp ? " (" + (dp > 0 ? "+" : "\u2212") + Math.abs(dp).toFixed(1) + ")" : "") + " · ";
   msgs.push({ pids: [p.pid], m: {
-    title: "Ny ranking: " + p.name + " #" + cur.s + (up ? (up > 0 ? " \u25B2\uFE0E " : " \u25BC\uFE0E ") + Math.abs(up) + (Math.abs(up) === 1 ? " plats" : " platser") : " (oförändrad)"),
-    body: f(cur.p) + " p" + (dp ? " (" + (dp > 0 ? "+" : "\u2212") + Math.abs(dp).toFixed(1) + ")" : "") + " · " + p.list,
-    tag: "padel-rank-" + p.pid, url: "./#" + p.who } });
+    title: "Ny ranking: " + p.name + " #" + cur.s + move(" plats", " platser", " (oförändrad)"),
+    body: pts + p.list,
+    tag: "padel-rank-" + p.pid, url: "./#" + p.who,
+    es: { title: "Nuevo ranking: " + p.name + " #" + cur.s + move(" puesto", " puestos", " (sin cambios)"), body: pts + (/^Dam/.test(p.list) ? "Lista principal femenina" : "Lista principal masculina") } } });
   return cur;
 }
 // Standings into the leaderboard in "disc" (read fresh from KV, written only when something changed). Players the board
@@ -811,8 +824,8 @@ async function subscribers(env) {
   SUBS = { list, at: Date.now() };
   return list;
 }
-// Push: every device gets the messages about the players it follows (prefs.follow), nothing else.
-// Jobs: {n: KV key, s: subscription, m: [messages], q: queued at (ms)}.
+// Push: every device gets the messages about the players it follows (prefs.follow), nothing else, in its language
+// (prefs.lang). Jobs: {n: KV key, s: subscription, m: [messages as that device gets them], q: queued at (ms)}.
 async function fanOut(env, msgs, budget, log) {
   const raw = await env.PUSH.get("outbox");
   let old = [];
@@ -823,19 +836,21 @@ async function fanOut(env, msgs, budget, log) {
   const jobs = old.slice();   // the outbox first
   if (msgs.length) {
     const devs = (await subscribers(env)).map(({ name, rec }) => {
-      const f = new Set(followOf(rec.prefs));
-      const out = mergeForDevice(msgs.filter(x => x.pids.some(p => f.has(Number(p)))).map(x => x.m));
-      return out.length ? { n: name, s: rec.sub, m: out, q: nowMs } : null;
+      const f = new Set(followOf(rec.prefs)), lang = langOf(rec.prefs);
+      const out = mergeForDevice(msgs.filter(x => x.pids.some(p => f.has(Number(p)))).map(x => localize(x.m, lang)));
+      return out.length ? { n: name, s: rec.sub, m: out, q: nowMs, lang } : null;
     }).filter(Boolean);
     // Fold into one notis per device when there are many pushes (subrequests, and CPU: about 0.3 ms per encrypted push).
     const total = pushesOf(devs);
     if (total > Math.min(Math.max(0, cap - pushesOf(old)), FOLD_OVER)) {
       devs.forEach(d => {
         if (d.m.length < 2) return;
-        d.m = [{ title: d.m.length + " nya resultat", body: d.m.map(m => m.title).join("\n"), tag: "padel-sammanfattning", url: d.m[d.m.length - 1].url }];
+        const title = d.lang === "es" ? d.m.length + (d.m.length === 1 ? " resultado nuevo" : " resultados nuevos") : d.m.length + " nya resultat";
+        d.m = [{ title, body: d.m.map(m => m.title).join("\n"), tag: "padel-sammanfattning", url: d.m[d.m.length - 1].url }];
       });
     }
     log.devices = devs.length;
+    devs.forEach(d => { delete d.lang; });   // the jobs (and the outbox) keep only what is sent
     jobs.push(...devs);
   }
   let rest = [];
@@ -932,7 +947,8 @@ async function testPush(env) {
     try {
       const rec = JSON.parse((await env.PUSH.get(name)) || "null");
       if (!rec || !rec.sub) continue;
-      const st = await send(rec.sub, { title: "Testnotis från Nynäs Padel", body: "Push fungerar. Nästa resultat kommer hit.", tag: "padel-test", url: "./#thea" }, env, key, jwts);
+      const st = await send(rec.sub, localize({ title: "Testnotis från Nynäs Padel", body: "Push fungerar. Nästa resultat kommer hit.", tag: "padel-test", url: "./#thea",
+        es: { title: "Notificación de prueba de Nynäs Padel", body: "Las notificaciones funcionan. Los próximos resultados llegarán aquí." } }, langOf(rec.prefs)), env, key, jwts);
       res.push({ host: new URL(rec.sub.endpoint).host, status: st });
     } catch (e) {
       res.push({ key: name, error: e.message });

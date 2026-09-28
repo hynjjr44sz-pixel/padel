@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Privacidad · Nynäs Padel</title>
+<meta name="theme-color" content="#EDF0F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#040A1B" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Instrument+Sans:wght@400;600;700&family=Chivo+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#EDF0F5; --surface:#FFFFFF; --ink:#0A1733; --dim:#5A6680; --line:#D8DEE9; --accent:#1F4FCF; color-scheme:light; }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg:#040A1B; --surface:#0A1733; --ink:#E8EEF9; --dim:#9AA8C4; --line:#1C2A4A; --accent:#8EC5FF; color-scheme:dark; }
+  }
+  :root[data-theme="dark"]{ --bg:#040A1B; --surface:#0A1733; --ink:#E8EEF9; --dim:#9AA8C4; --line:#1C2A4A; --accent:#8EC5FF; color-scheme:dark; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 "Instrument Sans", -apple-system, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+  .page{ max-width:640px; margin:0 auto; padding:max(20px, env(safe-area-inset-top)) 16px 48px; }
+  .back{ display:inline-flex; align-items:center; gap:8px; color:var(--ink); text-decoration:none; font:500 12px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; }
+  .back img{ height:24px; width:auto; }
+  h1{ font:900 clamp(28px, 8.5vw, 44px)/.95 "Big Shoulders Display", sans-serif; overflow-wrap:anywhere; text-transform:uppercase; letter-spacing:.01em; margin:22px 0 6px; }
+  .lead{ color:var(--dim); margin:0 0 22px; }
+  h2{ font:800 22px/1.1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; margin:26px 0 8px; }
+  p, li{ margin:0 0 10px; }
+  ul{ padding-left:20px; margin:0 0 10px; }
+  a{ color:var(--accent); }
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px; margin:18px 0; }
+  .card b{ display:block; font:800 20px/1.1 "Big Shoulders Display", sans-serif; text-transform:uppercase; margin-bottom:6px; }
+  .mail{ font-weight:700; font-size:18px; word-break:break-all; }
+  footer{ margin-top:36px; padding-top:14px; border-top:1px solid var(--line); color:var(--dim); font:500 12px/1.4 "Chivo Mono", monospace; }
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="back" href="./"><img src="img/nynas-logo.png" width="78" height="100" alt="">Volver</a>
+  <h1>Privacidad</h1>
+  <p class="lead">Cómo trata esta página los datos de los jugadores y los tuyos como usuario. Corto y claro.</p>
+
+  <div class="card">
+    <b>¿Quieres que te quitemos?</b>
+    <p>Escríbeme y quitaré de la página tu nombre, tus fotos y tus resultados, normalmente el mismo día. También si quieres cambiar la foto o corregir algo.</p>
+    <a class="mail" href="mailto:mikael@holmberg.st?subject=Nyn%C3%A4s%20Padel%20%E2%80%93%20quitarme">mikael@holmberg.st</a>
+  </div>
+
+  <h2>Quién está detrás</h2>
+  <p>La página la lleva de forma privada Mikael Holmberg, padre de una jugadora de Nynäs Padel Club. No es la página oficial del club ni de la Federación Sueca de Pádel.</p>
+
+  <h2>Qué datos se muestran de los jugadores</h2>
+  <ul>
+    <li>Nombre, club, equipo y categoría.</li>
+    <li>Torneos, cuadros, resultados, ranking, puntos de ranking y skill.</li>
+    <li>Foto de perfil: la del perfil de RankedIn del jugador o una que el propio jugador ha enviado.</li>
+  </ul>
+  <p>Los resultados, el ranking y el skill vienen de <a href="https://www.rankedin.com" rel="noopener">RankedIn</a>, que la Federación Sueca de Pádel usa para torneos y ranking. Allí ya son públicos. La página los reúne para que familia y amigos sigan los partidos fácilmente.</p>
+  <p>Solo aparecen jugadores que han dicho que sí (o su padre o madre si son menores de 18). La página no aparece en Google.</p>
+
+  <h2>Tus datos como visitante</h2>
+  <ul>
+    <li><b>Sin cuentas, sin rastreo, sin publicidad.</b> La página no usa herramientas de analítica ni cookies de rastreo.</li>
+    <li><b>En tu teléfono</b> se guardan los jugadores que sigues, el idioma, si las notificaciones están activadas y una copia de los últimos resultados, para que la página vaya rápida. Solo está en tu navegador y desaparece si borras los datos del sitio.</li>
+    <li><b>Notificaciones:</b> si las activas se guarda una dirección push anónima de tu teléfono (una dirección de Apple, Google o Mozilla), los jugadores que sigues y el idioma. No se guarda correo, nombre ni teléfono. Si las desactivas, la dirección se borra. También se borra sola si el teléfono deja de recibir notificaciones.</li>
+  </ul>
+
+  <h2>Dónde están los datos</h2>
+  <ul>
+    <li><b>GitHub Pages</b> sirve la página y las fotos.</li>
+    <li><b>Cloudflare</b> ejecuta el servidor de notificaciones y guarda las direcciones push y el último estado de los partidos.</li>
+    <li><b>RankedIn</b> proporciona resultados, ranking y skill.</li>
+    <li><b>Google Fonts</b> proporciona las tipografías.</li>
+  </ul>
+  <p>Estos proveedores pueden ver técnicamente tu dirección IP al cargar la página, como en cualquier web. Los datos nunca se venden ni se usan para otra cosa que la página.</p>
+
+  <h2>Tus derechos</h2>
+  <p>Puedes pedir en cualquier momento saber qué datos hay sobre ti, corregirlos o borrarlos. Escribe a <a href="mailto:mikael@holmberg.st">mikael@holmberg.st</a>. Si no quedas satisfecho, puedes acudir a la autoridad sueca de protección de datos (IMY).</p>
+
+  <footer>Última actualización: 28 de septiembre de 2026</footer>
+</div>
+</body>
+</html>

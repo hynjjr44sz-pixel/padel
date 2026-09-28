@@ -622,6 +622,26 @@ try {
   ok("worker down: Förslag says Inga förslag just nu. (no RankedIn calendar calls)", /Inga förslag just nu\./.test(await page.textContent("#sgList-kian")) && !api.paths.some(x => /Organisation|ClassesSection/i.test(x)));
   ok("worker down: Kian's page finds his events on RankedIn", /SPL|Herrar/.test(await page.textContent("#p-kian [data-r=round]").catch(() => "")), await page.textContent("#p-kian .dyn").catch(() => ""));
   await ctx.close();
+  // Spanish: chosen with the SV | ES switch, kept on the device; everything the page writes follows it
+  ({ page, ctx, errors, api } = await newPage());
+  await page.goto(url("#/"));
+  await page.waitForSelector("#lang [data-lang=es]");
+  await page.click("#lang [data-lang=es]");
+  await page.waitForFunction(() => document.documentElement.lang === "es", null, { timeout: 8000 });
+  ok("es: the switch reloads in Spanish and is remembered", (await page.textContent("#h-home")) === "Nynäs hoy" &&
+    await page.evaluate(() => localStorage.getItem("padel.lang") === "es" && document.querySelector("#lang [data-lang=es]").getAttribute("aria-pressed") === "true"));
+  await page.goto(url("#thea"));
+  await page.waitForSelector("#p-thea .pc .follow");
+  const esCard = await page.textContent("#p-thea .pc");
+  ok("es: player card in Spanish", /Siguiendo/.test(esCard) && /Nivel/.test(esCard) && !/Följer|Klass\b/.test(esCard), esCard.slice(0, 200));
+  await page.waitForFunction(() => /Últimos torneos/.test(document.body.textContent), null, { timeout: 8000 }).catch(() => {});
+  const esBody = await page.evaluate(() => document.getElementById("p-thea").textContent);
+  ok("es: player page sections in Spanish", /Últimos torneos/i.test(esBody) && /Evolución/i.test(esBody) && !/Senaste tävlingar|Utveckling/.test(esBody), (esBody.match(/[^.]{0,40}(Senaste tävlingar|Utveckling)[^.]{0,40}/) || [esBody.slice(0, 300)])[0]);
+  ok("es: no page errors", errors.length === 0, errors);
+  await page.click("#lang [data-lang=sv]");
+  await page.waitForFunction(() => document.documentElement.lang === "sv" && document.querySelector("#p-thea .pc .follow"), null, { timeout: 8000 }).catch(() => {});
+  ok("es: back to Swedish", /Följer/.test(await page.textContent("#p-thea .pc")) && await page.evaluate(() => localStorage.getItem("padel.lang") === "sv"));
+  await ctx.close();
 } catch (e) {
   results.push("FAIL exception " + (e && e.stack));
 } finally {

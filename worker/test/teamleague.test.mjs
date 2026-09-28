@@ -33,6 +33,9 @@ test("tie notiser: own rubber highlighted, team rubbers, tie result; nothing twi
   assert.equal(n[0].tag, "padel-tm127649:r5433848");
   assert.equal(n[1].body, "SPL Damer omgång 3. Thea och Rebecca vann sin match 6-3 6-2.");
   assert.equal(n[0].url, "./#thea/m5433848", "deep link to the rubber");
+  assert.deepEqual(n.map(x => x.es), [
+    { title: "Thea y Rebecca ganaron su partido 6-3 6-2", body: "Contra Frohlund / Spong. Marcador: Nynäs Damlag 1–2 Padelverket Damlag." },
+    { title: "Nynäs Damlag perdió contra Padelverket Damlag 1–2", body: "SPL Damer jornada 3. Thea y Rebecca ganaron su partido 6-3 6-2." }], "Spanish wording alongside");
   assert.equal(n[1].url, "./#thea/m5433848", "tie result links to her own rubber");
   assert.deepEqual(tieNotes(THEA, TIE, all, full), []);
 
