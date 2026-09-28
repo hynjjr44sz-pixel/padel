@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import worker, { tick, _resetMemory } from "../src/index.js";
 import { install, route } from "./fake-rankedin.mjs";
+import { suggestFor } from "../src/calendar.js";
 import { makeVapid } from "./helpers.mjs";
 import { readFileSync } from "node:fs";
 
@@ -39,7 +40,14 @@ await tick({ PUSH, ...(await makeVapid()), NOW: "2026-09-27T16:10:00Z", ORIGIN: 
 for (const m of ["08:07", "08:17", "08:27", "08:37", "08:47"]) { _resetMemory(); await tick({ PUSH, NOW: "2026-09-29T" + m + ":00Z", ORIGIN: "x", RANK_OFF: "1" }); }
 _resetMemory();
 const EVENTS_WEEK = await (await worker.fetch(new Request("https://w/events"), { PUSH, NOW: "2026-09-29T10:00:00Z", ORIGIN: "x" })).json();
+// "Förslag på tävlingar": the night's calendar (03:23 local, two ticks) from the saved SPF calendar, then GET /cal.
+install({});
+for (const m of ["01:23", "01:24", "01:25"]) { _resetMemory(); await tick({ PUSH, NOW: "2026-09-28T" + m + ":00Z", ORIGIN: "x", RANK_OFF: "1" }); }
+_resetMemory();
+const CAL = await (await worker.fetch(new Request("https://w/cal"), { PUSH, NOW: "2026-09-28T08:00:00Z", ORIGIN: "x" })).json();
 globalThis.fetch = realFetch;
+assert.equal(CAL.events.length, 22, "calendar built");
+assert.ok(CAL.events.find(e => e.id === 73554).regs.some(r => r.pid === 1675246), "Thea entered at Vista (discovery)");
 assert.deepEqual(EVENTS.wins, [], "no winner during the day");
 assert.deepEqual(EVENTS_WEEK.wins.map(w => w.id + " " + w.s), ["164681:1 6-1 6-4"], "worker wins the week after");
 assert.ok(EVENTS_WEEK.past.some(e => e.classId === 164681) && !EVENTS_WEEK.events.some(e => e.classId === 164681), "Järfälla in past");
@@ -112,6 +120,7 @@ async function newPage(opts = {}) {
   await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route(PUSH_API + "/**", r => {
     const u = new URL(r.request().url()), h = { "Access-Control-Allow-Origin": "*" };
+    if (u.pathname === "/cal") { api.cal = (api.cal || 0) + 1; return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.cal || CAL), headers: h }); }
     if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
     if (u.pathname === "/vapid") return r.fulfill({ contentType: "application/json", body: JSON.stringify({ key: "BOr5MaD1vP9w2uH0Pqzv8pH5v2cXf8j8e7Rrx6Qv0yq2mS9d2w8g5k2WnYQx1S0x0gJ5v8wV0z9Q2v5cXf8j8e7R", classes: [164681] }), headers: h });
     if (u.pathname === "/subscribe" || u.pathname === "/unsubscribe") { api.posts.push({ path: u.pathname, body: JSON.parse(r.request().postData() || "{}") }); return r.fulfill({ contentType: "application/json", body: "{\"ok\":true}", headers: h }); }
@@ -256,6 +265,45 @@ try {
   ok("old #kian link opens Kian", (await page.title()).startsWith("Kian Borgström"));
   { const c = await cardOf("kian");
     ok("card Kian: bronze tier (11.56), rating cut to 11.5 (not rounded), class C (Herrar rank 789)", /\bt-bronze\b/.test(c.cls) && c.ovr === "11.5" && c.klass === "C" && c.ln === "Borgström" && c.lnFits, c); }
+
+  // ---- Förslag på tävlingar (worker GET /cal; no RankedIn calls for it) ----
+  {
+    const sugg = async k => {
+      await page.waitForFunction(k => document.querySelector("#sgList-" + k + " .sg, #sgList-" + k + " .empty:not(:first-child), #sgList-" + k + " p.empty") &&
+        !/Hämtar/.test(document.querySelector("#sgList-" + k).textContent), k, { timeout: 8000 }).catch(() => {});
+      return page.$$eval("#sgList-" + k + " .sg", c => c.map(x => ({ id: +x.getAttribute("data-tid"), h: x.querySelector("h3").textContent, what: (x.querySelector(".what") || {}).textContent || "",
+        chips: [...x.querySelectorAll(".sgc li")].map(li => li.querySelector("b").textContent + (li.classList.contains("mine") ? "*" : "")), facts: x.querySelector(".facts").textContent,
+        btn: (b => b && { t: b.textContent, href: b.getAttribute("href"), rel: b.getAttribute("rel"), target: b.getAttribute("target") })(x.querySelector("a.sgbtn")) })));
+    };
+    const taken = pid => EVENTS.events.filter(e => e.kind === "tournament" && (e.pid === pid || e.partnerId === pid)).map(e => e.tournamentId);
+    for (const [k, g, pid] of [["thea", "F", 1675246], ["kian", "M", 1680004]]) {
+      await page.goto(url("#" + k));
+      await page.waitForSelector("#p-" + k + ":not([hidden]) #sg-" + k);
+      await page.waitForFunction(k => /#\d+/.test(document.getElementById("tv-" + k + "-rank")?.textContent || ""), k, { timeout: 8000 }).catch(() => {});
+      await page.waitForTimeout(300);
+      const list = await sugg(k), R = ROSTER.find(x => x.key === k);
+      const want = suggestFor(CAL, { pid, gender: g, pts: R.points, rank: R.rank }, new Date(T), taken(pid)).map(x => x.id);
+      ok(k + ": Förslag på tävlingar lists the worker's suggestions (same rules as calendar.js), at most 6, by date", list.length > 0 && list.length <= 6 &&
+        JSON.stringify(list.map(x => x.id)) === JSON.stringify(want), { page: list.map(x => x.id), want });
+      ok(k + ": every card: date, name, club/town, distance in mil, class chips, Sista anmälan, RankedIn button (new tab, noopener)", list.every(x => x.h && / mil$/.test(x.what) && x.chips.length &&
+        /^Sista anmälan (mån|tis|ons|tor|fre|lör|sön) \d+ \w+/.test(x.facts) && x.btn && x.btn.t.startsWith("Anmäl på RankedIn") && /^https:\/\/www\.rankedin\.com\/sv\/tournament\/\d+/.test(x.btn.href) &&
+        x.btn.rel === "noopener" && x.btn.target === "_blank"), list);
+      const note = await page.textContent("#sgNote-" + k);
+      if (k === "thea") {
+        ok("thea: not suggested where she is entered (Vista, Järfälla); only Dam B/A classes, own level marked", !list.some(x => [73554, 66374].includes(x.id)) &&
+          list.every(x => x.chips.every(c => /^(Dam|Damer|DAM|DAMER)\b.*\b[AB]\b/i.test(c.replace("*", "")))) && list.some(x => x.chips.some(c => c.endsWith("*"))), list.map(x => x.chips));
+        ok("thea: Du får spela B, C with a partner up to 63,4 p", /^Du får spela B och uppåt \(paret högst 420 p\)\. C går med en partner på högst 63,4 p\.$/.test(note), note);
+        ok("thea: distance (Jordbro inom 3 mil, own coordinates to one decimal)", list.some(x => /inom 3 mil/.test(x.what)) || list.some(x => /\d,\d mil/.test(x.what)), list.map(x => x.what));
+      } else {
+        const vista = list.find(x => x.id === 73554);
+        ok("kian: Vista suggested with Nynäs-spelare anmälda: Thea, Cassandra; Herr C/B classes", vista && /Nynäs-spelare anmälda: Thea, Cassandra/.test(vista.facts) &&
+          list.every(x => x.chips.every(c => /^(Herr|Herrar|HERR|HERRAR)\b.*\b[BC]\b/i.test(c.replace("*", "")))), list);
+        ok("kian: Du får spela C", /^Du får spela C och uppåt/.test(note), note);
+      }
+      ok(k + ": no horizontal scroll with suggestions", await noHScroll(page));
+    }
+    ok("suggestions: no RankedIn calls for the calendar from the page", !api.paths.some(x => /Organisation|ClassesSection/i.test(x)) && api.cal >= 1, api.paths.filter(x => /Organisation|ClassesSection/i.test(x)));
+  }
 
   // ---- follow + bell ----
   await page.goto(url("#rebecca"));
@@ -472,6 +520,29 @@ try {
   ok("tis 6 okt: Thea's hero moved on from Järfälla", !/Järfälla/.test(heroT2), heroT2);
   await ctx.close();
 
+  // ---- Förslag: 360 wide, light and dark; screenshots (SUGG_SHOTS=<prefix>) of Thea's and Kian's module at 390 ----
+  for (const [w, dark] of [[360, false], [390, false], [390, true]]) {
+    ({ page, ctx, errors, api } = await newPage({ width: w, dark }));
+    for (const k of ["thea", "kian"]) {
+      await page.goto(url("#" + k));
+      await page.waitForSelector("#sgList-" + k + " .sg");
+      await page.waitForTimeout(400);
+      ok("Förslag " + k + " " + w + (dark ? " dark" : "") + ": no horizontal scroll, button fits", await noHScroll(page) &&
+        await page.$$eval("#sgList-" + k + " .sgbtn", b => b.every(x => x.getBoundingClientRect().right <= window.innerWidth - 15 && x.getBoundingClientRect().height >= 40)));
+      if (dark) ok("Förslag " + k + " dark: own-class chip readable (dark tokens)", await page.$eval("#sgList-" + k + " .sgc li.mine", li => getComputedStyle(li).backgroundColor) === "rgb(19, 43, 85)");
+      if (process.env.SUGG_SHOTS && w === 390) await page.$eval("#sg-" + k, e => e.scrollIntoView()).then(() => page.locator("#sg-" + k).screenshot({ path: process.env.SUGG_SHOTS + k + (dark ? "-dark" : "-light") + ".png" }));
+    }
+    ok("Förslag " + w + (dark ? " dark" : "") + ": no console errors", errors.length === 0, errors);
+    await ctx.close();
+  }
+  // Empty state, and the worker's calendar missing: Inga förslag just nu.
+  ({ page, ctx, errors, api } = await newPage({ cal: { v: 1, at: null, caps: null, events: [] } }));
+  await page.goto(url("#thea"));
+  await page.waitForFunction(() => /Inga förslag just nu\./.test(document.getElementById("sgList-thea")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+  ok("Förslag: empty calendar -> Inga förslag just nu.", /Inga förslag just nu\./.test(await page.textContent("#sgList-thea")));
+  ok("Förslag: without caps the class comes from the standing (Thea 150: B)", /^Du får spela B och uppåt\./.test(await page.textContent("#sgNote-thea")), await page.textContent("#sgNote-thea"));
+  await ctx.close();
+
   // ---- worker down: client discovery only for the opened player ----
   ({ page, ctx, errors, api } = await newPage({ workerDown: true }));
   await page.goto(url(""));
@@ -480,6 +551,8 @@ try {
   await page.goto(url("#kian"));
   await page.waitForFunction(() => /SPL|Herrar/.test(document.querySelector("#p-kian [data-r=round]")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
   ok("worker down: home makes no RankedIn discovery calls", riHome === 0, riHome);
+  await page.waitForFunction(() => /Inga förslag just nu\./.test(document.getElementById("sgList-kian")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+  ok("worker down: Förslag says Inga förslag just nu. (no RankedIn calendar calls)", /Inga förslag just nu\./.test(await page.textContent("#sgList-kian")) && !api.paths.some(x => /Organisation|ClassesSection/i.test(x)));
   ok("worker down: Kian's page finds his events on RankedIn", /SPL|Herrar/.test(await page.textContent("#p-kian [data-r=round]").catch(() => "")), await page.textContent("#p-kian .dyn").catch(() => ""));
   await ctx.close();
 } catch (e) {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-nyPSIkzMb/tgCI5sYFZ5rKGFR6kziC04ve3Yrm1lYaA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-vrXeFfNZPRYWemSZGS6gRPTM003OjtIZg4NVmrsL0M4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -596,6 +596,19 @@
   .up li:last-child{ padding-bottom:0; }
   .up .facts{ font-size:12.5px; line-height:1.5; color:var(--dim); margin-top:8px; }
   .up .facts a{ font-family:"Instrument Sans", sans-serif; font-weight:600; font-size:13px; }
+  /* ---------- Förslag på tävlingar (player page) ---------- */
+  .sgnote{ margin:0 0 12px; font-size:13.5px; line-height:1.45; color:var(--dim); }
+  .sgnote b{ color:var(--ink); }
+  .up ul.sgc{ display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 0; }
+  .up ul.sgc li{ display:inline-flex; align-items:baseline; gap:6px; padding:5px 9px; border:1px solid var(--line); border-radius:8px; font-size:13px; line-height:1.2; }
+  .up ul.sgc li:last-child{ padding-bottom:5px; }
+  .up ul.sgc li b{ font-weight:700; white-space:nowrap; }
+  .up ul.sgc li span{ font:500 11px/1.2 "Chivo Mono", monospace; color:var(--dim); white-space:nowrap; }
+  .up ul.sgc li.mine{ background:var(--accent-soft); border-color:var(--accent); }
+  .up ul.sgc li.full span{ color:var(--loss); }
+  .sgbtn{ display:inline-flex; align-items:center; gap:6px; min-height:40px; margin-top:12px; padding:9px 14px; border-radius:10px; background:var(--solid); color:var(--solid-ink);
+    font:700 14px/1.1 "Instrument Sans", sans-serif; text-decoration:none; }
+  .sgbtn:hover{ filter:brightness(1.12); }
 
   /* ---------- info ---------- */
   .info{ border-top:1px solid var(--line); }
@@ -3088,6 +3101,108 @@
     if (meta) meta.textContent = months.length ? cap(months.slice(0, 3).join(" · ")) : "";
   }
 
+  /* ---- Förslag på tävlingar: the worker's calendar (GET /cal, built nightly: sanctioned tournaments within 20 mil, next
+     8 weeks) and the SPF rules for the player (same as worker/src/calendar.js: eligibility, suggestFor). No RankedIn calls. ---- */
+  var CAL_KEY = "padel.cal.v1", CAL = null, calBusy = false, calAt = 0;
+  (function(){ var c = CACHE_OFF ? null : store.json(CAL_KEY); if (c && c.d && Array.isArray(c.d.events)){ CAL = c.d; calAt = c.at || 0; } })();
+  function loadCal(){
+    if (calBusy || !PUSH_API || (CAL && Date.now() - calAt < HOUR)) return;
+    calBusy = true;
+    withTimeout(fetch(PUSH_API + "/cal", {credentials:"omit"}).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), 8000).then(function(d){
+      if (!d || !Array.isArray(d.events)) throw new Error("no calendar");
+      CAL = d; calAt = Date.now();
+      store.set(CAL_KEY, JSON.stringify({at:calAt, d:d}));
+    }).catch(function(err){
+      warn("Förslag på tävlingar", err);
+      if (!CAL) CAL = {events:[], caps:null, failed:true};
+    }).then(function(){
+      calBusy = false;
+      Object.keys(PANELS).forEach(function(w){ try { renderSugg(w); } catch (e){ warn("Förslag", e); } });
+    });
+  }
+  var SG_ORDER = ["D", "C", "B", "A"], SG_POS = {M:{A:60, B:200, C:1200}, F:{A:50, B:160, C:700}};
+  function sgBase(caps, g, pts, rank){
+    if (g !== "M" && g !== "F") return null;
+    if (caps && caps[g] && typeof pts === "number") return SG_ORDER.filter(function(L){ return L === "A" || 2 * pts <= caps[g][L]; })[0];
+    if (typeof rank === "number"){ var p = SG_POS[g]; return rank <= p.A ? "A" : rank <= p.B ? "B" : rank <= p.C ? "C" : "D"; }
+    return "D";
+  }
+  function sgElig(caps, g, pts, rank){
+    var base = sgBase(caps, g, pts, rank);
+    if (!base) return null;
+    var i = SG_ORDER.indexOf(base), low = i > 0 ? SG_ORDER[i - 1] : null;
+    var room = low && caps && caps[g] && typeof pts === "number" ? +(caps[g][low] - pts).toFixed(2) : null;
+    return {base:base, levels:SG_ORDER.slice(i, i + 2), cap:caps && caps[g] && base !== "A" ? caps[g][base] : null, lower:room != null && room > 0 ? {level:low, partnerMax:room} : null};
+  }
+  function sgOpen(e, t){ var c = riDate(e.closes); return e.state === 1 && (!c || +t < +c); }
+  // Roster players entered in the tournament: the calendar's regs and the discovery's entries (newer).
+  function sgMates(e){
+    var out = [];
+    (e.regs || []).forEach(function(r){ if (out.indexOf(+r.pid) < 0) out.push(+r.pid); });
+    ((DISC && DISC.events) || []).forEach(function(x){
+      if (!x || x.kind !== "tournament" || +x.tournamentId !== +e.id) return;
+      [x.pid, x.partnerId].forEach(function(p){ if (BYPID[p] && out.indexOf(+p) < 0) out.push(+p); });
+    });
+    return out;
+  }
+  function sgPoints(P){
+    var T = trendOf(P), b = boardOf(P);
+    return {pts:num(T.pts[0]) != null ? T.pts[0] : num(b.rp) != null ? b.rp : num(P.points), rank:num(T.rank[0]) != null ? T.rank[0] : num(b.rk) != null ? b.rk : num(P.rank)};
+  }
+  // -> {el, list: [{e, classes, mates}]} (at most n, by date)
+  function suggestions(P, n){
+    var me = sgPoints(P), el = sgElig(CAL && CAL.caps, P.gender, me.pts, me.rank), t = now(), out = [];
+    if (!el || !CAL) return {el:el, list:[]};
+    var taken = playerEvents(P).filter(function(x){ return x.kind === "tournament"; }).map(function(x){ return +x.tournamentId; });
+    (CAL.events || []).slice().sort(function(a, b){ return String(a.start).localeCompare(String(b.start)); }).forEach(function(e){
+      if (out.length >= (n || 6) || !sgOpen(e, t) || taken.indexOf(+e.id) >= 0) return;
+      var mates = sgMates(e);
+      if (mates.indexOf(P.pid) >= 0) return;
+      var cls = (e.classes || []).filter(function(c){ return c.gender === P.gender && el.levels.indexOf(c.level) >= 0; })
+        .sort(function(a, b){ return SG_ORDER.indexOf(a.level) - SG_ORDER.indexOf(b.level); });
+      if (cls.length) out.push({e:e, classes:cls, mates:mates});
+    });
+    return {el:el, list:out};
+  }
+  function fmtP(v){ return String(v >= 100 ? Math.round(v) : +v.toFixed(1)).replace(".", ","); }
+  function milOf(e){
+    if (typeof e.km !== "number") return "";
+    return e.approx ? "inom " + Math.round(e.km / 10) + " mil" : String(Math.max(0.1, Math.round(e.km) / 10).toFixed(1)).replace(".", ",") + " mil";
+  }
+  function sgCard(x, P, el){
+    var e = x.e, s = riDate(e.start) || now(), en = riDate(e.end) || s, sd = loc(s), ed = loc(en), multi = dayOf(s) !== dayOf(en);
+    var mon = MON[sd.getUTCMonth()] + (multi && ed.getUTCMonth() !== sd.getUTCMonth() ? "–" + MON[ed.getUTCMonth()] : "");
+    var where = [e.club, e.city && (e.club || "").toLowerCase().indexOf(e.city.toLowerCase()) < 0 ? e.city : "", milOf(e)].filter(Boolean).join(" · ");
+    var chips = x.classes.map(function(c){
+      var full = c.limit > 0 && c.players >= c.limit, own = c.level === el.base;
+      return '<li class="' + (own ? "mine" : "") + (full ? " full" : "") + '"><b>' + esc(c.name) + '</b><span>' + (full ? "fullt" : c.players + " par") + '</span>' +
+        '<span class="sr">' + (own ? ", din klass" : ", en klass upp") + (full ? ", reservlista" : "") + '</span></li>';
+    }).join("");
+    var cl = riDate(e.closes), facts = [cl ? "Sista anmälan " + dayLabel(cl) + (dayOf(cl) === dayOf(now()) ? " kl " + hm(cl) : "") : "Anmälan öppen"];
+    var names = x.mates.map(function(pid){ var Q = BYPID[pid]; return Q ? '<a href="#' + esc(Q.key) + '">' + esc(Q.short || Q.name) + '</a>' : ""; }).filter(Boolean);
+    if (names.length) facts.push("Nynäs-spelare anmälda: " + names.join(", "));
+    return '<article class="card up sg" data-tid="' + esc(e.id) + '"><div class="date"><small>' + esc(multi ? cap(DOW[sd.getUTCDay()]) + "–" + DOW[ed.getUTCDay()] : cap(DOW[sd.getUTCDay()])) + '</small><b>' +
+      esc(multi ? sd.getUTCDate() + "–" + ed.getUTCDate() : String(sd.getUTCDate())) + '</b><span>' + esc(mon) + '</span></div><div>' +
+      '<h3>' + esc(e.name || "Turnering") + '</h3>' + (where ? '<div class="what">' + esc(where) + '</div>' : "") +
+      '<ul class="sgc" aria-label="Klasser">' + chips + '</ul><div class="facts">' + facts.join("<br>") + '</div>' +
+      '<a class="sgbtn" href="' + esc(e.url || RI_WEB) + '" target="_blank" rel="noopener">Anmäl på RankedIn<span aria-hidden="true">↗︎</span><span class="sr"> (öppnas i ny flik), ' + esc(e.name || "") + '</span></a></div></article>';
+  }
+  function renderSugg(who){
+    var P = BYKEY[who], host = document.getElementById("sgList-" + who), note = document.getElementById("sgNote-" + who);
+    if (!P || !host) return;
+    if (!CAL){ loadCal(); return; }
+    var r = suggestions(P, 6), el = r.el;
+    if (note){
+      note.hidden = !el;
+      if (el) note.innerHTML = "Du får spela <b>" + el.base + "</b>" + (el.base === "A" ? "." : " och uppåt" + (el.cap ? " (paret högst " + esc(fmtP(el.cap)) + " p)" : "") + ".") +
+        (el.lower ? " " + el.lower.level + " går med en partner på högst " + esc(fmtP(el.lower.partnerMax)) + " p." : "");
+    }
+    var html = r.list.map(function(x){ return sgCard(x, P, el); }).join("");
+    if (host._h === html && html) return;
+    host._h = html;
+    host.innerHTML = html || '<p class="empty">Inga förslag just nu.</p>';
+  }
+
   /* ---- discovery straight against RankedIn (when the worker cannot be reached); same rules as worker/src/discover.js ---- */
   function clientDiscover(prev, players){
     var seenP = {};   // players in one tournament: fetch it once
@@ -3204,6 +3319,7 @@
     Object.keys(PANELS).forEach(function(w){
       try { updateCard(w); } catch (e){ warn("Spelarkort", e); }
       try { renderUps(w); } catch (e){ warn("Kommande", e); }
+      try { renderSugg(w); } catch (e){ warn("Förslag", e); }
       try { renderTours(w); } catch (e){ warn("Tävlingar", e); }
       if (!PANELS[w].hidden || DYN[w]) try { setMode(w, pickHero(w)); } catch (e){
         warn("Visning", e);
@@ -3606,6 +3722,8 @@
       '<section aria-labelledby="h-pa-' + k + '" id="pa-' + k + '"><div class="sh"><h2 id="h-pa-' + k + '">Partners</h2><div class="meta" id="paMeta-' + k + '">12 mån</div></div><div class="card partners" id="paList-' + k + '"></div><p class="panote" id="paNote-' + k + '"></p></section>' +
       '<section aria-labelledby="h-hist-' + k + '" id="hs-' + k + '" hidden><div class="sh"><h2 id="h-hist-' + k + '">Senaste matcher</h2><div class="meta" id="histMeta-' + k + '"></div></div><div class="card hist" id="hist-' + k + '"></div></section>' +
       '<section aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">Kommande</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div></section>' +
+      '<section aria-labelledby="h-sg-' + k + '" id="sg-' + k + '"><div class="sh"><h2 id="h-sg-' + k + '">Förslag på tävlingar</h2><div class="meta">Inom 20 mil · 8 veckor</div></div>' +
+        '<p class="sgnote" id="sgNote-' + k + '" hidden></p><div class="ups" id="sgList-' + k + '"><p class="empty">Hämtar förslag …</p></div></section>' +
       '<section aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">Bra att veta</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>';
   }
   var WATCHING = false;   // panel built by ensureWatch (hidden): its photo waits until the page is shown
@@ -3775,6 +3893,7 @@
     try { renderTrend(P.key); } catch (e){ warn("Utveckling", e); }
     try { renderInfo(P); } catch (e){ warn("Bra att veta", e); }
     try { renderUps(P.key); } catch (e){ warn("Kommande", e); }
+    try { renderSugg(P.key); } catch (e){ warn("Förslag", e); }
     try { renderTours(P.key); } catch (e){ warn("Tävlingar", e); }
     try { renderMHist(P.key); } catch (e){ warn("Matcher", e); }
     try { renderPartners(P.key); } catch (e){ warn("Partners", e); }
@@ -3789,6 +3908,7 @@
     if (DISC) try { setMode(P.key, pickHero(P.key)); } catch (e){ warn("Visning", e); }
     loadTrend(P);
     loadHistory(P);
+    loadCal();
     clientFallback(P);
   }
   // Is a hidden player's live view still needed? Only to notify (followed, live, not covered by push).
