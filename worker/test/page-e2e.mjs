@@ -419,6 +419,10 @@ try {
     await page.waitForSelector("#p-thea:not([hidden]) .hero.t-champ .pwin", { timeout: 8000 }).catch(() => {});
     { const c = await cardOf("thea");
       ok("week after " + (dark ? "dark" : "light") + ": Thea's card is the champion variant, ribbon Vann Damer C · Järfälla Padel Open no 11", /\bt-champ\b/.test(c.cls) && /^Vann Damer C · Järfälla Padel Open no 11$/.test(c.win) && c.tip === "Veckans vinnare" && c.ovr === "15.9", c); }
+    { const r = await page.$eval("#p-thea .pwin .wt", e => ({ d: getComputedStyle(e).display, sw: e.scrollWidth, cw: e.clientWidth }));
+      ok("week after " + (dark ? "dark" : "light") + " 390: ribbon's tournament whole or left out, never ellipsised", r.d === "none" || r.sw <= r.cw + 1, r); }
+    { const g = await page.$eval("#p-thea .pname .ln", e => { const cs = getComputedStyle(e); return parseFloat(cs.paddingTop) / parseFloat(cs.fontSize); });
+      ok("surname has room above the caps for Å/Ä/Ö (not clipped)", g >= 0.18, g); }
     if (dark) {
       await page.setViewportSize({ width: 360, height: 844 });
       await page.waitForTimeout(300);
@@ -445,7 +449,10 @@ try {
   await page.waitForFunction(() => /Vinnare/i.test(document.querySelector("#dyn-thea [data-r=time]")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
   const heroT = await page.$eval("#dyn-thea", d => ({ time: d.querySelector("[data-r=time]").textContent, pill: d.querySelector("[data-r=pill]").textContent, link: d.querySelector("[data-r=link]").textContent }));
   ok("mån 5 okt 12:00: Thea's hero still shows VINNARE (Järfälla)", /vinnare/i.test(heroT.time) && /vinnare/i.test(heroT.pill) && /Järfälla/.test(heroT.link), heroT);
-  { const c = await cardOf("thea"); ok("mån 5 okt (8 days after): Thea's card is back to gold, no ribbon", /\bt-gold\b/.test(c.cls) && !c.win, c); }
+  { const c = await cardOf("thea"); ok("mån 5 okt: Thea's card is still the champion card (same week as Veckans vinnare)", /\bt-champ\b/.test(c.cls), c); }
+  await page.goto(url("#thea", "", "2026-10-06T12:00:00+02:00"));
+  await page.waitForTimeout(800);
+  { const c = await cardOf("thea"); ok("tis 6 okt: Thea's card is back to gold, no ribbon", /\bt-gold\b/.test(c.cls) && !c.win, c); }
   await page.goto(url("#kian", "", "2026-10-05T12:00:00+02:00"));
   await page.waitForSelector("#p-kian:not([hidden]) #dyn-kian [data-r=link]");
   await page.waitForTimeout(500);

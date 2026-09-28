@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-UEr5Gyxe3lwdFJyyu0mCPOzcduPS9+DqqPTPLceY28Q='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-nyPSIkzMb/tgCI5sYFZ5rKGFR6kziC04ve3Yrm1lYaA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -294,7 +294,7 @@
   .pname .fn{ display:block; font:600 max(10px, 3.1cqw)/1 "Chivo Mono", monospace; letter-spacing:.3em; padding-left:.3em; text-transform:uppercase; color:var(--c-lab); }
   .pname .ln{
     display:block; font:900 min(14cqw, calc(152cqw / var(--n, 8)))/.9 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.005em;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:.8cqw; padding-top:.06em;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:calc(.8cqw - .14em); padding-top:.2em;   /* room for Å/Ä/Ö above the caps */
   }
   .t-champ .pname .ln{ text-shadow:0 0 18px rgba(142,197,255,.45); }
   .pname .tm{
@@ -3622,7 +3622,7 @@
   // Tier: gold from skill 15.5 (the top fifth of the club, which spans about 11.3 to 16.2), silver from 13, bronze
   // below. A class won in the last seven days (from the day of the final) turns the card blue, whatever the skill;
   // without the worker's wins the card simply keeps its metal.
-  var CARD_GOLD = 15.5, CARD_SILVER = 13, CHAMP_DAYS = 7;
+  var CARD_GOLD = 15.5, CARD_SILVER = 13, CHAMP_DAYS = 8;   // same week as "Veckans vinnare" (WIN_DAYS)
   function cardSkill(P){ var s = trendOf(P).skill[0], b = boardOf(P); return num(s) != null ? s : num(b.sk) != null ? b.sk : num(P.skill); }
   function cardChamp(P){
     var today = dayOf(now());
@@ -3688,13 +3688,13 @@
       stats.push(cardStat("form", "FORM", "Form", '<span class="pips" aria-hidden="true">' + form.map(function(r){ return '<i class="' + (r === "W" ? "w" : "l") + '"></i>'; }).join("") + pad.join("") + '</span>' +
         '<span class="sr">' + esc("Form: " + form.map(function(r){ return r === "W" ? "V" : "F"; }).join(" ") + " (" + nw + (nw === 1 ? " vinst, " : " vinster, ") + (form.length - nw) + (form.length - nw === 1 ? " förlust" : " förluster") + ")") + '</span>'));
     }
-    var team = [P.team, P.division].filter(Boolean).join(" · ") + (P.captain ? " · kapten" : ""), wn = champ ? winEventName(champ) : "";
+    var team = [P.team, P.division].filter(Boolean).join(" · "), wn = champ ? winEventName(champ) : "";
     return '<p class="sr">' + esc((sk != null ? "Skill " + sk.toFixed(2).replace(".", ",") : "Ingen skill än") + ", får spela " + cls + "-klass" + (rk != null ? ", ranking " + rk : "") + ".") + '</p>' +
       '<div class="prate" aria-hidden="true"><div class="ovr">' + (sk != null ? cardRating(sk) : "–") + '</div><div class="kl">Skill</div>' +
         '<div class="cls">' + cls + '</div><div class="kl">Klass</div><hr><img class="crest" src="img/nynas-logo.png" alt="" width="78" height="100"></div>' +
       '<div class="pname">' +
         (champ ? '<div class="pwin"><span>' + TROPHY + '<b>Vann ' + esc(champ.cls || "klassen") + '</b>' + (wn ? '<span class="wt"> · ' + esc(wn) + '</span>' : "") + '</span></div>' : "") +
-        '<span class="fn">' + esc(first) + '</span><span class="ln" style="--n:' + Math.max(5, last.length) + '">' + esc(last) + '</span>' +
+        '<span class="fn">' + esc(first + (P.captain ? " · kapten" : "")) + '</span><span class="ln" style="--n:' + Math.max(5, last.length) + '">' + esc(last) + '</span>' +
         (team ? '<span class="tm"><span>' + esc(team) + '</span></span>' : "") + '</div>' +
       '<dl class="pstats">' + stats.join("") + '</dl>' +
       '<div class="ptip">' + (champ ? "Veckans vinnare" : "Nynäs Padel Club") + '</div>';
@@ -3723,6 +3723,12 @@
       el.style.fontSize = "";
       var c = el.clientWidth, w = el.scrollWidth;
       if (w > c + 1) el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize) * c / w * .98).toFixed(1) + "px";
+    });
+    // Champion ribbon: the tournament name goes when it does not fit whole (no "Järfälla Padel Open no…").
+    [].forEach.call((root || document).querySelectorAll(".pwin .wt"), function(el){
+      if (!el.parentNode.clientWidth) return;
+      el.style.display = "";
+      if (el.scrollWidth > el.clientWidth + 1) el.style.display = "none";
     });
   }
   try { document.fonts.ready.then(function(){ fitNames(); }); document.fonts.addEventListener("loadingdone", function(){ fitNames(); }); } catch (e){}
