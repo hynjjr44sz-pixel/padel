@@ -66,6 +66,12 @@ Listan sparas i KV under `disc` och skrivs bara om när något ändrats, eller v
 - Ny tid eller bana för spelarens nästa match under speldagen ger en notis ("Ny tid: ...").
 - Ranking: minut 52 varje timme, en fråga per lista (dam, herr) så länge listans datum är det i KV
   `rankdate:<typ>:<ålder>`; ny lista: en fråga per spelare (max 20 per timme). Ny SPF-lista ger en notis.
+- `board` (Topplistan på "Nynäs idag"): per spelare `sk` (SPF-skill), `w`/`l`/`y` (årets vunna/förlorade dubbelmatcher och
+  året), `rk`/`rp`/`rd` (SPF-placering, poäng, listans datum) och `up` (platser uppåt på listan, RankedIns `StandingDiff`).
+  Ligger i `disc` (ingen extra KV-läsning för `/events`). W–L läses ur profilen som discovery ändå hämtar (inga extra
+  anrop). Placeringen kommer från rankingkollen (minut 52) när en spelares rad ändras, skill från `GetPlayerRatingAsync`
+  för 6 spelare i timmen i tur och ordning (hela truppen var 3:e timme, 6 anrop i timmen). `disc` skrivs bara när
+  tavlan ändrats. Första gången efter en deploy fylls placeringen i från `rank:<pid>` (bara KV-läsningar, en gång).
 - Skydd: `/subscribe` och `/unsubscribe` max 5 per minut och IP, övriga anrop 60 (`[[ratelimits]]` i
   `wrangler.toml`), högst 500 prenumerationer. Origin-kollen skyddar bara mot andra webbsidor.
 - Notisernas länk går direkt till matchen: `./#thea/m<MatchId>`.
@@ -89,6 +95,16 @@ Service workern visar sparade bilder direkt och hämtar om dem i bakgrunden, så
 
 `src/events.js` finns kvar som reserv: en rad där läggs till i listan (samma klass + spelare vinner
 det som hittats automatiskt). Normalt behöver du inte röra den.
+
+## Statistik på sidan (utan workern)
+
+- Inbördes möten: före nästa match (hjältens motståndare och korten i spelträdet) visas facit mot paret, räknat ur
+  spelarens egna turneringslottningar de senaste 12 månaderna, och mot var och en för sig från RankedIns
+  `GetPlayerSelectedOpponentsStatsAsync` (POST, alla rankade matcher, sparas 24 h, bara för nästa match i hjälten).
+- Partners: matcher, V–F och vinstprocent per partner ur samma matcher; bäst (minst 3 matcher) markeras.
+- Matcherna hämtas klass för klass bara när spelarsidan behöver dem (nästa match, eller Partners på skärmen), aldrig
+  när sidan är dold. En avslutad klass ändras aldrig och sparas (`padel.mh.v1.<pid>`); listan ses över efter 24 h.
+  Lottningar som redan finns på enheten återanvänds.
 
 ## Testa
 

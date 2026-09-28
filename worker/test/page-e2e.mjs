@@ -320,8 +320,10 @@ try {
         return { mf: [r.top, r.bottom], m: [m.top, m.bottom], sc: [sc.top, sc.bottom], slot: [sl.top, sl.bottom], ok: r.bottom <= m.bottom + 0.5 && r.bottom <= sc.bottom && m.bottom <= sl.bottom + 1 && m.top >= sl.top - 1 }; }).catch(e => ({ ok: false, e: String(e) }));
       ok("draw: the record line fits in the card and its slot", clip.ok, clip);
       const pa = await page.$$eval("#paList-thea .parow", a => a.map(x => x.querySelector(".pn b").textContent + "=" + x.querySelector(".pv b").textContent + (x.classList.contains("best") ? "*" : "")));
-      ok("Partners: Cassandra with W–L, marked best (3+ matches)", pa.length >= 1 && /^Cassandra Ersson=\d+–\d+\*$/.test(pa[0]), pa);
-      ok("Partners: note names the best partner", /Bäst ihop med Cassandra/.test(await page.textContent("#paNote-thea")));
+      // Only one partner in these draws: no "Bäst" (it needs someone to compare with)
+      ok("Partners: Cassandra with W–L, not marked best when she is the only partner", pa.length === 1 && /^Cassandra Ersson=\d+–\d+$/.test(pa[0]), pa);
+      const paNote = await page.textContent("#paNote-thea"), paMeta = await page.textContent("#paMeta-thea");
+      ok("Partners: period is the one the counted tournaments cover (not a claimed 12 months)", /^Turneringsmatcher sedan \d+ [a-zä]+\.$/.test(paNote) && /^Sedan \d+ [a-zä]+ · \d+ matcher$/.test(paMeta), [paNote, paMeta]);
       const draws = calls.filter(c => /GetDrawsForStage/.test(c) && !/164681/.test(c));
       ok("Thea page: earlier draws fetched once each (8 classes, stage 0)", draws.length <= 8 && new Set(draws).size === draws.length, calls);
       ok("Thea page: history rows show the record vs the same pair", /mot paret \d+–\d+/.test(await page.textContent("#hist-thea").catch(() => "")), await page.textContent("#hist-thea").catch(() => ""));
@@ -336,7 +338,7 @@ try {
     }
     await (await page.$("#p-thea .board")).screenshot({ path: SP + "stats-h2h-" + tag + ".png" });
     const nx = await page.$("#p-thea .m.next");
-    if (nx) { await nx.evaluate(e => e.scrollIntoView({ block: "center", behavior: "instant" })); await page.waitForTimeout(700); await nx.screenshot({ path: SP + "stats-h2h-card-" + tag + ".png" }); }
+    if (nx) { await nx.evaluate(e => e.scrollIntoView({ block: "center", behavior: "instant" })); await page.waitForTimeout(700); const bb = await (await nx.evaluateHandle(e => e.closest(".slot"))).asElement().boundingBox(); await page.screenshot({ path: SP + "stats-h2h-card-" + tag + ".png", clip: { x: Math.max(0, bb.x - 4), y: bb.y, width: Math.min(390, bb.width + 40), height: bb.height } }); }
     const pas = await page.$("#pa-thea");
     await pas.scrollIntoViewIfNeeded();
     await pas.screenshot({ path: SP + "stats-partners-" + tag + ".png" });

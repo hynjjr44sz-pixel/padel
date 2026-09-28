@@ -157,10 +157,24 @@ export async function runDiscovery(env, t, budget, rec, log = {}, max = 35) {
   const res = await discover(getter(env, mine), t, rec, rec ? discoveryBatch(t) : PLAYERS);
   budget.left -= start - mine.left;
   const next = { at: t.toISOString(), events: res.events, ended: res.ended, none: res.none, past: pastOf(rec, res.events, t), photos: res.photos, board: res.board || {} };
+  if (rec && rec.bat) next.bat = rec.bat;   // when the ranking check last changed the board
   const sig = r => JSON.stringify([r.events, r.ended, r.none || [], r.past || [], r.photos || {}, r.board || {}]);
   log.discovered = res.events.length;
   log.refreshed = res.refreshed.length;
   if (!rec || sig(rec) !== sig(next) || +t - new Date(rec.at) > 6 * H) {
+    // rec may be this isolate's copy (up to 5 min old): the leaderboard's skill and standings, written by the ranking
+    // check in between, are taken from KV so they are never overwritten with older ones.
+    if (rec) {
+      let cur = null;
+      try { cur = JSON.parse((await env.PUSH.get("disc")) || "null"); } catch (e) { cur = null; }
+      const newer = !!(cur && cur.bat && String(cur.bat) > String(rec.bat || "")), fb = newer ? cur.board || {} : {};
+      if (newer) next.bat = cur.bat;
+      for (const pid of Object.keys(fb)) {
+        const keep = {};
+        for (const k of ["sk", "rk", "rp", "rd", "up"]) if (k in fb[pid]) keep[k] = fb[pid][k];
+        next.board[pid] = { ...(next.board[pid] || {}), ...keep };
+      }
+    }
     await env.PUSH.put("disc", JSON.stringify(next));
     log.writes = (log.writes || 0) + 1;
     rec = next;
@@ -237,7 +251,7 @@ export async function rankingChecks(env, t, budget, log, players = RANKED, cap =
     try { sk = skillOf(await get(ratingPath(p.pid)), p.rid); } catch (e) { if (e.budget) break; continue; }
     patch[p.pid] = { ...(patch[p.pid] || {}), sk };
   }
-  try { await boardRanks(env, patch, players, log); } catch (e) { console.warn("board", e.message); }
+  try { await boardRanks(env, t, patch, players, log); } catch (e) { console.warn("board", e.message); }
   return msgs;
 }
 // Written standing -> the stored one (u: places gained on this list; RankedIn's StandingDiff, else from the last list).
@@ -257,9 +271,11 @@ async function rankOne(env, p, cur, msgs, log) {
 }
 // Standings into the leaderboard in "disc" (read fresh from KV, written only when something changed). Players the board
 // knows nothing about yet (first run after a deploy, canary mode) get what their "rank:<pid>" key holds, once.
-async function boardRanks(env, patch, players, log) {
+async function boardRanks(env, t, patch, players, log) {
   let rec = null;
   try { rec = JSON.parse((await env.PUSH.get("disc")) || "null"); } catch (e) { rec = null; }
+  // Discovery may have written it in this very tick (the first run): this isolate's copy is newer than a KV read then.
+  if (MEM.rec && Array.isArray(MEM.rec.events) && (!rec || String(MEM.rec.at) > String(rec.at) || String(MEM.rec.bat || "") > String(rec.bat || ""))) rec = JSON.parse(JSON.stringify(MEM.rec));
   if (!rec || !Array.isArray(rec.events)) return;   // discovery writes the record first
   const b = { ...(rec.board || {}) };
   for (const p of players) {
@@ -274,7 +290,7 @@ async function boardRanks(env, patch, players, log) {
     if (JSON.stringify(n) !== JSON.stringify(was)) { b[pid] = n; changed = true; }
   }
   if (!changed) return;
-  rec.board = b;
+  rec.board = b; rec.bat = t.toISOString();
   await env.PUSH.put("disc", JSON.stringify(rec));
   log.writes = (log.writes || 0) + 1; log.board = 1;
   MEM.rec = rec; MEM.readAt = Date.now();

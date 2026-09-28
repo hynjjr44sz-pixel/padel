@@ -118,3 +118,24 @@ test("GET /events serves the board; the tick at :52 fills it next to the notiser
   assert.deepEqual([thea.w, thea.l, thea.y, thea.rk, thea.rp, thea.up], [32, 4, 2026, 150, 68.695, 18]);
   assert.equal(Object.values(body.board).filter(x => typeof x.sk === "number").length, 6);
 });
+
+test("discovery from a stale isolate copy keeps the standings and skills the ranking check wrote meanwhile", async () => {
+  install({});
+  const PUSH = kv(), env = { PUSH, ORIGIN: "x" }, t0 = new Date("2026-09-28T03:47:00Z");
+  let rec = await runDiscovery(env, t0, { left: 500 }, null, {}, 500);
+  const stale = JSON.parse(JSON.stringify(rec));   // another isolate's copy, read before the ranking check
+  PUSH.m.set("rankdate:4:83", "2026-09-21"); PUSH.m.set("rankdate:3:82", "2026-09-21");
+  _resetMemory();
+  await rankingChecks(env, new Date("2026-09-28T03:52:00Z"), { left: 45 }, {});
+  const after = JSON.parse(PUSH.m.get("disc"));
+  assert.ok(after.bat && Object.values(after.board).some(b => "sk" in b), "the ranking check wrote skills");
+  // That isolate's discovery: something changed (a new W–L) so it writes, from its old copy
+  const st = install({}), thea = ROSTER.find(p => p.who === "thea");
+  st.over = { ["/player/playerprofileinfoasync?rankedinId=" + thea.rin + "&language=en"]: { Statistics: { WinLossDoublesCurrentYear: "40-4" } } };
+  _resetMemory();
+  for (let k = 1; k <= 5; k++) rec = await runDiscovery(env, new Date(+t0 + k * 600e3), { left: 45 }, k === 1 ? stale : rec, {});
+  const disc = JSON.parse(PUSH.m.get("disc"));
+  assert.equal(disc.board[thea.pid].w, 40, "the new W–L");
+  for (const pid of Object.keys(after.board)) for (const k of ["sk", "rk", "rp", "rd", "up"]) if (k in after.board[pid]) assert.equal(disc.board[pid][k], after.board[pid][k], pid + " " + k);
+  assert.equal(disc.bat, after.bat);
+});

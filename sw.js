@@ -3,7 +3,7 @@
    cached copy after 3 s on a slow network or at once offline. Other pages (integritet.html): network first, cached
    under their own URL. img/ and icons/: the cached copy at once, refreshed in the background (a replaced photo
    shows on the next view, a removed one leaves the cache). Other origins (api.rankedin.com, fonts) are never touched. */
-var VERSION = "padel-v5";
+var VERSION = "padel-v6";
 var PRECACHE = ["index.html", "players.json", "manifest.webmanifest", "icons/icon-192.png"];
 
 self.addEventListener("install", function(e){

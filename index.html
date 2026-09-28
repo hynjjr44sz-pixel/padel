@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bdkCOie3Gy8De0LVhiqrOFnZrqdxq5OUp2fXqwdX9SY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hFRpsdKTW74InlWkkD73zTyqd+usfxMrsBsFDftOXeU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -3832,6 +3832,7 @@
       MH_BUSY[key] = false;
       if (paused){ MH_WANT[key] = true; return; }
       rec.t = failed ? Date.now() - 23 * HOUR : Date.now();   // a failed class: another try in an hour
+      rec.f = failed ? 1 : 0;   // incomplete: no "Första mötet" from these matches until the retry
       mhSave(P);
       mhChanged(P, true);
     });
@@ -3903,8 +3904,9 @@
     var line = met.length ? "Var för sig: " + met.map(function(x){ return x.n + " " + x.w + "–" + (x.t - x.w); }).join(" · ") : "";
     var v;
     if (pr && pr.w + pr.l) v = '<b>' + pr.w + "–" + pr.l + '</b>mot ' + esc(short(op)) + '<span class="sr"> (' + pr.w + (pr.w === 1 ? " vinst" : " vinster") + ", " + pr.l + (pr.l === 1 ? " förlust" : " förluster") + ')</span>';
-    else if (met.length) v = "Första mötet mot paret";
-    else v = "Första mötet";
+    else if (met.length) v = mhGet(P).f ? "Mött dem var för sig" : "Första mötet mot paret";
+    else if (known || !mhGet(P).f) v = "Första mötet";
+    else return "";
     return '<div class="h2h" data-r2="h2h"><span class="k">Tidigare möten</span><span class="v">' + v + '</span>' + (line ? '<span class="i">' + esc(line) + '</span>' : "") + '</div>';
   }
   // A card in the draw (a match still to play with a club player): the record against that pair, when that player's
@@ -3920,6 +3922,7 @@
     });
     if (!hit) return "";
     var r = h2hPair(hit.Q, hit.op.n);
+    if (!(r.w + r.l) && mhGet(hit.Q).f) return "";
     return '<div class="mf">' + (r.w + r.l ? "Tidigare möten <b>" + r.w + "–" + r.l + "</b>" : "Första mötet") + '</div>';
   }
 
@@ -3934,15 +3937,24 @@
     });
     var rows = Object.keys(by).map(function(k){ var o = by[k]; o.m = o.w + o.l; o.pct = Math.round(100 * o.w / o.m); return o; });
     rows.sort(function(a, b){ return b.m - a.m || b.w / b.m - a.w / a.m || a.n.localeCompare(b.n); });
-    var best = rows.filter(function(o){ return o.m >= 3; }).sort(function(a, b){ return b.w / b.m - a.w / a.m || b.m - a.m; })[0] || null;
+    var best = rows.length < 2 ? null : rows.filter(function(o){ return o.m >= 3; }).sort(function(a, b){ return b.w / b.m - a.w / a.m || b.m - a.m; })[0] || null;
     return {rows:rows, best:best, total:list.length};
+  }
+  // The period the counted tournaments cover: "12 mån", or "sedan 25 apr" when only the latest ones are counted
+  // (Senaste tävlingar lists at most 12, RankedIn's history adds the latest 8).
+  function mhSince(P){
+    var rec = mhGet(P), t = now(), from = "";
+    Object.keys(rec.cls).forEach(function(c){ var d = rec.cls[c].d; if (d && +t - Date.parse(d + "T12:00:00Z") < YEAR_MS && (!from || d < from)) from = d; });
+    if (!from || +t - Date.parse(from + "T12:00:00Z") > 330 * 864e5) return null;
+    return dayMon(from) + (from.slice(0, 4) !== dayOf(t).slice(0, 4) ? " " + from.slice(0, 4) : "");
   }
   var PA_OPEN = {};
   function renderPartners(who){
     var host = document.getElementById("paList-" + who), meta = document.getElementById("paMeta-" + who), P = BYKEY[who];
     if (!host || !P) return;
     var ready = !!mhGet(P).t, st = partnerStats(P);
-    if (meta) meta.textContent = "12 mån" + (st.total ? " · " + st.total + " matcher" : "");
+    var since = mhSince(P), per = since ? "sedan " + since : "de senaste 12 månaderna";
+    if (meta) meta.textContent = (since ? "Sedan " + since : "12 mån") + (st.total ? " · " + st.total + " matcher" : "");
     if (!st.rows.length){
       host.innerHTML = '<p class="empty" style="padding:12px 0" role="status">' + (ready ? "Inga turneringsmatcher det senaste året." : "Räknar matcher …") + '</p>';
       return;
@@ -3955,8 +3967,8 @@
         '<span class="pv"><b>' + o.w + "–" + o.l + '</b>' + (best ? '<span class="pb win">Bäst</span>' : '<span>V–F</span>') + '</span></' + tag + '>';
     }).join("") + (st.rows.length > 6 ? '<div style="padding:10px 0"><button class="morebtn" type="button" data-pa="' + esc(who) + '" aria-expanded="' + (all ? "true" : "false") + '">' + (all ? "Visa färre" : "Visa alla " + st.rows.length) + '</button></div>' : "");
     var note = document.getElementById("paNote-" + who);
-    if (note) note.textContent = st.best ? "Bäst ihop med " + st.best.n.split(" ")[0] + ": " + st.best.w + "–" + st.best.l + " (" + st.best.pct + " %). Turneringsmatcher, de senaste 12 månaderna." :
-      "Turneringsmatcher, de senaste 12 månaderna. Bäst ihop visas från 3 matcher.";
+    if (note) note.textContent = (st.best ? "Bäst ihop med " + st.best.n.split(" ")[0] + ": " + st.best.w + "–" + st.best.l + " (" + st.best.pct + " %). Turneringsmatcher " + per + "." :
+      "Turneringsmatcher " + per + "." + (st.rows.length > 1 ? " Bäst ihop visas från 3 matcher." : "")) + (mhGet(P).f ? " Några tävlingar kunde inte hämtas, nytt försök om en timme." : "");
   }
   document.addEventListener("click", function(e){
     var b = e.target && e.target.closest && e.target.closest("[data-pa]");
