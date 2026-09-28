@@ -58,6 +58,9 @@ assert.ok(EVENTS_WEEK.board["1675246"].rk === 150, "board kept through later dis
 
 // What the page reads besides the discovery (ranking, skill, profile, SPL table): made up from players.json.
 const ROSTER = JSON.parse(readFileSync(new URL("../../players.json", import.meta.url), "utf8"));
+// Players the photo tests expect to have no photo of their own (initials, RankedIn photo or placeholder).
+const NO_PHOTO = ["lisa", "oliver", "jones", "tobias", "anton", "sanna"];
+const ROSTER_T = ROSTER.map(p => NO_PHOTO.includes(p.key) ? { ...p, img: null, avatar: null, imgW: null, imgH: null, hasPhoto: false, faceVisible: false } : p);
 // Thea's earlier tournaments (seed list in index.html, stage 0): three with a draw, the rest none.
 const drawOf = cid => "/tournament/GetDrawsForStageAndStrengthAsync?tournamentClassId=" + cid + "&drawStrength=0&drawStage=0&isReadonly=true&language=en";
 const FX = n => JSON.parse(readFileSync(new URL("./fixtures/" + n, import.meta.url), "utf8"));
@@ -117,6 +120,8 @@ async function newPage(opts = {}) {
     api.img.push(u);
     return /\/900002/.test(u) ? r.fulfill({ status: 404, body: "" }) : r.fulfill({ status: 200, contentType: "image/jpeg", body: STANDIN });
   });
+  // players.json with the photo tests' players pinned without own photos (photos keep being added to the real roster).
+  await page.route(/\/players\.json(\?|$)/, r => r.fulfill({ contentType: "application/json", body: JSON.stringify(ROSTER_T) }));
   await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route(PUSH_API + "/**", r => {
     const u = new URL(r.request().url()), h = { "Access-Control-Allow-Origin": "*" };
