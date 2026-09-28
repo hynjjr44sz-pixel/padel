@@ -72,6 +72,13 @@ Listan sparas i KV under `disc` och skrivs bara om när något ändrats, eller v
   anrop). Placeringen kommer från rankingkollen (minut 52) när en spelares rad ändras, skill från `GetPlayerRatingAsync`
   för 6 spelare i timmen i tur och ordning (hela truppen var 3:e timme, 6 anrop i timmen). `disc` skrivs bara när
   tavlan ändrats. Första gången efter en deploy fylls placeringen i från `rank:<pid>` (bara KV-läsningar, en gång).
+- Förslag på tävlingar (`src/calendar.js`): varje natt 03:23–03:38 svensk tid byggs en kalender över SPF-sanktionerade
+  turneringar som börjar inom 8 veckor, högst 20 mil från Nynäshamn (SPF:s kalender med radie 200 km, sedan `GetInfoAsync`
+  och `GetClassesSectionAsync` per turnering). Max 40 anrop per minut, fortsätter nästa minut (KV `calw`, ett par skrivningar
+  per natt). Avstånd: turneringens koordinater (haversine), annars den minsta radien (20–160 km) som listar den ("inom 3 mil").
+  Klassgränserna (parets poäng: 2 × poängen för rad 61/201/1201 herr, 51/161/701 dam) läses om när listan är en vecka gammal
+  (6 anrop). Anmälda klubbspelare tas ur discovery (inga extra anrop). KV `cal` skrivs bara när något ändrats; `GET /cal`
+  (cache 1 h) ger den. Sidan räknar ut förslagen per spelare med samma regler (`eligibility`, `suggestFor`).
 - Skydd: `/subscribe` och `/unsubscribe` max 5 per minut och IP, övriga anrop 60 (`[[ratelimits]]` i
   `wrangler.toml`), högst 500 prenumerationer. Origin-kollen skyddar bara mot andra webbsidor.
 - Notisernas länk går direkt till matchen: `./#thea/m<MatchId>`.

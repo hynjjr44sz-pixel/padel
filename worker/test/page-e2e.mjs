@@ -234,7 +234,7 @@ try {
   ok("photos: Lisa (RankedIn placeholder) keeps initials", av.lisa === "ini:LB", av.lisa);
   ok("photos: Kian's own avatar wins over his RankedIn photo", av.kian === "img/av/kian-avatar.jpg", av.kian);
   ok("photos: Oliver's broken RankedIn photo falls back to initials", av.oliver === "ini:OL" && await page.$eval('#plist a[href="#oliver"] .av', e => e.classList.contains("ini")), av.oliver);
-  ok("photos: the rest keep initials", ["svante", "tobias", "anton"].every(k => /^ini:/.test(av[k])), av);
+  ok("photos: the rest keep initials", ["jones", "tobias", "anton"].every(k => /^ini:/.test(av[k])), av);
   await shot(page, "photos-home");
   await page.goto(url("#sanna"));
   await page.waitForSelector("#p-sanna .hero.rin .pmed > img");
@@ -530,7 +530,7 @@ try {
       ok("Förslag " + k + " " + w + (dark ? " dark" : "") + ": no horizontal scroll, button fits", await noHScroll(page) &&
         await page.$$eval("#sgList-" + k + " .sgbtn", b => b.every(x => x.getBoundingClientRect().right <= window.innerWidth - 15 && x.getBoundingClientRect().height >= 40)));
       if (dark) ok("Förslag " + k + " dark: own-class chip readable (dark tokens)", await page.$eval("#sgList-" + k + " .sgc li.mine", li => getComputedStyle(li).backgroundColor) === "rgb(19, 43, 85)");
-      if (process.env.SUGG_SHOTS && w === 390) await page.$eval("#sg-" + k, e => e.scrollIntoView()).then(() => page.locator("#sg-" + k).screenshot({ path: process.env.SUGG_SHOTS + k + (dark ? "-dark" : "-light") + ".png" }));
+      if (process.env.SUGG_SHOTS && w === 390) await page.$eval("#sg-" + k, e => { document.querySelector(".top").style.position = "static"; e.scrollIntoView(); }).then(() => page.locator("#sg-" + k).screenshot({ path: process.env.SUGG_SHOTS + k + (dark ? "-dark" : "-light") + ".png" }));
     }
     ok("Förslag " + w + (dark ? " dark" : "") + ": no console errors", errors.length === 0, errors);
     await ctx.close();

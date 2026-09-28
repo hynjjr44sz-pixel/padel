@@ -79,6 +79,9 @@ try {
   ok("GET /events: discovered tournaments and SPL play days (+ past list)", evs.src === "worker" && Array.isArray(evs.past) && evs.events.some(e => e.key === "t173729-thea") && evs.events.some(e => e.kind === "teamleague" && e.who === "kian"), evs.events.map(e => e.key));
   ok("GET /events: roster players (Cassandra in Damer C), one SPL entry per team day, live view", evs.events.some(e => e.key === "t164681-cassandra") &&
     new Set(evs.events.map(e => e.key)).size === evs.events.length && evs.live && evs.live["1675246"] && evs.live["1675246"].st === "next", { keys: evs.events.map(e => e.key), live: evs.live });
+  const calRes = await fetch(base + "/cal", { headers: { Origin: "http://localhost:8765" } }), cal = await calRes.json();
+  ok("GET /cal in workerd: no calendar yet (built 03:23), cached an hour", calRes.status === 200 && Array.isArray(cal.events) && cal.events.length === 0 &&
+    calRes.headers.get("cache-control") === "public, max-age=3600" && !("cal" in evs), { status: calRes.status, cal });
   fixture = "dc_1112.json";
   delete over["/tournament/GetClassesAndDrawNamesAsync/?tournamentId=66374"];   // the draw is out
   await cron();
