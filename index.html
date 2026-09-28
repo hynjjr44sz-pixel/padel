@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-WsWzguuF+zLRu/aPjx2jM/eiiPenELwDZQVLSqxSKhQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-YO93W9QCGMSLeeEaQSkBoRRBYOGdaFvc+mLH3NkPVXM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -259,7 +259,7 @@
   .prate{ position:absolute; z-index:2; left:5.5%; top:6.4%; width:23%; display:flex; flex-direction:column; align-items:center; text-align:center; }
   .prate .ovr{ font:900 17cqw/.8 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; letter-spacing:-.02em; white-space:nowrap; }
   .prate .ovr small{ font-size:.46em; letter-spacing:0; margin-left:.02em; }
-  .t-champ .prate .ovr{ color:transparent; background:linear-gradient(175deg, #FFE27A 25%, #8EC5FF 100%); -webkit-background-clip:text; background-clip:text; filter:drop-shadow(0 1px 1px rgba(4,10,40,.8)) drop-shadow(0 2px 10px rgba(4,10,40,.55)); }
+  .t-champ .prate .ovr{ padding:.14em .04em 0; margin-top:-.14em; color:transparent; background:linear-gradient(175deg, #FFE27A 25%, #8EC5FF 100%); -webkit-background-clip:text; background-clip:text; filter:drop-shadow(0 1px 1px rgba(4,10,40,.8)) drop-shadow(0 2px 10px rgba(4,10,40,.55)); }
   .prate .kl{ font:600 max(10px, 2.6cqw)/1 "Chivo Mono", monospace; letter-spacing:.14em; text-transform:uppercase; color:var(--c-lab); margin-top:1.4cqw; padding-left:.14em; }
   .prate .cls{ font:900 9.5cqw/.8 "Big Shoulders Display", sans-serif; margin-top:2.6cqw; }
   .prate hr{ width:58%; border:0; border-top:1px solid var(--c-line); margin:2.6cqw 0 0; }
@@ -1564,6 +1564,11 @@
       list.push({d:dayOf(st), n:e.name || "Turnering", u:e.url || RI_WEB, c:e.cls || "", p:e.partner || "", cid:e.classId, tid:e.tournamentId, st:e.draws || null,
         b:sm.b || "Klar", x:sm.x || "", w:sm.w, l:sm.l, pts:sm.pts == null ? null : sm.pts, disc:true, needSum:!sm.b});
     });
+    list.forEach(function(r){
+      if (r.pts != null || r.b === "Pågår") return;
+      var q = ptsGet(r);
+      if (q && q.pts != null){ r.pts = q.pts; if (r.x === "poäng kommer") r.x = ""; }
+    });
     list.sort(function(x, y){ return x.d < y.d ? 1 : x.d > y.d ? -1 : 0; });
     return list.slice(0, 12);
   }
@@ -1600,6 +1605,7 @@
     });
     [].slice.call(host.children).forEach(function(c){ if (!keep[c.getAttribute("data-key")]) host.removeChild(c); });
     if (list.slice(0, 4).some(function(r){ return r.needSum; })) setTimeout(function(){ fillSummaries(who); }, 0);
+    setTimeout(function(){ fillPoints(who, list); }, 0);
     var done = list.filter(function(r){ return r.b !== "Pågår"; });
     var W = list.reduce(function(a, r){ return a + (r.w || 0); }, 0), L = list.reduce(function(a, r){ return a + (r.l || 0); }, 0);
     var t = done.filter(function(r){ return r.b === "Vinnare"; }).length, sf = done.filter(function(r){ return r.b === "Semi" || r.b === "Final" || r.b === "Vinnare"; }).length;
@@ -2353,6 +2359,29 @@
       label = row && row.standing ? "Grupp " + row.standing + "/" + g.rows.length : (res && res.place ? "Plats " + res.place : "Klar");
     } else label = res && res.place ? "Plats " + res.place : st.next ? "Pågår" : "Klar";
     return {label:label, b:SHORTB[label] || label, w:w, l:l, text:dynOutCopy(ev, st)};
+  }
+  // Ranking points arrive days after a tournament (when the organiser reports and SPF ranks it): rows still
+  // without points in the last 3 weeks ask GetResultsAsync again, at most every 3 h per class.
+  var PTS_KEY = "padel.pts.v1", ptsBusy = {};
+  function ptsTid(r){ return r.tid || (/tournament\/(\d+)/.exec(r.u || "") || [])[1]; }
+  function ptsGet(r){ var c = store.json(PTS_KEY); return c && c[ptsTid(r) + ":" + r.cid] || null; }
+  function fillPoints(who, list){
+    if (!PANELS[who] || PANELS[who].hidden) return;
+    var W = WHO[who], t = Date.now();
+    list.filter(function(r){ return r.pts == null && r.cid && ptsTid(r) && r.b !== "Pågår" && t - new Date(r.d).getTime() < 21 * 864e5 && t - new Date(r.d).getTime() > 0; }).slice(0, 3).forEach(function(r){
+      var k = ptsTid(r) + ":" + r.cid, q = ptsGet(r);
+      if (ptsBusy[k] || (q && t - q.at < 3 * HOUR)) return;
+      ptsBusy[k] = true;
+      riGet("/tournament/GetResultsAsync?tournamentId=" + ptsTid(r) + "&classId=" + r.cid + "&rankingId=1917&language=en").then(function(x){
+        var hit = ((x && x.Data) || []).filter(function(d){ return d.Player1ParticipantId === W.pid || d.Player2ParticipantId === W.pid; })[0];
+        var pts = hit && hit.RankingPoint && typeof hit.RankingPoint.Points === "number" ? hit.RankingPoint.Points : null;
+        var c = store.json(PTS_KEY) || {};
+        Object.keys(c).forEach(function(z){ if (t - c[z].at > 30 * 864e5) delete c[z]; });
+        c[k] = {pts:pts, at:t};
+        store.set(PTS_KEY, JSON.stringify(c));
+        if (pts != null) renderTours(who);
+      }).catch(function(){}).then(function(){ delete ptsBusy[k]; });
+    });
   }
   // Short summaries of discovered finished tournaments (badge, W–L, points), kept per player + class.
   var TSUM_KEY = "padel.tsum.v1";
