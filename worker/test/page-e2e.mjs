@@ -323,7 +323,7 @@ try {
       // Only one partner in these draws: no "Bäst" (it needs someone to compare with)
       ok("Partners: Cassandra with W–L, not marked best when she is the only partner", pa.length === 1 && /^Cassandra Ersson=\d+–\d+$/.test(pa[0]), pa);
       const paNote = await page.textContent("#paNote-thea"), paMeta = await page.textContent("#paMeta-thea");
-      ok("Partners: period is the one the counted tournaments cover (not a claimed 12 months)", /^Turneringsmatcher sedan \d+ [a-zä]+\.$/.test(paNote) && /^Sedan \d+ [a-zä]+ · \d+ matcher$/.test(paMeta), [paNote, paMeta]);
+      ok("Partners: period is the one the counted tournaments cover (not a claimed 12 months)", /^Turneringsmatcher sedan \d+ [a-zä]+\.$/.test(paNote) && /^Sedan\u00a0?\s?\d+\u00a0[a-zä]+ · \d+\u00a0matcher$/.test(paMeta), [paNote, paMeta]);
       const draws = calls.filter(c => /GetDrawsForStage/.test(c) && !/164681/.test(c));
       ok("Thea page: earlier draws fetched once each (8 classes, stage 0)", draws.length <= 8 && new Set(draws).size === draws.length, calls);
       ok("Thea page: history rows show the record vs the same pair", /mot paret \d+–\d+/.test(await page.textContent("#hist-thea").catch(() => "")), await page.textContent("#hist-thea").catch(() => ""));

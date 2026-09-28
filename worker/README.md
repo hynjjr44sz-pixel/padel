@@ -99,9 +99,11 @@ det som hittats automatiskt). Normalt behöver du inte röra den.
 ## Statistik på sidan (utan workern)
 
 - Inbördes möten: före nästa match (hjältens motståndare och korten i spelträdet) visas facit mot paret, räknat ur
-  spelarens egna turneringslottningar de senaste 12 månaderna, och mot var och en för sig från RankedIns
+  spelarens egna turneringslottningar (de tävlingar Senaste tävlingar listar, högst 12 månader bakåt), och mot var och en för sig från RankedIns
   `GetPlayerSelectedOpponentsStatsAsync` (POST, alla rankade matcher, sparas 24 h, bara för nästa match i hjälten).
-- Partners: matcher, V–F och vinstprocent per partner ur samma matcher; bäst (minst 3 matcher) markeras.
+- Partners: matcher, V–F och vinstprocent per partner ur samma matcher; bäst (minst 3 matcher, och minst två
+  partners att jämföra) markeras. Rubriken visar perioden matcherna täcker ("Sedan 26 apr" eller "12 mån").
+  Kunde en klass inte hämtas visas det, och "Första mötet" sägs inte förrän alla klasser är räknade.
 - Matcherna hämtas klass för klass bara när spelarsidan behöver dem (nästa match, eller Partners på skärmen), aldrig
   när sidan är dold. En avslutad klass ändras aldrig och sparas (`padel.mh.v1.<pid>`); listan ses över efter 24 h.
   Lottningar som redan finns på enheten återanvänds.

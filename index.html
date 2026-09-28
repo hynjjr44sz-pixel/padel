@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hFRpsdKTW74InlWkkD73zTyqd+usfxMrsBsFDftOXeU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Lte1UISiwXxbUOND4z4VHiYv7rUO5KBN/cFFBhENH1o='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -3901,7 +3901,7 @@
     var ind = op.n.map(function(n, i){ var x = h2hOne(P.pid, rid, (op.ids || [])[i]); return x ? {n:surname(n), t:x[0], w:x[1]} : null; });
     var known = ind.every(Boolean), met = ind.filter(function(x){ return x && x.t; });
     if (!ready && !(known && !met.length)) return "";   // the pair's record first (no flicker); no meeting at all: known at once
-    var line = met.length ? "Var för sig: " + met.map(function(x){ return x.n + " " + x.w + "–" + (x.t - x.w); }).join(" · ") : "";
+    var line = met.length ? "Var för sig: " + met.map(function(x){ return x.n + "\u00a0" + x.w + "–" + (x.t - x.w); }).join(" · ") : "";
     var v;
     if (pr && pr.w + pr.l) v = '<b>' + pr.w + "–" + pr.l + '</b>mot ' + esc(short(op)) + '<span class="sr"> (' + pr.w + (pr.w === 1 ? " vinst" : " vinster") + ", " + pr.l + (pr.l === 1 ? " förlust" : " förluster") + ')</span>';
     else if (met.length) v = mhGet(P).f ? "Mött dem var för sig" : "Första mötet mot paret";
@@ -3954,7 +3954,8 @@
     if (!host || !P) return;
     var ready = !!mhGet(P).t, st = partnerStats(P);
     var since = mhSince(P), per = since ? "sedan " + since : "de senaste 12 månaderna";
-    if (meta) meta.textContent = (since ? "Sedan " + since : "12 mån") + (st.total ? " · " + st.total + " matcher" : "");
+    // no break inside "26 apr" or "7 matcher" (the meta wraps at 360 px)
+    if (meta) meta.textContent = ((since ? "Sedan " + since : "12 mån") + (st.total ? " · " + st.total + (st.total === 1 ? " match" : " matcher") : "")).replace(/(\d) /g, "$1\u00a0");
     if (!st.rows.length){
       host.innerHTML = '<p class="empty" style="padding:12px 0" role="status">' + (ready ? "Inga turneringsmatcher det senaste året." : "Räknar matcher …") + '</p>';
       return;
