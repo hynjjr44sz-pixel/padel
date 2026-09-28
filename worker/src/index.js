@@ -205,9 +205,8 @@ const PUB_MINUTE = 35;   // not exported: workerd only accepts functions and han
 // list, KV "rank:<pid>" written only when the ranking date/standing/points change; a new ranking date gives one
 // notis per player. The first look is the baseline.
 // The leaderboard ("board" in "disc") gets each changed standing (rk, rp, rd, up = places gained: RankedIn's StandingDiff)
-// and the SPF skill (sk) of 6 players an hour, in turn (GetPlayerRatingAsync: the whole roster every 3 hours, 6 calls an
-// hour); "disc" is written only when the board changed.
-const RANK_MINUTE = 52, SKILLS_PER_HOUR = 6;
+// and the SPF skill (sk) of up to 20 players an hour, in turn (GetPlayerRatingAsync: the whole roster every hour); "disc" is written only when the board changed.
+const RANK_MINUTE = 52, SKILLS_PER_HOUR = 20;   // the whole roster every hour (skill changes after each match)
 const RANKED = PLAYERS.map(p => ({ who: p.who, pid: p.pid, name: p.name, q: p.me, rt: p.rt, ag: p.ag, rid: p.rid, list: p.gender === "F" ? "Dam huvudlista" : "Herrar huvudlista" }));
 // Up to 20 players per hour (rotating when the roster is larger), one RankedIn call each while a list is new.
 export async function rankingChecks(env, t, budget, log, players = RANKED, cap = 20) {
@@ -235,6 +234,7 @@ export async function rankingChecks(env, t, budget, log, players = RANKED, cap =
       const same = known === cur.d;   // the list has not changed since its last full round: this one call is enough
       const w = await rankOne(env, p, cur, msgs, log);
       if (w) patch[p.pid] = { rk: w.s, rp: w.p, rd: w.d, up: w.u == null ? null : w.u };
+      else if (typeof cur.u === "number") patch[p.pid] = { rk: cur.s, rp: cur.p, rd: cur.d, up: cur.u };   // unchanged standing: still fill the board's climb
       if (same) { all = false; break; }
     }
     if (all && date && known !== date) {   // every player of a new list looked at: canary mode until the next list
