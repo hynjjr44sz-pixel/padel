@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-e4oXtHEbR00Pw2k33lIjzyuAjWrrHUc95S5+FmetvSU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-c0pw4b4/sI/aWzKKwGEu6ePVcn+LqHz5BpVHZb8V3NA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -735,6 +735,8 @@
   .tcard{ padding:14px 14px 12px; display:flex; flex-direction:column; gap:10px; }
   .tcard h3{ margin:0; font:900 24px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; }
   .tcard .tl{ font:500 11px/1.35 "Chivo Mono", monospace; color:var(--dim); margin-top:4px; }
+  .capw{ position:relative; display:inline-flex; }
+  .cap{ position:absolute; right:-3px; bottom:-2px; width:17px; height:17px; border-radius:50%; background:var(--ball); color:#0A1733; border:2px solid var(--surface); font:800 10px/13px "Instrument Sans", sans-serif; font-style:normal; text-align:center; box-sizing:border-box; }
   .troster{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:8px 6px; }
   .troster a{ --s:38px; --ring:var(--surface); display:flex; flex-direction:column; align-items:center; gap:4px; min-width:52px; max-width:84px; color:var(--ink); text-decoration:none; font:600 11px/1.1 "Instrument Sans", sans-serif; text-align:center; }
   .troster a span{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -3229,7 +3231,7 @@
       var nx = nextTeamDay(T);
       return '<article class="card tcard"><div><h3>' + esc(T.name) + '</h3><div class="tl">' + esc(leagueName(T) + " · " + T.division) + '</div></div>' +
         '<ul class="troster" aria-label="Spelare i ' + esc(T.name) + '">' + T.players.map(function(p){
-          return '<li><a href="#' + esc(p.key) + '" title="' + esc(p.name + (p.captain ? " (kapten)" : "")) + '">' + avatar(p.name) + '<span>' + esc(p.short) + '</span></a></li>';
+          return '<li><a href="#' + esc(p.key) + '" title="' + esc(p.name + (p.captain ? " (kapten)" : "")) + '"><span class="capw">' + avatar(p.name) + (p.captain ? '<i class="cap" aria-label="Kapten">C</i>' : '') + '</span><span>' + esc(p.short) + '</span></a></li>';
         }).join("") + '</ul>' +
         (nx ? '<div class="tn">Nästa: <b>' + esc(cap(dayLabel(riDate(nx.date + "T12:00")))) + '</b> mot ' + esc((nx.ties || []).map(function(x){ return x.opp; }).join(" och ")) + '</div>' : "") +
         '<a class="tlink" href="#lag/' + T.id + '">Tabell och matcher →</a></article>';
