@@ -23,9 +23,23 @@ export const PROFILE_PHOTOS = {
   R000267043: [1683035, 900002, "https://cdn.rankedin.com/images/upload/player/900002.png", "https://cdn.rankedin.com/images/upload/player/900002thumb.png"],
   R000267664: [1702723, 0, "https://cdn.rankedin.com/images/rin_logo_sm.png", "https://cdn.rankedin.com/images/rin_logo_sm.png"]
 };
+// This year's doubles record (leaderboard "Årets vinster"): every roster player's profile has one; players without a
+// photo entry answer with the statistics only (no header, so no photo is recorded for them).
+const ROSTER = JSON.parse(readFileSync(new URL("../../players.json", import.meta.url), "utf8"));
+export const WL = { 1675246: "32-4", 1849853: "30-6", 1680004: "14-11", 2073852: "12-10", 1702723: "9-9" };
+export const wlFor = pid => WL[pid] || ((pid % 13) + 2) + "-" + ((pid % 5) + 3);
 export function profile(rin) {
-  const x = PROFILE_PHOTOS[rin];
-  return x ? { Header: { PlayerId: x[0], ImageId: x[1], ImageOriginalUrl: x[2], ImageThumbnailUrl: x[3], RankedinId: rin, Form: ["W", "L"] }, Statistics: {} } : null;
+  const x = PROFILE_PHOTOS[rin], r = ROSTER.find(p => p.rankedinId === rin);
+  const st = r ? { WinLossDoublesCurrentYear: wlFor(r.pid), EventsParticipatedDoublesCurrentYear: "6" } : {};
+  if (x) return { Header: { PlayerId: x[0], ImageId: x[1], ImageOriginalUrl: x[2], ImageThumbnailUrl: x[3], RankedinId: rin, Form: ["W", "L"] }, Statistics: st };
+  return r ? { Statistics: st } : null;
+}
+// SPF list of 2026-09-21 from players.json; StandingDiff (places gained on that list) made up per player.
+export const climbOf = pid => ({ 1675246: 18, 1680004: 41, 1849853: -3 })[pid] ?? ((pid % 9) - 4);
+function ranking(name) {
+  const r = ROSTER.find(p => p.name === name);
+  return { Payload: r && r.rank ? [{ Participant: { NewParticipantId: r.pid }, StandingDiff: climbOf(r.pid), Name: r.name,
+    ParticipantPoints: { RankingDate: r.rankDate + "T00:00:00", Standing: r.rank, Points: r.points } }] : [] };
 }
 
 // Routes a RankedIn API path (with query) to a response body. Unknown paths -> 404.
@@ -63,6 +77,11 @@ export function route(path, over = {}) {
   if (p.endsWith("/teamleague/getteamleagueteamhomepageasync")) return q("teamId") === "3355655" ? A("tl_homepage_3355655") : { team: { players: [] } };
   if (p.endsWith("/teamleague/getteamleagueteamsmatchesasync")) return A("tm_166800_matches");
   if (p.endsWith("/player/playerprofileinfoasync")) return profile(q("rankedinId"));
+  if (p.endsWith("/rating/getplayerratingasync")) {
+    const r = ROSTER.find(x => String(x.pid) === q("id"));
+    return r && r.skill != null ? [{ RatingId: r.rid, RatingValue: r.skill }, { RatingId: 66, RatingValue: 11.11 }] : [];
+  }
+  if (p.endsWith("/ranking/searchrankingplayersasync")) return ranking(q("searchTerm"));
   return null;
 }
 // globalThis.fetch replacement: RankedIn -> route(), everything else -> push(url, init) (201 by default)

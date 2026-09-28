@@ -7,7 +7,7 @@ import { localToDate, isoLocal, dayOf, isoDay } from "./tz.js";
 import ROSTER from "./players.js";
 
 // who = route key on the page ("#thea"), me = full name as RankedIn writes it
-export const PLAYERS = ROSTER.map(p => ({ who: p.key, pid: p.pid, me: p.name, name: p.short, gender: p.gender, rt: p.rt, ag: p.ag,
+export const PLAYERS = ROSTER.map(p => ({ who: p.key, pid: p.pid, me: p.name, name: p.short, gender: p.gender, rt: p.rt, ag: p.ag, rid: p.rid || null,
   team: p.team, teamId: p.teamId, league: p.league, division: p.division, rin: p.rankedinId || null }));
 export const BY_PID = new Map(PLAYERS.map(p => [p.pid, p]));
 // Thea and Kian were the first two players: old push subscriptions ({thea, kian}) and links refer to them.
@@ -49,6 +49,17 @@ export function photoOf(x, pid) {
   const url = ok(h.ImageOriginalUrl) || ok(h.ImageThumbnailUrl), thumb = ok(h.ImageThumbnailUrl) || url;
   if (!url) return null;
   return { url, thumb, placeholder: h.ImageId === 0 || /\/rin_logo/i.test(url) };
+}
+export const ratingPath = pid => "/rating/GetPlayerRatingAsync?id=" + pid;
+// Profile statistics -> this year's doubles record {w, l} ("32-4"), or null.
+export function wlOf(x) {
+  const m = /^\s*(\d+)\s*-\s*(\d+)\s*$/.exec(String((x && x.Statistics && x.Statistics.WinLossDoublesCurrentYear) || ""));
+  return m ? { w: +m[1], l: +m[2] } : null;
+}
+// GetPlayerRatingAsync -> the SPF skill of the player's own list (WD 65, MD 64), or null.
+export function skillOf(list, rid) {
+  const r = (Array.isArray(list) ? list : []).find(x => x && x.RatingId === rid && typeof x.RatingValue === "number");
+  return r ? r.RatingValue : null;
 }
 export const rubbersPath = tieId => "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=" + tieId + "&language=en";
 
@@ -165,7 +176,7 @@ async function teamleague(p, e, get, ctx) {
 
 // get(path) -> parsed JSON (throws on HTTP errors; err.budget = out of subrequests).
 // prev: the last discovery record ({events, ended}). players: whom to look up now (default: everyone).
-// Returns {events, ended, none, photos: {pid: {url, thumb, placeholder}}, refreshed: [who], partial}: events of the players (and teams) looked up are
+// Returns {events, ended, none, photos: {pid: {url, thumb, placeholder}}, board: {pid: {sk, w, l, y, rk, rp, rd, up}}, refreshed: [who], partial}: events of the players (and teams) looked up are
 // replaced, everything else is kept from prev. partial = someone in `players` could not be finished.
 export async function discover(get, now, prev, players = PLAYERS) {
   // Several players in the same tournament or team: fetch its info, class lists and team matches once per run.
@@ -197,14 +208,26 @@ export async function discover(get, now, prev, players = PLAYERS) {
   }
   // Profile photos (the page shows them for players without a photo in players.json): one call per player of the
   // batch, after everyone's events so they never take their budget; the others keep the previous record's.
-  const was = (prev && prev.photos) || {}, got = {};
+  // The same profile carries this year's W–L for the club leaderboard ("board", home view: Topplistan): no extra
+  // call. Skill and ranking (sk, rk, rp, rd, up) come from index.js (the hourly ranking check) and are kept as they are.
+  const was = (prev && prev.photos) || {}, got = {}, wasB = (prev && prev.board) || {}, gotB = {};
+  const year = +dayOf(now).slice(0, 4);
   for (const p of players) {
     if (!p.rin) continue;
-    try { const ph = photoOf(await raw(profilePath(p.rin)), p.pid); if (ph) got[p.pid] = ph; }
+    let x = null;
+    try { x = await raw(profilePath(p.rin)); }
     catch (err) { if (err && err.budget) break; }
+    const ph = photoOf(x, p.pid), wl = x && !(x.Header && x.Header.PlayerId && Number(x.Header.PlayerId) !== p.pid) ? wlOf(x) : null;
+    if (ph) got[p.pid] = ph;
+    if (wl) gotB[p.pid] = { w: wl.w, l: wl.l, y: year };
   }
-  const photos = {};
-  PLAYERS.forEach(p => { const ph = got[p.pid] || was[p.pid]; if (ph) photos[p.pid] = ph; });
+  const photos = {}, board = {};
+  PLAYERS.forEach(p => {
+    const ph = got[p.pid] || was[p.pid];
+    if (ph) photos[p.pid] = ph;
+    const b = { ...(wasB[p.pid] || {}), ...(gotB[p.pid] || {}) };
+    if (Object.keys(b).length) board[p.pid] = b;
+  });
   const known = new Set(PLAYERS.map(p => p.who));
   const out = ctx.prev.filter(x => x.kind === "teamleague" ? !teams.has(x.leagueId + ":" + x.teamId) : !refreshed.has(x.who) && known.has(x.who));
   const byKey = new Map();
@@ -215,5 +238,5 @@ export async function discover(get, now, prev, players = PLAYERS) {
   }
   out.push(...byKey.values());
   out.sort((a, b) => a.windowFrom.localeCompare(b.windowFrom) || a.key.localeCompare(b.key));
-  return { events: out, ended: [...ctx.ended].slice(-300), none: [...ctx.none].slice(-100), photos, refreshed: [...refreshed], partial };
+  return { events: out, ended: [...ctx.ended].slice(-300), none: [...ctx.none].slice(-100), photos, board, refreshed: [...refreshed], partial };
 }

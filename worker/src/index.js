@@ -4,7 +4,7 @@
 // enter on RankedIn, a few players per run) merged with events.js.
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
 import { parse, snapshot, unpack, notes, drawNote, summary, classResult, flip } from "./rankedin.js";
-import { discover, drawPath, rubbersPath, namesPath, drawsOf, API, PLAYERS, BY_PID, LEGACY } from "./discover.js";
+import { discover, drawPath, rubbersPath, namesPath, drawsOf, ratingPath, skillOf, API, PLAYERS, BY_PID, LEGACY } from "./discover.js";
 import { parseTie, snapshotTie, tieNotes, tieSummary } from "./teamleague.js";
 import { b64u, vapidKey, send } from "./webpush.js";
 import { dayOf, localToDate, offsetAt } from "./tz.js";
@@ -75,7 +75,10 @@ async function handle(req, env) {
     // wins: club players who won a class (place 1) or lost its final (place 2) in the last 30 days ("Veckans vinnare")
     const past = (rec && rec.past) || [], lv = await liveView(env, t, events.concat(past)), wins = recentWins(await loadWins(env), t);
     // photos: roster players' RankedIn profile photos {pid: {url, thumb, placeholder}} (the page: only without own photo)
-    return json({ at: rec ? rec.at : null, src: "worker", events, past, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {} }, 200, { ...h, "Cache-Control": "public, max-age=120" });
+    // board: the club leaderboard per pid {sk skill, w/l/y this year's W–L, rk/rp/rd SPF standing/points/list date, up places
+    // gained on that list} (home view: Topplistan; kept in "disc", so it costs no extra KV read)
+    return json({ at: rec ? rec.at : null, src: "worker", events, past, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {},
+      board: (rec && rec.board) || {} }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
   if (route === "POST /subscribe") {
     let b;
@@ -110,7 +113,7 @@ export function followOf(p) {
 const now = env => env.NOW ? new Date(env.NOW) : new Date();   // NOW: local tests only
 const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8;
 
-/* ---- discovered events: KV "disc" = {at, events, ended, none, past, photos}. Read at most every 5 min per isolate. ---- */
+/* ---- discovered events: KV "disc" = {at, events, ended, none, past, photos, board}. Read at most every 5 min per isolate. ---- */
 let MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 };
 export function _resetMemory() { MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 }; LV = { at: 0, v: null }; }
 async function loadRecord(env) {
@@ -153,8 +156,8 @@ export async function runDiscovery(env, t, budget, rec, log = {}, max = 35) {
   const mine = { left: Math.min(max, budget.left) }, start = mine.left;
   const res = await discover(getter(env, mine), t, rec, rec ? discoveryBatch(t) : PLAYERS);
   budget.left -= start - mine.left;
-  const next = { at: t.toISOString(), events: res.events, ended: res.ended, none: res.none, past: pastOf(rec, res.events, t), photos: res.photos };
-  const sig = r => JSON.stringify([r.events, r.ended, r.none || [], r.past || [], r.photos || {}]);
+  const next = { at: t.toISOString(), events: res.events, ended: res.ended, none: res.none, past: pastOf(rec, res.events, t), photos: res.photos, board: res.board || {} };
+  const sig = r => JSON.stringify([r.events, r.ended, r.none || [], r.past || [], r.photos || {}, r.board || {}]);
   log.discovered = res.events.length;
   log.refreshed = res.refreshed.length;
   if (!rec || sig(rec) !== sig(next) || +t - new Date(rec.at) > 6 * H) {
@@ -187,11 +190,14 @@ const PUB_MINUTE = 35;   // not exported: workerd only accepts functions and han
 // (women's, men's) while its ranking date is the one in KV "rankdate:<rt>:<ag>"; a new date: every player of that
 // list, KV "rank:<pid>" written only when the ranking date/standing/points change; a new ranking date gives one
 // notis per player. The first look is the baseline.
-const RANK_MINUTE = 52;
-const RANKED = PLAYERS.map(p => ({ who: p.who, pid: p.pid, name: p.name, q: p.me, rt: p.rt, ag: p.ag, list: p.gender === "F" ? "Dam huvudlista" : "Herrar huvudlista" }));
+// The leaderboard ("board" in "disc") gets each changed standing (rk, rp, rd, up = places gained: RankedIn's StandingDiff)
+// and the SPF skill (sk) of 6 players an hour, in turn (GetPlayerRatingAsync: the whole roster every 3 hours, 6 calls an
+// hour); "disc" is written only when the board changed.
+const RANK_MINUTE = 52, SKILLS_PER_HOUR = 6;
+const RANKED = PLAYERS.map(p => ({ who: p.who, pid: p.pid, name: p.name, q: p.me, rt: p.rt, ag: p.ag, rid: p.rid, list: p.gender === "F" ? "Dam huvudlista" : "Herrar huvudlista" }));
 // Up to 20 players per hour (rotating when the roster is larger), one RankedIn call each while a list is new.
 export async function rankingChecks(env, t, budget, log, players = RANKED, cap = 20) {
-  const get = getter(env, budget), msgs = [], n = Math.min(cap, players.length), start = (Math.floor(+t / H) * n) % Math.max(1, players.length);
+  const get = getter(env, budget), msgs = [], patch = {}, n = Math.min(cap, players.length), start = (Math.floor(+t / H) * n) % Math.max(1, players.length);
   const lists = new Map();
   for (let i = 0; i < n; i++) {
     const p = players[(start + i) % players.length], k = p.rt + ":" + p.ag;
@@ -210,9 +216,11 @@ export async function rankingChecks(env, t, budget, log, players = RANKED, cap =
       const me = ((x && x.Payload) || []).find(r => r && r.Participant && r.Participant.NewParticipantId === p.pid && r.ParticipantPoints);
       if (!me) continue;
       const pp = me.ParticipantPoints, cur = { d: String(pp.RankingDate).slice(0, 10), s: pp.Standing, p: pp.Points };
+      if (typeof me.StandingDiff === "number") cur.u = me.StandingDiff;
       if (known === undefined) { known = await env.PUSH.get("rankdate:" + lk); date = cur.d; }
       const same = known === cur.d;   // the list has not changed since its last full round: this one call is enough
-      await rankOne(env, p, cur, msgs, log);
+      const w = await rankOne(env, p, cur, msgs, log);
+      if (w) patch[p.pid] = { rk: w.s, rp: w.p, rd: w.d, up: w.u == null ? null : w.u };
       if (same) { all = false; break; }
     }
     if (all && date && known !== date) {   // every player of a new list looked at: canary mode until the next list
@@ -221,19 +229,55 @@ export async function rankingChecks(env, t, budget, log, players = RANKED, cap =
     }
   }
   if (msgs.length) log.ranked = msgs.length;
+  // Skills: after the standings, only with room left for the live polling that follows in this tick.
+  const sp = players.filter(p => p.rid), hour = Math.floor(+t / H);
+  for (let i = 0; i < Math.min(SKILLS_PER_HOUR, sp.length) && !out && budget.left > 15; i++) {
+    const p = sp[(hour * SKILLS_PER_HOUR + i) % sp.length];
+    let sk;
+    try { sk = skillOf(await get(ratingPath(p.pid)), p.rid); } catch (e) { if (e.budget) break; continue; }
+    patch[p.pid] = { ...(patch[p.pid] || {}), sk };
+  }
+  try { await boardRanks(env, patch, players, log); } catch (e) { console.warn("board", e.message); }
   return msgs;
 }
+// Written standing -> the stored one (u: places gained on this list; RankedIn's StandingDiff, else from the last list).
 async function rankOne(env, p, cur, msgs, log) {
   const key = "rank:" + p.pid, raw = await env.PUSH.get(key), prev = raw ? JSON.parse(raw) : null;
-  if (prev && prev.d === cur.d && prev.s === cur.s && prev.p === cur.p) return;
+  if (prev && prev.d === cur.d && prev.s === cur.s && prev.p === cur.p) return null;
+  if (cur.u == null && prev && prev.d < cur.d && typeof prev.s === "number") cur = { ...cur, u: prev.s - cur.s };
   await env.PUSH.put(key, JSON.stringify(cur));
   log.writes = (log.writes || 0) + 1;
-  if (!prev || prev.d >= cur.d) return;   // baseline or a correction of the same list: no notis
+  if (!prev || prev.d >= cur.d) return cur;   // baseline or a correction of the same list: no notis
   const up = prev.s - cur.s, dp = cur.p - prev.p, f = v => v.toFixed(v >= 20 ? 1 : 2);
   msgs.push({ pids: [p.pid], m: {
     title: "Ny ranking: " + p.name + " #" + cur.s + (up ? (up > 0 ? " \u25B2\uFE0E " : " \u25BC\uFE0E ") + Math.abs(up) + (Math.abs(up) === 1 ? " plats" : " platser") : " (oförändrad)"),
     body: f(cur.p) + " p" + (dp ? " (" + (dp > 0 ? "+" : "\u2212") + Math.abs(dp).toFixed(1) + ")" : "") + " · " + p.list,
     tag: "padel-rank-" + p.pid, url: "./#" + p.who } });
+  return cur;
+}
+// Standings into the leaderboard in "disc" (read fresh from KV, written only when something changed). Players the board
+// knows nothing about yet (first run after a deploy, canary mode) get what their "rank:<pid>" key holds, once.
+async function boardRanks(env, patch, players, log) {
+  let rec = null;
+  try { rec = JSON.parse((await env.PUSH.get("disc")) || "null"); } catch (e) { rec = null; }
+  if (!rec || !Array.isArray(rec.events)) return;   // discovery writes the record first
+  const b = { ...(rec.board || {}) };
+  for (const p of players) {
+    if ((patch[p.pid] && "rd" in patch[p.pid]) || (b[p.pid] && "rd" in b[p.pid])) continue;
+    let x = null;
+    try { x = JSON.parse((await env.PUSH.get("rank:" + p.pid)) || "null"); } catch (e) { x = null; }
+    patch[p.pid] = { ...(patch[p.pid] || {}), ...(x && x.d ? { rk: x.s, rp: x.p, rd: x.d, up: x.u == null ? null : x.u } : { rd: null }) };
+  }
+  let changed = false;
+  for (const pid of Object.keys(patch)) {
+    const was = b[pid] || {}, n = { ...was, ...patch[pid] };
+    if (JSON.stringify(n) !== JSON.stringify(was)) { b[pid] = n; changed = true; }
+  }
+  if (!changed) return;
+  rec.board = b;
+  await env.PUSH.put("disc", JSON.stringify(rec));
+  log.writes = (log.writes || 0) + 1; log.board = 1;
+  MEM.rec = rec; MEM.readAt = Date.now();
 }
 
 export async function drawChecks(env, t, list, budget, log, within = 7 * DAY) {

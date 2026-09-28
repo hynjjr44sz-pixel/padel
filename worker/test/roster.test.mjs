@@ -171,7 +171,7 @@ test("tick: SPL team play day (roster in the event) pushes to the right follower
 test("ranking: every roster player within the hourly budget (20), rotating when the roster is larger", async () => {
   const seen = [], env = { PUSH: { get: async () => null, put: async () => {} }, API_BASE: "http://x" };
   const orig = globalThis.fetch;
-  globalThis.fetch = async u => { seen.push(decodeURIComponent(new URL(String(u)).searchParams.get("searchTerm"))); return new Response(JSON.stringify({ Payload: [] })); };
+  globalThis.fetch = async u => { if (/SearchRankingPlayers/.test(u)) seen.push(decodeURIComponent(new URL(String(u)).searchParams.get("searchTerm"))); return new Response(JSON.stringify({ Payload: [] })); };
   try {
     const t = new Date("2026-09-28T01:52:00Z");
     await rankingChecks(env, t, { left: 45 }, {});
