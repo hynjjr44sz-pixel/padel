@@ -177,16 +177,38 @@ try {
   await page.waitForSelector('#p-thea [data-mid="6872156"]');
   await page.waitForTimeout(600);
   ok("deep link #thea/m6872156: Thea's page, match flashed", await page.$eval('#p-thea [data-mid="6872156"]', e => e.classList.contains("flash") || !!e.closest("#p-thea:not([hidden])")));
-  ok("Thea: hero photo", await page.$eval("#p-thea .hero img", i => i.getAttribute("src")) === "img/thea.jpg");
+  ok("Thea: hero photo", await page.$eval("#p-thea .hero .pmed img", i => i.getAttribute("src")) === "img/thea.jpg");
   ok("Thea: chips show followed first and Thea current", (await page.$$eval("#chips .pchip", a => a.map(x => x.getAttribute("href") + (x.getAttribute("aria-current") ? "*" : "")))).slice(0, 2).join() === "#thea*,#kian");
   ok("Thea: trend numbers", /#\d+/.test(await page.textContent("#tv-thea-rank")));
+  // ---- the player card (hero): rating, class, tier, stats from the data ----
+  const cardOf = k => page.$eval("#p-" + k + " .hero", h => {
+    const st = {}, t = e => e ? e.textContent.replace(/\s+/g, " ").trim() : null;
+    h.querySelectorAll(".pstats .st").forEach(x => { st[x.getAttribute("data-st")] = t(x.querySelector("dd")); });
+    const ln = h.querySelector(".pname .ln");
+    return { cls: h.className, ovr: t(h.querySelector(".prate .ovr")), klass: t(h.querySelector(".prate .cls")), labels: [...h.querySelectorAll(".pstats dt [aria-hidden]")].map(x => x.textContent),
+      st, pips: [...h.querySelectorAll(".pstats .pips i")].map(i => i.className).join(""), win: t(h.querySelector(".pwin")), tip: t(h.querySelector(".ptip")), fn: t(h.querySelector(".pname .fn")),
+      ln: t(ln), lnFits: ln ? ln.scrollWidth <= ln.clientWidth + 1 : null, tm: t(h.querySelector(".pname .tm")), sr: t(h.querySelector(".pface > .sr")), ini: t(h.querySelector(".ini-big")),
+      follow: !!h.querySelector(".pc .pfol [data-follow]"), crest: !!h.querySelector(".prate img.crest[src='img/nynas-logo.png']"), court: !!h.querySelector(".court") };
+  });
+  const RT = ROSTER.find(x => x.key === "thea"), ptsTxt = v => v.toFixed(v >= 20 ? 1 : 2);
+  await page.waitForFunction(() => /150/.test(document.querySelector("#p-thea .pstats [data-st=rnk] dd")?.textContent || "") && document.querySelector("#p-thea .pstats [data-st=form]"), null, { timeout: 8000 }).catch(() => {});
+  { const c = await cardOf("thea");
+    ok("card Thea: gold tier (skill 15.94), rating 15.9 as 15 + .9, class B (Damer rank 150)", /\bt-gold\b/.test(c.cls) && c.ovr === "15.9" && c.klass === "B" && /Skill 15,94, får spela B-klass, ranking 150/.test(c.sr), c);
+    ok("card Thea: stats row RNK/PTS/SKL/VIN%/TIT/FORM from the data (labels above the values)", c.labels.join() === "RNK,PTS,SKL,VIN%,TIT,FORM" &&
+      /^#150/.test(c.st.rnk) && c.st.pts.startsWith(ptsTxt(RT.points)) && c.st.skl.startsWith("15.94") && /^89\b/.test(c.st.vin) && /^\d+$/.test(c.st.tit), c);
+    ok("card Thea: form pips W L W W L with a text alternative", c.pips === "wlwwl" && /Form: V F V V F \(3 vinster, 2 förluster\)/.test(c.st.form), c);
+    ok("card Thea: name bar (first name, surname fits, team · division), crest, follow on the card, no court lines", c.fn === "Thea" && c.ln === "Holmberg Löving" && c.lnFits && c.tm === "Nynäs Damlag · Div 3 Öst - Södra" && c.crest && c.follow && !c.court && !c.win && c.tip === "Nynäs Padel Club", c); }
   await shot(page, "thea");
 
   // ---- player without photo (Lisa): initials hero, no broken image ----
   await page.goto(url("#lisa"));
   await page.waitForSelector("#p-lisa .hero.noimg .ini-big");
-  ok("Lisa: initials hero (LB), no img", (await page.textContent("#p-lisa .ini-big")) === "LB" && (await page.$$("#p-lisa .hero img")).length === 0);
+  ok("Lisa: initials hero (LB), no img", (await page.textContent("#p-lisa .ini-big")) === "LB" && (await page.$$("#p-lisa .hero .pmed img")).length === 0);
   ok("Lisa: back to Nynäs idag", await page.isVisible("#pnav .back"));
+  await page.waitForFunction(() => document.querySelector("#p-lisa .pstats [data-st=form]"), null, { timeout: 8000 }).catch(() => {});
+  { const c = await cardOf("lisa");
+    ok("card Lisa: silver tier (13.14), initials fallback, class C (Damer rank 691), no TIT slot without titles (no TÄV)", /\bt-silver\b/.test(c.cls) && /\bnoimg\b/.test(c.cls) && c.ini === "LB" && c.ovr === "13.1" && c.klass === "C" &&
+      c.labels.join() === "RNK,PTS,SKL,VIN%,FORM", c); }
   const broken = await page.$$eval("img", im => im.filter(i => i.complete && i.naturalWidth === 0 && i.getAttribute("src")).map(i => i.getAttribute("src")));
   ok("no broken images", broken.length === 0, broken);
   ok("Lisa: no horizontal scroll", await noHScroll(page));
@@ -206,32 +228,34 @@ try {
   ok("photos: the rest keep initials", ["svante", "tobias", "anton"].every(k => /^ini:/.test(av[k])), av);
   await shot(page, "photos-home");
   await page.goto(url("#sanna"));
-  await page.waitForSelector("#p-sanna .hero.rin > img");
-  await page.waitForFunction(() => document.querySelector("#p-sanna .hero > img").complete);
-  const sh = await page.$eval("#p-sanna .hero > img", i => ({ src: i.getAttribute("src"), w: i.naturalWidth, pos: getComputedStyle(i).objectPosition, fit: getComputedStyle(i).objectFit }));
+  await page.waitForSelector("#p-sanna .hero.rin .pmed > img");
+  await page.waitForFunction(() => document.querySelector("#p-sanna .hero .pmed > img").complete);
+  const sh = await page.$eval("#p-sanna .hero .pmed > img", i => ({ src: i.getAttribute("src"), w: i.naturalWidth, pos: getComputedStyle(i).objectPosition, fit: getComputedStyle(i).objectFit }));
   ok("photos: Sanna's hero is her full RankedIn photo, cover, 50% 20%", sh.src.endsWith("/player/900001.png") && sh.w > 0 && sh.fit === "cover" && sh.pos === "50% 20%" && !(await page.$("#p-sanna .ini-big")), sh);
   ok("photos: Sanna no horizontal scroll", await noHScroll(page));
   await shot(page, "photos-sanna");
   await page.goto(url("#oliver"));
   await page.waitForSelector("#p-oliver .hero.noimg .ini-big");
-  ok("photos: Oliver's hero falls back to initials (OL), no img", (await page.textContent("#p-oliver .hero .ini-big")) === "OL" && !(await page.$("#p-oliver .hero > img")));
+  ok("photos: Oliver's hero falls back to initials (OL), no img", (await page.textContent("#p-oliver .hero .ini-big")) === "OL" && !(await page.$("#p-oliver .hero .pmed > img")));
   await page.goto(url("#kian"));
-  await page.waitForSelector("#p-kian:not([hidden]) .hero > img");
-  ok("photos: Kian's hero stays img/kian.jpg", await page.$eval("#p-kian .hero > img", i => i.getAttribute("src")) === "img/kian.jpg");
+  await page.waitForSelector("#p-kian:not([hidden]) .hero .pmed > img");
+  ok("photos: Kian's hero stays img/kian.jpg", await page.$eval("#p-kian .hero .pmed > img", i => i.getAttribute("src")) === "img/kian.jpg");
   ok("photos: only roster photos are requested from the CDN (no placeholder logo)", api.img.length > 0 && api.img.every(u => CDN_RE.test(u) && !/rin_logo|121978/.test(u)), api.img);
   ok("photos: no CSP violations", (await page.evaluate(() => window.__csp)).length === 0, await page.evaluate(() => window.__csp));
 
   // ---- Cassandra (photo, no avatar): her own Damer C entry from the worker ----
   await page.goto(url("#cassandra"));
-  await page.waitForSelector("#p-cassandra .hero img");
+  await page.waitForSelector("#p-cassandra .hero .pmed img");
   await page.waitForFunction(() => /Damer C/.test(document.querySelector("#p-cassandra [data-r=round]")?.textContent || ""));
   ok("Cassandra: live Damer C view with Thea as partner", /Thea|Holmberg/.test(await page.textContent("#p-cassandra .vs")));
   await shot(page, "cassandra");
 
   // ---- old #kian link ----
   await page.goto(url("#kian"));
-  await page.waitForSelector("#p-kian:not([hidden]) .hero img");
+  await page.waitForSelector("#p-kian:not([hidden]) .hero .pmed img");
   ok("old #kian link opens Kian", (await page.title()).startsWith("Kian Borgström"));
+  { const c = await cardOf("kian");
+    ok("card Kian: bronze tier (11.56), rating cut to 11.5 (not rounded), class C (Herrar rank 789)", /\bt-bronze\b/.test(c.cls) && c.ovr === "11.5" && c.klass === "C" && c.ln === "Borgström" && c.lnFits, c); }
 
   // ---- follow + bell ----
   await page.goto(url("#rebecca"));
@@ -368,7 +392,7 @@ try {
   await page.waitForSelector("#nowList .nowrow");
   ok("360 dark: no horizontal scroll (home)", await noHScroll(page));
   await page.goto(url("#nathalie"));
-  await page.waitForSelector("#p-nathalie .hero img");
+  await page.waitForSelector("#p-nathalie .hero .pmed img");
   ok("360 dark: no horizontal scroll (Nathalie)", await noHScroll(page));
   await shot(page, "nathalie-dark-360");
   ok("no console errors", errors.concat(errors2).length === 0, errors.concat(errors2));
@@ -390,6 +414,24 @@ try {
     const el = await page.$("#secWin");
     await el.screenshot({ path: "/tmp/claude-0/-home-user-padel/e0bacc1b-df2c-5dc3-aa35-2abf1c7370b5/scratchpad/wins-" + (dark ? "dark" : "light") + ".png" }).catch(() => {});
     if (SHOTS) await el.screenshot({ path: SHOTS + "/wins-" + (dark ? "dark" : "light") + ".png" });
+    // The card the week after a class win: blue holo "Veckans vinnare" with the win on a ribbon (Thea and Cassandra), metal for the rest.
+    await page.goto(url("#thea", "", "2026-09-29T10:00:00+02:00"));
+    await page.waitForSelector("#p-thea:not([hidden]) .hero.t-champ .pwin", { timeout: 8000 }).catch(() => {});
+    { const c = await cardOf("thea");
+      ok("week after " + (dark ? "dark" : "light") + ": Thea's card is the champion variant, ribbon Vann Damer C · Järfälla Padel Open no 11", /\bt-champ\b/.test(c.cls) && /^Vann Damer C · Järfälla Padel Open no 11$/.test(c.win) && c.tip === "Veckans vinnare" && c.ovr === "15.9", c); }
+    if (dark) {
+      await page.setViewportSize({ width: 360, height: 844 });
+      await page.waitForTimeout(300);
+      const w360 = await page.$eval("#p-thea .pwin", e => ({ wt: getComputedStyle(e.querySelector(".wt")).display, fits: e.firstElementChild.scrollWidth <= e.clientWidth + 1 }));
+      ok("week after 360: ribbon shortened to Vann Damer C (no ellipsised tournament), no horizontal scroll", w360.wt === "none" && w360.fits && await noHScroll(page), w360);
+      await page.setViewportSize({ width: 390, height: 844 });
+    }
+    await page.goto(url("#cassandra", "", "2026-09-29T10:00:00+02:00"));
+    await page.waitForSelector("#p-cassandra:not([hidden]) .hero");
+    ok("week after: Cassandra's card is the champion variant too", /\bt-champ\b/.test((await cardOf("cassandra")).cls));
+    await page.goto(url("#kian", "", "2026-09-29T10:00:00+02:00"));
+    await page.waitForSelector("#p-kian:not([hidden]) .hero");
+    { const c = await cardOf("kian"); ok("week after: Kian (no win) keeps bronze", /\bt-bronze\b/.test(c.cls) && !c.win && c.tip === "Nynäs Padel Club", c); }
     ok("week after " + (dark ? "dark" : "light") + ": no console errors", errors.length === 0, errors);
     await ctx.close();
   }
@@ -403,6 +445,7 @@ try {
   await page.waitForFunction(() => /Vinnare/i.test(document.querySelector("#dyn-thea [data-r=time]")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
   const heroT = await page.$eval("#dyn-thea", d => ({ time: d.querySelector("[data-r=time]").textContent, pill: d.querySelector("[data-r=pill]").textContent, link: d.querySelector("[data-r=link]").textContent }));
   ok("mån 5 okt 12:00: Thea's hero still shows VINNARE (Järfälla)", /vinnare/i.test(heroT.time) && /vinnare/i.test(heroT.pill) && /Järfälla/.test(heroT.link), heroT);
+  { const c = await cardOf("thea"); ok("mån 5 okt (8 days after): Thea's card is back to gold, no ribbon", /\bt-gold\b/.test(c.cls) && !c.win, c); }
   await page.goto(url("#kian", "", "2026-10-05T12:00:00+02:00"));
   await page.waitForSelector("#p-kian:not([hidden]) #dyn-kian [data-r=link]");
   await page.waitForTimeout(500);

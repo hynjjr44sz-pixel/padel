@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Lte1UISiwXxbUOND4z4VHiYv7rUO5KBN/cFFBhENH1o='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-UEr5Gyxe3lwdFJyyu0mCPOzcduPS9+DqqPTPLceY28Q='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -159,18 +159,191 @@
   }
   .appbar .x:hover{ background:var(--surface-2); color:var(--ink); }
 
-  /* ---------- photo hero ---------- */
+  /* ---------- player card (the hero): a shield-cut trading card, tier by SPF skill ---------- */
+  /* The whole hero is navy (both themes): the card lies on it, the live strip (the old hero's text) follows under it. */
   .hero{
-    position:relative; margin:4px -16px 0; overflow:hidden; background:var(--board); color:var(--board-ink);
-    width:auto; height:clamp(400px, 112vw, 460px);
+    position:relative; margin:4px -16px 0; padding:14px 0 0; color:var(--board-ink); touch-action:pan-y; isolation:isolate; overflow:hidden;
+    background:radial-gradient(70% 46% at 50% 34%, var(--glow), transparent 72%), var(--board);
   }
-  .hero > img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 0%; }
-  .hero .scrim{
-    position:absolute; inset:0;
-    background:linear-gradient(180deg, rgba(6,13,34,.30) 0%, rgba(6,13,34,0) 18%, rgba(6,13,34,0) 40%, rgba(6,13,34,.72) 64%, var(--board) 96%);
+  .hero{
+    /* gold (default): the lower half stays light so the navy-brown ink holds 4.5:1 */
+    --m1:#FCF0C2; --m2:#EDD286; --m3:#D2A850; --m4:#F7E3A0; --glow:rgba(237,210,134,.16);
+    --c-ink:#2A1C03; --c-lab:#3F2B05; --c-line:rgba(88,58,4,.5); --c-mesh:rgba(88,58,4,.12); --c-hi:rgba(255,250,228,.75);
+    --c-up:#11522F; --c-dn:#8A1F12; --c-w:#2A1C03; --c-l:#9A3A2C; --c-none:rgba(42,28,3,.4);
+    --ini1:#4A3006; --ini2:#B8892E; --pill:rgba(255,248,222,.82); --pill-ink:#2A1C03;
   }
-  .hero .court{ position:absolute; left:0; right:0; bottom:0; width:100%; height:30%; opacity:.12; }
-  .hero-top{ position:absolute; top:12px; left:16px; right:16px; display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .hero.t-silver{
+    --m1:#F8FAFD; --m2:#DCE2EA; --m3:#B4BDCB; --m4:#EEF1F6; --glow:rgba(205,212,223,.13);
+    --c-ink:#0C1631; --c-lab:#1F2A44; --c-line:rgba(12,22,49,.42); --c-mesh:rgba(12,22,49,.1); --c-hi:rgba(255,255,255,.8);
+    --c-up:#11522F; --c-dn:#8A1F12; --c-w:#0C1631; --c-l:#A0463A; --c-none:rgba(12,22,49,.38);
+    --ini1:#1C2A4E; --ini2:#8C97AB; --pill:rgba(255,255,255,.82); --pill-ink:#0C1631;
+  }
+  .hero.t-bronze{
+    --m1:#F8DEC2; --m2:#E6B88C; --m3:#C98A58; --m4:#F2CCA6; --glow:rgba(214,150,100,.15);
+    --c-ink:#2B1305; --c-lab:#3A1A07; --c-line:rgba(80,36,8,.5); --c-mesh:rgba(80,36,8,.12); --c-hi:rgba(255,238,220,.7);
+    --c-up:#0E4A29; --c-dn:#7A170C; --c-w:#2B1305; --c-l:#7E2414; --c-none:rgba(43,19,5,.42);
+    --ini1:#4A2208; --ini2:#B0703E; --pill:rgba(255,240,226,.82); --pill-ink:#2B1305;
+  }
+  .hero.t-champ{
+    --m1:#2A5BE0; --m2:#1A3FB0; --m3:#0F2A7A; --m4:#2F63E6; --glow:rgba(142,197,255,.24);
+    --c-ink:#FFFFFF; --c-lab:#EEF4FF; --c-line:rgba(255,216,74,.72); --c-mesh:rgba(142,197,255,.16); --c-hi:rgba(190,225,255,.16);
+    --c-up:#8BE3B0; --c-dn:#FFB0A5; --c-w:#FFD84A; --c-l:#FF9C8F; --c-none:rgba(220,232,255,.5);
+    --ini1:#FFE27A; --ini2:#8EC5FF; --pill:rgba(6,13,34,.5); --pill-ink:#FFFFFF;
+  }
+  .cardwrap{
+    position:relative; width:min(84%, 330px); margin:0 auto;
+    filter:drop-shadow(0 18px 18px rgba(0,0,0,.45)) drop-shadow(0 2px 3px rgba(0,0,0,.3));
+  }
+  .pc{
+    --shield:polygon(0% 4.2%, 5.5% 0%, 37% 0%, 41% 1.4%, 59% 1.4%, 63% 0%, 94.5% 0%, 100% 4.2%, 100% 83.5%, 98.6% 86%, 94% 88.6%, 84% 92.2%, 70% 95.6%, 58% 98.4%, 50% 100%, 42% 98.4%, 30% 95.6%, 16% 92.2%, 6% 88.6%, 1.4% 86%, 0% 83.5%);
+    position:relative; aspect-ratio:3 / 4; container-type:inline-size; overflow:hidden; color:var(--c-ink); touch-action:pan-y;
+    -webkit-clip-path:var(--shield); clip-path:var(--shield);
+    background:
+      radial-gradient(90% 50% at 28% 6%, var(--c-hi), transparent 70%),
+      linear-gradient(160deg, var(--m4) 0%, var(--m1) 20%, var(--m2) 46%, var(--m3) 66%, var(--m2) 84%, var(--m3) 100%);
+    transform:perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition:transform .6s cubic-bezier(.2,.8,.2,1);
+  }
+  .t-champ .pc{
+    background:
+      radial-gradient(90% 50% at 28% 6%, var(--c-hi), transparent 70%),
+      linear-gradient(160deg, var(--m4) 0%, var(--m1) 22%, var(--m2) 50%, var(--m3) 78%, #0A1D5C 100%);
+  }
+  /* fence mesh (the glass court's wire) at the top */
+  .pc .pfx{
+    position:absolute; inset:0; pointer-events:none;
+    background:
+      repeating-linear-gradient(45deg, var(--c-mesh) 0 1px, transparent 1px 11px),
+      repeating-linear-gradient(-45deg, var(--c-mesh) 0 1px, transparent 1px 11px);
+    -webkit-mask-image:linear-gradient(180deg, #000 0%, rgba(0,0,0,.5) 36%, transparent 60%);
+    mask-image:linear-gradient(180deg, #000 0%, rgba(0,0,0,.5) 36%, transparent 60%);
+  }
+  .t-champ .pc .pfx{
+    background:
+      repeating-linear-gradient(45deg, var(--c-mesh) 0 1px, transparent 1px 11px),
+      repeating-linear-gradient(-45deg, var(--c-mesh) 0 1px, transparent 1px 11px),
+      conic-gradient(from 210deg at 70% 30%, rgba(142,197,255,0), rgba(142,197,255,.4), rgba(185,243,255,.3), rgba(255,216,74,.26), rgba(201,182,255,.3), rgba(142,197,255,0));
+    background-size:auto, auto, 180% 180%;
+    -webkit-mask-image:none; mask-image:none; mix-blend-mode:screen;
+  }
+  /* sheen: follows the finger / pointer (--sx) */
+  .pc::after{
+    content:""; position:absolute; inset:-10%; pointer-events:none; z-index:4;
+    background:linear-gradient(112deg, transparent calc(var(--sx, 30%) - 16%), rgba(255,255,255,.3) var(--sx, 30%), transparent calc(var(--sx, 30%) + 16%));
+    mix-blend-mode:soft-light;
+  }
+  .pc .edge{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:5; }
+  .pc .edge path{ fill:none; stroke:var(--c-line); stroke-width:1.2; vector-effect:non-scaling-stroke; }
+  .t-champ .pc .edge path{ stroke-width:1.6; }
+
+  /* photo: a soft oval around the face that sinks into the metal (no hard rectangle), the face left neutral */
+  .pmed{
+    position:absolute; top:0; right:0; left:16%; height:62%; z-index:1;
+    -webkit-mask-image:radial-gradient(68% 62% at 54% 40%, #000 52%, rgba(0,0,0,.6) 72%, transparent 100%), linear-gradient(180deg, #000 60%, transparent 98%);
+    -webkit-mask-composite:source-in;
+    mask-image:radial-gradient(68% 62% at 54% 40%, #000 52%, rgba(0,0,0,.6) 72%, transparent 100%), linear-gradient(180deg, #000 60%, transparent 98%);
+    mask-composite:intersect;
+  }
+  .pmed::after{ content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg, transparent 58%, var(--m2) 100%); opacity:.55; }
+  .pmed img{ width:100%; height:100%; object-fit:cover; object-position:50% 8%; }
+  .pmed img.rin{ object-position:50% 20%; }
+  .pmed .ini-big{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:4% 0 0 12%; user-select:none;
+    font:900 40cqw/.8 "Big Shoulders Display", sans-serif; letter-spacing:-.01em;
+    color:transparent; background:linear-gradient(172deg, var(--ini1) 18%, var(--ini2) 88%); -webkit-background-clip:text; background-clip:text;
+    -webkit-mask-image:linear-gradient(180deg, #000 45%, rgba(0,0,0,.25) 92%); mask-image:linear-gradient(180deg, #000 45%, rgba(0,0,0,.25) 92%);
+  }
+  .noimg .pmed::after{ display:none; }
+
+  /* left column: rating (skill, big integer + small decimal), class, crest */
+  .prate{ position:absolute; z-index:2; left:5.5%; top:6.4%; width:23%; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .prate .ovr{ font:900 17cqw/.8 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; letter-spacing:-.02em; white-space:nowrap; }
+  .prate .ovr small{ font-size:.46em; letter-spacing:0; margin-left:.02em; }
+  .t-champ .prate .ovr{ color:transparent; background:linear-gradient(175deg, #FFE27A 25%, #8EC5FF 100%); -webkit-background-clip:text; background-clip:text; filter:drop-shadow(0 1px 1px rgba(4,10,40,.8)) drop-shadow(0 2px 10px rgba(4,10,40,.55)); }
+  .prate .kl{ font:600 max(10px, 2.6cqw)/1 "Chivo Mono", monospace; letter-spacing:.14em; text-transform:uppercase; color:var(--c-lab); margin-top:1.4cqw; padding-left:.14em; }
+  .prate .cls{ font:900 9.5cqw/.8 "Big Shoulders Display", sans-serif; margin-top:2.6cqw; }
+  .prate hr{ width:58%; border:0; border-top:1px solid var(--c-line); margin:2.6cqw 0 0; }
+  .prate .crest{ width:11cqw; height:auto; margin-top:2.8cqw; filter:drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+  .t-champ .prate .kl, .t-champ .prate .cls{ text-shadow:0 1px 6px rgba(4,10,40,.7); }
+
+  /* follow pill, top right on the card, tinted by the tier */
+  .pc .pfol{ position:absolute; z-index:6; top:5.5%; right:6%; }
+  .pc .follow{
+    height:32px; padding:0 11px 0 9px; font-size:12.5px; border-color:var(--c-line); background:var(--pill); color:var(--pill-ink);
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  }
+  .pc .follow:hover{ border-color:var(--pill-ink); }
+  .pc .follow[aria-pressed="true"]{ background:var(--c-ink); border-color:var(--c-ink); color:var(--m1); }
+  .t-champ .pc .follow{ border-color:rgba(255,255,255,.3); }
+  .t-champ .pc .follow[aria-pressed="true"]{ background:var(--ball); border-color:var(--ball); color:#0A1733; }
+
+  /* champion ribbon (above the name): why the card is blue */
+  .pwin{ display:flex; justify-content:center; margin:0 1.5cqw 2.6cqw; }
+  .pwin > span{
+    display:inline-flex; align-items:center; gap:1.6cqw; max-width:100%; min-width:0; padding:1.3cqw 2.4cqw 1.3cqw 1.8cqw; border-radius:1.4cqw;
+    background:var(--ball); color:#0A1733; box-shadow:0 4px 12px -4px rgba(0,0,0,.45);
+    font:700 max(10px, 2.9cqw)/1 "Chivo Mono", monospace; letter-spacing:.06em; white-space:nowrap;
+  }
+  .pwin svg{ width:max(11px, 3.2cqw); height:max(11px, 3.2cqw); flex:none; }
+  .pwin b{ font-weight:700; text-transform:uppercase; flex:none; }
+  .pwin .wt{ min-width:0; overflow:hidden; text-overflow:ellipsis; font-weight:500; letter-spacing:.02em; }
+  @container (max-width: 319px){ .pwin .wt{ display:none; } }
+
+  /* name bar: first name spaced out, surname heavy and as big as it fits */
+  .pname{ position:absolute; z-index:2; left:6.5%; right:6.5%; bottom:31.6%; text-align:center; }   /* grows upwards: stats never move */
+  .pname .fn{ display:block; font:600 max(10px, 3.1cqw)/1 "Chivo Mono", monospace; letter-spacing:.3em; padding-left:.3em; text-transform:uppercase; color:var(--c-lab); }
+  .pname .ln{
+    display:block; font:900 min(14cqw, calc(152cqw / var(--n, 8)))/.9 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.005em;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:.8cqw; padding-top:.06em;
+  }
+  .t-champ .pname .ln{ text-shadow:0 0 18px rgba(142,197,255,.45); }
+  .pname .tm{
+    display:flex; align-items:center; gap:2.2cqw; margin-top:.8cqw;
+    font:500 max(10px, 2.7cqw)/1.4 "Chivo Mono", monospace; letter-spacing:.03em; color:var(--c-lab); white-space:nowrap;
+  }
+  .pname .tm::before, .pname .tm::after{ content:""; flex:1 0 3cqw; border-top:1px solid var(--c-line); }
+  .pname .tm span{ min-width:0; overflow:hidden; text-overflow:ellipsis; }
+
+  /* stats: labels above tabular values, rows of three (five when there is no title) */
+  .pstats{ position:absolute; z-index:2; left:8%; right:8%; top:69.6%; margin:0; display:flex; flex-wrap:wrap; justify-content:center; row-gap:3.4cqw; }
+  .pstats .st{ flex:0 0 33.333%; min-width:0; display:flex; flex-direction:column; align-items:center; gap:1cqw; }
+  .pstats .st:not(:nth-child(3n+1)){ border-left:1px solid var(--c-line); }
+  .pstats dt{ font:600 max(10px, 2.7cqw)/1 "Chivo Mono", monospace; letter-spacing:.12em; padding-left:.12em; color:var(--c-lab); }
+  .pstats dd{ margin:0; display:flex; align-items:center; justify-content:center; height:6.4cqw; font:800 6.6cqw/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .pstats dd small{ font:inherit; font-size:.62em; opacity:.85; }
+  .pstats .ar{ font-size:.46em; margin-left:.3em; align-self:flex-start; margin-top:.1em; }
+  .pstats .ar-up{ color:var(--c-up); }
+  .pstats .ar-dn{ color:var(--c-dn); }
+  .pstats .pips{ display:inline-flex; align-items:center; gap:.9cqw; }
+  .pstats .pips i{ width:2.1cqw; height:4.4cqw; border-radius:.5cqw; }
+  .pstats .pips i.w{ background:var(--c-w); }
+  .pstats .pips i.l{ background:var(--c-l); }
+  .pstats .pips i.n{ width:1.3cqw; height:1.3cqw; border-radius:50%; background:var(--c-none); }
+  .ptip{
+    position:absolute; z-index:2; left:0; right:0; bottom:7.6%; text-align:center;
+    font:600 max(9px, 2.3cqw)/1 "Chivo Mono", monospace; letter-spacing:.2em; padding-left:.2em; text-transform:uppercase; color:var(--c-lab);
+  }
+  .t-champ .ptip{ color:var(--ball); }
+
+  /* live strip under the card (was the text over the photo) */
+  .strip{ position:relative; padding:14px 16px 4px; }
+  .strip:empty{ display:none; }
+  .st-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; min-width:0; }
+  .st-row > .glass{ flex:none; }
+  .st-row > a.glass{ display:block; flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+  .st-main{ margin-top:12px; }
+  .st-main .eyebrow{ color:var(--racket); }
+  .strip .timeline-big{ margin-top:4px; gap:12px 18px; }
+  .strip .bigtime{ font-size:clamp(46px, 14vw, 60px); flex:0 1 auto; min-width:0; }
+  .strip .bigtime.word{ font-size:clamp(40px, 12vw, 56px); }
+  .strip .court-no{ flex:none; padding:0 0 2px 16px; border-left:1px solid var(--board-line); }
+  .strip .court-no b{ font-size:34px; }
+
+  @media (prefers-reduced-motion: no-preference){
+    .t-champ .pc .pfx{ animation:holo 7s ease-in-out infinite alternate; }
+  }
+  @keyframes holo{ from{ background-position:0 0, 0 0, 0% 30%; } to{ background-position:0 0, 0 0, 100% 70%; } }
+  @media (prefers-reduced-motion: reduce){ .pc{ transition:none; } }
   .glass{
     display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
     font:600 11px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase;
@@ -182,11 +355,7 @@
   .glass.live{ background:var(--ball); color:var(--board); border-color:var(--ball); }
   .glass.live .dot{ background:var(--board); }
   .glass.done .dot{ background:var(--board-dim); }
-  .hero-top > .glass{ flex:none; }
-  .hero-top > a.glass{ display:block; flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; }
-  .hero-bot{ position:absolute; left:16px; right:16px; bottom:14px; }
   .eyebrow{ font:600 11px/1.2 "Chivo Mono", monospace; letter-spacing:.14em; text-transform:uppercase; color:var(--board-dim); }
-  .hero-bot .eyebrow{ color:var(--racket); }
   .timeline-big{ display:flex; align-items:flex-end; gap:14px; margin-top:6px; }
   .bigtime{
     font:900 clamp(96px, 31vw, 136px)/.78 "Big Shoulders Display", sans-serif; letter-spacing:-.01em;
@@ -459,7 +628,6 @@
   .kbig .lab span{ font:500 11.5px/1.3 "Chivo Mono", monospace; color:var(--board-dim); }
   .knote{ position:relative; font-size:15px; line-height:1.4; margin:14px 0 0; padding:12px 0 14px; border-top:1px solid var(--board-line); }
   .khero2 > img{ object-position:50% 0%; }
-  .hero{ touch-action:pan-y; }
   .court-no b.spf{ font-size:clamp(28px, 8vw, 40px); }
   .khero2 .bigtime{ font-size:clamp(84px, 26vw, 136px); }
   .khero2 .timeline-big{ gap:10px; }
@@ -596,12 +764,9 @@
   footer span{ font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); }
 
   @media (min-width:640px){
-    .hero, .khero{ margin-left:0; margin-right:0; border-radius:22px 22px 0 0; }
-    .hero{ height:420px; }
-    .hero > img{ left:auto; width:58%; object-position:50% 8%;
-      -webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 45%); mask-image:linear-gradient(90deg, transparent 0%, #000 45%); }
     .board{ margin-left:0; margin-right:0; border-radius:0 0 22px 22px; }
-    .khero{ border-radius:22px; }
+    .khero{ margin-left:0; margin-right:0; border-radius:22px; }
+    .hero{ margin-left:0; margin-right:0; border-radius:22px 22px 0 0; }
     .bk-wrap{ margin:0; }
     .bk-scroll{ padding-left:0; padding-right:0; scroll-padding-inline:0; }
   }
@@ -663,15 +828,6 @@
   .follow[aria-pressed="true"]{ background:var(--solid); border-color:var(--solid); color:var(--solid-ink); }
   .follow[aria-pressed="true"] svg path{ fill:currentColor; }
 
-  /* ---------- hero without a photo: big initials on the court ---------- */
-  .hero.rin > img{ object-position:50% 20%; }   /* RankedIn profile photo: faces sit in the upper part */
-  .hero.noimg{ background:radial-gradient(120% 90% at 85% 8%, #1A3789 0%, var(--board-2) 42%, var(--board) 82%); }
-  .hero.noimg .ini-big{
-    position:absolute; right:14px; top:46px; font:900 clamp(150px, 50vw, 240px)/.8 "Big Shoulders Display", sans-serif;
-    letter-spacing:-.01em; color:var(--racket); opacity:.88; user-select:none;
-  }
-  .hero.noimg .court{ height:62%; opacity:.2; }
-  .hero.noimg .scrim{ background:linear-gradient(180deg, rgba(6,13,34,0) 38%, rgba(6,13,34,.55) 64%, var(--board) 96%); }
 
   /* ---------- home ---------- */
   .club{
@@ -1437,6 +1593,7 @@
     sum.innerHTML = t ? '<b>' + t + (t === 1 ? " titel" : " titlar") + '</b><span>på ' + done.length + ' tävlingar' + tail + '</span>' :
       sf ? '<b>' + sf + (sf === 1 ? " semifinal" : " semifinaler") + '</b><span>på ' + done.length + ' tävlingar' + tail + '</span>' :
       '<b>' + done.length + (done.length === 1 ? " tävling" : " tävlingar") + '</b><span>senaste året' + tail + '</span>';
+    updateCard(who);
   }
   // Expand a row: placement, own matches (scores, opponents' skill) and the full draw, fetched from RankedIn once.
   function toggleTour(who, item, restore){
@@ -2315,9 +2472,9 @@
   function dynShell(who){
     var P = BYKEY[who];
     return '<div class="livebar" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div><div class="recent" data-r="recent" hidden></div>' +
-      '<div class="' + heroCls(P) + '">' + heroMedia(P) + '<div class="scrim"></div>' + COURT_SVG +
-      '<div class="hero-top"><a class="glass" data-r="link" target="_blank" rel="noopener"></a><span class="glass" data-r="pill"><span class="dot"></span><span>–</span></span></div>' +
-      '<div class="hero-bot"><div class="eyebrow" data-r="round"></div><div class="timeline-big"><div class="bigtime" data-r="time">–</div><div class="court-no" data-r="cno"><small data-r="clab">Bana</small><b data-r="court"></b></div></div></div></div>' +
+      '<div class="' + heroCls(P) + '">' + cardHtml(P) +
+      '<div class="strip"><div class="st-row"><span class="glass" data-r="pill"><span class="dot"></span><span>–</span></span><a class="glass" data-r="link" target="_blank" rel="noopener"></a></div>' +
+      '<div class="st-main"><div class="eyebrow" data-r="round"></div><div class="timeline-big"><div class="bigtime" data-r="time">–</div><div class="court-no" data-r="cno"><small data-r="clab">Bana</small><b data-r="court"></b></div></div></div></div></div>' +
       '<div class="board" aria-live="polite"><div class="countdown" data-r="cd"><span class="l"><span class="dot"></span><span data-r="cdt">–</span></span><a data-r="rl" target="_blank" rel="noopener">RankedIn ↗︎</a></div>' +
       '<div class="lastres" data-r="last" hidden></div><div class="vs" data-r="vs"></div><div class="nextev" data-r="next" hidden></div></div>' +
       '<ol class="route" data-r="route" aria-label="Vägen genom tävlingen" hidden></ol>' +
@@ -2358,7 +2515,7 @@
     el.time.textContent = o.big || "–";
     el.time.className = "bigtime" + (o.word ? " word" : "");
     // Long words ("Kvartsfinal") must fit on one line even in the fallback font (web font not loaded yet)
-    el.time.style.fontSize = o.word && String(o.big).length > 7 ? "min(86px, 15.5vw, calc((100vw - 40px) / " + (String(o.big).length * 0.63).toFixed(2) + "))" : "";
+    el.time.style.fontSize = o.word && String(o.big).length > 7 ? "min(60px, 12.5vw, calc((100vw - 40px) / " + (String(o.big).length * 0.63).toFixed(2) + "))" : "";
     el.time.parentNode.className = "timeline-big" + (o.word ? " wrap" : "");
     el.cno.hidden = !o.court; el.clab.textContent = o.clab || "Bana"; el.court.textContent = o.court || "";
     el.pill.className = "glass" + (o.pcls ? " " + o.pcls : "");
@@ -2900,6 +3057,7 @@
     [].forEach.call(box.querySelectorAll("[data-r]"), function(x){ D.el[x.getAttribute("data-r")] = x; });
     D.bar = box.querySelector(".livebar");
     box.hidden = false;
+    fitNames(box);
     if (e){
       var c = CACHE_OFF ? null : store.json(dynCacheKey(D));
       if (c && Array.isArray(c.datas)){ D.datas = c.datas; D.cachedAt = new Date(c.at); DYN_SAVED[dynCacheKey(D)] = JSON.stringify(c.datas); }
@@ -3044,6 +3202,7 @@
     if (VIEW.name === "home") renderHome();
     if (VIEW.name === "team") try { renderTeam(TEAMS.filter(function(x){ return x.id === VIEW.team; })[0]); } catch (e){}
     Object.keys(PANELS).forEach(function(w){
+      try { updateCard(w); } catch (e){ warn("Spelarkort", e); }
       try { renderUps(w); } catch (e){ warn("Kommande", e); }
       try { renderTours(w); } catch (e){ warn("Tävlingar", e); }
       if (!PANELS[w].hidden || DYN[w]) try { setMode(w, pickHero(w)); } catch (e){
@@ -3433,10 +3592,9 @@
     return '<div class="stat"><div class="k">' + label + '</div><div class="v" id="tv-' + k + '-' + key + '">–</div><div class="d" id="td-' + k + '-' + key + '" hidden></div><div class="s" id="ts-' + k + '-' + key + '">' + esc(sub) + '</div></div>';
   }
   function playerHtml(P){
-    var k = P.key, last = lastName(P);
-    return '<div class="phead"><div class="pt"><h1 id="ph-' + k + '">' + esc(P.short) + (last ? ' <span>' + esc(last) + '</span>' : "") + '</h1>' +
-      '<div class="pm">' + esc([P.team, P.division].filter(Boolean).join(" · ") + (P.captain ? " · kapten" : "")) + '</div></div>' + followBtnHtml(P) + '</div>' +
-      '<div class="dyn" id="dyn-' + k + '"><div class="' + heroCls(P) + '">' + heroMedia(P) + '<div class="scrim"></div>' + COURT_SVG + '</div>' +
+    var k = P.key;
+    return '<h1 class="sr" id="ph-' + k + '">' + esc(P.name) + '</h1>' +
+      '<div class="dyn" id="dyn-' + k + '"><div class="' + heroCls(P) + '">' + cardHtml(P) + '</div>' +
         '<div class="board"><div class="countdown"><span class="l"><span class="dot"></span><span>Hämtar tävlingar …</span></span></div></div></div>' +
       '<section aria-labelledby="h-dev-' + k + '"><div class="sh"><h2 id="h-dev-' + k + '">Utveckling</h2><div class="meta">SPF-ranking</div></div>' +
         '<div class="stats">' + statHtml(k, "rank", "Ranking", P.gender === "F" ? "Dam huvudlista" : "Herrar huvudlista") + statHtml(k, "pts", "Rankingpoäng", "SPF, 12 mån") + statHtml(k, "skill", "Skill", "") + '</div>' +
@@ -3451,7 +3609,7 @@
       '<section aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">Bra att veta</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>';
   }
   var WATCHING = false;   // panel built by ensureWatch (hidden): its photo waits until the page is shown
-  function heroCls(P){ return P.img ? "hero" : rinPhoto(P) ? "hero rin" : "hero noimg"; }
+  function heroCls(P){ return "hero t-" + cardTier(P) + (P.img ? "" : rinPhoto(P) ? " rin" : " noimg"); }
   function heroMedia(P){
     var rin = rinPhoto(P);
     if (rin) return '<img class="rin" src="' + esc(rin) + '" alt="' + esc(P.name) + '" decoding="async" referrerpolicy="no-referrer" data-ini="' + esc(initials(P.name)) + '"' +
@@ -3460,6 +3618,115 @@
       (WATCHING ? ' loading="lazy"' : ' fetchpriority="high"') + '>';
     return '<div class="ini-big" aria-hidden="true">' + esc(initials(P.name)) + '</div>';
   }
+  /* ---- the player card: rating (skill), class, crest, photo, name, official stats; tier by skill ---- */
+  // Tier: gold from skill 15.5 (the top fifth of the club, which spans about 11.3 to 16.2), silver from 13, bronze
+  // below. A class won in the last seven days (from the day of the final) turns the card blue, whatever the skill;
+  // without the worker's wins the card simply keeps its metal.
+  var CARD_GOLD = 15.5, CARD_SILVER = 13, CHAMP_DAYS = 7;
+  function cardSkill(P){ var s = trendOf(P).skill[0], b = boardOf(P); return num(s) != null ? s : num(b.sk) != null ? b.sk : num(P.skill); }
+  function cardChamp(P){
+    var today = dayOf(now());
+    return ((DISC && DISC.wins) || []).filter(function(w){
+      return w && (w.place || 1) === 1 && /^\d{4}-\d\d-\d\d$/.test(w.date || "") && w.date <= today && today <= addDays(w.date, CHAMP_DAYS) &&
+        (w.pids || []).map(Number).indexOf(P.pid) >= 0;
+    }).sort(function(a, b){ return String(b.date).localeCompare(String(a.date)); })[0] || null;
+  }
+  function cardTier(P){ var s = cardSkill(P); return cardChamp(P) ? "champ" : s == null ? "bronze" : s >= CARD_GOLD ? "gold" : s >= CARD_SILVER ? "silver" : "bronze"; }
+  // SPF: the ranking decides the lowest class a player may enter (Bra att veta, Klasser). Not ranked: D.
+  function classOf(P, rank){
+    if (rank == null) return "D";
+    return P.gender === "F" ? (rank <= 50 ? "A" : rank <= 160 ? "B" : rank <= 700 ? "C" : "D") : (rank <= 60 ? "A" : rank <= 200 ? "B" : rank <= 1200 ? "C" : "D");
+  }
+  // This year's doubles W–L: the worker's board, else the RankedIn profile ("12-5").
+  function yearWL(P){
+    var b = boardOf(P), yr = +dayOf(now()).slice(0, 4), pr = trendOf(P).prof;
+    if (b.y === yr && num(b.w) != null) return [b.w, num(b.l) || 0];
+    var m = /^(\d+)\s*[-–]\s*(\d+)$/.exec(String((pr && pr.season) || ""));
+    return m ? [+m[1], +m[2]] : null;
+  }
+  // Classes won this year: Senaste tävlingar (placement "Vinnare") and the worker's wins, one per class.
+  function titlesYear(P){
+    var yr = dayOf(now()).slice(0, 4), seen = {};
+    try { tourRows(P.key).forEach(function(r){ if (r.b === "Vinnare" && String(r.d).slice(0, 4) === yr) seen[String(r.cid || r.u)] = 1; }); } catch (e){}
+    ((DISC && DISC.wins) || []).forEach(function(w){
+      if (w && (w.place || 1) === 1 && String(w.date || "").slice(0, 4) === yr && (w.pids || []).map(Number).indexOf(P.pid) >= 0) seen[String(w.classId)] = 1;
+    });
+    return Object.keys(seen).length;
+  }
+  // The tournament's name as the hero shows it (the discovery's event), else the one stored with the win.
+  function winEventName(w){
+    var id = String(w.classId), e = ((DISC && DISC.events) || []).concat((DISC && DISC.past) || []).filter(function(x){ return x && String(x.classId) === id && x.name; })[0];
+    return (e && e.name) || w.name || "";
+  }
+  var CARD_EDGE = '<svg class="edge" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M2.6 5.4 7.4 1.9H36.6L40.6 3.3H59.4L63.4 1.9H92.6L97.4 5.4V83L96.2 85.2 92.2 87.4 82.8 90.7 69.4 93.8 57.6 96.4 50 97.9 42.4 96.4 30.6 93.8 17.2 90.7 7.8 87.4 3.8 85.2 2.6 83Z"/></svg>';
+  var TROPHY = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.4A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.4 12H8a4 4 0 0 1-4-4V5h3zm-1 4v1a2 2 0 0 0 1 1.7V7zm12 0v2.7A2 2 0 0 0 18 8V7z"/></svg>';
+  // Arrows mean "better" the same way everywhere: up and green when the ranking number drops or the points/skill rise.
+  function cardArrow(x, lowerIsBetter){
+    if (!x || typeof x[0] !== "number" || typeof x[1] !== "number" || Math.abs(x[0] - x[1]) < 0.005) return "";
+    var better = lowerIsBetter ? x[0] < x[1] : x[0] > x[1];
+    return '<span class="ar ' + (better ? "ar-up" : "ar-dn") + '" aria-hidden="true">' + (better ? "▲︎" : "▼︎") + '</span><span class="sr">' + (better ? ", bättre" : ", sämre") + '</span>';
+  }
+  function cardStat(key, abbr, full, val){ return '<div class="st" data-st="' + key + '"><dt><span aria-hidden="true">' + abbr + '</span><span class="sr">' + esc(full) + '</span></dt><dd>' + val + '</dd></div>'; }
+  // Rating: skill cut (not rounded) to one decimal, so 15.96 reads 15.9 and never 16.0; the exact value is in SKL.
+  function cardRating(sk){ var t = (Math.floor(sk * 10 + 1e-6) / 10).toFixed(1).split("."); return t[0] + '<small>.' + t[1] + '</small>'; }
+  function cardFace(P){
+    var T = trendOf(P), b = boardOf(P), sk = cardSkill(P), rk = num(T.rank[0]) != null ? T.rank[0] : num(b.rk) != null ? b.rk : num(P.rank);
+    var pts = num(T.pts[0]) != null ? T.pts[0] : num(b.rp) != null ? b.rp : num(P.points), cls = classOf(P, rk);
+    var last = surname(P.name), first = P.name.split(" ")[0], champ = cardChamp(P), wl = yearWL(P), tit = titlesYear(P);
+    var stats = [
+      cardStat("rnk", "RNK", "SPF-ranking", rk != null ? '<small>#</small>' + rk + cardArrow(T.rank, true) : "–"),
+      cardStat("pts", "PTS", "Rankingpoäng", pts != null ? fmtPts(pts) + cardArrow(T.pts) : "–"),
+      cardStat("skl", "SKL", "Skill", sk != null ? sk.toFixed(2) + cardArrow(T.skill) : "–"),
+      cardStat("vin", "VIN%", "Vunna matcher i år, procent", wl && wl[0] + wl[1] ? Math.round(100 * wl[0] / (wl[0] + wl[1])) + '<span class="sr"> (' + wl[0] + " vinster, " + wl[1] + " förluster)</span>" : "–")
+    ];
+    if (tit) stats.push(cardStat("tit", "TIT", "Vunna klasser i år", String(tit)));
+    // Form: the last five results (V filled, F red), a dot for a match not played yet; hidden without any results.
+    var form = ((T.prof && T.prof.form) || []).filter(function(r){ return r === "W" || r === "L"; }).slice(0, 5);
+    if (form.length){
+      var nw = form.filter(function(r){ return r === "W"; }).length, pad = [];
+      for (var i = form.length; i < 5; i++) pad.push('<i class="n"></i>');
+      stats.push(cardStat("form", "FORM", "Form", '<span class="pips" aria-hidden="true">' + form.map(function(r){ return '<i class="' + (r === "W" ? "w" : "l") + '"></i>'; }).join("") + pad.join("") + '</span>' +
+        '<span class="sr">' + esc("Form: " + form.map(function(r){ return r === "W" ? "V" : "F"; }).join(" ") + " (" + nw + (nw === 1 ? " vinst, " : " vinster, ") + (form.length - nw) + (form.length - nw === 1 ? " förlust" : " förluster") + ")") + '</span>'));
+    }
+    var team = [P.team, P.division].filter(Boolean).join(" · ") + (P.captain ? " · kapten" : ""), wn = champ ? winEventName(champ) : "";
+    return '<p class="sr">' + esc((sk != null ? "Skill " + sk.toFixed(2).replace(".", ",") : "Ingen skill än") + ", får spela " + cls + "-klass" + (rk != null ? ", ranking " + rk : "") + ".") + '</p>' +
+      '<div class="prate" aria-hidden="true"><div class="ovr">' + (sk != null ? cardRating(sk) : "–") + '</div><div class="kl">Skill</div>' +
+        '<div class="cls">' + cls + '</div><div class="kl">Klass</div><hr><img class="crest" src="img/nynas-logo.png" alt="" width="78" height="100"></div>' +
+      '<div class="pname">' +
+        (champ ? '<div class="pwin"><span>' + TROPHY + '<b>Vann ' + esc(champ.cls || "klassen") + '</b>' + (wn ? '<span class="wt"> · ' + esc(wn) + '</span>' : "") + '</span></div>' : "") +
+        '<span class="fn">' + esc(first) + '</span><span class="ln" style="--n:' + Math.max(5, last.length) + '">' + esc(last) + '</span>' +
+        (team ? '<span class="tm"><span>' + esc(team) + '</span></span>' : "") + '</div>' +
+      '<dl class="pstats">' + stats.join("") + '</dl>' +
+      '<div class="ptip">' + (champ ? "Veckans vinnare" : "Nynäs Padel Club") + '</div>';
+  }
+  function cardHtml(P){
+    return '<div class="cardwrap"><div class="pc" role="group" aria-label="' + esc("Spelarkort, " + P.name) + '"><div class="pmed">' + heroMedia(P) + '</div><div class="pfx" aria-hidden="true"></div>' +
+      '<div class="pface">' + cardFace(P) + '</div><div class="pfol">' + followBtnHtml(P) + '</div>' + CARD_EDGE + '</div></div>';
+  }
+  // New ranking, skill, profile, titles or wins: the card's text and tier (the photo and the follow button stay).
+  function updateCard(who){
+    var P = BYKEY[who], m = PANELS[who];
+    if (!P || !m) return;
+    var tier = "t-" + cardTier(P), face = cardFace(P);
+    [].forEach.call(m.querySelectorAll(".hero"), function(h){
+      ["t-gold", "t-silver", "t-bronze", "t-champ"].forEach(function(c){ h.classList.toggle(c, c === tier); });
+      var f = h.querySelector(".pface");
+      if (f && f._h !== face){ f.innerHTML = face; f._h = face; }
+    });
+    fitNames(m);
+  }
+  // Long surnames: the CSS size fits the display font; a name that still does not fit (the fallback font before the
+  // web font, a long double name) shrinks to the card's width. Hidden cards wait until they are shown.
+  function fitNames(root){
+    [].forEach.call((root || document).querySelectorAll(".pname .ln"), function(el){
+      if (!el.clientWidth) return;
+      el.style.fontSize = "";
+      var c = el.clientWidth, w = el.scrollWidth;
+      if (w > c + 1) el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize) * c / w * .98).toFixed(1) + "px";
+    });
+  }
+  try { document.fonts.ready.then(function(){ fitNames(); }); document.fonts.addEventListener("loadingdone", function(){ fitNames(); }); } catch (e){}
+  window.addEventListener("resize", function(){ clearTimeout(fitNames.t); fitNames.t = setTimeout(function(){ fitNames(); }, 150); });
   // New or changed RankedIn photos (applyDisc): the heroes already built get the new image (or initials); the
   // avatars follow with the next render of their list.
   function rinHeroes(){
@@ -3467,11 +3734,9 @@
       var P = BYKEY[w];
       if (!P || P.img) return;
       [].forEach.call(PANELS[w].querySelectorAll(".hero"), function(h){
-        var cur = h.querySelector(".hero > img, .hero > .ini-big"), want = rinPhoto(P);
-        if (cur && (cur.tagName === "IMG" ? cur.getAttribute("src") === want : !want)) return;
-        var tmp = document.createElement("div");
-        tmp.innerHTML = heroMedia(P);
-        if (cur) h.replaceChild(tmp.firstChild, cur); else h.insertBefore(tmp.firstChild, h.firstChild);
+        var box = h.querySelector(".pmed"), cur = box && box.firstElementChild, want = rinPhoto(P);
+        if (!box || (cur && (cur.tagName === "IMG" ? cur.getAttribute("src") === want : !want))) return;
+        box.innerHTML = heroMedia(P);
         h.classList.toggle("rin", !!want); h.classList.toggle("noimg", !want);
       });
     });
@@ -3486,11 +3751,11 @@
     if (h.contains("av")){
       h.add("ini"); box.setAttribute("aria-hidden", "true");
       box.textContent = box.getAttribute("data-ini") || "";
-    } else if (h.contains("hero")){
-      var d = document.createElement("div");
+    } else if (h.contains("pmed")){
+      var d = document.createElement("div"), hero = box.closest(".hero");
       d.className = "ini-big"; d.setAttribute("aria-hidden", "true"); d.textContent = im.getAttribute("data-ini") || "";
       box.replaceChild(d, im);
-      h.remove("rin"); h.add("noimg");
+      if (hero){ hero.classList.remove("rin"); hero.classList.add("noimg"); }
     }
   }, true);
   function panel(P){
@@ -3576,6 +3841,7 @@
       fr.hidden = !form.length;
       fm.innerHTML = chips(form);
     }
+    updateCard(who);
   }
   // Skill after each match: the last ten points, with the top marked.
   function drawChart(who, hist){
@@ -4002,7 +4268,7 @@
     var host = document.getElementById(P.key + "Info");
     if (!host) return;
     var rank = trendOf(P).rank[0], F = P.gender === "F";
-    var lvl = rank == null ? "" : F ? (rank <= 50 ? "A" : rank <= 160 ? "B" : rank <= 700 ? "C" : "D") : (rank <= 60 ? "A" : rank <= 200 ? "B" : rank <= 1200 ? "C" : "D");
+    var lvl = rank == null ? "" : classOf(P, rank);
     var me = rank == null ? P.short + " finns inte på SPF-rankingen just nu." : P.short + " ligger på plats " + rank + " och är " + lvl + "-spelare.";
     host.innerHTML = info([sptItem,
       {t:"Klasser", s:SRC.cls, b:"<p>Din klass styrs av din rankingplacering. " + (F ? "Damer 51–160 är B-klass, 161–700 är C-klass." : "Herrar 61–200 är B-klass, 201–1200 är C-klass.") +
@@ -4025,6 +4291,8 @@
       var el = document.getElementById(v);
       if (el) el.hidden = v !== id;
     });
+    var shown = document.getElementById(id);
+    if (shown) fitNames(shown);
   }
   function renderChips(cur){
     var host = document.getElementById("chips");
@@ -4123,7 +4391,7 @@
     document.addEventListener("touchstart", function(e){
       var h = e.target.closest && e.target.closest("main.view:not([hidden]) .hero");
       if (!h || VIEW.name !== "player" || e.touches.length !== 1 || e.target.closest("a, button")){ el = null; return; }
-      el = h; sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; lock = null;
+      el = h.querySelector(".cardwrap") || h; sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; lock = null;
       el.style.transition = "none";
     }, {passive:true});
     document.addEventListener("touchmove", function(e){
@@ -4133,7 +4401,7 @@
       if (lock !== "x") return;
       dx = x;
       var pull = step(x < 0 ? 1 : -1) ? x * 0.45 : x * 0.18;
-      if (!calm) el.style.transform = "translateX(" + pull.toFixed(1) + "px)";
+      if (!calm) el.style.transform = "translateX(" + pull.toFixed(1) + "px) rotate(" + (pull * 0.025).toFixed(2) + "deg)";
     }, {passive:true});
     function end(){
       if (!el) return;
@@ -4143,11 +4411,29 @@
       h.style.transform = "";
       if (!to) return;
       goPlayer(to);
-      var nh = document.querySelector("#p-" + to + " .hero");
-      if (nh && !calm && nh.animate) nh.animate([{transform:"translateX(" + (dir * 40) + "px)", opacity:.4}, {transform:"none", opacity:1}], {duration:320, easing:"cubic-bezier(.2,.8,.2,1)"});
+      var nh = document.querySelector("#p-" + to + " .hero .cardwrap");
+      if (nh && !calm && nh.animate) nh.animate([{transform:"translateX(" + (dir * 90) + "px) rotate(" + (dir * 3) + "deg)", opacity:.2}, {transform:"none", opacity:1}], {duration:380, easing:"cubic-bezier(.2,.8,.2,1)"});
     }
     document.addEventListener("touchend", end, {passive:true});
     document.addEventListener("touchcancel", end, {passive:true});
+  })();
+
+  // The card catches the light: the sheen follows the pointer or finger; a mouse also tilts it a little.
+  (function(){
+    var calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (calm) return;
+    document.addEventListener("pointermove", function(e){
+      var pc = e.target.closest && e.target.closest(".pc");
+      if (!pc) return;
+      var r = pc.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      pc.style.setProperty("--sx", (x * 100).toFixed(1) + "%");
+      if (e.pointerType === "mouse"){ pc.style.setProperty("--ry", ((x - .5) * 10).toFixed(2) + "deg"); pc.style.setProperty("--rx", ((.5 - y) * 8).toFixed(2) + "deg"); }
+    }, {passive:true});
+    document.addEventListener("pointerout", function(e){
+      var pc = e.target.closest && e.target.closest(".pc");
+      if (!pc || (e.relatedTarget && pc.contains(e.relatedTarget))) return;
+      pc.style.removeProperty("--rx"); pc.style.removeProperty("--ry");
+    }, {passive:true});
   })();
 
   document.addEventListener("click", function(e){
