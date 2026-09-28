@@ -35,3 +35,21 @@ export async function makeVapid() {
   return { VAPID_PUBLIC_KEY: b64u.enc(await crypto.subtle.exportKey("raw", kp.publicKey)), VAPID_PRIVATE_KEY: JSON.stringify({ kty, crv, x, y, d }), verifyKey: kp.publicKey, d };
 }
 
+
+// KV with metadata (like Cloudflare's: list() returns each key's metadata, 1000 keys per page)
+export function kv() {
+  const m = new Map(), meta = new Map(), ops = { get: 0, put: 0, delete: 0, list: 0 };
+  return { m, meta, ops,
+    async get(k) { ops.get++; return m.has(k) ? m.get(k) : null; },
+    async getWithMetadata(k) { ops.get++; return { value: m.has(k) ? m.get(k) : null, metadata: meta.get(k) || null }; },
+    async put(k, v, o) {
+      if (o && o.metadata && new TextEncoder().encode(JSON.stringify(o.metadata)).length > 1024) throw new Error("KV PUT failed: 413 metadata too large");   // as Cloudflare
+      ops.put++; m.set(k, v); if (o && o.metadata) meta.set(k, o.metadata); else meta.delete(k);
+    },
+    async delete(k) { ops.delete++; m.delete(k); meta.delete(k); },
+    async list({ prefix, cursor }) {
+      ops.list++;
+      const all = [...m.keys()].filter(k => k.startsWith(prefix)).sort(), from = cursor ? +cursor : 0, keys = all.slice(from, from + 1000);
+      return { keys: keys.map(name => ({ name, ...(meta.has(name) ? { metadata: meta.get(name) } : {}) })), list_complete: from + 1000 >= all.length, cursor: String(from + 1000) };
+    } };
+}

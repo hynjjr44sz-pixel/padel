@@ -98,13 +98,14 @@ test("tick: SPL play day end to end: baseline, a finished rubber is pushed, KV o
   partial[0].matches.matches[0].matchResult = null; partial[0].matches.matches[0].state = 2;
   st.over = { "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=127649&language=en": partial };
   let r = await tick(env, [ev]);
-  assert.deepEqual([r.writes, r.sent], [1, 0]);
+  assert.deepEqual([r.writes, r.sent], [2, 0], "the tie's state + the live relay");
+  assert.equal(JSON.parse(JSON.parse(m.get("live")).items.tm127649.d)[0].matches.matches[0].state, 2, "relay: the raw rubbers");
   r = await tick(env, [ev]);
   assert.deepEqual([r.writes, r.sent], [0, 0]);
   st.over = {};
   st.over["/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=127649&language=en"] = A("tm_127649_matches");
   r = await tick(env, [ev]);
-  assert.deepEqual([r.writes, r.sent], [1, 2]);
+  assert.deepEqual([r.writes, r.sent], [2, 2]);
   const msgs = await Promise.all(st.pushes.map(async p => JSON.parse(await a.decrypt(p.init.body))));
   assert.deepEqual(msgs.map(x => x.title), ["Thea och Rebecca vann sin match 6-3 6-2", "Nynäs Damlag förlorade mot Padelverket Damlag 1–2"]);
   assert.ok(JSON.parse(m.get("st:tm127649"))._done);

@@ -15,7 +15,13 @@ crons = ["* * * * *"]
 ORIGIN = "https://padel.holmberg.st"
 VAPID_SUBJECT = "https://padel.holmberg.st"
 
-# Secrets (set by deploy.sh with `wrangler secret put`): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
+# Secrets (set by deploy.sh with `wrangler secret put`): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, FANOUT_KEY
+
+# Push fan-out: the cron tick hands its pushes to this same worker (POST /fanout, secret FANOUT_KEY), which sends
+# them in batches, each call with its own subrequest and CPU budget (see README: capacity).
+[[services]]
+binding = "SELF"
+service = "padel-push"
 
 # Per-IP rate limits (free plan): subscribe/unsubscribe, and the public GET routes (each costs KV reads).
 [[ratelimits]]
@@ -27,3 +33,17 @@ simple = { limit = 5, period = 60 }
 name = "API_RL"
 namespace_id = "1002"
 simple = { limit = 60, period = 60 }
+
+# GET /live (the live relay): polled once a minute by every open app during an event. Many phones at one venue can
+# share an IP (the club's wifi), so this limit is higher. Each call costs at most one KV read per isolate per 25 s.
+[[ratelimits]]
+name = "LIVE_RL"
+namespace_id = "1003"
+simple = { limit = 600, period = 60 }
+
+# GET /live, all callers together (one key): past ~100 calls a minute the apps are told to poll RankedIn themselves for
+# 30 min, so the relay can never use up the free plan's 100k requests a day that cron and the pushes need.
+[[ratelimits]]
+name = "LIVE_ALL"
+namespace_id = "1004"
+simple = { limit = 100, period = 60 }

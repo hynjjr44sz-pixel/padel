@@ -9,6 +9,7 @@ import { parseTie, snapshotTie, tieNotes, tieSummary } from "./teamleague.js";
 import { b64u, vapidKey, send } from "./webpush.js";
 import { dayOf, localToDate, offsetAt } from "./tz.js";
 import { calendarDue, calendarStep, sameCalendar, registrations, runOf } from "./calendar.js";
+import { prune, playersOf, parseLive, nextLive, skillsDue, ratingsOf, liveBody, ID_RE, LIVE_MEM_MS, LIVE_CALM_MS, LIVE_MAX_WRITES } from "./relay.js";
 
 // Push services we are willing to POST to (no open relay). PUSH_HOST_ANY=1 is for local tests only.
 const PUSH_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(fcm\.googleapis\.com|android\.googleapis\.com|push\.services\.mozilla\.com|push\.apple\.com|notify\.windows\.com)(:\d+)?\//;
@@ -42,12 +43,40 @@ async function limited(rl, req) {
   if (!rl) return false;
   try { return !(await rl.limit({ key: req.headers.get("CF-Connecting-IP") || "local" })).success; } catch (e) { return false; }
 }
-const MAX_SUBS = 500;
-async function readBody(req) {
-  if (Number(req.headers.get("Content-Length") || 0) > 4096) throw new Error("too large");
+// Push fan-out (see fanOut): up to MAX_SUBS devices. The cap only keeps KV and the outbox bounded.
+const MAX_SUBS = 5000;
+async function readBody(req, max = 4096) {
+  if (Number(req.headers.get("Content-Length") || 0) > max) throw new Error("too large");
   const t = await req.text();
-  if (t.length > 4096) throw new Error("too large");
+  if (t.length > max) throw new Error("too large");
   return JSON.parse(t);
+}
+// Subscriptions: the record is also the key's KV metadata when it fits (1024 bytes), so the fan-out reads every device
+// with one KV list per 1000 devices instead of a get each.
+// KV's limit is 1024 bytes of serialized metadata (the record's quotes are escaped in it).
+const metaOf = rec => new TextEncoder().encode(JSON.stringify({ r: rec })).length <= 1024 ? { metadata: { r: rec } } : undefined;
+// Devices counted by this isolate (the cap check on a new subscription lists at most every 10 min).
+let SUBN = { n: 0, at: 0 };
+async function subCount(env) {
+  if (SUBN.at && Date.now() - SUBN.at < 10 * 60e3 && SUBN.n < MAX_SUBS - 50) return SUBN.n;
+  let n = 0, cursor;
+  do {
+    const page = await env.PUSH.list({ prefix: "sub:", cursor });
+    n += page.keys.length;
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor && n < MAX_SUBS);
+  SUBN = { n, at: Date.now() };
+  return n;
+}
+
+// Constant-time compare of the fan-out secret (crypto.subtle.timingSafeEqual in workerd; plain compare elsewhere).
+function sameSecret(a, b) {
+  const x = new TextEncoder().encode(String(a || "")), y = new TextEncoder().encode(String(b || ""));
+  if (x.length !== y.length) return false;
+  if (crypto.subtle && crypto.subtle.timingSafeEqual) return crypto.subtle.timingSafeEqual(x, y);
+  let d = 0;
+  for (let i = 0; i < x.length; i++) d |= x[i] ^ y[i];
+  return d === 0;
 }
 
 async function handle(req, env) {
@@ -58,10 +87,18 @@ async function handle(req, env) {
     if (!env.ADMIN_KEY || req.headers.get("X-Admin-Key") !== env.ADMIN_KEY) return json({ error: "forbidden" }, 403, {});
     return json(await testPush(env), 200, {});
   }
+  // Internal: a batch of pushes from this worker's own cron tick (service binding SELF). Secret FANOUT_KEY; off without it.
+  if (url.pathname === "/fanout") {
+    if (req.method !== "POST" || !env.FANOUT_KEY || !sameSecret(req.headers.get("X-Fanout-Key"), env.FANOUT_KEY)) return json({ error: "forbidden" }, 403, {});
+    let b;
+    try { b = await readBody(req, 8 << 20); } catch (e) { return json({ error: "bad json" }, 400, {}); }
+    if (!b || !Array.isArray(b.jobs)) return json({ error: "bad json" }, 400, {});
+    return json(await fanoutRoute(env, b.jobs, Math.max(0, b.depth | 0)), 200, {});   // a batch (depth >= 1) never calls on
+  }
   // Writes only from the site (or localhost). The Origin header is only CSRF protection (any script can send it):
   // the per-IP rate limits and the cap on subscriptions are what keep KV (1000 writes, 100k reads a day) safe.
   if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
-  if (await limited(req.method === "POST" ? env.SUB_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
+  if (await limited(req.method === "POST" ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
   const route = req.method + " " + url.pathname;
   if (route === "GET /health") {
     const rec = await loadRecord(env);
@@ -81,6 +118,7 @@ async function handle(req, env) {
     return json({ at: rec ? rec.at : null, src: "worker", events, past, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {},
       board: (rec && rec.board) || {} }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
+  if (route === "GET /live") return liveRoute(req, env, url, h);
   if (route === "GET /cal") {
     // "Förslag på tävlingar": sanctioned tournaments within 200 km, next 8 weeks (built nightly), with the roster's
     // entries as the discovery record has them now. Separate from /events (which stays small), cached an hour.
@@ -97,9 +135,13 @@ async function handle(req, env) {
     if (!(await validSub(s, env))) return json({ error: "bad subscription" }, 400, h);
     const rec = JSON.stringify({ sub: { endpoint: s.endpoint, keys: { p256dh: s.keys.p256dh, auth: s.keys.auth } },
       prefs: { follow: followOf((b && b.prefs) || {}) } });
-    const key = await subKey(s.endpoint), was = await env.PUSH.get(key);
-    if (was === null && (await env.PUSH.list({ prefix: "sub:", limit: MAX_SUBS })).keys.length >= MAX_SUBS) return json({ error: "full" }, 503, h);
-    if (was !== rec) await env.PUSH.put(key, rec);   // no write when nothing changed
+    const key = await subKey(s.endpoint);
+    // getWithMetadata: a record stored before the metadata existed is written once more (the page posts on every visit).
+    let was, meta = true;
+    if (env.PUSH.getWithMetadata) { const x = await env.PUSH.getWithMetadata(key); was = x.value; meta = !metaOf(rec) || !!(x.metadata && x.metadata.r === rec); }
+    else was = await env.PUSH.get(key);
+    if (was === null && (await subCount(env)) >= MAX_SUBS) return json({ error: "full" }, 503, h);
+    if (was !== rec || !meta) { await env.PUSH.put(key, rec, metaOf(rec)); if (was === null) SUBN.n++; SUBS.at = 0; }   // no write when nothing changed
     return json({ ok: true }, 200, h);
   }
   if (route === "POST /unsubscribe") {
@@ -107,7 +149,7 @@ async function handle(req, env) {
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
     if (!b || typeof b.endpoint !== "string") return json({ error: "endpoint missing" }, 400, h);
     const key = await subKey(b.endpoint);
-    if (await env.PUSH.get(key)) await env.PUSH.delete(key);
+    if (await env.PUSH.get(key)) { await env.PUSH.delete(key); SUBS.at = 0; SUBN.at = 0; }
     return json({ ok: true }, 200, h);
   }
   return json({ error: "not found" }, 404, h);
@@ -125,7 +167,7 @@ const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8;
 
 /* ---- discovered events: KV "disc" = {at, events, ended, none, past, photos, board}. Read at most every 5 min per isolate. ---- */
 let MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 };
-export function _resetMemory() { MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 }; LV = { at: 0, v: null }; CAL = { v: undefined, at: 0 }; }
+export function _resetMemory() { MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 }; LV = { at: 0, v: null }; CAL = { v: undefined, at: 0 }; LIVE = { rec: null, at: 0 }; SUBS = { list: null, at: 0 }; SUBN = { n: 0, at: 0 }; LIVE_N = { min: 0, n: 0 }; }
 async function loadRecord(env) {
   if (MEM.rec !== undefined && Date.now() - MEM.readAt < 5 * 60e3) return MEM.rec;
   let rec = null;
@@ -554,6 +596,9 @@ export async function tick(env, events) {
   }
   const evs = activeEvents(t, list);
   if (!evs.length && !pubMsgs.length) {
+    // Pushes left over from an earlier tick (outbox) still go out.
+    try { await fanOut(env, [], budget, log); } catch (e) { console.warn("outbox", e.message); }
+    if (log.sent || log.removed || log.queued) return { active: 0, sent: log.sent, removed: log.removed, queued: log.queued || 0, writes: log.writes };
     if (log.discovered != null || log.writes || log.cal != null) return { active: 0, discovered: log.discovered, refreshed: log.refreshed, writes: log.writes, ...(log.cal != null ? { cal: log.cal } : {}) };
     return { active: 0 };
   }
@@ -584,7 +629,7 @@ export async function tick(env, events) {
   const get = getter(env, budget);
   let msgs = pubMsgs.slice();
   let fetches = 0;
-  const wins = [], pending = [];
+  const wins = [], pending = [], relay = {};
   // Nights (23-07 local) are between events even inside a multi-day window; off-minutes only for the hot units.
   const lh = new Date(+t + offsetAt(+t) * H).getUTCHours(), night = lh >= 23 || lh < 7, quiet = mm % 10 !== 0;
   log.units = arr.length; log.polled = 0;
@@ -608,7 +653,11 @@ export async function tick(env, events) {
     let after;
     try {
       if (u.kind === "t") {
-        const matches = parse(await Promise.all(u.draws.map(([st, sg]) => fetchDraw(env, get, u.classId, st, sg))));
+        const datas = await Promise.all(u.draws.map(([st, sg]) => fetchDraw(env, get, u.classId, st, sg)));
+        // Live relay (GET /live): the draws as the page reads them
+        const pr = prune(datas);
+        relay[String(u.classId)] = { data: pr, dr: u.draws, p: playersOf(pr) };
+        const matches = parse(datas);
         if (!matches.length) continue;
         after = snapshot(matches);
         // "groups" from an older look at the draws: with a later stage it is not a groups-only class.
@@ -621,7 +670,9 @@ export async function tick(env, events) {
         const fin = classResult(matches, ROSTER_BY_NAME, fmt);
         if (fin && (fin.w.length || fin.l.length)) { after._sum.fin = fin; wins.push(...winEntries(u.evs[0], fin, t)); }
       } else {
-        const rubbers = parseTie(await get(rubbersPath(u.tie.id)));
+        const raw = await get(rubbersPath(u.tie.id));
+        relay["tm" + u.tie.id] = { data: raw };
+        const rubbers = parseTie(raw);
         if (!rubbers.length) continue;
         after = snapshotTie(rubbers);
         if (prev) tieNotes(u.ev, u.tie, rubbers, prev).forEach(n => { const { pids, ...m } = n; msgs.push({ pids, m }); });
@@ -632,15 +683,18 @@ export async function tick(env, events) {
       continue;
     }
     if (after._done) after._doneAt = (prev && prev._done && prev._doneAt) || t.toISOString();
+    // Relay hint for the page (GET /live "every"): a match of this unit on now or soon -> poll every minute, else every 5.
+    const rid = u.kind === "t" ? String(u.classId) : "tm" + u.tie.id;
+    if (relay[rid] && !after._done && hot(after, u, t)) relay[rid].h = 1;
     const next = JSON.stringify(after);
     if (JSON.stringify(prev) !== next) pending.push([u.key, next]);   // free KV: 1000 writes/day
   }
   if (wins.length) try { await addWins(env, t, wins, log); } catch (e) { console.warn("wins", e.message); }
+  if (!night) try { await relayStep(env, t, relay, arr, budget, log, pending); } catch (e) { console.warn("relay", e.message); }
   msgs = dedupe(msgs);
-  if (msgs.length) {
-    // The new state is written after the pushes: if the invocation dies on the way, the next tick sends them again.
-    try { await fanOut(env, msgs, budget, log); } catch (e) { console.warn("push", e.message); log.pushFailed = 1; return log; }
-  }
+  // The new state is written after the pushes (sent, or queued in the outbox): if the invocation dies on the way, the
+  // next tick sends them again. Also runs without new messages: it drains the outbox.
+  try { await fanOut(env, msgs, budget, log); } catch (e) { console.warn("push", e.message); log.pushFailed = 1; return log; }
   for (const [k, v] of pending) { await env.PUSH.put(k, v); log.writes++; }
   return log;
 }
@@ -667,51 +721,208 @@ function hot(prev, u, t) {
   return times.some(d => d.slice(0, 10) === today && +t >= +localToDate(d) - 30 * 60e3);
 }
 
-// Push: every device gets the messages about the players it follows (prefs.follow), nothing else.
-async function fanOut(env, msgs, budget, log) {
-  const names = [];
+/* ---- live relay: KV "live" (relay.js), written at most once per tick and only when the data changed ---- */
+const SK_MINUTE = 3, SK_PER_TICK = 20;   // skills of the players in live draws: every 10 min (minute 3, 13, ...), refreshed after 3 h
+async function relayStep(env, t, relay, units, budget, log, pending) {
+  const mm = t.getUTCMinutes(), skTime = mm % 10 === (env.SK_MINUTE != null ? +env.SK_MINUTE : SK_MINUTE);   // SK_MINUTE: local tests only
+  if (!Object.keys(relay).length && !skTime) return;
+  const prev = parseLive(await env.PUSH.get("live")), skills = {}, day = dayOf(t), wn = prev.wd === day ? prev.wn : 0;
+  if (wn >= LIVE_MAX_WRITES) return;   // the day's cap is reached: the relay is empty until tomorrow
+  if (skTime && budget.left > 8) {
+    const items = { ...prev.items };
+    Object.keys(relay).forEach(id => { items[id] = { ...(items[id] || {}), p: relay[id].p }; });
+    const due = skillsDue({ items, sk: prev.sk }, t, Math.min(SK_PER_TICK, budget.left - 6)), get = getter(env, budget);
+    for (const pid of due) {
+      try { skills[pid] = ratingsOf(await get(ratingPath(pid))); } catch (e) { if (e.budget) break; }
+    }
+    if (due.length) log.skills = Object.keys(skills).length;
+  }
+  const keep = new Set(units.map(u => u.kind === "t" ? String(u.classId) : "tm" + u.tie.id));
+  const next = nextLive(prev, relay, skills, t, keep);
+  if (!next) return;
+  // A new result, time or court (the unit's state changed, as for the notiser) or new skills: now. Anything else the
+  // page shows (a live score): at most every 3 minutes.
+  const urgent = Object.keys(skills).length > 0 || Object.keys(relay).some(id => pending.some(([k]) => k === "st:" + id));
+  if (!urgent && prev.at && +t - Date.parse(prev.at) < LIVE_CALM_MS) return;
+  next.wd = day; next.wn = wn + 1;
+  if (next.wn >= LIVE_MAX_WRITES) { next.items = {}; next.sk = {}; log.relayOff = 1; console.warn("relay: " + LIVE_MAX_WRITES + " writes today, off until tomorrow"); }
+  pending.push(["live", JSON.stringify(next)]);
+  log.relay = 1;
+  LIVE = { rec: next, at: Date.now(), bodies: new Map() };
+}
+// GET /live?ids=164681,tm167486[&since=<v>]: {v, at, items: {id: {v, at, dr?, data}}, sk: {pid: {rid: skill}}}.
+// Ids the relay does not have are missing from items (the page asks RankedIn for those). If-None-Match -> 304,
+// since=<v> unchanged -> {v, same: 1}. The record is read from KV at most every 25 s per isolate.
+let LIVE = { rec: null, at: 0, bodies: new Map() };
+// Load shedding: the free plan has 100k requests a day for everything (cron, pushes, the page). Past LIVE_ALL (a rate
+// limit with ONE key for every caller: about 100 /live calls a minute per Cloudflare location, i.e. at most ~72k in a
+// 12-hour day) or LIVE_SHED calls a minute in one isolate, the apps are told to ask RankedIn themselves for 30 min
+// ({shed: 1}): the apps that got through keep the relay, the rest poll RankedIn as before the relay existed.
+const LIVE_SHED = 150;
+let LIVE_N = { min: 0, n: 0 };
+async function overAll(env) {
+  if (!env.LIVE_ALL) return false;
+  try { return !(await env.LIVE_ALL.limit({ key: "all" })).success; } catch (e) { return false; }
+}
+async function liveRoute(req, env, url, h) {
+  const m = Math.floor(Date.now() / 60e3);
+  if (LIVE_N.min !== m) LIVE_N = { min: m, n: 0 };
+  if (++LIVE_N.n > (+env.LIVE_SHED || LIVE_SHED) || await overAll(env)) return json({ shed: 1, every: 1800 }, 200, { ...h, "Cache-Control": "no-store" });
+  const ids = [...new Set(String(url.searchParams.get("ids") || "").split(","))].filter(x => ID_RE.test(x)).slice(0, 12);
+  if (!ids.length) return json({ error: "ids" }, 400, h);
+  if (!LIVE.rec || Date.now() - LIVE.at >= LIVE_MEM_MS || env.NOW) {
+    LIVE = { rec: parseLive(await env.PUSH.get("live")), at: Date.now(), bodies: new Map() };
+  }
+  const k = ids.join(",");
+  let out = LIVE.bodies.get(k);
+  if (!out) { out = liveBody(LIVE.rec, ids); if (LIVE.bodies.size > 200) LIVE.bodies.clear(); LIVE.bodies.set(k, out); }
+  const etag = "\"" + out.v + "\"", hd = { ...h, "Content-Type": "application/json", "ETag": etag, "Cache-Control": "no-cache", "Access-Control-Expose-Headers": "ETag" };
+  if ((req.headers.get("If-None-Match") || "") === etag) return new Response(null, { status: 304, headers: hd });
+  if (url.searchParams.get("since") === out.v) return new Response(JSON.stringify({ v: out.v, same: 1 }), { status: 200, headers: hd });
+  return new Response(out.body, { status: 200, headers: hd });
+}
+
+/* ---- push fan-out ----
+   The tick hands every push to ONE call of this worker (service binding SELF, POST /fanout, secret FANOUT_KEY), which
+   splits it into batches of FANOUT_BATCH pushes, each sent by a further call (its own 50 subrequests and 10 ms CPU).
+   A request may use 32 Worker invocations: cron + dispatcher + 29 batches (MAX_CHILDREN). Whatever does not fit, or a
+   batch that failed, goes to KV "outbox" (one key, written only when it changed) and goes out first on the next tick.
+   Without SELF/FANOUT_KEY (local tests, the first deploy before the secret exists) the tick sends in-process as before. */
+const FANOUT_BATCH = 20, MAX_CHILDREN = 29, OUTBOX_MAX_AGE = H;   // a push waits at most an hour (its TTL)
+const batchSize = env => Math.max(1, +env.FANOUT_BATCH || FANOUT_BATCH);   // FANOUT_BATCH: tuning / tests
+const fanoutReady = env => !!env.FANOUT_KEY && !!(env.SELF || env.FANOUT_URL);
+const pushesOf = jobs => jobs.reduce((n, j) => n + j.m.length, 0);
+// Every device record, read with the KV list (metadata) and a get only for records without it. Kept 3 min per isolate.
+let SUBS = { list: null, at: 0 };
+async function subscribers(env) {
+  if (SUBS.list && Date.now() - SUBS.at < 3 * 60e3 && !env.NOW) return SUBS.list;
+  const keys = [];
   let cursor;
-  do {   // at most MAX_SUBS: one KV read each, well inside the per-invocation limits
+  do {
     const page = await env.PUSH.list({ prefix: "sub:", cursor });
-    names.push(...page.keys.map(k => k.name));
+    keys.push(...page.keys);
     cursor = page.list_complete ? null : page.cursor;
-  } while (cursor && names.length < MAX_SUBS);
-  names.length = Math.min(names.length, MAX_SUBS);
-  const devs = (await Promise.all(names.map(async name => {
+  } while (cursor && keys.length < MAX_SUBS);
+  const list = (await Promise.all(keys.slice(0, MAX_SUBS).map(async k => {
     let rec = null;
-    try { rec = JSON.parse((await env.PUSH.get(name)) || "null"); } catch (e) { rec = null; }
-    if (!rec || !rec.sub) return null;
-    const f = new Set(followOf(rec.prefs));
-    const out = mergeForDevice(msgs.filter(x => x.pids.some(p => f.has(Number(p)))).map(x => x.m));
-    return out.length ? { name, rec, out } : null;
+    try { rec = JSON.parse((k.metadata && k.metadata.r) || (await env.PUSH.get(k.name)) || "null"); } catch (e) { rec = null; }
+    return rec && rec.sub ? { name: k.name, rec } : null;
   }))).filter(Boolean);
-  // Fold into one notis per device when needed (subrequests, and CPU: about 1 ms per encrypted push), and cap
-  // the number of devices.
-  const pushBudget = Math.max(0, budget.left);
-  let total = devs.reduce((n, d) => n + d.out.length, 0);
-  if (total > Math.min(pushBudget, FOLD_OVER)) {
-    devs.forEach(d => {
-      if (d.out.length < 2) return;
-      d.out = [{ title: d.out.length + " nya resultat", body: d.out.map(m => m.title).join("\n"), tag: "padel-sammanfattning", url: d.out[d.out.length - 1].url }];
-    });
-    total = devs.length;
+  SUBS = { list, at: Date.now() };
+  return list;
+}
+// Push: every device gets the messages about the players it follows (prefs.follow), nothing else.
+// Jobs: {n: KV key, s: subscription, m: [messages], q: queued at (ms)}.
+async function fanOut(env, msgs, budget, log) {
+  const raw = await env.PUSH.get("outbox");
+  let old = [];
+  try { old = (JSON.parse(raw || "null") || {}).jobs || []; } catch (e) { old = []; }
+  const nowMs = +now(env);
+  old = old.filter(j => nowMs - (j.q || 0) < OUTBOX_MAX_AGE);
+  const cap = fanoutReady(env) ? MAX_CHILDREN * batchSize(env) : Math.max(0, budget.left);
+  const jobs = old.slice();   // the outbox first
+  if (msgs.length) {
+    const devs = (await subscribers(env)).map(({ name, rec }) => {
+      const f = new Set(followOf(rec.prefs));
+      const out = mergeForDevice(msgs.filter(x => x.pids.some(p => f.has(Number(p)))).map(x => x.m));
+      return out.length ? { n: name, s: rec.sub, m: out, q: nowMs } : null;
+    }).filter(Boolean);
+    // Fold into one notis per device when there are many pushes (subrequests, and CPU: about 0.3 ms per encrypted push).
+    const total = pushesOf(devs);
+    if (total > Math.min(Math.max(0, cap - pushesOf(old)), FOLD_OVER)) {
+      devs.forEach(d => {
+        if (d.m.length < 2) return;
+        d.m = [{ title: d.m.length + " nya resultat", body: d.m.map(m => m.title).join("\n"), tag: "padel-sammanfattning", url: d.m[d.m.length - 1].url }];
+      });
+    }
+    log.devices = devs.length;
+    jobs.push(...devs);
   }
-  if (total > pushBudget) {
-    console.warn("push budget: " + devs.length + " devices, sending to the first " + pushBudget);
-    devs.length = pushBudget;
+  let rest = [];
+  if (jobs.length) {
+    if (old.length) log.drained = old.length;
+    rest = await dispatch(env, jobs, budget, log, cap);
   }
-  log.devices = devs.length;
-  if (!devs.length) return;
-  const key = await vapidKey(env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY), jwts = {};   // one VAPID JWT per push service per tick (CPU time on the free plan is 10 ms)
-  await Promise.all(devs.map(async ({ name, rec, out }) => {
-    for (const m of out) {
-      const st = await send(rec.sub, m, env, key, jwts);
-      // 404/410: gone; -1: its keys cannot be used (encryption failed), it would fail every time
-      if (st === 404 || st === 410 || st === -1) { await env.PUSH.delete(name); log.removed++; return; }
-      if (st >= 200 && st < 300) log.sent++;
-      else console.warn("push", st, new URL(rec.sub.endpoint).host);
+  if (rest.length > MAX_SUBS) rest.length = MAX_SUBS;
+  const next = rest.length ? JSON.stringify({ at: new Date(nowMs).toISOString(), jobs: rest }) : null;
+  if (rest.length) { console.warn("push: " + rest.length + " devices wait in the outbox"); log.queued = rest.length; }
+  if (next !== raw && !(next === null && raw === null)) {
+    if (next) await env.PUSH.put("outbox", next); else await env.PUSH.delete("outbox");
+    log.writes = (log.writes || 0) + 1;
+  }
+}
+// Sends what fits this tick; returns the jobs that did not go out (for the outbox).
+async function dispatch(env, jobs, budget, log, cap) {
+  const take = [], rest = [];
+  let n = 0;
+  for (const j of jobs) { if (n + j.m.length <= cap && (take.length || budget.left > 0)) { take.push(j); n += j.m.length; } else rest.push(j); }
+  if (!take.length) return rest;
+  let r;
+  if (fanoutReady(env)) {
+    budget.left--;
+    try { r = await callSelf(env, take, 0); } catch (e) {
+      console.warn("fanout", e.message); log.fanoutFailed = 1;
+      // 4xx: refused before anything was sent (e.g. the secret differs between versions): send in-process as before,
+      // so a misconfiguration cannot hold every push back. 5xx / network: batches may have gone out, so the outbox.
+      if (!(e.status >= 400 && e.status < 500)) return jobs;
+      r = await sendJobs(env, take, Math.max(0, budget.left));
+      budget.left -= r.used;
+    }
+    if (!log.fanoutFailed) log.children = r.children || 1;
+    if (r.failed) log.childFailed = r.failed;
+  } else {
+    r = await sendJobs(env, take, budget.left);
+    budget.left -= r.used;
+  }
+  log.sent = (log.sent || 0) + (r.sent || 0); log.removed = (log.removed || 0) + (r.removed || 0);
+  if (SUBS.list && (r.gone || []).length) { const g = new Set(r.gone); SUBS.list = SUBS.list.filter(x => !g.has(x.name)); }
+  return (r.rest || []).concat(rest);
+}
+async function callSelf(env, jobs, depth) {
+  const init = { method: "POST", headers: { "Content-Type": "application/json", "X-Fanout-Key": env.FANOUT_KEY }, body: JSON.stringify({ jobs, depth }) };
+  // FANOUT_URL: the worker's own URL, for wrangler dev without the binding
+  const res = env.SELF ? await env.SELF.fetch(new Request("https://self/fanout", init)) : await fetch(env.FANOUT_URL.replace(/\/$/, "") + "/fanout", init);
+  if (!res.ok) throw Object.assign(new Error("fanout HTTP " + res.status), { status: res.status });
+  return res.json();
+}
+// POST /fanout: a batch (sent here) or, from the tick (depth 0), everything: split into batches for further calls.
+async function fanoutRoute(env, jobs, depth) {
+  jobs = jobs.filter(j => j && typeof j.n === "string" && j.n.startsWith("sub:") && j.s && typeof j.s.endpoint === "string" && Array.isArray(j.m) && j.m.length);
+  const B = batchSize(env);
+  if (depth >= 1 || pushesOf(jobs) <= B || !(env.SELF || env.FANOUT_URL)) return sendJobs(env, jobs, B);
+  const batches = [], rest = [];
+  let cur = [], n = 0;
+  for (const j of jobs) {
+    if (n + j.m.length > B && cur.length) { batches.push(cur); cur = []; n = 0; }
+    cur.push(j); n += j.m.length;
+  }
+  if (cur.length) batches.push(cur);
+  batches.slice(MAX_CHILDREN).forEach(b => rest.push(...b));
+  const res = await Promise.all(batches.slice(0, MAX_CHILDREN).map(b => callSelf(env, b, depth + 1).catch(e => { console.warn("fanout batch", e.message); return { rest: b, failed: 1 }; })));
+  const out = { sent: 0, removed: 0, gone: [], rest, children: res.length, failed: 0 };
+  res.forEach(r => { out.sent += r.sent || 0; out.removed += r.removed || 0; out.gone.push(...(r.gone || [])); out.rest.push(...(r.rest || [])); out.failed += r.failed || 0; });
+  return out;
+}
+// Sends up to max pushes in this invocation (one VAPID JWT per push service). 404/410 (gone) and -1 (keys unusable,
+// it would fail every time) remove the subscription.
+async function sendJobs(env, jobs, max) {
+  const take = [], rest = [];
+  let n = 0;
+  for (const j of jobs) { if (n + j.m.length <= max) { take.push(j); n += j.m.length; } else rest.push(j); }
+  const out = { sent: 0, removed: 0, gone: [], rest, used: 0 };
+  if (!take.length) return out;
+  const key = await vapidKey(env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY), jwts = {};
+  await Promise.all(take.map(async ({ n: name, s: sub, m: list }) => {
+    if (!(env.PUSH_HOST_ANY === "1" ? /^https?:\/\//.test(sub.endpoint) : PUSH_HOSTS.test(sub.endpoint))) return;   // never an open relay
+    for (const m of list) {
+      out.used++;
+      const st = await send(sub, m, env, key, jwts);
+      if (st === 404 || st === 410 || st === -1) { await env.PUSH.delete(name); out.removed++; out.gone.push(name); return; }
+      if (st >= 200 && st < 300) out.sent++;
+      else console.warn("push", st, new URL(sub.endpoint).host);
     }
   }));
+  return out;
 }
 
 async function testPush(env) {

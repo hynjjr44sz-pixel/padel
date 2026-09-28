@@ -40,7 +40,7 @@ echo "3/6 deploy (roster: players.json -> src/players.js)"
 node sync-players.mjs
 "${WR[@]}" deploy
 
-echo "4/6 VAPID keys"
+echo "4/6 VAPID keys, fan-out secret"
 # The private key goes straight from gen-vapid.mjs into a wrangler secret (stdin), never to disk or screen.
 # A new key pair breaks every existing subscription: only when there is none yet, or with ROTATE_VAPID=1.
 SECRETS="$("${WR[@]}" secret list)" || { echo "Cannot list the worker's secrets (network, or token permissions): stopping, nothing rotated." >&2; exit 1; }
@@ -56,6 +56,15 @@ else
   tr -d '\n' < vapid-public.tmp | "${WR[@]}" secret put VAPID_PUBLIC_KEY >/dev/null
   mv vapid-public.tmp vapid-public.txt
   echo "    new key pair; public key in worker/vapid-public.txt (commit it)"
+fi
+
+# The push fan-out's shared secret (the worker calls itself: POST /fanout). Made once; until it exists the tick sends
+# in-process as before.
+if grep -q FANOUT_KEY <<<"$SECRETS"; then
+  echo "    FANOUT_KEY already set"
+else
+  node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("base64url"))' | "${WR[@]}" secret put FANOUT_KEY >/dev/null
+  echo "    FANOUT_KEY set (push fan-out)"
 fi
 
 echo "5/6 URL"

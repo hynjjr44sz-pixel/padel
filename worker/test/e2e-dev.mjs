@@ -44,7 +44,9 @@ await new Promise(r => srv.listen(P, "127.0.0.1", r));
 const v = await makeVapid();
 writeFileSync(dir + ".dev.vars", [
   "VAPID_PUBLIC_KEY=" + v.VAPID_PUBLIC_KEY, "VAPID_PRIVATE_KEY='" + v.VAPID_PRIVATE_KEY + "'", "PUSH_HOST_ANY=1",
-  "FIXTURE_URL=http://127.0.0.1:" + P + "/rankedin?classId={classId}&stage={stage}", "API_BASE=http://127.0.0.1:" + P + "/api", "NOW=2026-09-27T12:00:00+02:00", "PUB_MINUTE=0"].join("\n") + "\n");
+  "FIXTURE_URL=http://127.0.0.1:" + P + "/rankedin?classId={classId}&stage={stage}", "API_BASE=http://127.0.0.1:" + P + "/api", "NOW=2026-09-27T12:00:00+02:00", "PUB_MINUTE=0",
+  // push fan-out through the SELF service binding (to this same worker), batches of 2 pushes: the dispatcher + batch calls
+  "FANOUT_KEY=e2e-fanout", "FANOUT_BATCH=2"].join("\n") + "\n");
 const persist = mkdtempSync(join(tmpdir(), "padel-kv-"));
 const wr = spawn("npx", ["wrangler", "dev", "--test-scheduled", "--port", String(W), "--ip", "127.0.0.1", "--persist-to", persist, "--show-interactive-dev-session=false"],
   { cwd: dir, stdio: ["ignore", "pipe", "pipe"], detached: true,
@@ -79,6 +81,14 @@ try {
   ok("GET /events: discovered tournaments and SPL play days (+ past list)", evs.src === "worker" && Array.isArray(evs.past) && evs.events.some(e => e.key === "t173729-thea") && evs.events.some(e => e.kind === "teamleague" && e.who === "kian"), evs.events.map(e => e.key));
   ok("GET /events: roster players (Cassandra in Damer C), one SPL entry per team day, live view", evs.events.some(e => e.key === "t164681-cassandra") &&
     new Set(evs.events.map(e => e.key)).size === evs.events.length && evs.live && evs.live["1675246"] && evs.live["1675246"].st === "next", { keys: evs.events.map(e => e.key), live: evs.live });
+  // Live relay: the baseline tick stored Damer C's draw; GET /live serves it (ETag -> 304)
+  const lr = await fetch(base + "/live?ids=164681,tm1", { headers: { Origin: "http://localhost:8765" } }), lv = await lr.json();
+  ok("GET /live: Damer C relayed (pruned draws), unknown tie missing", lr.status === 200 && Array.isArray(lv.items["164681"] && lv.items["164681"].data) && !lv.items.tm1 &&
+    JSON.stringify(lv.items["164681"].data).includes("6872156"), { status: lr.status, keys: Object.keys(lv.items || {}) });
+  const l304 = await fetch(base + "/live?ids=164681,tm1", { headers: { Origin: "http://localhost:8765", "If-None-Match": lr.headers.get("etag") } });
+  ok("GET /live: unchanged -> 304", l304.status === 304, l304.status);
+  const pub = await fetch(base + "/fanout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{\"jobs\":[]}" });
+  ok("POST /fanout without the secret: 403", pub.status === 403, pub.status);
   const calRes = await fetch(base + "/cal", { headers: { Origin: "http://localhost:8765" } }), cal = await calRes.json();
   ok("GET /cal in workerd: no calendar yet (built 03:23), cached an hour", calRes.status === 200 && Array.isArray(cal.events) && cal.events.length === 0 &&
     calRes.headers.get("cache-control") === "public, max-age=3600" && !("cal" in evs), { status: calRes.status, cal });
@@ -132,6 +142,8 @@ try {
   ok("dropped subscription gets nothing", later.every(x => x.path !== "/push/gone") && later.some(x => x.path === "/push/a"), later.map(x => x.path));
   const last = laterA.length ? JSON.parse(await a.decrypt(laterA.at(-1).body)) : {};
   ok("Thea's QF win pushed", last.title === "Thea och Cassandra vann kvartsfinalen 6-2 7-5", last);
+  if (process.env.DEBUG) console.error(log.split("\n").filter(l => /fanout|tick/.test(l)).join("\n"));
+  ok("pushes went through the fan-out (SELF: the dispatcher and batch calls, FANOUT_BATCH=2)", /"children":\d+/.test(log) && !/"fanoutFailed"/.test(log), log.split("\n").filter(l => /tick/.test(l)).slice(-4));
 } catch (e) {
   results.push("FAIL exception " + e.stack);
 } finally {

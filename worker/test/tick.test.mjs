@@ -34,11 +34,11 @@ async function subscribe(env, sub) {
   return res;
 }
 
-test("inactive: returns at once, no KV and no fetch", async () => {
+test("inactive: returns at once, no KV but the outbox look and no fetch", async () => {
   const state = { fixture: "dc_1031.json", rankedin: 0, status: {} }, pushes = net(state), PUSH = kv();
   const r = await tick({ PUSH, NOW: "2026-09-28T10:00:00+02:00" }, EV);
   assert.deepEqual(r, { active: 0 });
-  assert.deepEqual(PUSH.ops, { get: 0, put: 0, delete: 0, list: 0 });
+  assert.deepEqual(PUSH.ops, { get: 1, put: 0, delete: 0, list: 0 });
   assert.equal(state.rankedin + pushes.length, 0);
 });
 
@@ -57,13 +57,13 @@ test("baseline, no-change and change ticks; KV written only on change; 410 remov
   assert.equal(bad.status, 400, "only real push services");
 
   let r = await tick(env, EV);
-  assert.deepEqual([r.writes, r.sent, pushes.length], [1, 0, 0], "first tick = baseline, silent");
+  assert.deepEqual([r.writes, r.sent, pushes.length], [2, 0, 0], "first tick = baseline (class state + live relay), silent");
   r = await tick(env, EV);
   assert.deepEqual([r.writes, r.sent, pushes.length], [0, 0, 0], "nothing changed: no KV write");
 
   state.fixture = "dc_1112.json";
   r = await tick(env, EV);
-  assert.equal(r.writes, 1);
+  assert.equal(r.writes, 2);
   assert.equal(r.removed, 1);
   assert.equal(r.sent, 1);
   const toA = pushes.filter(p => p.url === a.sub.endpoint);

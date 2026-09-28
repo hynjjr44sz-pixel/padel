@@ -29,8 +29,12 @@ await tick({ PUSH, NOW: "2026-09-27T11:07:00Z", ORIGIN: "x" });
 // Discovery rounds of 4 players (during the live day): each looks at its players' RankedIn profile photos too.
 for (const m of ["11:17", "11:27", "11:37", "11:47"]) { _resetMemory(); await tick({ PUSH, NOW: "2026-09-27T" + m + ":00Z", ORIGIN: "x", RANK_OFF: "1" }); }
 _resetMemory();
-await tick({ PUSH, NOW: "2026-09-27T11:52:00Z", ORIGIN: "x" });   // minute 52: ranking + 6 skills into the leaderboard
+await tick({ PUSH, NOW: "2026-09-27T11:52:00Z", ORIGIN: "x", SK_MINUTE: "2" });   // minute 52: ranking + 6 skills into the leaderboard; relay skills
 const EVENTS = await (await worker.fetch(new Request("https://w/events"), { PUSH, NOW: "2026-09-27T11:52:00Z", ORIGIN: "x" })).json();
+// GET /live (the live relay) for Damer C as the worker serves it during the day
+const LIVE = await (await worker.fetch(new Request("https://w/live?ids=164681"), { PUSH, NOW: "2026-09-27T11:52:00Z", ORIGIN: "x" })).text();
+assert.ok(JSON.parse(LIVE).items["164681"], "worker relays Damer C");
+if (process.env.DEBUG) console.log("LIVE sk", JSON.stringify(JSON.parse(LIVE).sk));
 // The week after (Veckans vinnare): the real final (Thea and Cassandra 6-1 6-4) seen by the live tick, then a full
 // round of discovery on Tuesday (Järfälla moves to "past"), GET /events on Tuesday.
 const FINAL = { "/tournament/GetDrawsForStageAndStrengthAsync?tournamentClassId=164681&drawStrength=0&drawStage=0&isReadonly=true&language=en": JSON.parse(readFileSync(new URL("./fixtures/dc_final.json", import.meta.url), "utf8")) };
@@ -126,6 +130,11 @@ async function newPage(opts = {}) {
   await page.route(PUSH_API + "/**", r => {
     const u = new URL(r.request().url()), h = { "Access-Control-Allow-Origin": "*" };
     if (u.pathname === "/cal") { api.cal = (api.cal || 0) + 1; return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.cal || CAL), headers: h }); }
+    if (u.pathname === "/live") {
+      api.live = (api.live || 0) + 1;
+      if (opts.live == null) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ v: "", at: null, items: {}, sk: {} }), headers: h });   // nothing relayed
+      return r.fulfill({ status: opts.liveStatus || 200, contentType: "application/json", body: opts.liveStatus ? "{}" : opts.live, headers: h });
+    }
     if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
     if (u.pathname === "/vapid") return r.fulfill({ contentType: "application/json", body: JSON.stringify({ key: "BOr5MaD1vP9w2uH0Pqzv8pH5v2cXf8j8e7Rrx6Qv0yq2mS9d2w8g5k2WnYQx1S0x0gJ5v8wV0z9Q2v5cXf8j8e7R", classes: [164681] }), headers: h });
     if (u.pathname === "/subscribe" || u.pathname === "/unsubscribe") { api.posts.push({ path: u.pathname, body: JSON.parse(r.request().postData() || "{}") }); return r.fulfill({ contentType: "application/json", body: "{\"ok\":true}", headers: h }); }
@@ -547,6 +556,59 @@ try {
   ok("Förslag: empty calendar -> Inga förslag just nu.", /Inga förslag just nu\./.test(await page.textContent("#sgList-thea")));
   ok("Förslag: without caps the class comes from the standing (Thea 150: B)", /^Du får spela B och uppåt\./.test(await page.textContent("#sgNote-thea")), await page.textContent("#sgNote-thea"));
   await ctx.close();
+
+  // ---- live relay: during the event the page reads the worker's GET /live, not RankedIn's draws ----
+  {
+    const live = JSON.parse(LIVE), skIds = Object.keys(live.sk || {});
+    const drawCalls = a => a.paths.filter(c => /GetDrawsForStage.*tournamentClassId=164681\b/.test(c)).length;
+    ({ page, ctx, errors, api } = await newPage({ live: LIVE }));
+    await page.goto(url("#thea"));
+    await page.waitForSelector('#p-thea [data-mid="6872156"]', { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(800);
+    ok("relay: Thea's live draw is built from GET /live", !!(await page.$('#p-thea [data-mid="6872156"]')) && api.live >= 1, api.live);
+    ok("relay: 0 RankedIn draw calls for the live class", drawCalls(api) === 0, api.paths.filter(c => /GetDraws/.test(c)));
+    ok("relay: skills from the relay are not fetched from RankedIn", skIds.length > 0 && !api.paths.some(c => skIds.some(id => new RegExp("GetPlayerRatingAsync\\?id=" + id + "$").test(c))), [skIds.length, api.paths.filter(c => /GetPlayerRating/.test(c))]);
+    ok("relay: live bar says Live", /Live/.test(await page.textContent("#dyn-thea .livebar").catch(() => "")), await page.textContent("#dyn-thea .livebar").catch(() => ""));
+    ok("relay: no console errors", errors.length === 0, errors);
+    await ctx.close();
+    ({ page, ctx, errors, api } = await newPage({ live: LIVE, liveStatus: 500 }));
+    await page.goto(url("#thea"));
+    await page.waitForSelector('#p-thea [data-mid="6872156"]', { timeout: 8000 }).catch(() => {});
+    ok("relay down (500): the page falls back to RankedIn and shows the draw", api.live >= 1 && drawCalls(api) >= 1 && !!(await page.$('#p-thea [data-mid="6872156"]')), [api.live, drawCalls(api)]);
+    await ctx.close();
+    // A class the relay does not have (e.g. not discovered yet): RankedIn for that one
+    const other = JSON.stringify({ ...live, items: {} });
+    ({ page, ctx, errors, api } = await newPage({ live: other }));
+    await page.goto(url("#thea"));
+    await page.waitForSelector('#p-thea [data-mid="6872156"]', { timeout: 8000 }).catch(() => {});
+    ok("relay without the class: RankedIn for it", api.live >= 1 && drawCalls(api) >= 1, [api.live, drawCalls(api)]);
+    await ctx.close();
+    // The same page from the relay and from RankedIn directly: identical (apart from the live bar's time)
+    const render = async opts => {
+      ({ page, ctx, errors, api } = await newPage(opts));
+      await page.goto(url("#thea"));
+      await page.waitForSelector('#p-thea [data-mid="6872156"]', { timeout: 8000 }).catch(() => {});
+      await page.waitForTimeout(1500);
+      const html = await page.evaluate(() => { const b = document.getElementById("dyn-thea").cloneNode(true); b.querySelectorAll(".livebar").forEach(x => x.remove()); return b.innerHTML; });
+      const n = drawCalls(api);
+      await ctx.close();
+      return { html, n };
+    };
+    const viaRelay = await render({ live: LIVE }), viaRi = await render({ live: other });
+    ok("relay vs RankedIn: the live draw renders identically", viaRelay.n === 0 && viaRi.n >= 1 && viaRelay.html.length > 1000 && viaRelay.html === viaRi.html,
+      [viaRelay.n, viaRi.n, viaRelay.html.length, viaRi.html.length]);
+    // The worker sheds load ({shed: 1}): RankedIn directly, no further relay calls in the next 30 min
+    ({ page, ctx, errors, api } = await newPage({ live: JSON.stringify({ shed: 1, every: 1800 }) }));
+    await page.goto(url("#thea"));
+    await page.waitForSelector('#p-thea [data-mid="6872156"]', { timeout: 8000 }).catch(() => {});
+    const l0 = api.live;
+    await page.evaluate(() => { document.dispatchEvent(new Event("visibilitychange")); });
+    await page.waitForTimeout(6000);
+    await page.evaluate(() => { document.dispatchEvent(new Event("visibilitychange")); });
+    await page.waitForTimeout(800);
+    ok("relay shed: RankedIn for the draw, the relay is left alone", l0 === 1 && api.live === 1 && drawCalls(api) >= 1, [l0, api.live, drawCalls(api)]);
+    await ctx.close();
+  }
 
   // ---- worker down: client discovery only for the opened player ----
   ({ page, ctx, errors, api } = await newPage({ workerDown: true }));

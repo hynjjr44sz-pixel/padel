@@ -79,10 +79,86 @@ Listan sparas i KV under `disc` och skrivs bara om när något ändrats, eller v
   Klassgränserna (parets poäng: 2 × poängen för rad 61/201/1201 herr, 51/161/701 dam) läses om när listan är en vecka gammal
   (6 anrop). Anmälda klubbspelare tas ur discovery (inga extra anrop). KV `cal` skrivs bara när något ändrats; `GET /cal`
   (cache 1 h) ger den. Sidan räknar ut förslagen per spelare med samma regler (`eligibility`, `suggestFor`).
-- Skydd: `/subscribe` och `/unsubscribe` max 5 per minut och IP, övriga anrop 60 (`[[ratelimits]]` i
-  `wrangler.toml`), högst 500 prenumerationer. Origin-kollen skyddar bara mot andra webbsidor.
+- Skydd: `/subscribe` och `/unsubscribe` max 5 per minut och IP, `/live` 600 (många telefoner på samma wifi i hallen),
+  övriga anrop 60 (`[[ratelimits]]` i `wrangler.toml`), högst 5000 prenumerationer. Origin-kollen skyddar bara mot andra
+  webbsidor. `/fanout` kräver hemligheten `FANOUT_KEY` (403 annars, och avstängd utan den).
 - Notisernas länk går direkt till matchen: `./#thea/m<MatchId>`.
 - Workern får bara exportera funktioner (workerd vägrar starta annars), se test i `features.test.mjs`.
+
+## Live-relä: RankedIn hämtas en gång, delas ut till alla
+
+Bevakningen ovan hämtar redan varje pågående klass och lagmatch från RankedIn varje minut. Det sidan behöver av det
+(lottningarna rensade till de fält sidans modell läser, samma `KEEP`-lista som `index.html`, ett test håller dem lika;
+lagmatchens rubbers som de är) sparas i **en** KV-nyckel, `live` (`src/relay.js`), och `GET /live?ids=164681,tm167486`
+ger `{v, at, every, items: {id: {v, at, dr, data}}, sk: {pid: {rid: skill}}}`. Sidan läser det under en pågående tävling
+i stället för RankedIn (samma regler för dold flik som förut). Saknas klassen i reläet (t.ex. en tävling workern inte
+hittat än), svarar workern fel, eller säger den `shed`, frågar sidan RankedIn direkt som förut (med den delade
+30-sekunderscachen `riGet`); efter ett fel i 5 minuter, efter `shed` i 30.
+
+- `live` skrivs högst en gång per minut och bara när något ändrats. Ett nytt resultat, ny tid eller bana (det som också
+  ger notiser) skrivs direkt; annat (t.ex. ett liveresultat under matchen) högst var 3:e minut. Max 400 skrivningar per dag:
+  vid taket töms reläet (sidan frågar RankedIn själv) till nästa dag.
+- `every`: 60 sekunder när en match i klassen pågår eller börjar inom 30 minuter, annars 300. Sidan väntar så länge
+  mellan hämtningarna.
+- Oförändrat: `ETag` + `If-None-Match` ger 304 (sidan hämtar med `cache: "no-cache"`, webbläsaren frågar med ETag),
+  `since=<v>` ger `{v, same: 1}`.
+- Varje isolat läser `live` ur KV högst var 25:e sekund och bygger svaret som text (lottningarna parsas inte per anrop).
+- Skill för spelarna i pågående lottningar: var 10:e minut (minut 3, 13, ...) högst 20 `GetPlayerRatingAsync`, bara för
+  spelare vars värde är äldre än 3 h, inom tickens budget. Sidan tar dem ur `sk` och frågar inte RankedIn om dem.
+
+## Pushnotiser till många: fan-out
+
+Ticken skickar inte längre notiserna själv. Den bygger en lista (en post per enhet: prenumeration + meddelanden, efter
+följa-filtret, sammanslagning per enhet och "N nya resultat"-vikningen som förut) och gör **ett** anrop till sig själv
+via service binding `SELF` (`POST /fanout`, header `X-Fanout-Key` = hemligheten `FANOUT_KEY`, som `deploy.sh` gör).
+Det anropet delar upp i omgångar om 20 notiser och skickar varje omgång till ett eget anrop (egna 50 underanrop och
+10 ms CPU), högst 29 omgångar (Cloudflare tillåter 32 Worker-anrop per request: cron + fördelaren + 29). Omgången
+skickar, tar bort prenumerationer som svarar 404/410 (eller vars nycklar inte går att använda) och svarar med antal.
+Det som inte får plats, eller en omgång som misslyckas, sparas i KV `outbox` (en nyckel, skrivs bara när den ändrats,
+tas bort när den är tom) och går först nästa minut. En notis som väntat en timme (TTL) slängs. Klassens nya läge skrivs
+först när notiserna gått iväg eller ligger i `outbox`, så inget skickas två gånger (utom om en omgång dör mitt i:
+då kan någon få samma notis igen, med samma tag ersätter den den förra).
+
+Utan `SELF`/`FANOUT_KEY` (lokala tester, första deployen innan hemligheten finns) skickar ticken själv som förut, och det
+som inte ryms i budgeten hamnar i `outbox`. Svarar `/fanout` 4xx (avvisat innan något skickats, t.ex. olika hemlighet
+mellan versioner) skickar ticken också själv; vid 5xx/nätverksfel kan omgångar redan ha gått, så då väntar allt i `outbox`. `FANOUT_URL` (workerns egen adress) kan ersätta bindningen i `wrangler dev`
+om den inte fungerar där (det gör den i wrangler 4, se e2e-testet).
+
+Prenumerationerna sparas också som KV-metadata på nyckeln, så fan-outen läser alla enheter med en `list` per 1000 i
+stället för en `get` per enhet (listan hålls 3 minuter per isolat; en ny prenumeration kan alltså missa notiser de
+första minuterna). Gamla poster utan metadata skrivs om en gång när sidan öppnas (den skickar `/subscribe` vid varje besök).
+En post som blir över 1024 byte som metadata (KV:s gräns, räknat med escapade citattecken) sparas utan och läses med `get`.
+
+## Kapacitet (gratisplanen)
+
+Gränser: 100 000 anrop/dag (allt: cron, fan-out, sidan), 50 underanrop och 10 ms CPU per anrop, KV 100 000 läsningar,
+1000 skrivningar, 1000 borttagningar och 1000 list per dag, 32 Worker-anrop per request.
+
+**Notiser.** CPU per krypterad notis (ECDH P-256 + HKDF + AES-GCM) mätt i workerd lokalt: ca 0,25–0,3 ms, plus ca 0,1 ms
+för VAPID-signaturen per push-tjänst och omgång. En omgång om 20 notiser ≈ 6–7 ms (40 hade varit 10–12 ms, över gränsen).
+Per minut: 29 × 20 = **580 notiser** (en enhet får en notis per minut när många ska ha: vikningen). Fler väntar i
+`outbox`: 1200 enheter når alla inom 3 minuter (580 + 580 + 40), 5000 inom 9 (då är `outbox` ett par MB som ticken
+läser varje minut, nära CPU-gränsen: räkna med 1000–2000 enheter som bekvämt, 5000 som tak). Ticken använder 1 underanrop för allt
+detta (förut ett per notis, max 44 enheter, resten tappades), så RankedIn behåller sin andel (max 30 per minut).
+Anrop: 1 + antal omgångar per minut med notiser, t.ex. 300 sådana minuter × 30 = 9 000 av 100 000.
+KV: `outbox` läses varje minut (1 440/dag), skrivs bara när den ändras; listning 2 per notisminut vid 1200 enheter
+(5 vid 5000, med 3 min cache i isolatet: ca 200–500 av 1000/dag), 404/410 tas bort (max 1000/dag).
+
+**Live-reläet.** RankedIn: inga extra anrop (datat hämtas ändå av bevakningen), skill högst 20 per 10 minuter. KV:
+`live` ≤ 1 skrivning per minut, i praktiken en per nytt resultat/ny tid (≈ 100–300 en stor dag), tak 400; läsningar:
+ticken 1 per minut, `GET /live` 1 per isolat per 25 s (≈ 2 300 per isolat och dag på 16 h). **Anropen är taket:** varje
+synlig app gör 60 anrop/timme medan en match pågår eller är nära, 12 annars. 100 000/dag minus cron (1 440), fan-out och
+`/events` räcker till ungefär 80 000 `/live`-anrop: t.ex. 150 appar som står öppna samtidigt i 8 timmar, eller några
+tusen användare som tittar till och från. Över 100 `/live`-anrop per minut totalt (rate limit `LIVE_ALL` med en enda
+nyckel för alla, räknas per Cloudflare-plats: i praktiken Stockholm) eller 150 i ett isolat svarar workern `{shed: 1}`
+och de apparna frågar RankedIn själva i 30 minuter; de som kom igenom behåller reläet. Då blir `/live` högst ca 72 000
+anrop på en 12-timmarsdag, så cron och notiser inte svälter. Behövs mer: Workers Paid
+(10 miljoner anrop/månad) eller ett eget domännamn med cache framför `/live`.
+
+**Ticken.** RankedIn: högst 30 anrop per minut för bevakningen (oförändrat), + skill (≤ 20, bara om budget finns kvar,
+minut 3/13/...), + 1 för fan-outen. KV-skrivningar per dag: klassernas läge (per ändring) + `live` (≤ 400) + `outbox` +
+`disc`/`pub`/`rank`/`wins`/`cal` som förut. Simulerad stor dag (3 klasser à 30 matcher + 2 SPL-matcher à 5 matcher,
+09–20): `live` ≈ 300, klassernas läge ≈ 200, totalt ≈ 500–550 av 1000.
 
 ## Följa och notiser
 
@@ -120,8 +196,8 @@ det som hittats automatiskt). Normalt behöver du inte röra den.
 ```sh
 cd worker
 npm install
-npm test                 # kryptering (RFC 8291/8292), notistexter, KV-logik, automatisk sökning, lagserier, följa
-E2E_PORT=19011 node test/e2e-dev.mjs    # wrangler dev lokalt: prenumerera, kör cron, ta emot och dekryptera en push
+npm test                 # kryptering (RFC 8291/8292), notistexter, KV-logik, automatisk sökning, lagserier, följa, relä, fan-out
+E2E_PORT=19111 node test/e2e-dev.mjs    # wrangler dev lokalt: prenumerera, kör cron, fan-out via SELF, GET /live, dekryptera push
 # sidan i Chromium (Playwright), RankedIn och workern mockade:
 (cd .. && python3 -m http.server 19021 --bind 127.0.0.1) &
 NODE_PATH=$(npm root -g) node test/page-e2e.mjs

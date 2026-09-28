@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bwPEbec01WvU4LgMCo99iOGXPYPlp8dy27TtwAi4z+k='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-WsWzguuF+zLRu/aPjx2jM/eiiPenELwDZQVLSqxSKhQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1899,14 +1899,33 @@
   }
 
   /* ---- skill for any player: SPF rating by player id (WD 65, MD 64, XD 66), cached 2 h (kept 7 days) ---- */
-  var SKV_KEY = "padel-skill-v2", SKT = {}, skWant = {}, skBusy = {}, skTimer = null, SK_TTL = 2 * HOUR;
+  var SKV_KEY = "padel-skill-v2", SKT = {}, SKN = {}, skWant = {}, skBusy = {}, skTimer = null, SK_TTL = 2 * HOUR;
   (function(){ var c = store.json(SKV_KEY); if (c && c.v){ for (var k in c.v) SKV[k] = c.v[k]; SKT = c.t || {}; } })();
   function wantSkills(pairs){
     pairs.forEach(function(p){
       if (!p || !p.ids || !p.rid) return;
-      p.ids.forEach(function(id){ if (id && !skBusy[id] && !(SKT[id] && Date.now() - SKT[id] < SK_TTL && SKV[id + ":" + p.rid] != null)) skWant[id] = true; });
+      p.ids.forEach(function(id){ if (id && !skBusy[id] && !(SKT[id] && Date.now() - SKT[id] < SK_TTL && (SKV[id + ":" + p.rid] != null || SKN[id]))) skWant[id] = true; });
     });
     if (!skTimer && Object.keys(skWant).length) skTimer = setTimeout(fetchSkills, 400);
+  }
+  function skSave(){
+    var old = Date.now() - 7 * 864e5, sv = {}, st = {};   // players not looked up for a week leave the stored copy
+    Object.keys(SKT).forEach(function(k){ if (SKT[k] >= old) st[k] = SKT[k]; });
+    Object.keys(SKV).forEach(function(k){ if (st[k.split(":")[0]]) sv[k] = SKV[k]; });
+    store.set(SKV_KEY, JSON.stringify({v:sv, t:st}));
+  }
+  // Skills from the live relay ({pid: {rid: skill}}, the worker refreshes them every 3 h): no RankedIn call for these
+  // (SKN: the relay knows the player has no rating).
+  function relaySkills(sk){
+    var ids = Object.keys(sk || {});
+    if (!ids.length) return;
+    ids.forEach(function(id){
+      var r = sk[id] || {};
+      Object.keys(r).forEach(function(rid){ if (typeof r[rid] === "number") SKV[id + ":" + rid] = r[rid]; });
+      SKT[id] = Date.now(); delete skWant[id];
+      if (!Object.keys(r).length) SKN[id] = 1;
+    });
+    skSave();
   }
   function fetchSkills(){
     skTimer = null;
@@ -1924,10 +1943,7 @@
         SKT[id] = Date.now();   // also after an error: next try in 2 h
         delete skBusy[id];
         if (--left > 0) return one();
-        var old = Date.now() - 7 * 864e5, sv = {}, st = {};   // players not looked up for a week leave the stored copy
-        Object.keys(SKT).forEach(function(k){ if (SKT[k] >= old) st[k] = SKT[k]; });
-        Object.keys(SKV).forEach(function(k){ if (st[k.split(":")[0]]) sv[k] = SKV[k]; });
-        store.set(SKV_KEY, JSON.stringify({v:sv, t:st}));
+        skSave();
         if (changed) Object.keys(DYN).forEach(function(w){ if (DYN[w]) try { dynRender(DYN[w]); } catch (e){} });
         if (Object.keys(skWant).length) skTimer = setTimeout(fetchSkills, 400);
       });
@@ -2950,6 +2966,36 @@
     return e.kind === "teamleague" ? (e.ties || []).map(function(t){ return rubbersPath(t.id); }) :
       (e.draws || [[0, 0], [1, 0]]).map(function(d){ return drawPath(e.classId, d[0], d[1]); });
   }
+  /* ---- live relay: the worker (GET /live) already fetches every live class and SPL tie from RankedIn each minute; the
+     page reads that (one small request, 304 when unchanged) instead of RankedIn. A class or tie the relay does not have
+     (e.g. an event it has not found yet), or a relay error (then for 5 min), falls back to RankedIn as before. ---- */
+  var RELAY_MEM = {}, RELAY_FAIL = 0;
+  function relayIds(e){ return e.kind === "teamleague" ? (e.ties || []).map(function(t){ return "tm" + t.id; }) : (e.classId ? [String(e.classId)] : []); }
+  function relayGet(ids){
+    var k = ids.join(","), c = RELAY_MEM[k], t = Date.now(), p;
+    if (c && t - c.t < 20000) return c.p;   // two players in one class: one request
+    try {
+      p = withTimeout(fetch(PUSH_API + "/live?ids=" + k, {credentials:"omit", cache:"no-cache"})
+        .then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), LIVE_TIMEOUT);
+    } catch (e){ return Promise.reject(e); }
+    RELAY_MEM = {}; RELAY_MEM[k] = {t:t, p:p};
+    p.catch(function(){ if (RELAY_MEM[k] && RELAY_MEM[k].p === p) delete RELAY_MEM[k]; });
+    return p;
+  }
+  function dynFetch(D){
+    var e = D.e, ids = relayIds(e);
+    function direct(){ D.via = "rankedin"; return Promise.all(dynPaths(e).map(function(p){ return riGet(p); })); }
+    if (!PUSH_API || !ids.length || !inWin(e) || Date.now() < RELAY_FAIL) return direct();
+    return relayGet(ids).then(function(x){
+      var items = (x && x.items) || {};
+      if (x && x.shed){ RELAY_FAIL = Date.now() + (x.every || 1800) * 1000; return direct(); }   // the worker is busy: RankedIn for a while
+      if (!ids.every(function(id){ return items[id] && items[id].data; })) return direct();   // not in the relay (yet)
+      try { relaySkills(x.sk); } catch (err){}
+      D.via = "relay"; D.every = +x.every || 60;
+      // tournament: the item holds the stages ([stage response, ...]); team league: one rubbers response per tie
+      return e.kind === "teamleague" ? ids.map(function(id){ return items[id].data; }) : items[ids[0]].data;
+    }, function(){ RELAY_FAIL = Date.now() + 5 * 60000; return direct(); });
+  }
   function dynLocal(D){ return !!D.e && notiOn() && !(pushOn() && (D.e.cover || []).length && D.e.cover.every(function(c){ return pushCovers(c + ":"); })); }
   function dynSnap(D){
     if (D.e.kind === "teamleague") return D.model.ties.map(function(x){ return snapTie(x.rubbers); });
@@ -3001,7 +3047,7 @@
     if (D.busy || (document.visibilityState === "hidden" && !(live && dynLocal(D)))) return;
     D.busy = true;
     if (live && !D.okAt && !D.failed) setBar(D, "wait");
-    Promise.all(dynPaths(D.e).map(function(p){ return riGet(p); })).then(function(datas){
+    dynFetch(D).then(function(datas){
       if (D.dead) return;
       D.datas = datas; D.okAt = now(); D.fetchedAt = Date.now(); D.failed = false;
       dynBuild(D);
@@ -3026,7 +3072,8 @@
     if (D.dead || !D.e || !inWin(D.e)) return;
     var hidden = document.visibilityState === "hidden";
     if (hidden && !dynLocal(D)) return;
-    D.timer = setTimeout(function(){ dynPoll(D); }, hidden ? 2 * LIVE_EVERY : LIVE_EVERY);
+    // from the relay: its hint (60 s while a match is on or soon, else 5 min); RankedIn directly: every minute
+    D.timer = setTimeout(function(){ dynPoll(D); }, hidden ? 2 * LIVE_EVERY : D.via === "relay" ? Math.max(LIVE_EVERY, (D.every || 60) * 1000) : LIVE_EVERY);
   }
   document.addEventListener("visibilitychange", function(){
     Object.keys(DYN).forEach(function(w){
