@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-9d4byV3vtC5qrfG+iiHOJrRFophIovwOgZWQMDy9zrs='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-311fUvtHU+PRcSz6PYj3NvjBpcee8do+6lyK7aMDKkQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -4223,8 +4223,7 @@
     rows.sort(function(a, b){ return (b.fol ? 1 : 0) - (a.fol ? 1 : 0) || (b.s.pcls === "live" ? 1 : 0) - (a.s.pcls === "live" ? 1 : 0); });
     if (meta) meta.textContent = rows.length ? rows.length + (rows.length === 1 ? _(" spelare") : _(" spelare ")) : "";
     if (!rows.length){
-      var nx = upcomingRows()[0];
-      host.innerHTML = '<p class="empty">' + _("Ingen spelar just nu.") + (nx ? _(" Nästa: ") + esc(nx.title) + " " + esc(dayLabel(nx.at)) + "." : "") + '</p>';
+      host.innerHTML = '<p class="empty">' + _("Ingen spelar just nu.") + '</p>';   // what comes next: Kommande, right below
       return;
     }
     host.innerHTML = rows.map(function(r){
