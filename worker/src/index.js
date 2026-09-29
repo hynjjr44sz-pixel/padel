@@ -19,7 +19,7 @@ function cors(req, env) {
   const o = req.headers.get("Origin") || "";
   const ok = o === env.ORIGIN || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o);
   return ok ? { "Access-Control-Allow-Origin": o, "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Max-Age": "86400", "Vary": "Origin" } : { "Vary": "Origin" };
+    "Access-Control-Allow-Headers": "Content-Type, X-Stats-Key", "Access-Control-Max-Age": "86400", "Vary": "Origin" } : { "Vary": "Origin" };
 }
 const json = (data, status, h) => new Response(JSON.stringify(data), { status: status || 200, headers: { "Content-Type": "application/json", ...h } });
 async function subKey(endpoint) {
@@ -129,6 +129,11 @@ async function handle(req, env) {
   if (route === "GET /health") {
     const rec = await loadRecord(env);
     return json({ ok: true, active: activeEvents(now(env), merge(rec ? rec.events : [])).map(e => e.cls || e.name), discoveredAt: rec ? rec.at : null }, 200, h);
+  }
+  // The owner's statistics (the page's #stats view): secret STATS_KEY (read only; off without it).
+  if (route === "GET /stats") {
+    if (!env.STATS_KEY || !sameSecret(req.headers.get("X-Stats-Key"), env.STATS_KEY)) return json({ error: "forbidden" }, 403, h);
+    return json(await ownerStats(env, now(env)), 200, { ...h, "Cache-Control": "no-store" });
   }
   if (route === "GET /vapid") return json({ key: env.VAPID_PUBLIC_KEY || "", classes: await covers(env) }, env.VAPID_PUBLIC_KEY ? 200 : 503, h);
   if (route === "GET /events") {
@@ -270,6 +275,41 @@ export async function runBhs(env, t, budget, log = {}) {
   BHSM = { v, at: Date.now() };
   log.writes = (log.writes || 0) + 1; log.bhs = r.groups.length;
   return v;
+}
+// Pushes per day (KV "stats:<day>"): written only by a tick that sent something, so a handful of writes on a match day.
+async function countPushes(env, t, sent, removed) {
+  const k = "stats:" + dayOf(t);
+  let v = { sent: 0, removed: 0, ticks: 0 };
+  try { v = { ...v, ...JSON.parse((await env.PUSH.get(k)) || "{}") }; } catch (e) {}
+  v.sent += sent; v.removed += removed; v.ticks++;
+  await env.PUSH.put(k, JSON.stringify(v), { expirationTtl: 120 * 86400 });
+}
+// -> the numbers for the owner: devices (language, push service, who they follow), pushes per day, the data's age.
+export async function ownerStats(env, t) {
+  const subs = await subscribers(env), per = {}, lang = { sv: 0, es: 0 }, svc = {}, nf = [];
+  for (const { rec } of subs) {
+    const f = (rec.prefs && rec.prefs.follow) || [];
+    f.forEach(pid => { per[pid] = (per[pid] || 0) + 1; });
+    nf.push(f.length);
+    lang[rec.prefs && rec.prefs.lang === "es" ? "es" : "sv"]++;
+    const host = (() => { try { return new URL(rec.sub.endpoint).host; } catch (e) { return ""; } })();
+    const s = /apple/.test(host) ? "Apple" : /google|fcm/.test(host) ? "Google" : /mozilla/.test(host) ? "Mozilla" : /windows|notify\.live/.test(host) ? "Microsoft" : "Annat";
+    svc[s] = (svc[s] || 0) + 1;
+  }
+  const days = [];
+  for (let i = 0; i < 14; i++) {
+    const d = dayOf(new Date(+t - i * DAY)), v = JSON.parse((await env.PUSH.get("stats:" + d)) || "null");
+    days.push({ d, sent: v ? v.sent : 0, removed: v ? v.removed : 0 });
+  }
+  const rec = await loadRecord(env), list = merge(rec ? rec.events : []), bhs = await loadBhs(env), cal = await loadCal(env);
+  return {
+    at: t.toISOString(), cap: MAX_SUBS,
+    devices: { n: subs.length, lang, services: svc, followAvg: nf.length ? +(nf.reduce((a, b) => a + b, 0) / nf.length).toFixed(1) : 0, following: Object.entries(per).map(([pid, n]) => ({ pid: +pid, n })).sort((a, b) => b.n - a.n) },
+    pushes: { days, total: days.reduce((a, x) => a + x.sent, 0) },
+    data: { roster: PLAYERS.length, checked: checkedAt(rec, t), changed: rec ? rec.at : null, active: activeEvents(t, list).length, upcoming: list.filter(e => new Date(e.windowFrom) > t).length,
+      past: ((rec && rec.past) || []).length, calendar: cal ? (cal.events || []).length : 0, calAt: cal ? cal.at : null,
+      series: bhs ? bhs.groups.length : 0, seriesAt: bhs ? bhs.at : null, seriesHistAt: bhs && bhs.hist ? bhs.hist.at : null, schedule: bhs ? bhs.groups.reduce((a, g) => a + (g.next || []).length, 0) : 0 }
+  };
 }
 export function discoveryDue(rec, t) {
   if (Date.now() - MEM.tryAt < 5 * 60e3 && rec) return false;
@@ -1044,6 +1084,9 @@ async function testPush(env) {
 export default {
   fetch: (req, env) => handle(req, env).catch(e => json({ error: "server error" }, 500, cors(req, env))),
   scheduled(controller, env, ctx) {
-    ctx.waitUntil(tick(env).then(r => { if (r.active || r.discovered != null || r.cal != null) console.log("tick", JSON.stringify(r)); }));
+    ctx.waitUntil(tick(env).then(async r => {
+      if (r.active || r.discovered != null || r.cal != null) console.log("tick", JSON.stringify(r));
+      if (r.sent || r.removed) try { await countPushes(env, now(env), r.sent || 0, r.removed || 0); } catch (e) {}
+    }));
   }
 };

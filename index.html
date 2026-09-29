@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-rzoZQKCEnMVBzjHhbh5LNJySJnCW659I6ZMW75wQ65A='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-FPpfBRGWp0H3ic4c2jGJBqOVvrfZeJn3o7Ms87UpRY0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -536,6 +536,13 @@
   [data-tab="loc"] .t-off{ display:none !important; }
   [data-tab="off"] .t-loc, main:not([data-tab]) .t-loc{ display:none !important; }
   [data-tab="loc"] .hero{ padding-bottom:18px; }
+  .stt{ margin-top:4px; }
+  #stats .bchips small{ white-space:normal; overflow:visible; }
+  .stnote{ font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); margin:8px 0; }
+  .stbars{ display:flex; align-items:flex-end; gap:4px; height:110px; padding:12px 12px 8px; }
+  .stbars > div{ flex:1 1 0; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:4px; }
+  .stbars i{ display:block; width:100%; min-height:2px; border-radius:3px 3px 0 0; background:var(--accent); }
+  .stbars span{ font:500 9.5px/1 "Chivo Mono", monospace; color:var(--dim); }
   .swk{ font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin:12px 0 4px; }
   .bres{ margin:8px 0 6px; border-top:1px solid var(--line); }
   .bdevw{ margin:12px 0 8px; padding-top:10px; border-top:1px solid var(--line); }
@@ -1280,6 +1287,7 @@
     "Anmälan öppen":"Inscripción abierta",
     "Bana":"Pista",
     "Bana ":"Pista ",
+    "Bara för dig":"Solo para ti",
     "Borta":"Fuera",
     "Bra att veta":"Bueno saber",
     "Bäst":"Mejor",
@@ -1293,7 +1301,9 @@
     "Damer":"Mujeres",
     "Damer 51–160 är B-klass, 161–700 är C-klass.":"En mujeres, del 51 al 160 es categoría B y del 161 al 700 categoría C.",
     "Damer eller herrar":"Mujeres u hombres",
+    "Data":"Datos",
     "Dela → Lägg till på hemskärmen":"Compartir → Añadir a pantalla de inicio",
+    "Den här sidan är privat.":"Esta página es privada.",
     "Den här webbläsaren kan inte visa notiser.":"Este navegador no puede mostrar notificaciones.",
     "Din klass styrs av din rankingplacering. ":"Tu categoría depende de tu puesto en el ranking. ",
     "Du får spela ":"Puedes jugar ",
@@ -1310,11 +1320,13 @@
     "Följ en spelare först. Tryck Följ på spelarens sida.":"Sigue primero a un jugador. Pulsa Seguir en su página.",
     "Följ {name}":"Seguir a {name}",
     "Följer":"Siguiendo",
+    "Följer i snitt":"Siguen de media",
     "Föregående":"Anterior",
     "Föregående rond":"Ronda anterior",
     "Förlorade":"Perdidos",
     "Förlust":"Derrota",
     "Förlust mot ":"Derrota contra ",
+    "Förslag":"Sugerencias",
     "Förslag på tävlingar":"Torneos sugeridos",
     "Första match ":"Primer partido ",
     "Första mötet":"Primer duelo",
@@ -1349,6 +1361,7 @@
     "Inga resultat inlagda än. De finns på RankedIn när lagen rapporterat.":"Aún no hay resultados. Estarán en RankedIn cuando los equipos los envíen.",
     "Inga turneringsmatcher det senaste året.":"Ningún partido de torneo en el último año.",
     "Inga vunna matcher inlagda i år än.":"Aún no hay victorias este año.",
+    "Ingen följer någon än.":"Aún nadie sigue a nadie.",
     "Ingen i klubben klättrade på veckans lista.":"Nadie del club subió en la lista de esta semana.",
     "Ingen lottning publicerad":"Cuadro sin publicar",
     "Ingen rankad just nu.":"Nadie en el ranking ahora.",
@@ -1412,6 +1425,7 @@
     "Matcher":"Partidos",
     "Matchskillnad":"Diferencia de partidos",
     "Med ":"Con ",
+    "Mest följda":"Más seguidos",
     "Mixed":"Mixto",
     "Mixedserie":"Liga mixta",
     "Mot ":"Contra ",
@@ -1423,14 +1437,17 @@
     "Ner från plats ":"Baja desde el puesto ",
     "Notis när spelarna du följer får ett resultat":"Aviso cuando los jugadores que sigues tengan un resultado",
     "Notiser":"Avisos",
+    "Notiser 14 dagar":"Avisos 14 días",
     "Notiser av.":"Notificaciones desactivadas.",
     "Notiser för spelarna du följer":"Notificaciones de los jugadores que sigues",
     "Notiser för {gen} matcher.":"Notificaciones de los partidos de {name}.",
+    "Notiser per dag":"Avisos por día",
     "Notiser på för {who}, även när appen är stängd.":"Notificaciones activadas para {who}, incluso con la app cerrada.",
     "Notiser på för {who}. Funkar medan appen är öppen.":"Notificaciones activadas para {who}. Funcionan con la app abierta.",
     "Notiser är blockerade för sidan. Tillåt dem i webbläsarens inställningar.":"Las notificaciones están bloqueadas para esta página. Permítelas en los ajustes del navegador.",
     "Ny bana: ":"Nueva pista: ",
     "Ny tid: ":"Nueva hora: ",
+    "Nyckeln stämmer inte. Öppna länken du fick igen.":"La clave no es válida. Abre de nuevo el enlace que recibiste.",
     "Nynäs Padel ett tryck bort.":"Nynäs Padel a un toque.",
     "Nynäs idag":"Nynäs hoy",
     "Nynäs idag, startsidan":"Nynäs hoy, inicio",
@@ -1464,6 +1481,7 @@
     "Poäng":"Puntos",
     "På iPhone kommer notiser bara när sidan ligger på hemskärmen. Tryck Dela → Lägg till på hemskärmen och öppna den därifrån.":"En iPhone las notificaciones solo llegan si la página está en la pantalla de inicio. Pulsa Compartir → Añadir a pantalla de inicio y ábrela desde ahí.",
     "Pågår":"En juego",
+    "RankedIn kollad":"RankedIn revisado",
     "Rankingen räknar dina 12 bästa tävlingar de senaste 12 månaderna. Poängen faller bort efter ett år. Listan uppdateras varje natt mellan söndag och måndag.":"El ranking cuenta tus 12 mejores torneos de los últimos 12 meses. Los puntos caducan al año. La lista se actualiza cada noche de domingo a lunes.",
     "Rankinglistan":"La lista de ranking",
     "Rankingpoäng":"Puntos",
@@ -1491,6 +1509,7 @@
     "Serien på Backhandsmash ↗︎":"La liga en Backhandsmash ↗︎",
     "Serien på RankedIn ↗︎":"La liga en RankedIn ↗︎",
     "Serier":"Ligas",
+    "Serier hämtade":"Ligas cargadas",
     "Serier: ":"Ligas: ",
     "Seriesegrare":"Ganadores de liga",
     "Seriespel":"Liga",
@@ -1511,7 +1530,9 @@
     "Spelarkort, ":"Carta de jugador, ",
     "Spelträd":"Cuadro",
     "Spelträd ":"Cuadro ",
+    "Språk":"Idioma",
     "Start ":"Inicio ",
+    "Statistik":"Estadísticas",
     "Ställning":"Marcador",
     "Ställning mot ":"Marcador contra ",
     "Stäng":"Cerrar",
@@ -1523,6 +1544,7 @@
     "Tabell":"Clasificación",
     "Tabell och matcher →":"Clasificación y partidos →",
     "Tabellen gick inte att hämta just nu.":"No se pudo cargar la clasificación.",
+    "Telefoner":"Teléfonos",
     "Tid kommer":"Hora por confirmar",
     "Tid och plats inte klart":"Hora y lugar por confirmar",
     "Tidigare möten":"Duelos anteriores",
@@ -1534,6 +1556,7 @@
     "Turneringsmatcher ":"Partidos de torneo ",
     "Tvåa i {cls}. Silver efter en stark dag.":"Segundo puesto en {cls}. Plata tras un gran día.",
     "Tvåa i {cls}. Silver, starkt jobbat.":"Segundo puesto en {cls}. Plata, muy buen trabajo.",
+    "Tävlingar":"Torneos",
     "Tävlingar & SPL":"Torneos y SPL",
     "Tävlingsbestämmelser":"Reglamento de competición",
     "Tävlingsklasser":"Categorías de competición",
@@ -1571,6 +1594,7 @@
     "Väntar":"Esperando",
     "Väntar på resultat":"Esperando resultado",
     "V–F":"G–P",
+    "av max {n}":"de máx. {n}",
     "av {n} omgångar":"de {n} jornadas",
     "av {n}, snitt ett år":"de {n}, media de un año",
     "borta":"fuera",
@@ -1585,9 +1609,12 @@
     "förlust":"derrota",
     "första C-tävlingen, KF":"primer torneo C, cuartos",
     "gruppen":"el grupo",
+    "grupper · {n} inbokade":"grupos · {n} previstos",
     "gruppmatchen":"el partido de grupo",
     "gruppspel":"fase de grupos",
     "hemma":"en casa",
+    "historik ":"historial ",
+    "i players.json":"en players.json",
     "idag":"hoy",
     "inget set förlorat":"sin perder un set",
     "kapten":"capitán",
@@ -1606,11 +1633,19 @@
     "poäng kommer":"puntos pendientes",
     "på {n} tävlingar":"en {n} torneos",
     "pågår":"en juego",
+    "pågår / kommande":"en juego / próximos",
     "sedan ":"desde ",
+    "senast ändrad ":"último cambio ",
     "senaste året":"último año",
+    "servern":"el servidor",
+    "skickade":"enviados",
     "snitt ":"media ",
+    "spelare per telefon":"jugadores por teléfono",
+    "svenska / spanska":"sueco / español",
+    "telefoner":"teléfonos",
     "topp ":"máx. ",
     "tvåa":"2.º puesto",
+    "tävlingar inom 20 mil":"torneos a 200 km",
     "vann ":"ganaron ",
     "vinst":"victoria",
     "vinster":"victorias",
@@ -4471,6 +4506,40 @@
     if (empty) empty.hidden = list.length > 0;
   }
 
+  /* ================= #stats: the owner's numbers (worker GET /stats, secret key kept on this device only) ================= */
+  // Opened once as #stats/<key> (the link from the owner); after that #stats. No link to it anywhere on the page.
+  var STATS_KEY_LS = "padel.statsKey";
+  function renderStats(){
+    var box = document.getElementById("stats");
+    if (!box){ box = document.createElement("main"); box.className = "view"; box.id = "stats"; box.tabIndex = -1; box.hidden = true; document.getElementById("players").parentNode.insertBefore(box, document.getElementById("players")); }
+    var key = store.get(STATS_KEY_LS);
+    box.innerHTML = '<div class="phead"><div class="pt"><h1>' + _("Statistik") + '</h1><div class="pm">' + _("Bara för dig") + '</div></div></div><div id="statsBody"><p class="empty">' + _("Hämtar …") + '</p></div>';
+    var body = box.querySelector("#statsBody");
+    if (!key || !PUSH_API){ body.innerHTML = '<p class="empty">' + _("Den här sidan är privat.") + '</p>'; return; }
+    withTimeout(fetch(PUSH_API + "/stats", {headers:{"X-Stats-Key":key}, cache:"no-store", credentials:"omit"}).then(function(r){ if (r.status === 403) throw new Error("403"); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), 10000).then(function(s){
+      var d = s.devices, pu = s.pushes, dt = s.data, mx = Math.max.apply(null, pu.days.map(function(x){ return x.sent; }).concat([1]));
+      var when = function(iso){ if (!iso) return "–"; var x = new Date(iso); return (dayOf(x) === dayOf(now()) ? _("idag") : dayLabel(x)) + " " + hm(x); };
+      var tile = function(k, v, sub){ return '<div><span>' + esc(k) + '</span><b>' + esc(v) + '</b><small>' + esc(sub || "") + '</small></div>'; };
+      var svc = Object.keys(d.services).sort(function(a, b){ return d.services[b] - d.services[a]; }).map(function(k){ return k + " " + d.services[k]; }).join(" · ");
+      body.innerHTML =
+        '<section><div class="sh"><h2>' + _("Notiser") + '</h2><div class="meta">' + esc(when(s.at)) + '</div></div><div class="bchips stt">' +
+          tile(_("Telefoner"), String(d.n), _("av max {n}", {n:s.cap})) + tile(_("Följer i snitt"), String(d.followAvg).replace(".", ","), _("spelare per telefon")) +
+          tile(_("Notiser 14 dagar"), String(pu.total), _("skickade")) + tile(_("Språk"), d.lang.sv + " / " + d.lang.es, _("svenska / spanska")) + '</div>' +
+          '<p class="stnote">' + esc(svc || "–") + '</p>' +
+          '<div class="card stbars" aria-label="' + _("Notiser per dag") + '">' + pu.days.slice().reverse().map(function(x){
+            return '<div title="' + esc(x.d + ": " + x.sent) + '"><i style="height:' + Math.round(100 * x.sent / mx) + '%"></i><span>' + (+x.d.slice(8)) + '</span></div>'; }).join("") + '</div>' +
+        '</section>' +
+        '<section><div class="sh"><h2>' + _("Mest följda") + '</h2><div class="meta">' + d.following.length + _(" spelare") + '</div></div><div class="card partners">' +
+          (d.following.length ? d.following.map(function(f){ var P = BYPID[f.pid]; if (!P) return ""; var pct = Math.round(100 * f.n / Math.max(1, d.n));
+            return '<a class="parow" href="#' + esc(P.key) + '"><span class="avs">' + avatar(P.name) + '</span><span class="pn"><b>' + esc(P.name) + '</b><span>' + f.n + " " + _("telefoner") + " · " + pct + ' %</span><span class="bar" aria-hidden="true"><i style="width:' + pct + '%"></i></span></span><span class="pv"><b>' + f.n + '</b></span></a>'; }).join("") :
+            '<p class="empty" style="padding:12px 0">' + _("Ingen följer någon än.") + '</p>') + '</div></section>' +
+        '<section><div class="sh"><h2>' + _("Data") + '</h2><div class="meta">' + _("servern") + '</div></div><div class="bchips stt">' +
+          tile(_("RankedIn kollad"), when(dt.checked), _("senast ändrad ") + when(dt.changed)) + tile(_("Tävlingar"), dt.active + " / " + dt.upcoming, _("pågår / kommande")) +
+          tile(_("Förslag"), String(dt.calendar), _("tävlingar inom 20 mil")) + tile(_("Serier"), String(dt.series), _("grupper · {n} inbokade", {n:dt.schedule})) +
+          tile(_("Serier hämtade"), when(dt.seriesAt), _("historik ") + when(dt.seriesHistAt)) + tile(_("Spelare"), String(dt.roster), _("i players.json")) + '</div></section>';
+    }).catch(function(e){ body.innerHTML = '<p class="empty">' + (/403/.test(e.message) ? _("Nyckeln stämmer inte. Öppna länken du fick igen.") : _("Kunde inte hämta just nu.")) + '</p>'; });
+  }
+
   /* ================= team view (#lag/<teamId>) ================= */
   function renderTeam(T){
     var box = document.getElementById("team");
@@ -5234,13 +5303,15 @@
   function parseHash(h){
     h = String(h || "");
     if (!h || h === "#" || h === "#/") return {view:"home"};
+    var sk = /^#stats(?:\/([\w-]+))?$/.exec(h);
+    if (sk) return {view:"stats", key:sk[1] || null};
     var t = /^#lag\/(\d+)/.exec(h);
     if (t) return {view:"team", teamId:+t[1]};
     var m = /^#([a-z0-9-]+)(?:\/m([\w-]+))?/i.exec(h), P = m && (BYKEY[m[1].toLowerCase()] || BYSLUG[m[1].toLowerCase()]);
     return P ? {view:"player", who:P.key, P:P, mid:m[2] || null} : {view:"home"};
   }
   function showView(id){
-    ["home", "team"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
+    ["home", "team", "stats"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
       var el = document.getElementById(v);
       if (el) el.hidden = v !== id;
     });
@@ -5300,6 +5371,11 @@
       setTimeout(function(){ try { fillSummaries(x.who); } catch (e){} }, 0);
       VIEW = {name:"player", who:x.who};
       document.title = x.P.name + " · Nynäs Padel";
+    } else if (x.view === "stats"){
+      if (x.key){ store.set(STATS_KEY_LS, x.key); history.replaceState(null, "", "#stats"); }   // the key leaves the address bar
+      renderStats(); showView("stats");
+      VIEW = {name:"stats", who:null};
+      document.title = _("Statistik") + " · Nynäs Padel";
     } else if (x.view === "team"){
       var T = TEAMS.filter(function(t){ return t.id === x.teamId; })[0];
       if (!T){ location.replace("#/"); return; }

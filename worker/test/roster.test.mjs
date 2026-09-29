@@ -258,3 +258,22 @@ test("GET /events: latest results and who plays now, from the units' records", a
   assert.equal(body.live[String(SANNA)].st, "next");
   assert.equal(body.live[String(SANNA)].vs, "Padelverket Damlag");
 });
+
+test("GET /stats: only with STATS_KEY; devices by language, service and followed player; pushes per day", async () => {
+  const PUSH = kv(), v = await makeVapid();
+  const env = { PUSH, ...v, VAPID_SUBJECT: ORIGIN, ORIGIN, NOW: "2026-09-29T12:00:00+02:00", STATS_KEY: "st" };
+  const a = await makeSubscription("https://web.push.apple.com/a1"), b = await makeSubscription("https://fcm.googleapis.com/fcm/send/b1");
+  await post(env, { subscription: a.sub, prefs: { follow: [THEA, KIAN] } });
+  await post(env, { subscription: b.sub, prefs: { follow: [THEA], lang: "es" } });
+  PUSH.m.set("stats:2026-09-27", JSON.stringify({ sent: 5, removed: 1, ticks: 2 }));
+  assert.equal((await worker.fetch(new Request("https://w/stats"), env)).status, 403);
+  assert.equal((await worker.fetch(new Request("https://w/stats", { headers: { "X-Stats-Key": "no" } }), env)).status, 403);
+  const s = await (await worker.fetch(new Request("https://w/stats", { headers: { "X-Stats-Key": "st" } }), env)).json();
+  assert.equal(s.devices.n, 2);
+  assert.deepEqual(s.devices.lang, { sv: 1, es: 1 });
+  assert.deepEqual(s.devices.services, { Apple: 1, Google: 1 });
+  assert.deepEqual(s.devices.following.slice(0, 2), [{ pid: THEA, n: 2 }, { pid: KIAN, n: 1 }]);
+  assert.equal(s.devices.followAvg, 1.5);
+  assert.equal(s.pushes.total, 5);
+  assert.deepEqual(s.pushes.days[2], { d: "2026-09-27", sent: 5, removed: 1 });
+});
