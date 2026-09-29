@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Mb3bVJc0BKjLyX0ibuHBEnjdbmKE7C7HrOL9NPTI+PI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-BO2VbRLJhek/nD3kalk7HYQ1qGA56216m28RzyPGRS0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -3698,6 +3698,31 @@
     }); });
     return out.sort(function(a, b){ return a.at - b.at; });
   }
+  // Home: every club series match (once, whoever of the club plays in it)
+  function bhsKey(g, x){ return g.id + "|" + x.a + "|" + x.b + "|" + (x.d || ""); }
+  function bhsPlayers(x){ return (x.pids || []).map(function(p){ return BYPID[p]; }).filter(Boolean); }
+  function bhsLatest(){
+    var t = +now(), seen = {}, out = [], b = DISC && DISC.bhs;
+    ((b && b.groups) || []).forEach(function(g){ (g.res || []).forEach(function(r){
+      var at = riDate(r.d + "T20:00"), k = bhsKey(g, r);
+      if (!at || seen[k] || t - at > 14 * 864e5) return;
+      seen[k] = 1;
+      var won = bhsSets(r.s) >= 0, pl = bhsPlayers(r);
+      out.push({at:+at, x:{lab:g.series, day:r.d, win:won ? r.a : r.b, lose:won ? r.b : r.a, s:won ? r.s : flip(r.s), name:"", cls:g.name, pids:r.pids, who:pl[0] ? pl[0].key : ""}});
+    }); });
+    return out;
+  }
+  function bhsAgenda(lim){
+    var t = +now(), seen = {}, out = [], b = DISC && DISC.bhs;
+    ((b && b.groups) || []).forEach(function(g){ (g.next || []).forEach(function(x){
+      var at = riDate(String(x.d).replace(" ", "T")), k = bhsKey(g, x);
+      if (!at || seen[k] || +at + (x.min || 90) * 60000 < t || +at > lim) return;
+      seen[k] = 1;
+      var pl = bhsPlayers(x);
+      out.push({kind:"bhs", at:at, time:hm(at), title:_(g.series), cls:g.name, href:"#" + (pl[0] ? pl[0].key : ""), sub:x.a + " – " + x.b + (x.c ? " · " + _("Bana ") + x.c : ""), players:pl});
+    }); });
+    return out;
+  }
   function bhsSides(P, x){ var mine = bhsIn(P, x.a) || !bhsIn(P, x.b); return {me:mine ? x.a : x.b, op:mine ? x.b : x.a, first:mine}; }
   function bhsCard(P, n){
     var x = n.x, sd = bhsSides(P, x), d = loc(n.at);
@@ -4109,13 +4134,15 @@
   function renderLatest(){
     var sec = document.getElementById("secRes"), host = document.getElementById("homeRecent");
     if (!sec || !host) return;
-    var list = ((DISC && DISC.latest) || []).filter(function(x){ return x && x.mid && x.win; }).slice(0, 8), f = follows();
+    // RankedIn (the worker's live monitoring) and the club's series (Backhandsmash, the last two weeks), newest first
+    var list = ((DISC && DISC.latest) || []).filter(function(x){ return x && x.mid && x.win; }).map(function(x){ return {x:x, at:+(riDate(x.d) || 0)}; })
+      .concat(bhsLatest()).sort(function(a, b){ return b.at - a.at; }).slice(0, 8).map(function(y){ return y.x; }), f = follows();
     sec.hidden = !list.length;
     if (!list.length){ host.innerHTML = ""; return; }
     host.innerHTML = '<ol aria-label="' + _("Senaste resultat") + '">' + list.map(function(x){
       var mine = (x.pids || []).some(function(p){ return f.indexOf(Number(p)) >= 0; }), who = x.who || (BYPID[(x.pids || [])[0]] || {}).key || "";
       var ev = x.team ? x.team + " – " + x.opp : [x.name, x.cls].filter(Boolean).join(" · ");
-      return '<li><a href="#' + esc(who) + '/m' + esc(x.mid) + '"' + (mine ? ' class="mine"' : "") + '><div class="rh"><b>' + esc(_(x.lab || "")) + '</b><span>' + esc(whenOf(x.d)) + '</span></div>' +
+      return '<li><a href="#' + esc(who) + (x.mid ? '/m' + esc(x.mid) : "") + '"' + (mine ? ' class="mine"' : "") + '><div class="rh"><b>' + esc(_(x.lab || "")) + '</b><span>' + esc(x.day ? dayMon(x.day) : whenOf(x.d)) + '</span></div>' +
         '<div class="rw">' + esc(x.win) + '</div><div class="rl">' + esc(((x.s ? x.s + " " : "") + (x.lose ? _("mot ") + x.lose : "")).trim()) + '</div><div class="rv">' + esc(ev) + '</div></a></li>';
     }).join("") + '</ol>';
   }
@@ -4274,7 +4301,7 @@
     var lim = +now() + 45 * 864e5, teamSeen = {}, rows = upcomingRows().filter(function(r){
       if (r.kind === "tl"){ if (teamSeen[r.e.teamId]) return false; teamSeen[r.e.teamId] = 1; return true; }   // the next round per team
       return +r.at < lim;
-    }).slice(0, 8), days = [], by = {};
+    }).concat(bhsAgenda(lim)).sort(function(a, b){ return a.at - b.at; }).slice(0, 10), days = [], by = {};
     rows.forEach(function(r){ var d = dayOf(r.at); if (!by[d]){ by[d] = []; days.push(d); } by[d].push(r); });
     if (meta) meta.textContent = rows.length ? cap(days.slice(0, 3).map(function(d){ return MON[+d.slice(5, 7) - 1]; }).filter(function(m, i, a){ return a.indexOf(m) === i; }).join(" · ")) : "";
     host.innerHTML = days.length ? days.map(function(d){
