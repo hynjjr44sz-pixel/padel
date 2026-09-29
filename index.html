@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-4VVhi6MUfkGcrV5Fj22laTDZUyPQ8DPkkbnEg1PCYgU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-9d4byV3vtC5qrfG+iiHOJrRFophIovwOgZWQMDy9zrs='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -525,6 +525,7 @@
   .tbl .gt tr.me td{ background:var(--accent-soft); font-weight:700; }
   .tbl .gt tr.me td:first-child{ box-shadow:inset 3px 0 0 var(--accent); }
   .tblhd a{ color:inherit; }
+  .nd.bfirst{ margin:0 0 12px; padding:8px 10px; border-radius:10px; background:rgba(142,197,255,.1); border:1px solid rgba(142,197,255,.25); }
   .swk{ font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin:12px 0 4px; }
   .bres{ margin:8px 0 6px; border-top:1px solid var(--line); }
   .bdevw{ margin:12px 0 8px; padding-top:10px; border-top:1px solid var(--line); }
@@ -1425,6 +1426,7 @@
     "Nästa":"Siguiente",
     "Nästa omgångar: ":"Próximas jornadas: ",
     "Nästa rond":"Ronda siguiente",
+    "Nästa seriematch: ":"Próximo partido de liga: ",
     "Nästa tävling":"Próximo torneo",
     "Nästa: ":"Siguiente: ",
     "O":"E",
@@ -1473,6 +1475,7 @@
     "Senaste resultat":"Últimos resultados",
     "Senaste tävlingar":"Últimos torneos",
     "Senaste tävlingen":"Último torneo",
+    "Seriematch först: ":"Antes, partido de liga: ",
     "Serien på Backhandsmash ↗︎":"La liga en Backhandsmash ↗︎",
     "Serien på RankedIn ↗︎":"La liga en RankedIn ↗︎",
     "Serier":"Ligas",
@@ -3493,6 +3496,13 @@
     } else {
       o.link = W.name; o.url = RI_WEB; o.pill = _("Paus"); o.pcls = "done"; o.round = _("Inget inbokat"); o.big = "–";
       o.txt = _("Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva."); o.sub = _("Inget inbokat");
+    }
+    // a club series match before the next event (or with nothing booked): one line under it
+    var nb = bhsNext(W.P)[0];
+    if (nb && (!e || +nb.at < +nextStart(D))){
+      var sd = bhsSides(W.P, nb.x);
+      o.next = '<div class="nd bfirst">' + (e ? _("Seriematch först: ") : _("Nästa seriematch: ")) + '<b>' + esc(cap(dayLabel(nb.at)) + " " + hm(nb.at)) + '</b> · ' +
+        esc([_(nb.g.series) + " " + nb.g.name, nb.x.c ? _("Bana ") + nb.x.c : "", _("mot ") + sd.op].filter(Boolean).join(" · ")) + '</div>' + (o.next || "");
     }
     if (!e){ o.nosec = true; setHero(D, o); D.el.draw.innerHTML = ""; return; }
     if (e.kind === "teamleague"){
