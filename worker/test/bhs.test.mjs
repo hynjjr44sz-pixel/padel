@@ -42,3 +42,14 @@ test("round history and league ranking", async () => {
   const r = parseRanking({ Compiled: "Updated  2026-06-20 00:00", TableData: { Rows: [{ Cells: [{ Value: 1 }, { Value: "Cecilia  Hildemyhr" }, { Value: 2.2 }] }, { Cells: [{ Value: 4 }, { Value: "Sanna  Årsjö" }, { Value: 4.4 }] }] } }, n => /Sanna/.test(n) ? [1055851] : []);
   assert.deepEqual(r, { n: 2, at: "2026-06-20", rows: [{ rank: 4, name: "Sanna Årsjö", avg: 4.4, pids: [1055851] }] });
 });
+test("series winners: when the league's round moves on, the 1st of the round that ended", async () => {
+  const { seriesWinners } = await import("../src/bhs.js");
+  const groups = [{ lg: "mix", series: "Mixedserie", name: "Mix 1", rows: [{ id: 7, n: "Kian Borgström / Thea Löving", pids: [1, 2] }, { id: 8, n: "Magnus Olsson / Sigrid Olsson", pids: [3] }] }];
+  const t1 = new Date("2026-09-29T01:43:00Z"), t2 = new Date("2026-10-27T01:43:00Z");
+  const a = seriesWinners(null, { 7: [["2026:4", 1, 2], ["2026:8", 1, 1]], 8: [["2026:8", 1, 3]] }, groups, t1);
+  assert.deepEqual(a.cur, { mix: "2026:8" });
+  assert.deepEqual(a.sw, []);
+  const b = seriesWinners(a, { 7: [["2026:8", 1, 1], ["2026 : 9", 1, 2]], 8: [["2026:8", 1, 3], ["2026 : 9", 1, 1]] }, groups, t2);
+  assert.deepEqual(b.sw, [{ id: 7, lg: "mix", series: "Mixedserie", group: "Mix 1", round: "2026:8", n: "Kian Borgström / Thea Löving", pids: [1, 2], at: t2.toISOString() }]);
+  assert.deepEqual(seriesWinners(b, { 7: [["2026 : 9", 1, 2]], 8: [["2026 : 9", 1, 1]] }, groups, t2).sw.length, 1);   // not twice
+});

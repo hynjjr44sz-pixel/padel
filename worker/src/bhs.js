@@ -144,6 +144,29 @@ export async function fetchBhsHistory(budget, groups, players = PLAYERS) {
   return { members, rank };
 }
 
+// Series winners: a round is over when the league's newest round in the history moves on (a new round has begun). The
+// teams/players that were 1st in the round that ended are the winners; names and groups come from the tables seen
+// before the change (snap). -> {cur: {lg: round}, snap: {memberId: {lg, series, group, n, pids}}, sw: [...]} (sw kept 60 days)
+const roundNo = r => { const m = /(\d{4})\s*:\s*(\d+)/.exec(String(r)); return m ? +m[1] * 100 + +m[2] : 0; };
+export function seriesWinners(prev, members, groups, t) {
+  const p = prev || {}, cur = {}, snap = {}, sw = ((p.sw || []).filter(w => +t - Date.parse(w.at) < 60 * 864e5));
+  for (const g of groups) for (const r of g.rows) {
+    if (!r.id || !(r.pids || []).length) continue;
+    snap[r.id] = { lg: g.lg, series: g.series, group: g.name, n: r.n, pids: r.pids };
+    const last = (members[r.id] || []).map(x => x[0]).sort((a, b) => roundNo(b) - roundNo(a))[0];
+    if (last && roundNo(last) > roundNo(cur[g.lg] || "")) cur[g.lg] = last;
+  }
+  for (const lg of Object.keys(cur)) {
+    const was = (p.cur || {})[lg];
+    if (!was || roundNo(cur[lg]) <= roundNo(was)) continue;   // first run, or the same round
+    for (const id of Object.keys(p.snap || {})) {
+      const s0 = p.snap[id], e = s0.lg === lg && (members[id] || []).find(x => roundNo(x[0]) === roundNo(was));
+      if (e && e[2] === 1 && !sw.some(w => w.id === +id && w.round === was)) sw.push({ id: +id, lg, series: s0.series, group: s0.group, round: was, n: s0.n, pids: s0.pids, at: t.toISOString() });
+    }
+  }
+  return { cur, snap, sw };
+}
+
 /* ---- the schedule (time and court of the coming matches) is behind the login: the captain's MATCHi account, secrets
    BHS_USER / BHS_PASS (off without them). Login: backhandsmash.com -> auth.matchi.com (Keycloak form) -> session. ---- */
 // Minimal cookie jar: name=value per host (enough for the login round trip; paths and expiry are not needed here).

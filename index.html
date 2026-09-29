@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-miMR0kaCvaeh5wy39r7MDnFdFkSdJGfv6FYW7Vie6UY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-4VVhi6MUfkGcrV5Fj22laTDZUyPQ8DPkkbnEg1PCYgU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -525,6 +525,7 @@
   .tbl .gt tr.me td{ background:var(--accent-soft); font-weight:700; }
   .tbl .gt tr.me td:first-child{ box-shadow:inset 3px 0 0 var(--accent); }
   .tblhd a{ color:inherit; }
+  .swk{ font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin:12px 0 4px; }
   .bres{ margin:8px 0 6px; border-top:1px solid var(--line); }
   .bdevw{ margin:12px 0 8px; padding-top:10px; border-top:1px solid var(--line); }
   .bk2{ font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin-bottom:6px; }
@@ -1476,6 +1477,7 @@
     "Serien på RankedIn ↗︎":"La liga en RankedIn ↗︎",
     "Serier":"Ligas",
     "Serier: ":"Ligas: ",
+    "Seriesegrare":"Ganadores de liga",
     "Seriespel":"Liga",
     "Sista anmälan ":"Inscripción hasta ",
     "Skill efter varje match, ":"Skill tras cada partido, ",
@@ -1527,6 +1529,7 @@
     "VIN%":"VIC%",
     "Vad är SPT?":"¿Qué es el SPT?",
     "Vann ":"Ganaron ",
+    "Vann gruppen":"Grupo ganado",
     "Vann gruppen ":"Ganaron el grupo ",
     "Vann {cls}":"Ganó {cls}",
     "Var för sig: ":"Por separado: ",
@@ -1581,6 +1584,7 @@
     "om ":"en ",
     "om 1 dag":"en 1 día",
     "om {n} dagar":"en {n} días",
+    "omgång ":"jornada ",
     "plate: 8-10 i avgörandet":"plate: 8-10 en el desempate",
     "poäng kommer":"puntos pendientes",
     "på {n} tävlingar":"en {n} torneos",
@@ -4262,15 +4266,19 @@
     var n = (w.pair || []).length ? w.pair : winPlayers(w).map(function(p){ return p.name; });
     return '<span class="avs ' + (size || "") + '">' + n.map(avatar).join("") + '</span>';
   }
+  function seriesWins(){
+    var h = DISC && DISC.bhs && DISC.bhs.hist, t = +now();
+    return ((h && h.sw) || []).filter(function(w){ return t - Date.parse(w.at) <= WIN_DAYS * 864e5; }).sort(function(a, b){ return String(b.at).localeCompare(String(a.at)); });
+  }
   function renderWins(){
     var sec = document.getElementById("secWin"), host = document.getElementById("winList"), meta = document.getElementById("winMeta");
     if (!sec || !host) return;
     var f = follows(), fol = function(w){ return (w.pids || []).some(function(p){ return f.indexOf(Number(p)) >= 0; }) ? 1 : 0; };
     var order = function(a, b){ return String(b.date).localeCompare(String(a.date)) || fol(b) - fol(a) || String(a.id).localeCompare(String(b.id)); };
-    var wins = weekWins(1).sort(order), fins = weekWins(2).sort(order);
-    sec.hidden = !wins.length;
-    if (!wins.length){ host.innerHTML = ""; if (meta) meta.textContent = ""; return; }
-    if (meta) meta.textContent = wins.length === 1 ? _("1 klass") : wins.length + _(" klasser");
+    var wins = weekWins(1).sort(order), fins = weekWins(2).sort(order), sws = seriesWins();
+    sec.hidden = !wins.length && !sws.length;
+    if (!wins.length && !sws.length){ host.innerHTML = ""; if (meta) meta.textContent = ""; return; }
+    if (meta) meta.textContent = wins.length ? (wins.length === 1 ? _("1 klass") : wins.length + _(" klasser")) : "";
     host.innerHTML = wins.map(function(w){
       var P = winPlayers(w)[0], day = riDate(w.date + "T12:00"), res = w.rr ? _("Vann gruppen ") + (w.s || "") : (w.s || "");
       return '<a class="wcard" href="#' + esc(P ? P.key : "") + '" aria-label="' + esc(pairLabel(w) + _(" vann ") + (w.cls || _("klassen")) + (w.name ? _(" i ") + w.name : "")) + '">' +
@@ -4284,6 +4292,12 @@
       var P = winPlayers(w)[0];
       return '<li><a href="#' + esc(P ? P.key : "") + '"><span class="pb hi">Final</span><span><b>' + esc(pairLabel(w)) + '</b>' +
         '<span class="wm">' + esc([w.cls, w.name].filter(Boolean).join(" · ") + (w.s ? " · " + w.s : "") + (w.opp ? _(" mot ") + w.opp : "")) + '</span></span>' + winAvatars(w, "sm") + '</a></li>';
+    }).join("") + '</ul>' : "") +
+    // the club's series: who won their group in the round that just ended (Backhandsmash), a week from when it was seen
+    (sws.length ? '<div class="swk">' + _("Seriesegrare") + '</div><ul class="winfin" aria-label="' + _("Seriesegrare") + '">' + sws.map(function(w){
+      var pl = (w.pids || []).map(function(p){ return BYPID[p]; }).filter(Boolean);
+      return '<li><a href="#' + esc(pl[0] ? pl[0].key : "") + '"><span class="pb win">' + ordinal(1) + '</span><span><b>' + esc(pl.length ? pl.map(function(p){ return p.short; }).join(" & ") + (/ \/ /.test(w.n) && pl.length < 2 ? " & " + w.n.split(" / ").filter(function(n){ return !pl.some(function(p){ return bhsIn(p, n); }); }).map(surname).join("") : "") : w.n) + '</b>' +
+        '<span class="wm">' + esc(_(w.series) + " · " + w.group + " · " + _("omgång ") + bhsRound(w.round)) + '</span></span>' + avatarsOf(pl, "sm") + '</a></li>';
     }).join("") + '</ul>' : "");
   }
   /* ================= Topplistan: the club's leaderboard ================= */

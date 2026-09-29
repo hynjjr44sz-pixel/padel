@@ -2,7 +2,7 @@
 // event is active, diffs against the last state in KV and pushes new results to the devices that follow
 // the player(s) concerned. Events come from discover.js (every event the club's players in players.json
 // enter on RankedIn, a few players per run) merged with events.js.
-import { fetchBhs, fetchBhsHistory, bhsLogin } from "./bhs.js";
+import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
 import { parse, snapshot, unpack, notes, drawNote, summary, classResult, flip } from "./rankedin.js";
 import { discover, drawPath, rubbersPath, namesPath, drawsOf, ratingPath, skillOf, API, PLAYERS, BY_PID, LEGACY } from "./discover.js";
@@ -142,7 +142,7 @@ async function handle(req, env) {
     // board: the club leaderboard per pid {sk skill, w/l/y this year's W–L, rk/rp/rd SPF standing/points/list date, up places
     // gained on that list} (home view: Topplistan; kept in "disc", so it costs no extra KV read)
     const bhs = await loadBhs(env);
-    return json({ at: rec ? rec.at : null, checked: checkedAt(rec, t), src: "worker", events, past, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {}, bhs: bhs ? { at: bhs.at, groups: bhs.groups, hist: bhs.hist || null } : null,
+    return json({ at: rec ? rec.at : null, checked: checkedAt(rec, t), src: "worker", events, past, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {}, bhs: bhs ? { at: bhs.at, groups: bhs.groups, hist: bhs.hist ? { at: bhs.hist.at, members: bhs.hist.members, rank: bhs.hist.rank, sw: bhs.hist.sw || [] } : null } : null,
       board: (rec && rec.board) || {} }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
   if (route === "GET /live") return liveRoute(req, env, url, h);
@@ -252,9 +252,10 @@ export async function bhsHistDue(env, t) {
   return t.getUTCHours() === 1 || !v.hist || +t - Date.parse(v.hist.at) > 26 * H;
 }
 export async function runBhsHist(env, t, budget, log = {}) {
-  const v = await loadBhs(env), h = await fetchBhsHistory(budget, v.groups);
-  const next = { ...v, hist: { at: t.toISOString(), ...h } };
-  if (v.hist && JSON.stringify({ m: v.hist.members, r: v.hist.rank }) === JSON.stringify({ m: h.members, r: h.rank }) && +t - Date.parse(v.hist.at) < 6 * DAY) { log.bhsHist = 0; return v; }
+  const v = await loadBhs(env), h = await fetchBhsHistory(budget, v.groups), w = seriesWinners(v.hist, h.members, v.groups, t);
+  const next = { ...v, hist: { at: t.toISOString(), ...h, ...w } };
+  const same = x => JSON.stringify([x.members, x.rank, x.cur, x.snap, x.sw]);
+  if (v.hist && same(v.hist) === same(next.hist) && +t - Date.parse(v.hist.at) < 6 * DAY) { log.bhsHist = 0; return v; }
   await env.PUSH.put("bhs", JSON.stringify(next));
   BHSM = { v: next, at: Date.now() };
   log.writes = (log.writes || 0) + 1; log.bhsHist = Object.keys(h.members).length;
