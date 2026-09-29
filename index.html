@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-NGdP4J52OkNz+1dGnJjdE68eoPmRJoDo0KQlFLUgxOQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-2MSM+lQdhnkkoSHsUXrrhHdDw6XiW1YyQbomhyyYamc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -4788,8 +4788,7 @@
       if (document.visibilityState === "hidden"){ todo.length = 0; paused = true; return Promise.resolve(); }
       return mhDatas(P, r).then(function(datas){
         rec.cls[r.cid] = {d:r.d, n:r.n || "", m:mhFromEv(P, buildTour({cls:r.c || "", me:P.name, pid:P.pid, rating:ratingFor(r.c)}, datas), r.d)};
-        mhSave(P);
-        mhChanged(P, false);
+        mhSave(P);   // shown once, when every class is counted (no list that grows and reorders while it loads)
       }, function(){ failed = true; }).then(one);
     }
     Promise.all([one(), one()]).then(function(){
@@ -4916,21 +4915,23 @@
   function renderPartners(who){
     var host = document.getElementById("paList-" + who), meta = document.getElementById("paMeta-" + who), P = BYKEY[who];
     if (!host || !P) return;
-    var ready = !!mhGet(P).t, st = partnerStats(P);
+    var ready = !!mhGet(P).t, st = ready || !MH_BUSY[who] ? partnerStats(P) : {rows:[], best:null, total:0};   // first count: nothing until it is done
     var since = mhSince(P), per = since ? _("sedan ") + since : _("de senaste 12 månaderna");
     // no break inside "26 apr" or "7 matcher" (the meta wraps at 360 px)
     if (meta) meta.textContent = ((since ? _("Sedan ") + since : _("12 mån")) + (st.total ? " · " + st.total + (st.total === 1 ? _(" match") : _(" matcher")) : "")).replace(/(\d) /g, "$1\u00a0");
     if (!st.rows.length){
       host.innerHTML = '<p class="empty" style="padding:12px 0" role="status">' + (ready ? _("Inga turneringsmatcher det senaste året.") : _("Räknar matcher …")) + '</p>';
+      host._h = null;
       return;
     }
     var all = !!PA_OPEN[who], list = all ? st.rows : st.rows.slice(0, 6);
-    host.innerHTML = list.map(function(o){
+    var html = list.map(function(o){
       var Q = BYNAME[slug(o.n)], best = o === st.best, tag = Q ? "a" : "div";
       return '<' + tag + ' class="parow' + (best ? " best" : "") + '"' + (Q ? ' href="#' + esc(Q.key) + '"' : "") + '>' + '<span class="avs">' + avatar(o.n) + '</span>' +
         '<span class="pn"><b>' + esc(o.n) + '</b><span>' + o.m + (o.m === 1 ? _(" match") : _(" matcher")) + " · " + o.pct + _(" % vinster") + '</span><span class="bar" aria-hidden="true"><i style="width:' + o.pct + '%"></i></span></span>' +
         '<span class="pv"><b>' + o.w + "–" + o.l + '</b>' + (best ? '<span class="pb win">' + _("Bäst") + '</span>' : '<span>' + _("V–F") + '</span>') + '</span></' + tag + '>';
     }).join("") + (st.rows.length > 6 ? '<div style="padding:10px 0"><button class="morebtn" type="button" data-pa="' + esc(who) + '" aria-expanded="' + (all ? "true" : "false") + '">' + (all ? _("Visa färre") : _("Visa alla ") + st.rows.length) + '</button></div>' : "");
+    if (host._h !== html){ host.innerHTML = html; host._h = html; }
     var note = document.getElementById("paNote-" + who);
     if (note) note.textContent = (st.best ? _("Bäst ihop med ") + st.best.n.split(" ")[0] + ": " + st.best.w + "–" + st.best.l + " (" + st.best.pct + " %). " + _("Turneringsmatcher ") + per + "." :
       _("Turneringsmatcher ") + per + "." + (st.rows.length > 1 ? _(" Bäst ihop visas från 3 matcher.") : "")) + (mhGet(P).f ? _(" Några tävlingar kunde inte hämtas, nytt försök om en timme.") : "");
