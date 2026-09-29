@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-2MSM+lQdhnkkoSHsUXrrhHdDw6XiW1YyQbomhyyYamc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-TXnZOvaj1SvOYUP18ocC3BcmnPlUjbyrbqvEQ5igU7U='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -4741,7 +4741,7 @@
   }
   function mhClasses(P){
     var t = now(), today = dayOf(t);
-    return tourRows(P.key).filter(function(r){ return r.cid && r.d && r.d < today && +t - Date.parse(r.d + "T12:00:00Z") < YEAR_MS; });
+    return tourRows(P.key).filter(function(r){ return r.cid && r.d && (r.d < today || (r.d === today && r.b !== "Pågår")) && +t - Date.parse(r.d + "T12:00:00Z") < YEAR_MS; });   // finished today counts at once
   }
   // Raw draws of a class: this device's copies first (any player's), else RankedIn.
   function mhDatas(P, r){
@@ -4777,7 +4777,8 @@
   function mhRun(P){
     var rec = mhGet(P), key = P.key;
     if (MH_BUSY[key]) return;
-    if (rec.t && Date.now() - rec.t < 24 * HOUR){ MH_WANT[key] = false; return; }
+    // counted in the last 24 h and no finished tournament since: nothing to do (a new one is counted at once)
+    if (rec.t && Date.now() - rec.t < 24 * HOUR && !(HIST_BUSY[key] ? [] : mhClasses(P)).some(function(r){ return !rec.cls[r.cid]; })){ MH_WANT[key] = false; return; }
     // stays wanted: the page on screen, Senaste tävlingar's lookup finished and the tab visible call again
     if (!PANELS[key] || PANELS[key].hidden || HIST_BUSY[key] || document.visibilityState === "hidden" || !window.fetch) return;
     MH_WANT[key] = false; MH_BUSY[key] = true;
