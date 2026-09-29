@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-311fUvtHU+PRcSz6PYj3NvjBpcee8do+6lyK7aMDKkQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-rzoZQKCEnMVBzjHhbh5LNJySJnCW659I6ZMW75wQ65A='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -526,6 +526,16 @@
   .tbl .gt tr.me td:first-child{ box-shadow:inset 3px 0 0 var(--accent); }
   .tblhd a{ color:inherit; }
   .nd.bfirst{ margin:0 0 12px; padding:8px 10px; border-radius:10px; background:rgba(142,197,255,.1); border:1px solid rgba(142,197,255,.25); }
+  /* tabs under the player card: Tävlingar & SPL | Klubbserier */
+  .ptabs{ display:flex; gap:3px; width:min(84%, 330px); margin:14px auto 0; padding:3px; border-radius:99px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); }
+  .ptabs[hidden]{ display:none; }
+  .ptabs button{ appearance:none; flex:1 1 0; min-width:0; height:34px; border:0; border-radius:99px; background:none; color:rgba(232,238,249,.75); cursor:pointer;
+    font:600 12px/1 "Chivo Mono", monospace; letter-spacing:.05em; text-transform:uppercase; white-space:nowrap; }
+  .ptabs button[aria-selected="true"]{ background:#FFD84A; color:#0A1733; }
+  .ptabs + .strip{ margin-top:4px; }
+  [data-tab="loc"] .t-off{ display:none !important; }
+  [data-tab="off"] .t-loc, main:not([data-tab]) .t-loc{ display:none !important; }
+  [data-tab="loc"] .hero{ padding-bottom:18px; }
   .swk{ font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin:12px 0 4px; }
   .bres{ margin:8px 0 6px; border-top:1px solid var(--line); }
   .bdevw{ margin:12px 0 8px; padding-top:10px; border-top:1px solid var(--line); }
@@ -1367,8 +1377,10 @@
     "Klass":"Nivel",
     "Klasser":"Categorías",
     "Klubbranking":"Ranking del club",
+    "Klubbserier":"Ligas del club",
     "Klättrare":"Suben",
     "Kommande":"Próximamente",
+    "Kommande seriematcher":"Próximos partidos de liga",
     "Kunde inte hämta just nu.":"No se pudo cargar ahora.",
     "Kunde inte hämta tävlingarna just nu. Försöker igen om en stund.":"No se pudieron cargar los torneos. Se reintentará en un momento.",
     "Kunde inte hämta – visar senast kända":"No se pudo cargar: se muestra lo último conocido",
@@ -1522,6 +1534,7 @@
     "Turneringsmatcher ":"Partidos de torneo ",
     "Tvåa i {cls}. Silver efter en stark dag.":"Segundo puesto en {cls}. Plata tras un gran día.",
     "Tvåa i {cls}. Silver, starkt jobbat.":"Segundo puesto en {cls}. Plata, muy buen trabajo.",
+    "Tävlingar & SPL":"Torneos y SPL",
     "Tävlingsbestämmelser":"Reglamento de competición",
     "Tävlingsklasser":"Categorías de competición",
     "Upp ":"Sube ",
@@ -1545,6 +1558,7 @@
     "Vinnare av ":"Ganador de ",
     "Vinst":"Victoria",
     "Vinster":"Victorias",
+    "Visa":"Mostrar",
     "Visa alla ":"Ver todos ",
     "Visa färre":"Ver menos",
     "Vunna":"Ganados",
@@ -3070,14 +3084,14 @@
   var COURT_SVG = '<svg class="court" viewBox="0 0 390 230" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1"><path d="M20 229 L110 20 H280 L370 229 Z"/><path d="M58 140 H332"/><path d="M195 140 V229"/><path d="M92 62 H298" stroke-dasharray="3 5"/></svg>';
   function dynShell(who){
     var P = BYKEY[who];
-    return '<div class="livebar" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div><div class="recent" data-r="recent" hidden></div>' +
-      '<div class="' + heroCls(P) + '">' + cardHtml(P) +
-      '<div class="strip"><div class="st-row"><span class="glass" data-r="pill"><span class="dot"></span><span>–</span></span><a class="glass" data-r="link" target="_blank" rel="noopener"></a></div>' +
+    return '<div class="livebar t-off" hidden><span class="ldot" aria-hidden="true"></span><span class="ltxt"></span></div><div class="recent t-off" data-r="recent" hidden></div>' +
+      '<div class="' + heroCls(P) + '">' + cardHtml(P) + ptabsHtml(who) +
+      '<div class="strip t-off"><div class="st-row"><span class="glass" data-r="pill"><span class="dot"></span><span>–</span></span><a class="glass" data-r="link" target="_blank" rel="noopener"></a></div>' +
       '<div class="st-main"><div class="eyebrow" data-r="round"></div><div class="timeline-big"><div class="bigtime" data-r="time">–</div><div class="court-no" data-r="cno"><small data-r="clab">' + _("Bana") + '</small><b data-r="court"></b></div></div></div></div></div>' +
-      '<div class="board" aria-live="polite"><div class="countdown" data-r="cd"><span class="l"><span class="dot"></span><span data-r="cdt">–</span></span><a data-r="rl" target="_blank" rel="noopener">RankedIn ↗︎</a></div>' +
+      '<div class="board t-off" aria-live="polite"><div class="countdown" data-r="cd"><span class="l"><span class="dot"></span><span data-r="cdt">–</span></span><a data-r="rl" target="_blank" rel="noopener">RankedIn ↗︎</a></div>' +
       '<div class="lastres" data-r="last" hidden></div><div class="vs" data-r="vs"></div><div class="nextev" data-r="next" hidden></div></div>' +
-      '<ol class="route" data-r="route" aria-label="' + _("Vägen genom tävlingen") + '" hidden></ol>' +
-      '<section data-r="sec" aria-labelledby="dh-' + who + '"><div class="sh"><h2 id="dh-' + who + '" data-r="h">' + _("Spelträd") + '</h2><div class="meta" data-r="meta"></div></div><div data-r="draw"></div></section>';
+      '<ol class="route t-off" data-r="route" aria-label="' + _("Vägen genom tävlingen") + '" hidden></ol>' +
+      '<section class="t-off" data-r="sec" aria-labelledby="dh-' + who + '"><div class="sh"><h2 id="dh-' + who + '" data-r="h">' + _("Spelträd") + '</h2><div class="meta" data-r="meta"></div></div><div data-r="draw"></div></section>';
   }
   function meTeamRow(p, right){
     var sv = pskill(p), info = p.n.map(function(n){ return n.split(" ")[0]; }).join(_(" och ")) + (sv ? " · skill " + fmtSkill(sv) : "");
@@ -3497,13 +3511,6 @@
       o.link = W.name; o.url = RI_WEB; o.pill = _("Paus"); o.pcls = "done"; o.round = _("Inget inbokat"); o.big = "–";
       o.txt = _("Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva."); o.sub = _("Inget inbokat");
     }
-    // a club series match before the next event (or with nothing booked): one line under it
-    var nb = bhsNext(W.P)[0];
-    if (nb && (!e || +nb.at < +nextStart(D))){
-      var sd = bhsSides(W.P, nb.x);
-      o.next = '<div class="nd bfirst">' + (e ? _("Seriematch först: ") : _("Nästa seriematch: ")) + '<b>' + esc(cap(dayLabel(nb.at)) + " " + hm(nb.at)) + '</b> · ' +
-        esc([_(nb.g.series) + " " + nb.g.name, nb.x.c ? _("Bana ") + nb.x.c : "", _("mot ") + sd.op].filter(Boolean).join(" · ")) + '</div>' + (o.next || "");
-    }
     if (!e){ o.nosec = true; setHero(D, o); D.el.draw.innerHTML = ""; return; }
     if (e.kind === "teamleague"){
       var m = D.model || buildTL(e, []);
@@ -3706,6 +3713,7 @@
     if (D){ D.dead = true; clearTimeout(D.timer); dropResize(D.el.draw); }
     D = DYN[who] = {who:who, e:e || null, mode:pk.mode, recent:pk.recent || null, key:pk.key, box:box, el:{}};
     box.innerHTML = dynShell(who);
+    ptabSet(who, store.get(PTAB_KEY));
     [].forEach.call(box.querySelectorAll("[data-r]"), function(x){ D.el[x.getAttribute("data-r")] = x; });
     D.bar = box.querySelector(".livebar");
     box.hidden = false;
@@ -3734,8 +3742,6 @@
         items.push({at:+new Date(e.windowFrom), h:tlCard(e, later)});
       } else items.push({at:+new Date(e.windowFrom), h:tourCard(e)});
     });
-    // the club's own series (Backhandsmash): coming matches with time and court, in date order with the rest
-    bhsNext(P).forEach(function(x){ items.push({at:+x.at, h:bhsCard(P, x)}); });
     items.sort(function(a, b){ return a.at - b.at; }).forEach(function(x){ var m = MON[loc(new Date(x.at)).getUTCMonth()]; if (months.indexOf(m) < 0) months.push(m); });
     host.innerHTML = items.length ? items.map(function(x){ return x.h; }).join("") : '<p class="empty">' + _("Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva.") + '</p>';
     if (meta) meta.textContent = months.length ? cap(months.slice(0, 3).join(" · ")) : "";
@@ -3830,8 +3836,12 @@
   function renderBhs(who){
     var P = BYKEY[who], sec = document.getElementById("bhs-" + who), host = document.getElementById("bhsList-" + who);
     if (!P || !sec || !host) return;
-    var gs = bhsGroups(P);
+    var gs = bhsGroups(P), up = document.getElementById("bup-" + who), uh = document.getElementById("bhsUp-" + who);
     sec.hidden = !gs.length;
+    ptabSet(who, (PANELS[who] && PANELS[who].getAttribute("data-tab")) || store.get(PTAB_KEY));
+    var nl = bhsNext(P);
+    if (up) up.hidden = !nl.length;
+    if (uh){ var uhh = nl.map(function(n){ return bhsCard(P, n); }).join(""); if (uh._h !== uhh){ uh.innerHTML = uhh; uh._h = uhh; } }
     if (!gs.length){ host.innerHTML = ""; return; }
     var nx = bhsNext(P), html = gs.map(function(g){
       var mine = (g.res || []).filter(function(r){ return (r.pids || []).indexOf(P.pid) >= 0; }).slice(0, 3);
@@ -4493,23 +4503,50 @@
   function playerHtml(P){
     var k = P.key;
     return '<h1 class="sr" id="ph-' + k + '">' + esc(P.name) + '</h1>' +
-      '<div class="dyn" id="dyn-' + k + '"><div class="' + heroCls(P) + '">' + cardHtml(P) + '</div>' +
-        '<div class="board"><div class="countdown"><span class="l"><span class="dot"></span><span>' + _("Hämtar tävlingar …") + '</span></span></div></div></div>' +
-      '<section aria-labelledby="h-dev-' + k + '"><div class="sh"><h2 id="h-dev-' + k + '">' + _("Utveckling") + '</h2><div class="meta">' + _("SPF-ranking") + '</div></div>' +
+      '<div class="dyn" id="dyn-' + k + '"><div class="' + heroCls(P) + '">' + cardHtml(P) + ptabsHtml(k) + '</div>' +
+        '<div class="board t-off"><div class="countdown"><span class="l"><span class="dot"></span><span>' + _("Hämtar tävlingar …") + '</span></span></div></div></div>' +
+      '<section class="t-off" aria-labelledby="h-dev-' + k + '"><div class="sh"><h2 id="h-dev-' + k + '">' + _("Utveckling") + '</h2><div class="meta">' + _("SPF-ranking") + '</div></div>' +
         '<div class="stats">' + statHtml(k, "rank", "Ranking", P.gender === "F" ? _("Dam huvudlista") : _("Herrar huvudlista")) + statHtml(k, "pts", _("Rankingpoäng"), _("SPF, 12 mån")) + statHtml(k, "skill", "Skill", "") + '</div>' +
         '<div class="card chart" id="chart-' + k + '" hidden><svg id="trend-' + k + '" viewBox="0 0 340 176" role="img"></svg><div class="cap"></div></div>' +
         '<div class="record" id="rec-' + k + '" hidden></div>' +
         '<div class="formrow" id="formrow-' + k + '" hidden><div class="k"><span>' + _("Form, senaste matcherna") + '</span><span>RankedIn</span></div><div class="form" id="form-' + k + '"></div></div>' +
       '</section>' +
-      '<section aria-labelledby="h-tt-' + k + '"><div class="sh"><h2 id="h-tt-' + k + '">' + _("Senaste tävlingar") + '</h2><div class="meta"></div></div><p class="tsum" id="' + k + 'Sum"></p><div class="card tours" id="' + k + 'Tours"></div></section>' +
-      '<section aria-labelledby="h-bhs-' + k + '" id="bhs-' + k + '" hidden><div class="sh"><h2 id="h-bhs-' + k + '">' + _("Serier") + '</h2><div class="meta">Backhandsmash</div></div><div id="bhsList-' + k + '"></div></section>' +
-      '<section aria-labelledby="h-pa-' + k + '" id="pa-' + k + '"><div class="sh"><h2 id="h-pa-' + k + '">' + _("Partners") + '</h2><div class="meta" id="paMeta-' + k + '">' + _("12 mån") + '</div></div><div class="card partners" id="paList-' + k + '"></div><p class="panote" id="paNote-' + k + '"></p></section>' +
-      '<section aria-labelledby="h-hist-' + k + '" id="hs-' + k + '" hidden><div class="sh"><h2 id="h-hist-' + k + '">' + _("Senaste matcher") + '</h2><div class="meta" id="histMeta-' + k + '"></div></div><div class="card hist" id="hist-' + k + '"></div></section>' +
-      '<section aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">' + _("Kommande") + '</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div></section>' +
-      '<section aria-labelledby="h-sg-' + k + '" id="sg-' + k + '"><div class="sh"><h2 id="h-sg-' + k + '">' + _("Förslag på tävlingar") + '</h2><div class="meta">' + _("Inom&nbsp;20&nbsp;mil") + '</div></div>' +
+      '<section class="t-off" aria-labelledby="h-tt-' + k + '"><div class="sh"><h2 id="h-tt-' + k + '">' + _("Senaste tävlingar") + '</h2><div class="meta"></div></div><p class="tsum" id="' + k + 'Sum"></p><div class="card tours" id="' + k + 'Tours"></div></section>' +
+      '<section class="t-off" aria-labelledby="h-pa-' + k + '" id="pa-' + k + '"><div class="sh"><h2 id="h-pa-' + k + '">' + _("Partners") + '</h2><div class="meta" id="paMeta-' + k + '">' + _("12 mån") + '</div></div><div class="card partners" id="paList-' + k + '"></div><p class="panote" id="paNote-' + k + '"></p></section>' +
+      '<section class="t-off" aria-labelledby="h-hist-' + k + '" id="hs-' + k + '" hidden><div class="sh"><h2 id="h-hist-' + k + '">' + _("Senaste matcher") + '</h2><div class="meta" id="histMeta-' + k + '"></div></div><div class="card hist" id="hist-' + k + '"></div></section>' +
+      '<section class="t-off" aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">' + _("Kommande") + '</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div></section>' +
+      '<section class="t-off" aria-labelledby="h-sg-' + k + '" id="sg-' + k + '"><div class="sh"><h2 id="h-sg-' + k + '">' + _("Förslag på tävlingar") + '</h2><div class="meta">' + _("Inom&nbsp;20&nbsp;mil") + '</div></div>' +
         '<p class="sgnote" id="sgNote-' + k + '" hidden></p><div class="ups" id="sgList-' + k + '"><p class="empty">' + _("Hämtar förslag …") + '</p></div></section>' +
-      '<section aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">' + _("Bra att veta") + '</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>';
+      '<section class="t-off" aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">' + _("Bra att veta") + '</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>' +
+      '<section class="t-loc" aria-labelledby="h-bup-' + k + '" id="bup-' + k + '" hidden><div class="sh"><h2 id="h-bup-' + k + '">' + _("Kommande seriematcher") + '</h2><div class="meta">Backhandsmash</div></div><div class="ups" id="bhsUp-' + k + '"></div></section>' +
+      '<section class="t-loc" aria-labelledby="h-bhs-' + k + '" id="bhs-' + k + '" hidden><div class="sh"><h2 id="h-bhs-' + k + '">' + _("Serier") + '</h2><div class="meta">Backhandsmash</div></div><div id="bhsList-' + k + '"></div></section>';
   }
+  // Under the card: Tävlingar & SPL (official, RankedIn) | Klubbserier (Backhandsmash). Only for players in a club series;
+  // the choice is kept on this device.
+  var PTAB_KEY = "padel.ptab";
+  function ptabsHtml(k){
+    return '<div class="ptabs" role="tablist" aria-label="' + _("Visa") + '" data-pt="' + esc(k) + '" hidden><button type="button" role="tab" data-ptab="off" aria-selected="true">' + _("Tävlingar & SPL") + '</button>' +
+      '<button type="button" role="tab" data-ptab="loc" aria-selected="false">' + _("Klubbserier") + '</button></div>';
+  }
+  function ptabSet(who, tab){
+    var m = PANELS[who];
+    if (!m) return;
+    var has = bhsGroups(BYKEY[who]).length > 0;
+    tab = has && tab === "loc" ? "loc" : "off";
+    m.setAttribute("data-tab", tab);
+    [].forEach.call(m.querySelectorAll(".ptabs"), function(bar){
+      bar.hidden = !has;
+      [].forEach.call(bar.querySelectorAll("[data-ptab]"), function(b){ b.setAttribute("aria-selected", b.getAttribute("data-ptab") === tab ? "true" : "false"); });
+    });
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target && e.target.closest && e.target.closest("[data-ptab]"), bar = b && b.closest(".ptabs");
+    if (!bar) return;
+    var tab = b.getAttribute("data-ptab");
+    store.set(PTAB_KEY, tab);
+    ptabSet(bar.getAttribute("data-pt"), tab);
+    window.dispatchEvent(new Event("resize"));
+  });
   var WATCHING = false;   // panel built by ensureWatch (hidden): its photo waits until the page is shown
   function heroCls(P){ return "hero t-" + cardTier(P) + (P.cut ? " cut" : P.img ? "" : rinPhoto(P) ? " rin" : " noimg"); }
   function heroMedia(P){
@@ -4676,6 +4713,7 @@
     m.innerHTML = playerHtml(P);
     document.getElementById("players").appendChild(m);
     PANELS[P.key] = m;
+    ptabSet(P.key, store.get(PTAB_KEY));
     try { renderTrend(P.key); } catch (e){ warn("Utveckling", e); }
     try { renderInfo(P); } catch (e){ warn("Bra att veta", e); }
     try { renderUps(P.key); } catch (e){ warn("Kommande", e); }
@@ -5278,7 +5316,7 @@
     // Live views of players no longer shown stop, unless they are needed for notiser
     Object.keys(DYN).forEach(function(k){ if (DYN[k] && k !== VIEW.who && !watchWanted(BYKEY[k])) stopDyn(k); });
     var now2 = VIEW.name + ":" + (VIEW.who || VIEW.team || "");
-    if (x.mid) focusMatch(x.who, x.mid, 0);
+    if (x.mid){ ptabSet(x.who, "off"); focusMatch(x.who, x.mid, 0); }   // a match link: the tournament tab
     else if (now2 !== prev) try { window.scrollTo(0, 0); } catch (e){}
     window.dispatchEvent(new Event("resize"));
   }
