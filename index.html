@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-TXnZOvaj1SvOYUP18ocC3BcmnPlUjbyrbqvEQ5igU7U='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Mb3bVJc0BKjLyX0ibuHBEnjdbmKE7C7HrOL9NPTI+PI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -524,6 +524,16 @@
   .tbl .gt th, .tbl .gt td{ padding-left:3px; padding-right:3px; }
   .tbl .gt tr.me td{ background:var(--accent-soft); font-weight:700; }
   .tbl .gt tr.me td:first-child{ box-shadow:inset 3px 0 0 var(--accent); }
+  .tblhd a{ color:inherit; }
+  .bres{ margin:8px 0 6px; border-top:1px solid var(--line); }
+  .bres > div{ display:grid; grid-template-columns:52px minmax(0,1fr) auto; column-gap:10px; align-items:baseline; padding:8px 0 0; font-size:13px; }
+  .bres > div > span:first-child{ font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .bres > .w > span:first-child{ color:var(--accent); }
+  .bres > .l > span:first-child{ color:#C0392B; }
+  .bres > .nx > span:first-child{ color:var(--ink); }
+  .bres .o{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bres b{ font:600 12px/1 "Chivo Mono", monospace; white-space:nowrap; }
+  .bres small{ grid-column:2 / 4; font:500 10.5px/1.3 "Chivo Mono", monospace; color:var(--dim); }
   .tpos{ display:inline-block; width:18px; color:var(--dim); font:500 11px/1 "Chivo Mono", monospace; }
   .gt th{ font:500 10.5px/1 "Chivo Mono", monospace; color:var(--dim); text-align:right; padding:6px 4px; }
   .gt th:first-child, .gt td:first-child{ text-align:left; }
@@ -1228,6 +1238,7 @@
     "1 klass":"1 categoría",
     "12 mån":"12 meses",
     "3:e plats":"3.er puesto",
+    "Americanoserie":"Liga americano",
     "Anmäl på RankedIn":"Inscríbete en RankedIn",
     "Anmälan öppen":"Inscripción abierta",
     "Bana":"Pista",
@@ -1359,6 +1370,7 @@
     "Matchskillnad":"Diferencia de partidos",
     "Med ":"Con ",
     "Mixed":"Mixto",
+    "Mixedserie":"Liga mixta",
     "Mot ":"Contra ",
     "Mot vinnaren av":"Contra el ganador de",
     "Motståndare klara när lottningen kommer":"Rivales cuando salga el cuadro",
@@ -1428,7 +1440,11 @@
     "Senaste resultat":"Últimos resultados",
     "Senaste tävlingar":"Últimos torneos",
     "Senaste tävlingen":"Último torneo",
+    "Serien på Backhandsmash ↗︎":"La liga en Backhandsmash ↗︎",
     "Serien på RankedIn ↗︎":"La liga en RankedIn ↗︎",
+    "Serier":"Ligas",
+    "Serier: ":"Ligas: ",
+    "Seriespel":"Liga",
     "Sista anmälan ":"Inscripción hasta ",
     "Skill efter varje match, ":"Skill tras cada partido, ",
     "Slut":"Final",
@@ -3641,22 +3657,75 @@
   function renderUps(who){
     var host = document.getElementById(who + "Up"), meta = document.getElementById(who + "UpMeta");
     if (!host || !DISC) return;
-    var t = now(), list = playerEvents(BYKEY[who]).filter(function(e){ return new Date(e.windowFrom) > t; });
-    var html = [], seen = {}, months = [];
+    var P = BYKEY[who], t = now(), list = playerEvents(P).filter(function(e){ return new Date(e.windowFrom) > t; });
+    var items = [], seen = {}, months = [];
     list.forEach(function(e){
-      var m = MON[loc(new Date(e.windowFrom)).getUTCMonth()];
       if (e.kind === "teamleague"){
         var k = e.leagueId + ":" + e.teamId;
         if (seen[k]) return;
         seen[k] = true;
         var later = list.filter(function(x){ return x.kind === "teamleague" && x.leagueId === e.leagueId && x.teamId === e.teamId && x !== e; })
           .map(function(x){ return dayMonD(riDate(x.date + "T12:00")); });
-        html.push(tlCard(e, later));
-      } else html.push(tourCard(e));
-      if (months.indexOf(m) < 0) months.push(m);
+        items.push({at:+new Date(e.windowFrom), h:tlCard(e, later)});
+      } else items.push({at:+new Date(e.windowFrom), h:tourCard(e)});
     });
-    host.innerHTML = html.length ? html.join("") : '<p class="empty">' + _("Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva.") + '</p>';
+    // the club's own series (Backhandsmash): coming matches with time and court, in date order with the rest
+    bhsNext(P).forEach(function(x){ items.push({at:+x.at, h:bhsCard(P, x)}); });
+    items.sort(function(a, b){ return a.at - b.at; }).forEach(function(x){ var m = MON[loc(new Date(x.at)).getUTCMonth()]; if (months.indexOf(m) < 0) months.push(m); });
+    host.innerHTML = items.length ? items.map(function(x){ return x.h; }).join("") : '<p class="empty">' + _("Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva.") + '</p>';
     if (meta) meta.textContent = months.length ? cap(months.slice(0, 3).join(" · ")) : "";
+  }
+
+  /* ---- Serier: Nynäshamn Padelcenter's own series on Backhandsmash (the worker reads them once a night: tables, results,
+     and with the captain's login the coming matches). Club matches, not SPF-ranked: they count for nothing else here
+     (form, win %, partners, titles stay RankedIn only). A player sees only the series they play in. ---- */
+  function bhsFold(s){ return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").trim().split(/\s+/); }
+  function bhsIn(P, side){
+    var f = bhsFold(P.name), k = f[0] + " " + f[f.length - 1];
+    return String(side || "").split("/").some(function(n){ var x = bhsFold(n); return x.length > 1 && x[0] + " " + x[x.length - 1] === k; });
+  }
+  function bhsGroups(P){
+    var b = DISC && DISC.bhs;
+    return P && b && Array.isArray(b.groups) ? b.groups.filter(function(g){ return (g.pids || []).indexOf(P.pid) >= 0; }) : [];
+  }
+  // Sets won - lost from the first side's score ("6-3 4-6 6-2")
+  function bhsSets(s){ var w = 0, l = 0; String(s || "").split(/\s+/).forEach(function(x){ var m = /^(\d+)-(\d+)$/.exec(x); if (m){ if (+m[1] > +m[2]) w++; else if (+m[2] > +m[1]) l++; } }); return w - l; }
+  function bhsNext(P){
+    var t = now(), out = [];
+    bhsGroups(P).forEach(function(g){ (g.next || []).forEach(function(x){
+      var at = riDate(String(x.d).replace(" ", "T"));
+      if (at && +at + (x.min || 90) * 60000 > +t && (x.pids || []).indexOf(P.pid) >= 0) out.push({g:g, x:x, at:at});
+    }); });
+    return out.sort(function(a, b){ return a.at - b.at; });
+  }
+  function bhsSides(P, x){ var mine = bhsIn(P, x.a) || !bhsIn(P, x.b); return {me:mine ? x.a : x.b, op:mine ? x.b : x.a, first:mine}; }
+  function bhsCard(P, n){
+    var x = n.x, sd = bhsSides(P, x), d = loc(n.at);
+    return upCard({dow:cap(DOW[d.getUTCDay()]), day:String(d.getUTCDate()), mon:MON[d.getUTCMonth()], title:_(n.g.series), cls:n.g.name,
+      what:esc(sd.me + " – " + sd.op),
+      facts:esc([hm(n.at) + " (" + (x.min || 90) + " min)", x.c ? _("Bana ") + x.c : ""].filter(Boolean).join(" · ")) + '<br><a href="' + esc(n.g.url) + '" target="_blank" rel="noopener">' + _("Serien på Backhandsmash ↗︎") + '</a>'});
+  }
+  function renderBhs(who){
+    var P = BYKEY[who], sec = document.getElementById("bhs-" + who), host = document.getElementById("bhsList-" + who);
+    if (!P || !sec || !host) return;
+    var gs = bhsGroups(P);
+    sec.hidden = !gs.length;
+    if (!gs.length){ host.innerHTML = ""; return; }
+    var nx = bhsNext(P), html = gs.map(function(g){
+      var mine = (g.res || []).filter(function(r){ return (r.pids || []).indexOf(P.pid) >= 0; }).slice(0, 3);
+      var next = nx.filter(function(n){ return n.g === g; })[0];
+      return '<div class="card tbl bhs"><div class="tblhd"><b>' + esc(_(g.series)) + '</b><span>' + esc(g.name) + ' · <a href="' + esc(g.url) + '" target="_blank" rel="noopener">Backhandsmash ↗︎</a></span></div>' +
+        '<table class="gt"><thead><tr><th>' + _(g.single ? "Spelare" : "Par") + '</th><th title="' + _("Spelade") + '">' + _("S") + '</th><th title="' + _("Vunna") + '">' + _("V") + '</th><th title="' + _("Förlorade") + '">' + _("F") + '</th><th title="' + _("Matchskillnad") + '">+/-</th><th title="' + _("Poäng") + '">' + _("P") + '</th></tr></thead><tbody>' +
+        (g.rows || []).map(function(r){
+          return '<tr' + ((r.pids || []).indexOf(P.pid) >= 0 ? ' class="me"' : '') + '><td><span class="tpos">' + r.pos + '</span>' + esc(r.n) + '</td><td>' + r.m + '</td><td>' + r.w + '</td><td>' + r.l + '</td><td>' + (r.d > 0 ? "+" : "") + r.d + '</td><td><b>' + String(r.p).replace(".", LANG === "es" ? "," : ",") + '</b></td></tr>';
+        }).join("") + '</tbody></table>' +
+        (mine.length || next ? '<div class="bres">' + mine.map(function(r){
+          var sd = bhsSides(P, r), sets = bhsSets(r.s) * (sd.first ? 1 : -1), sc = sd.first ? r.s : flip(r.s);
+          return '<div class="' + (sets > 0 ? "w" : sets < 0 ? "l" : "") + '"><span>' + (sets > 0 ? _("Vinst") : sets < 0 ? _("Förlust") : "") + '</span><span class="o">' + esc(_("mot ") + sd.op) + '</span><b>' + esc(sc) + '</b><small>' + esc(r.d ? dayMon(r.d) : "") + '</small></div>';
+        }).join("") + (next ? '<div class="nx"><span>' + _("Nästa") + '</span><span class="o">' + esc(_("mot ") + bhsSides(P, next.x).op) + '</span><b>' + esc(cap(dayLabel(next.at)) + " " + hm(next.at)) + '</b><small>' + esc(next.x.c ? _("Bana ") + next.x.c : "") + '</small></div>' : "") + '</div>' : "") +
+        '</div>';
+    }).join("");
+    if (host._h !== html){ host.innerHTML = html; host._h = html; }
   }
 
   /* ---- Förslag på tävlingar: the worker's calendar (GET /cal, built nightly: sanctioned tournaments within 20 mil, next
@@ -3868,7 +3937,9 @@
     var at = DISC.checked || DISC.at ? new Date(DISC.checked || DISC.at) : null, rd = "";
     ROSTER.forEach(function(P){ var d = boardOf(P).rd; if (typeof d === "string" && d > rd) rd = d; });
     var when = at && !isNaN(at) ? (dayOf(at) === dayOf(now()) ? _("idag") + " " + hm(at) : dayLabel(at) + " " + hm(at)) : "";
-    el.textContent = [when ? _("Resultat från RankedIn: ") + when.replace(/ (?=\d)/g, "\u00a0") : "", rd ? _("SPF-ranking ") + dayMon(rd).replace(" ", "\u00a0") : ""].filter(Boolean).join(" · ");
+    var bh = DISC.bhs && DISC.bhs.at ? new Date(DISC.bhs.at) : null;
+    el.textContent = [when ? _("Resultat från RankedIn: ") + when.replace(/ (?=\d)/g, "\u00a0") : "", rd ? _("SPF-ranking ") + dayMon(rd).replace(" ", "\u00a0") : "",
+      bh && !isNaN(bh) ? _("Serier: ") + dayMonD(bh).replace(" ", "\u00a0") : ""].filter(Boolean).join(" · ");
   }
   /* ---- load: cache -> worker -> RankedIn directly (opened player only); every 30 min ---- */
   function applyDisc(d){
@@ -3891,6 +3962,7 @@
       try { renderUps(w); } catch (e){ warn("Kommande", e); }
       try { renderSugg(w); } catch (e){ warn("Förslag", e); }
       try { renderTours(w); } catch (e){ warn("Tävlingar", e); }
+      try { renderBhs(w); } catch (e){ warn("Serier", e); }
       if (!PANELS[w].hidden || DYN[w]) try { setMode(w, pickHero(w)); } catch (e){
         warn("Visning", e);
       }
@@ -4289,6 +4361,7 @@
         '<div class="formrow" id="formrow-' + k + '" hidden><div class="k"><span>' + _("Form, senaste matcherna") + '</span><span>RankedIn</span></div><div class="form" id="form-' + k + '"></div></div>' +
       '</section>' +
       '<section aria-labelledby="h-tt-' + k + '"><div class="sh"><h2 id="h-tt-' + k + '">' + _("Senaste tävlingar") + '</h2><div class="meta"></div></div><p class="tsum" id="' + k + 'Sum"></p><div class="card tours" id="' + k + 'Tours"></div></section>' +
+      '<section aria-labelledby="h-bhs-' + k + '" id="bhs-' + k + '" hidden><div class="sh"><h2 id="h-bhs-' + k + '">' + _("Serier") + '</h2><div class="meta">Backhandsmash</div></div><div id="bhsList-' + k + '"></div></section>' +
       '<section aria-labelledby="h-pa-' + k + '" id="pa-' + k + '"><div class="sh"><h2 id="h-pa-' + k + '">' + _("Partners") + '</h2><div class="meta" id="paMeta-' + k + '">' + _("12 mån") + '</div></div><div class="card partners" id="paList-' + k + '"></div><p class="panote" id="paNote-' + k + '"></p></section>' +
       '<section aria-labelledby="h-hist-' + k + '" id="hs-' + k + '" hidden><div class="sh"><h2 id="h-hist-' + k + '">' + _("Senaste matcher") + '</h2><div class="meta" id="histMeta-' + k + '"></div></div><div class="card hist" id="hist-' + k + '"></div></section>' +
       '<section aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">' + _("Kommande") + '</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div></section>' +
@@ -4467,6 +4540,7 @@
     try { renderUps(P.key); } catch (e){ warn("Kommande", e); }
     try { renderSugg(P.key); } catch (e){ warn("Förslag", e); }
     try { renderTours(P.key); } catch (e){ warn("Tävlingar", e); }
+    try { renderBhs(P.key); } catch (e){ warn("Serier", e); }
     try { renderMHist(P.key); } catch (e){ warn("Matcher", e); }
     try { renderPartners(P.key); } catch (e){ warn("Partners", e); }
     // Partners on screen (or close): the matches are counted (nothing while the page is hidden or not shown)
