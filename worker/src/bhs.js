@@ -31,13 +31,14 @@ export function parseLeague(html) {
 // Table fragment -> rows [{pos, n, m, w, t, l, g, d, p}] (the first table: plain points, not "by average")
 export function parseTable(html) {
   const tb = (/<table[\s\S]*?<\/table>/i.exec(html) || [""])[0];
-  const rows = [...tb.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)].map(r => [...r[1].matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi)].map(c => text(c[1])));
+  const raw = [...tb.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)].map(r => [...r[1].matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi)].map(c => c[1]));
+  const rows = raw.map(r => r.map(text));
   if (!rows.length) return [];
   const hd = rows[0], col = k => hd.indexOf(k), name = col("Name"), last = hd.length - 1;
   const played = col("M") >= 0 ? col("M") : col("P");   // pairs: M (P = points, last); singles: P, then "Points"
   const num = v => { const x = parseFloat(String(v).replace(",", ".")); return isNaN(x) ? 0 : x; };
-  return rows.slice(1).filter(r => r.length === hd.length && r[name]).map(r => ({
-    pos: parseInt(r[0], 10) || 0, n: r[name].replace(/\s*\/\s*/g, " / "), m: num(r[played]), w: num(r[col("W")]), t: num(r[col("T")]), l: num(r[col("L")]),
+  return rows.slice(1).map((r, i) => [r, raw[i + 1]]).filter(x => x[0].length === hd.length && x[0][name]).map(([r, h]) => ({
+    id: +((/loadPlayer\((\d+)/.exec(h[name]) || [])[1] || 0), pos: parseInt(r[0], 10) || 0, n: r[name].replace(/\s*\/\s*/g, " / "), m: num(r[played]), w: num(r[col("W")]), t: num(r[col("T")]), l: num(r[col("L")]),
     g: r[col("Game") >= 0 ? col("Game") : col("G")] || "", d: num(r[col("+/-")]), p: num(r[last])
   }));
 }
@@ -91,7 +92,7 @@ export async function fetchBhs(budget, players = PLAYERS, env = {}) {
       take();
       const res = parseResults(await page(BHS + "/results/bygroup?id=" + id + "&name=" + encodeURIComponent(name) + "&mobile=false&lang=sv"))
         .map(r => ({ ...r, pids: who(r.a).concat(who(r.b)) })).filter(r => r.pids.length).slice(0, 40);
-      groups.push({ id: +id, lg, series: BHS_LEAGUES[lg], name, url: BHS + "/clubs/" + BHS_CLUB + "/" + lg + "/tables/" + encodeURIComponent(name), single: !rows.some(r => / \/ /.test(r.n)), rows, res, pids, next: [] });
+      groups.push({ id: +id, lg, site: L.site, series: BHS_LEAGUES[lg], name, url: BHS + "/clubs/" + BHS_CLUB + "/" + lg + "/tables/" + encodeURIComponent(name), single: !rows.some(r => / \/ /.test(r.n)), rows, res, pids, next: [] });
     }
   }
   let err = null;
@@ -109,6 +110,38 @@ export async function fetchBhs(budget, players = PLAYERS, env = {}) {
     }
   } catch (e) { err = e.message; }   // no schedule (login refused, site changed): the tables and results still count
   return { groups, err };
+}
+
+// Round history of a team or player (/public/members/<id>/roundhistorydata, Google chart JSON) -> [[round "2026:4", group, position]]
+export function parseHistory(json) {
+  let d = null;
+  try { d = typeof json === "string" ? JSON.parse(json) : json; } catch (e) { return []; }
+  return ((d && d.rows) || []).map(r => { const c = r.c || []; return [String((c[0] || {}).f || ""), +((c[1] || {}).v || 0), +((c[2] || {}).v || 0)]; }).filter(x => x[0] && x[1] && x[2]);
+}
+// League ranking (/public/stats/leagues/<site>/ranking/0) -> {n, at, rows: [{rank, name, avg, pids}]} for the club's players
+export function parseRanking(json, who) {
+  let d = null;
+  try { d = typeof json === "string" ? JSON.parse(json) : json; } catch (e) { return null; }
+  const rows = (d && d.TableData && d.TableData.Rows) || [];
+  return { n: rows.length, at: (/(\d{4}-\d\d-\d\d)/.exec(d.Compiled || "") || [])[1] || "",
+    rows: rows.map(r => ({ rank: +r.Cells[0].Value, name: String(r.Cells[1].Value).replace(/\s+/g, " ").trim(), avg: +r.Cells[2].Value }))
+      .map(r => ({ ...r, pids: who(r.name) })).filter(r => r.pids.length) };
+}
+// History for the groups fetchBhs found: every club row's rounds, and each league's ranking. A second night run (its
+// own subrequests: about 20).
+export async function fetchBhsHistory(budget, groups, players = PLAYERS) {
+  const who = matcher(players), members = {}, rank = {};
+  const take = () => { if (budget.left <= 0) throw new Error("subrequest budget"); budget.left--; };
+  const get = async u => { take(); const r = await fetch(BHS + u, { headers: { "User-Agent": "Mozilla/5.0 (padel.holmberg.st nightly)", "Accept": "application/json" }, signal: AbortSignal.timeout(15000) }); if (!r.ok) throw new Error("Backhandsmash HTTP " + r.status); return r.text(); };
+  for (const g of groups) for (const r of g.rows) {
+    if (!r.id || !(r.pids || []).length || members[r.id]) continue;
+    members[r.id] = parseHistory(await get("/public/members/" + r.id + "/roundhistorydata"));
+  }
+  for (const g of groups) {
+    if (!g.site || rank[g.lg]) continue;
+    rank[g.lg] = parseRanking(await get("/public/stats/leagues/" + g.site + "/ranking/0?mobile=false"), who);
+  }
+  return { members, rank };
 }
 
 /* ---- the schedule (time and court of the coming matches) is behind the login: the captain's MATCHi account, secrets

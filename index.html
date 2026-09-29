@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-BO2VbRLJhek/nD3kalk7HYQ1qGA56216m28RzyPGRS0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-miMR0kaCvaeh5wy39r7MDnFdFkSdJGfv6FYW7Vie6UY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -526,6 +526,21 @@
   .tbl .gt tr.me td:first-child{ box-shadow:inset 3px 0 0 var(--accent); }
   .tblhd a{ color:inherit; }
   .bres{ margin:8px 0 6px; border-top:1px solid var(--line); }
+  .bdevw{ margin:12px 0 8px; padding-top:10px; border-top:1px solid var(--line); }
+  .bk2{ font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin-bottom:6px; }
+  .bdev{ display:block; width:100%; height:auto; }
+  .bdev .g1{ stroke:var(--line); stroke-dasharray:3 4; }
+  .bdev .ln{ fill:none; stroke:var(--accent); stroke-width:2.2; stroke-linejoin:round; }
+  .bdev circle{ stroke:var(--surface); stroke-width:2; }
+  .bdev .pt{ fill:var(--accent); } .bdev .now{ fill:var(--ink); } .bdev .win{ fill:#E5B500; }
+  .bdev .pv{ font:700 10.5px/1 "Chivo Mono", monospace; fill:var(--ink); text-anchor:middle; }
+  .bdev .rx{ font:500 9.5px/1 "Chivo Mono", monospace; fill:var(--dim); text-anchor:middle; }
+  .bcap{ font:500 10.5px/1.35 "Chivo Mono", monospace; color:var(--dim); margin:2px 0 8px; }
+  .bchips{ display:grid; grid-template-columns:repeat(auto-fill, minmax(92px, 1fr)); gap:6px; }
+  .bchips > div{ background:var(--surface-2); border-radius:10px; padding:8px 9px; min-width:0; }
+  .bchips span{ display:block; font:600 9.5px/1.2 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .bchips b{ display:block; font:900 22px/1.05 "Big Shoulders Display", sans-serif; margin-top:3px; }
+  .bchips small{ display:block; font:500 10px/1.3 "Chivo Mono", monospace; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bres > div{ display:grid; grid-template-columns:52px minmax(0,1fr) auto; column-gap:10px; align-items:baseline; padding:8px 0 0; font-size:13px; }
   .bres > div > span:first-child{ font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
   .bres > .w > span:first-child{ color:var(--accent); }
@@ -751,6 +766,15 @@
   /* ---------- senaste resultat (strip under the live bar) ---------- */
   .recent{ margin:0 -16px 10px; }
   .recent[hidden]{ display:none; }
+  .recent{ position:relative; }
+  .rnav{ display:none; }
+  @media (hover: hover) and (pointer: fine){
+    .rnav{ display:flex; align-items:center; justify-content:center; position:absolute; z-index:2; bottom:calc(50% - 30px); width:34px; height:34px; border-radius:50%;
+      border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 20px/1 system-ui, sans-serif; cursor:pointer; box-shadow:0 4px 14px -6px rgba(0,0,0,.35); }
+    .rnav[hidden]{ display:none; }
+    .rnav.prev{ left:6px; } .rnav.next{ right:6px; }
+    .rnav:hover{ border-color:var(--ink); }
+  }
   .recent .rk{ font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); padding:0 16px 6px; }
   .recent ol{ list-style:none; margin:0; padding:0 16px 2px; display:flex; gap:8px; overflow-x:auto; scroll-snap-type:x proximity; scroll-padding-inline:16px; scrollbar-width:none; overscroll-behavior-x:contain; }
   .recent ol::-webkit-scrollbar{ display:none; }
@@ -1177,6 +1201,7 @@
     " och ":" y ",
     " och uppåt":" o superior",
     " omgång ":" jornada ",
+    " omgångar":" jornadas",
     " par":" parejas",
     " platser":" puestos",
     " poäng":" puntos",
@@ -1273,6 +1298,7 @@
     "Följ en spelare först. Tryck Följ på spelarens sida.":"Sigue primero a un jugador. Pulsa Seguir en su página.",
     "Följ {name}":"Seguir a {name}",
     "Följer":"Siguiendo",
+    "Föregående":"Anterior",
     "Föregående rond":"Ronda anterior",
     "Förlorade":"Perdidos",
     "Förlust":"Derrota",
@@ -1283,9 +1309,11 @@
     "Första mötet mot paret":"Primer duelo contra la pareja",
     "Försök igen":"Reintentar",
     "Förut ":"Antes: ",
+    "Game":"Juegos",
     "Grupp":"Grupo",
     "Grupper":"Grupos",
     "Gruppmatchen":"Partido de grupo",
+    "Gruppsegrar":"Grupos ganados",
     "Gruppspel":"Fase de grupos",
     "Hemma":"En casa",
     "Herr":"Masculino",
@@ -1336,6 +1364,7 @@
     "Klart.":"Terminado.",
     "Klass":"Nivel",
     "Klasser":"Categorías",
+    "Klubbranking":"Ranking del club",
     "Klättrare":"Suben",
     "Kommande":"Próximamente",
     "Kunde inte hämta just nu.":"No se pudo cargar ahora.",
@@ -1405,12 +1434,15 @@
     "Omg":"Jor.",
     "Omgång 1":"Ronda 1",
     "Omgångar":"Jornadas",
+    "Omgången":"Jornada",
     "P":"Pts",
     "PF":"FP",
     "Par":"Pareja",
     "Partners":"Parejas",
     "Paus":"Pausa",
     "Placering ":"Puesto ",
+    "Placering i gruppen per omgång, 1 överst. Guld = gruppseger.":"Puesto en el grupo por jornada, el 1 arriba. Oro = grupo ganado.",
+    "Placering per omgång":"Puesto por jornada",
     "Plate":"Plate",
     "Plate-final":"Final de Plate",
     "Plats inte klar":"Lugar por confirmar",
@@ -1453,6 +1485,7 @@
     "Slår på notiser …":"Activando notificaciones …",
     "Snitt skill · +":"Skill media · +",
     "Snitt skill · jämnt":"Skill media · igualado",
+    "Snittplacering":"Puesto medio",
     "Som junior spelar du i 18-årsklassen och får även spela seniorklasser. Du har både junior- och seniorranking. När du blir senior följer 25 procent av poängen med.":"Como júnior juegas en la categoría sub-18 y también puedes jugar categorías absolutas. Tienes ranking júnior y absoluto. Al pasar a absoluto conservas el 25 % de los puntos.",
     "Spelade":"Jugados",
     "Spelar nu":"Jugando ahora",
@@ -1518,6 +1551,8 @@
     "Väntar":"Esperando",
     "Väntar på resultat":"Esperando resultado",
     "V–F":"G–P",
+    "av {n} omgångar":"de {n} jornadas",
+    "av {n}, snitt ett år":"de {n}, media de un año",
     "borta":"fuera",
     "börjar om ":"empieza en ",
     "de senaste 12 månaderna":"de los últimos 12 meses",
@@ -1558,6 +1593,7 @@
     "vann ":"ganaron ",
     "vinst":"victoria",
     "vinster":"victorias",
+    "vunna matcher":"partidos ganados",
     "{gen} matcher":"Partidos de {name}",
     "{gen} skill de {n} senaste matcherna: {a} den {d}, topp {top}, nu {now}":"Skill de {name} en los últimos {n} partidos: {a} el {d}, máximo {top}, ahora {now}",
     "{gen} väg":"Camino de {name}",
@@ -3285,10 +3321,25 @@
   function dynBuild(D){ if (!D.e) return; D.eSig = JSON.stringify(D.e); D.model = D.e.kind === "teamleague" ? buildTL(D.e, D.datas) : buildTour(D.e, D.datas); }
 
   /* ---- "Senaste resultat": the last finished matches in the class, under the live bar ---- */
+  // Mouse: arrows over the sideways lists (touch swipes them; the arrows only show with a pointer that hovers)
+  var RNAV = '<button class="rnav prev" type="button" data-rnav="-1" aria-label="' + _("Föregående") + '" hidden>‹</button><button class="rnav next" type="button" data-rnav="1" aria-label="' + _("Nästa") + '" hidden>›</button>';
+  function rnavSync(box){
+    var ol = box && box.querySelector("ol"), b = box && box.querySelectorAll(".rnav");
+    if (!ol || !b || b.length < 2) return;
+    b[0].hidden = ol.scrollLeft < 4; b[1].hidden = ol.scrollLeft + ol.clientWidth >= ol.scrollWidth - 4;
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target && e.target.closest && e.target.closest("[data-rnav]"), box = b && b.closest(".recent"), ol = box && box.querySelector("ol");
+    if (!ol) return;
+    e.preventDefault();
+    ol.scrollBy({left:+b.getAttribute("data-rnav") * ol.clientWidth * .8, behavior:"smooth"});
+  });
+  document.addEventListener("scroll", function(e){ var t = e.target; if (t && t.tagName === "OL" && t.parentNode && t.parentNode.classList && t.parentNode.classList.contains("recent")) rnavSync(t.parentNode); }, true);
+  setInterval(function(){ [].forEach.call(document.querySelectorAll(".recent"), function(r){ if (r.offsetParent) rnavSync(r); }); }, 1000);
   function recentHtml(who, items){
     items = items.slice(0, 4);
     if (!items.length) return "";
-    return '<div class="rk" aria-hidden="true">' + _("Senaste resultat") + '</div><ol aria-label="' + _("Senaste resultat") + '">' + items.map(function(x){
+    return '<div class="rk" aria-hidden="true">' + _("Senaste resultat") + '</div>' + RNAV + '<ol aria-label="' + _("Senaste resultat") + '">' + items.map(function(x){
       return '<li><a href="#' + who + '/m' + esc(x.mid) + '"' + (x.mine ? ' class="mine"' : "") + '><div class="rh"><b>' + esc(x.lab) + '</b><span>' + esc(x.when) + '</span></div>' +
         '<div class="rw">' + esc(x.win) + '</div><div class="rl">' + esc(((x.score ? x.score + " " : "") + (x.lose ? _("mot ") + x.lose : "")).trim()) + '</div></a></li>';
     }).join("") + '</ol>';
@@ -3730,6 +3781,38 @@
       what:esc(sd.me + " – " + sd.op),
       facts:esc([hm(n.at) + " (" + (x.min || 90) + " min)", x.c ? _("Bana ") + x.c : ""].filter(Boolean).join(" · ")) + '<br><a href="' + esc(n.g.url) + '" target="_blank" rel="noopener">' + _("Serien på Backhandsmash ↗︎") + '</a>'});
   }
+  // Utveckling in a series: the team's (or player's) place in the group round by round (Backhandsmash's round history;
+  // group numbers change between seasons, so only the place is drawn), group wins, the league's one-year ranking and
+  // this round so far.
+  function bhsRound(r){ return String(r || "").replace(/\s+/g, ""); }
+  function bhsDev(P, g){
+    var row = (g.rows || []).filter(function(r){ return (r.pids || []).indexOf(P.pid) >= 0; })[0];
+    if (!row) return "";
+    var h = DISC && DISC.bhs && DISC.bhs.hist, hist = ((h && h.members && h.members[row.id]) || []).slice(-8);
+    var rk = h && h.rank && h.rank[g.lg], mine = rk && (rk.rows || []).filter(function(x){ return x.name.replace(/\s+/g, " ") === row.n.replace(/\s+/g, " "); })[0];
+    var chips = [], wins = hist.filter(function(x){ return x[2] === 1; }).length;
+    if (row.m) chips.push([_("Omgången"), Math.round(100 * row.w / row.m) + " %", _("vunna matcher")]);
+    if (row.g) chips.push([_("Game"), (row.d > 0 ? "+" : "") + row.d, row.g.replace("-", "–")]);
+    if (hist.length > 1) chips.push([_("Snittplacering"), (hist.reduce(function(a, x){ return a + x[2]; }, 0) / hist.length).toFixed(1).replace(".", ","), hist.length + _(" omgångar")]);
+    if (wins) chips.push([_("Gruppsegrar"), String(wins), _("av {n} omgångar", {n:hist.length})]);
+    if (mine) chips.push([_("Klubbranking"), "#" + mine.rank, _("av {n}, snitt ett år", {n:rk.n})]);
+    if (!chips.length && hist.length < 2) return "";
+    var svg = "";
+    if (hist.length > 1){
+      var W = 320, H = 118, L = 10, R = 10, T = 22, B = 22, mx = Math.max(6, Math.max.apply(null, hist.map(function(x){ return x[2]; })));
+      var X = function(i){ return L + (W - L - R) * (hist.length === 1 ? .5 : i / (hist.length - 1)); }, Y = function(p){ return T + (H - T - B) * (p - 1) / (mx - 1); };
+      svg = '<svg class="bdev" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(_("Placering per omgång") + ": " + hist.map(function(x){ return bhsRound(x[0]) + " " + x[2]; }).join(", ")) + '">' +
+        '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(1) + '" y2="' + Y(1) + '" class="g1"/>' +
+        '<path d="' + hist.map(function(x, i){ return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(x[2]).toFixed(1); }).join(" ") + '" class="ln"/>' +
+        hist.map(function(x, i){ var last = i === hist.length - 1;
+          return '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(x[2]).toFixed(1) + '" r="' + (last ? 6 : 4.5) + '" class="' + (x[2] === 1 ? "win" : last ? "now" : "pt") + '"/>' +
+            '<text x="' + X(i).toFixed(1) + '" y="' + (Y(x[2]) - 9).toFixed(1) + '" class="pv">' + x[2] + '</text>' +
+            '<text x="' + X(i).toFixed(1) + '" y="' + (H - 5) + '" class="rx">' + esc(bhsRound(x[0]).replace(/^20/, "")) + '</text>'; }).join("") + '</svg>' +
+        '<div class="bcap">' + esc(_("Placering i gruppen per omgång, 1 överst. Guld = gruppseger.")) + '</div>';
+    }
+    return '<div class="bdevw"><div class="bk2">' + _("Utveckling") + '</div>' + svg +
+      (chips.length ? '<div class="bchips">' + chips.map(function(c){ return '<div><span>' + esc(c[0]) + '</span><b>' + esc(c[1]) + '</b><small>' + esc(c[2]) + '</small></div>'; }).join("") + '</div>' : "") + '</div>';
+  }
   function renderBhs(who){
     var P = BYKEY[who], sec = document.getElementById("bhs-" + who), host = document.getElementById("bhsList-" + who);
     if (!P || !sec || !host) return;
@@ -3748,7 +3831,7 @@
           var sd = bhsSides(P, r), sets = bhsSets(r.s) * (sd.first ? 1 : -1), sc = sd.first ? r.s : flip(r.s);
           return '<div class="' + (sets > 0 ? "w" : sets < 0 ? "l" : "") + '"><span>' + (sets > 0 ? _("Vinst") : sets < 0 ? _("Förlust") : "") + '</span><span class="o">' + esc(_("mot ") + sd.op) + '</span><b>' + esc(sc) + '</b><small>' + esc(r.d ? dayMon(r.d) : "") + '</small></div>';
         }).join("") + (next ? '<div class="nx"><span>' + _("Nästa") + '</span><span class="o">' + esc(_("mot ") + bhsSides(P, next.x).op) + '</span><b>' + esc(cap(dayLabel(next.at)) + " " + hm(next.at)) + '</b><small>' + esc(next.x.c ? _("Bana ") + next.x.c : "") + '</small></div>' : "") + '</div>' : "") +
-        '</div>';
+        bhsDev(P, g) + '</div>';
     }).join("");
     if (host._h !== html){ host.innerHTML = html; host._h = html; }
   }
@@ -4114,6 +4197,14 @@
     ROSTER.forEach(function(P){
       var e = liveNow(P)[0];
       if (e) rows.push({P:P, e:e, fol:f.indexOf(P.pid) >= 0, s:nowStatus(P, e)});
+      else {   // a club series match (Backhandsmash) on now or within 30 min
+        var t0 = +now(), n = bhsNext(P).filter(function(x){ return +x.at - 30 * 60000 <= t0; })[0];
+        if (n){
+          var on = +n.at <= t0, sd = bhsSides(P, n.x);
+          rows.push({P:P, e:{name:_(n.g.series), cls:n.g.name}, fol:f.indexOf(P.pid) >= 0,
+            s:{pill:on ? _("Pågår") : _("Om ") + fmtLeft(n.at - t0), pcls:on ? "live" : "next", line:[n.x.c ? _("Bana ") + n.x.c : "", _("mot ") + sd.op].filter(Boolean).join(" · ")}});
+        }
+      }
     });
     rows.sort(function(a, b){ return (b.fol ? 1 : 0) - (a.fol ? 1 : 0) || (b.s.pcls === "live" ? 1 : 0) - (a.s.pcls === "live" ? 1 : 0); });
     if (meta) meta.textContent = rows.length ? rows.length + (rows.length === 1 ? _(" spelare") : _(" spelare ")) : "";
@@ -4139,7 +4230,7 @@
       .concat(bhsLatest()).sort(function(a, b){ return b.at - a.at; }).slice(0, 8).map(function(y){ return y.x; }), f = follows();
     sec.hidden = !list.length;
     if (!list.length){ host.innerHTML = ""; return; }
-    host.innerHTML = '<ol aria-label="' + _("Senaste resultat") + '">' + list.map(function(x){
+    host.innerHTML = RNAV + '<ol aria-label="' + _("Senaste resultat") + '">' + list.map(function(x){
       var mine = (x.pids || []).some(function(p){ return f.indexOf(Number(p)) >= 0; }), who = x.who || (BYPID[(x.pids || [])[0]] || {}).key || "";
       var ev = x.team ? x.team + " – " + x.opp : [x.name, x.cls].filter(Boolean).join(" · ");
       return '<li><a href="#' + esc(who) + (x.mid ? '/m' + esc(x.mid) : "") + '"' + (mine ? ' class="mine"' : "") + '><div class="rh"><b>' + esc(_(x.lab || "")) + '</b><span>' + esc(x.day ? dayMon(x.day) : whenOf(x.d)) + '</span></div>' +
