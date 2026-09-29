@@ -1,9 +1,118 @@
-// Backhandsmash (MATCHi's league site): the club's series tables, read once a night with the captain's own MATCHi
-// login (secrets BHS_USER / BHS_PASS; off without them). Only the pages the captain sees in the browser, never more.
-// Login: backhandsmash.com -> auth.matchi.com (Keycloak, username + password form) -> back with a code -> session cookie.
+// Backhandsmash (MATCHi's club leagues): Nynäshamn Padelcenter's series. The tables and results are public fragments
+// (/public/tables/group/<id>, /results/bygroup) even though the pages around them ask for a login, so no account is used.
+// Once a night: the league pages give the groups, each group's table, and the results of the groups a club player is in.
+// Kept: only the groups with a club player (matched on first + last name), so a player page shows just their own series.
 
-const BHS = "https://backhandsmash.com";
+import { PLAYERS } from "./discover.js";
 
+export const BHS = "https://backhandsmash.com", BHS_CLUB = "nynashamnpc";
+export const BHS_LEAGUES = { open: "Seriespel", mix: "Mixedserie", noteam: "Americanoserie" };
+
+const ent = s => String(s).replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/&#x([0-9a-f]+);/gi, (m, n) => String.fromCharCode(parseInt(n, 16)))
+  .replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ");
+const text = s => ent(String(s).replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
+const fold = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").trim().split(/\s+/);
+
+// Club players by first + last name ("Thea Löving" is Thea Holmberg Löving)
+function matcher(players) {
+  const by = {};
+  players.forEach(p => { const f = fold(p.me); by[f[0] + " " + f[f.length - 1]] = p.pid; });
+  return name => String(name).split("/").map(n => { const f = fold(n); return f.length > 1 ? by[f[0] + " " + f[f.length - 1]] : null; }).filter(Boolean);
+}
+
+// League page -> {site (schedule id), groups: [[id, name]]}
+export function parseLeague(html) {
+  const lt = /loadLeagueTables\('([\d,]+)',\s*(\d+)/.exec(html) || [], ids = lt[1];
+  const names = {};
+  for (const m of html.matchAll(/loadGroupTable\((\d+),\s*'([^']+)'/g)) names[m[1]] = ent(m[2]);
+  return { site: lt[2] ? +lt[2] : null, groups: (ids ? ids.split(",") : Object.keys(names)).map(id => [id, names[id] || ""]) };
+}
+
+// Table fragment -> rows [{pos, n, m, w, t, l, g, d, p}] (the first table: plain points, not "by average")
+export function parseTable(html) {
+  const tb = (/<table[\s\S]*?<\/table>/i.exec(html) || [""])[0];
+  const rows = [...tb.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)].map(r => [...r[1].matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi)].map(c => text(c[1])));
+  if (!rows.length) return [];
+  const hd = rows[0], col = k => hd.indexOf(k), name = col("Name"), last = hd.length - 1;
+  const played = col("M") >= 0 ? col("M") : col("P");   // pairs: M (P = points, last); singles: P, then "Points"
+  const num = v => { const x = parseFloat(String(v).replace(",", ".")); return isNaN(x) ? 0 : x; };
+  return rows.slice(1).filter(r => r.length === hd.length && r[name]).map(r => ({
+    pos: parseInt(r[0], 10) || 0, n: r[name].replace(/\s*\/\s*/g, " / "), m: num(r[played]), w: num(r[col("W")]), t: num(r[col("T")]), l: num(r[col("L")]),
+    g: r[col("Game") >= 0 ? col("Game") : col("G")] || "", d: num(r[col("+/-")]), p: num(r[last])
+  }));
+}
+
+// Results fragment -> [{a, b, s, d}] newest first (score from a's side)
+export function parseResults(html) {
+  const out = [];
+  for (const m of html.matchAll(/vertical-timeline-content">([\s\S]*?)<\/small>/gi)) {
+    const h2 = text((/<h2>([\s\S]*?)<\/h2>/i.exec(m[1]) || [])[1] || ""), s = text((/<p>([\s\S]*?)<\/p>/i.exec(m[1]) || [])[1] || "");
+    const d = (/(\d{4}-\d\d-\d\d)\s*$/.exec(text(m[1])) || [])[1] || "", i = h2.indexOf(" - ");
+    if (i > 0 && /\d-\d/.test(s)) out.push({ a: h2.slice(0, i).replace(/\s*\/\s*/g, " / "), b: h2.slice(i + 3).replace(/\s*\/\s*/g, " / "), s, d });
+  }
+  return out;
+}
+
+// Schedule page (logged in) -> coming matches [{d "2026-09-30 20:00", min, c court, g group, a, b}]
+export function parseSchedule(html) {
+  const out = [];
+  for (const m of html.matchAll(/<tr data-passed="False"([\s\S]*?)<\/tr>/gi)) {
+    const g = ent((/data-group="([^"]*)"/.exec(m[1]) || [])[1] || ""), who = ent((/data-match="([^"]*)"/.exec(m[1]) || [])[1] || "");
+    const td = [...m[1].matchAll(/<td>([\s\S]*?)<\/td>/gi)].map(c => text(c[1]));
+    const when = /(\d{4}-\d\d-\d\d) (\d\d:\d\d)(?: \((\d+) m\))?/.exec(td[1] || ""), i = who.indexOf(",");
+    if (!g || !when || i < 0) continue;   // bookings without a match ("MATCHi bokningssystem")
+    const court = /^(\d+)/.exec(td[3] || "");
+    out.push({ d: when[1] + " " + when[2], min: +(when[3] || 90), c: court ? court[1] : (td[3] || ""), g, a: who.slice(0, i).replace(/\s+/g, " ").replace(/\s*\/\s*/g, " / ").trim(), b: who.slice(i + 1).replace(/\s+/g, " ").replace(/\s*\/\s*/g, " / ").trim() });
+  }
+  return out;
+}
+
+async function page(url) {
+  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (padel.holmberg.st nightly)", "Accept": "text/html" }, signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error("Backhandsmash HTTP " + res.status);
+  return res.text();
+}
+
+// -> {groups: [...]} with only the groups a club player is in; with the captain's login (env.BHS_USER) also each group's
+// coming matches of club players (next). budget: the invocation's subrequests (the login takes up to 10).
+export async function fetchBhs(budget, players = PLAYERS, env = {}) {
+  const who = matcher(players), groups = [], sites = {};
+  const take = n => { if (budget.left < (n || 1)) throw new Error("subrequest budget"); budget.left -= n || 1; };
+  for (const lg of Object.keys(BHS_LEAGUES)) {
+    take();
+    const L = parseLeague(await page(BHS + "/clubs/" + BHS_CLUB + "/" + lg + "/tables"));
+    sites[lg] = L.site;
+    for (const [id, name] of L.groups) {
+      take();
+      const rows = parseTable(await page(BHS + "/public/tables/group/" + id + "?groupId=" + id + "&mobile=false&lang=sv&isList=true"));
+      rows.forEach(r => { r.pids = who(r.n); });
+      const pids = [...new Set(rows.flatMap(r => r.pids))];
+      if (!pids.length) continue;
+      take();
+      const res = parseResults(await page(BHS + "/results/bygroup?id=" + id + "&name=" + encodeURIComponent(name) + "&mobile=false&lang=sv"))
+        .map(r => ({ ...r, pids: who(r.a).concat(who(r.b)) })).filter(r => r.pids.length).slice(0, 40);
+      groups.push({ id: +id, lg, series: BHS_LEAGUES[lg], name, url: BHS + "/clubs/" + BHS_CLUB + "/" + lg + "/tables/" + encodeURIComponent(name), single: !rows.some(r => / \/ /.test(r.n)), rows, res, pids, next: [] });
+    }
+  }
+  let err = null;
+  if (env.BHS_USER && env.BHS_PASS && groups.length) try {
+    take(10);
+    const s2 = await bhsLogin(env);
+    for (const lg of [...new Set(groups.map(g => g.lg))]) {
+      if (!sites[lg]) continue;
+      take();
+      const r = await s2.get("/schedule?siteId=" + sites[lg] + "&mobile=false&lang=sv");
+      parseSchedule(r.html).forEach(x => {
+        const g = groups.find(y => y.lg === lg && y.name === x.g), pids = g ? who(x.a).concat(who(x.b)) : [];
+        if (g && pids.length && g.next.length < 8) g.next.push({ ...x, pids });
+      });
+    }
+  } catch (e) { err = e.message; }   // no schedule (login refused, site changed): the tables and results still count
+  return { groups, err };
+}
+
+/* ---- the schedule (time and court of the coming matches) is behind the login: the captain's MATCHi account, secrets
+   BHS_USER / BHS_PASS (off without them). Login: backhandsmash.com -> auth.matchi.com (Keycloak form) -> session. ---- */
 // Minimal cookie jar: name=value per host (enough for the login round trip; paths and expiry are not needed here).
 function jar() {
   const by = {};
@@ -41,7 +150,7 @@ async function go(j, url, init = {}, hops = 10) {
   throw new Error("too many redirects");
 }
 
-const unescape = s => s.replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+const unesc = s => s.replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 
 // -> a cookie jar with a logged-in Backhandsmash session. Errors never include the credentials.
 export async function bhsLogin(env) {
@@ -51,8 +160,8 @@ export async function bhsLogin(env) {
   // MATCHi's login page is a Keycloakify app: the form's target is in its kcContext ("loginAction"); a plain form as fallback
   const m = /"loginAction"\s*:\s*"([^"]+)"/.exec(a.text) || /<form[^>]*action="([^"]*login-actions\/authenticate[^"]*)"/i.exec(a.text);
   if (!m) throw new Error("login form not found (" + new URL(a.url).host + " " + a.res.status + ")");
-  const body = new URLSearchParams({ username: env.BHS_USER, password: env.BHS_PASS, credentialId: "" });
-  const b = await go(j, new URL(unescape(m[1].replace(/\\\//g, "/")), a.url).href, { method: "POST", body, headers: { "Content-Type": "application/x-www-form-urlencoded" } });
+  const body = new URLSearchParams({ username: String(env.BHS_USER).trim(), password: String(env.BHS_PASS).replace(/[\r\n]+$/, ""), credentialId: "" });   // pasted values: no stray line breaks
+  const b = await go(j, new URL(unesc(m[1].replace(/\\\//g, "/")), a.url).href, { method: "POST", body, headers: { "Content-Type": "application/x-www-form-urlencoded" } });
   if (new URL(b.url).host.indexOf("matchi.com") >= 0) {
     const err = /"message"\s*:\s*\{[^}]*"summary"\s*:\s*"([^"]*)"/.exec(b.text) || /kc-feedback-text[^>]*>([^<]*)/i.exec(b.text);
     const page = /pageId = "([^"]+)"/.exec(b.text);
