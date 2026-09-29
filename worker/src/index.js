@@ -2,6 +2,7 @@
 // event is active, diffs against the last state in KV and pushes new results to the devices that follow
 // the player(s) concerned. Events come from discover.js (every event the club's players in players.json
 // enter on RankedIn, a few players per run) merged with events.js.
+import { bhsLogin } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
 import { parse, snapshot, unpack, notes, drawNote, summary, classResult, flip } from "./rankedin.js";
 import { discover, drawPath, rubbersPath, namesPath, drawsOf, ratingPath, skillOf, API, PLAYERS, BY_PID, LEGACY } from "./discover.js";
@@ -86,6 +87,20 @@ async function handle(req, env) {
   if (req.method === "POST" && url.pathname === "/test") {
     if (!env.ADMIN_KEY || req.headers.get("X-Admin-Key") !== env.ADMIN_KEY) return json({ error: "forbidden" }, 403, {});
     return json(await testPush(env), 200, {});
+  }
+  // Admin: log in to Backhandsmash with the captain's account and return a few pages (to build and check the parser).
+  if (req.method === "POST" && url.pathname === "/bhs-probe") {
+    if (!env.ADMIN_KEY || !sameSecret(req.headers.get("X-Admin-Key"), env.ADMIN_KEY)) return json({ error: "forbidden" }, 403, {});
+    let b = {};
+    try { b = await readBody(req); } catch (e) {}
+    try {
+      const s2 = await bhsLogin(env), out = [];
+      for (const p of (Array.isArray(b.paths) ? b.paths : ["/clubs/nynashamnpc/open/tables"]).slice(0, 6)) {
+        const r = await s2.get(p);
+        out.push({ path: p, status: r.status, url: r.url, len: r.html.length, html: r.html.slice(0, 300000) });
+      }
+      return json({ ok: true, pages: out }, 200, {});
+    } catch (e) { return json({ ok: false, error: String(e && e.message) }, 200, {}); }
   }
   // Internal: a batch of pushes from this worker's own cron tick (service binding SELF). Secret FANOUT_KEY; off without it.
   if (url.pathname === "/fanout") {
