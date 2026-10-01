@@ -1,9 +1,11 @@
 /* Nynäs Padel service worker.
-   index.html and players.json (the roster): network first with revalidation (an unchanged file is a 304), the
-   cached copy after 3 s on a slow network or at once offline. Other pages (integritet.html): network first, cached
+   index.html and players.json (the app shell): the cached copy at once (a start never waits for the network), the
+   network copy fetched next to it with revalidation (an unchanged file is a 304) and kept for the next start; when
+   it changed, the open pages are told ("padel-update") and reload the next time they come back to the screen.
+   Without a cached copy (first visit): the network. Other pages (integritet.html): network first, cached
    under their own URL. img/ and icons/: the cached copy at once, refreshed in the background (a replaced photo
    shows on the next view, a removed one leaves the cache). Other origins (api.rankedin.com, fonts) are never touched. */
-var VERSION = "padel-v7";
+var VERSION = "padel-v8";
 var PRECACHE = ["index.html", "players.json", "manifest.webmanifest", "icons/icon-192.png"];
 
 self.addEventListener("install", function(e){
@@ -17,6 +19,25 @@ self.addEventListener("activate", function(e){
   }).then(function(){ return self.clients.claim(); }));
 });
 
+function staleFirst(e, key){
+  var net = fetch(e.request, {cache:"no-cache"});
+  e.waitUntil(net.then(function(res){
+    if (!res || !res.ok || res.redirected) return;
+    var copy = res.clone();
+    return caches.open(VERSION).then(function(c){
+      return c.match(key).then(function(old){
+        return Promise.all([old ? old.text() : null, copy.text()]).then(function(t){
+          if (t[0] === t[1]) return;
+          return c.put(key, new Response(t[1], {headers:copy.headers})).then(function(){
+            if (t[0] == null) return;   // first copy: nothing to update
+            return self.clients.matchAll({type:"window"}).then(function(list){ list.forEach(function(w){ w.postMessage({type:"padel-update"}); }); });
+          });
+        });
+      });
+    });
+  }).catch(function(){}));
+  e.respondWith(caches.match(key).then(function(hit){ return hit || net; }));
+}
 function networkFirst(e, key, wait){
   var net = fetch(e.request, {cache:"no-cache"});
   e.waitUntil(net.then(function(res){   // attached first: the copy is taken before the page reads the body
@@ -42,7 +63,7 @@ self.addEventListener("fetch", function(e){
 
   // The app shell is keyed on its path, never on req.mode: another page must not overwrite it.
   if (rel === "" || rel === "index.html" || rel === "players.json"){
-    networkFirst(e, rel === "players.json" ? "players.json" : "index.html", 3000);
+    staleFirst(e, rel === "players.json" ? "players.json" : "index.html");
     return;
   }
   if (req.mode === "navigate"){

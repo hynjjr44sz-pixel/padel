@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-SONjT/rWszGi3s9Rktyy23IVLvMT1RCP/an7lbTKVoc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ACQMkWDuMeOOMU846opaC3d6p02YIwEOUCuHCkcqHu4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -5743,10 +5743,18 @@
     }
   });
   window.addEventListener("hashchange", handleHash);
+  // A newer app (service worker "padel-update", fetched while this one started from the cache): taken the next time
+  // the app comes back to the screen, never in the middle of use.
+  var UPDATE = false, hiddenAt = 0;
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden){ hiddenAt = Date.now(); return; }
+    if (UPDATE && hiddenAt && Date.now() - hiddenAt > 2000) try { location.reload(); } catch (e){}
+  });
   // A tapped notis while the app is open: the service worker posts the link instead of reloading the page.
   try {
     if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", function(e){
       var d = e.data || {};
+      if (d.type === "padel-update"){ UPDATE = true; return; }
       if (d.type !== "padel-open" || typeof d.hash !== "string") return;
       if (location.hash !== d.hash) history.replaceState(null, "", d.hash);
       handleHash();

@@ -218,6 +218,34 @@ test("sw.js: notificationclick focuses an open page and posts the deep link (no 
   assert.equal(calls[0][2].data.url, "./#kian/m1");
 });
 
+test("sw.js: the app shell comes from the cache at once; a changed copy is kept and the pages told", async () => {
+  const store = new Map(), msgs = [];
+  const cache = { match: async k => store.has(k) ? new Response(store.get(k)) : undefined, put: async (k, r) => { store.set(k, await r.text()); } };
+  let net = "v2", hang = false;
+  const handlers = {}, client = { postMessage: m => msgs.push(m) };
+  const self = { addEventListener: (t, fn) => { handlers[t] = fn; }, registration: { scope: "https://padel.holmberg.st/" },
+    clients: { matchAll: async () => [client], claim: async () => {} }, skipWaiting() {}, location: { origin: "https://padel.holmberg.st" } };
+  const fetch = () => hang ? new Promise(() => {}) : Promise.resolve(new Response(net, { status: 200 }));
+  vm.runInNewContext(readFileSync(new URL("../../sw.js", import.meta.url), "utf8"), { self, caches: { open: async () => cache, match: cache.match }, fetch, URL, Promise, Response });
+  const go = async () => { let resp, wait; handlers.fetch({ request: { method: "GET", url: "https://padel.holmberg.st/", mode: "navigate" }, respondWith: p => { resp = p; }, waitUntil: p => { wait = p; } }); return { body: await (await resp).text(), wait }; };
+  let r = await go();
+  assert.equal(r.body, "v2", "first visit: the network");
+  await r.wait;
+  assert.deepEqual(msgs, [], "first copy: no update message");
+  hang = true;
+  r = await go();
+  assert.equal(r.body, "v2", "the cached copy at once, even when the network hangs");
+  hang = false; net = "v3";
+  r = await go();
+  assert.equal(r.body, "v2", "still the cached copy");
+  await r.wait;
+  assert.equal(store.get("index.html"), "v3", "the new copy is kept for the next start");
+  assert.deepEqual(JSON.parse(JSON.stringify(msgs)), [{ type: "padel-update" }]);
+  r = await go(); await r.wait;
+  assert.equal(r.body, "v3");
+  assert.equal(msgs.length, 1, "unchanged: no message");
+});
+
 test("module exports are functions or the handler object (workerd refuses anything else)", async () => {
   const mod = await import("../src/index.js");
   for (const [k, v] of Object.entries(mod)) assert.ok(typeof v === "function" || (k === "default" && typeof v.fetch === "function" && typeof v.scheduled === "function"), k);
