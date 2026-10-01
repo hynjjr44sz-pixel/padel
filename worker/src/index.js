@@ -2,7 +2,7 @@
 // event is active, diffs against the last state in KV and pushes new results to the devices that follow
 // the player(s) concerned. Events come from discover.js (every event the club's players in players.json
 // enter on RankedIn, a few players per run) merged with events.js.
-import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin } from "./bhs.js";
+import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
 import { parse, snapshot, unpack, notes, drawNote, summary, classResult, flip } from "./rankedin.js";
 import { discover, drawPath, rubbersPath, namesPath, drawsOf, ratingPath, skillOf, API, PLAYERS, BY_PID, LEGACY } from "./discover.js";
@@ -94,9 +94,16 @@ async function handle(req, env) {
     let b2 = {};
     try { b2 = (await readBody(req)) || {}; } catch (e) {}
     try {
-      const log = {}, v = b2.hist ? await runBhsHist(env, now(env), { left: SUBREQUESTS }, log) : await runBhs(env, now(env), { left: SUBREQUESTS }, log);
+      const log = {}, budget = { left: SUBREQUESTS };
+      let v;
+      if (b2.hist) v = await runBhsHist(env, now(env), budget, log);
+      else {   // new results found here are sent as from the cron
+        const msgs = await runBhs(env, now(env), budget, log);
+        if (msgs.length) await fanOut(env, msgs, budget, log);
+        v = await loadBhs(env);
+      }
       if (b2.hist) return json({ ok: true, written: log.bhsHist, members: Object.keys((v.hist || {}).members || {}).length, rank: Object.keys((v.hist || {}).rank || {}) }, 200, {});
-      return json({ ok: true, at: v.at, written: log.bhs, groups: v.groups.map(g => ({ series: g.series, name: g.name, players: g.pids.length, rows: g.rows.length, res: g.res.length, next: (g.next || []).length })) }, 200, {});
+      return json({ ok: true, at: v.at, written: log.bhs, sent: log.sent || 0, groups: v.groups.map(g => ({ series: g.series, name: g.name, players: g.pids.length, rows: g.rows.length, res: g.res.length, next: (g.next || []).length })) }, 200, {});
     } catch (e) { return json({ ok: false, error: String(e && e.message) }, 200, {}); }
   }
   // Admin: log in to Backhandsmash with the captain's account and return a few pages (to build and check the parser).
@@ -266,15 +273,46 @@ export async function runBhsHist(env, t, budget, log = {}) {
   log.writes = (log.writes || 0) + 1; log.bhsHist = Object.keys(h.members).length;
   return next;
 }
+// -> the notiser to send now. New results are sent at once in the day (07-23 local); at night they wait in the record
+// ("held", not in /events) for the first look after 07.
+export function bhsSendable(v, notes, t) {
+  const lh = new Date(+t + offsetAt(+t) * H).getUTCHours(), night = lh >= 23 || lh < 7;
+  if (night) { if (notes.length) v.held = (v.held || []).concat(notes).slice(-20); return []; }
+  const out = (v.held || []).concat(notes);
+  delete v.held;
+  return out;
+}
 export async function runBhs(env, t, budget, log = {}) {
   const r = await fetchBhs(budget, undefined, env), was = await loadBhs(env);
   if (r.err) console.warn("backhandsmash schedule", r.err);
-  if (was && JSON.stringify(was.groups) === JSON.stringify(r.groups) && +t - Date.parse(was.at) < 6 * DAY) { log.bhs = 0; return was; }
-  const v = { at: t.toISOString(), groups: r.groups, ...(was && was.hist ? { hist: was.hist } : {}) };
+  if (was && JSON.stringify(was.groups) === JSON.stringify(r.groups) && +t - Date.parse(was.at) < 6 * DAY) { log.bhs = 0; return []; }
+  const v = { at: t.toISOString(), groups: r.groups, ...(was && was.hist ? { hist: was.hist } : {}), ...(was && was.held ? { held: was.held } : {}) };
+  const send = bhsSendable(v, was ? newResults(was.groups, r.groups, t) : [], t);
   await env.PUSH.put("bhs", JSON.stringify(v));
   BHSM = { v, at: Date.now() };
   log.writes = (log.writes || 0) + 1; log.bhs = r.groups.length;
-  return v;
+  return send;
+}
+// Every 10 minutes (minute 3, 13, ...): the groups whose scheduled match just ended get their results looked at again
+// (bhs.js resultsDue), and results that waited over the night go out. Written only on a change.
+export async function runBhsResults(env, t, budget, log = {}) {
+  const was = await loadBhs(env);
+  if (!was || !was.groups) return [];
+  const due = resultsDue(was.groups, t);
+  if (!due.length && !was.held) return [];
+  const groups = was.groups.slice();
+  for (const g of due) {
+    try {
+      const res = await fetchGroupResults(budget, g);
+      if (res.length) groups[groups.indexOf(g)] = { ...g, res };
+    } catch (e) { console.warn("backhandsmash results", g.id, e.message); }
+  }
+  const v = { ...was, groups }, send = bhsSendable(v, newResults(was.groups, groups, t), t);
+  if (JSON.stringify(v) === JSON.stringify(was)) return send;
+  await env.PUSH.put("bhs", JSON.stringify(v));
+  BHSM = { v, at: Date.now() };
+  log.writes = (log.writes || 0) + 1; log.bhsRes = send.length;
+  return send;
 }
 // Pushes per day (KV "stats:<day>"): written only by a tick that sent something, so a handful of writes on a match day.
 async function countPushes(env, t, sent, removed) {
@@ -726,7 +764,9 @@ export async function tick(env, events) {
     try { await runBhsHist(env, t, budget, log); } catch (e) { console.warn("backhandsmash history", e.message); }
   }
   if (!events && env.BHS_OFF !== "1" && (await bhsDue(env, t))) {   // BHS_OFF: local tests only
-    try { await runBhs(env, t, budget, log); } catch (e) { console.warn("backhandsmash", e.message); }
+    try { pubMsgs.push(...await runBhs(env, t, budget, log)); } catch (e) { console.warn("backhandsmash", e.message); }
+  } else if (!events && env.BHS_OFF !== "1" && mm % 10 === 3) {
+    try { pubMsgs.push(...await runBhsResults(env, t, budget, log)); } catch (e) { console.warn("backhandsmash results", e.message); }
   }
   if (!events && env.CAL_OFF !== "1" && calendarDue(t, env)) {   // CAL_OFF / CAL_ANY: local tests only
     try { await runCalendar(env, t, budget, rec, log); } catch (e) { console.warn("calendar", e.message); }

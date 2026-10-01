@@ -4,6 +4,7 @@
 // Kept: only the groups with a club player (matched on first + last name), so a player page shows just their own series.
 
 import { PLAYERS } from "./discover.js";
+import { localToDate } from "./tz.js";
 
 export const BHS = "https://backhandsmash.com", BHS_CLUB = "nynashamnpc";
 export const BHS_LEAGUES = { open: "Seriespel", mix: "Mixedserie", noteam: "Americanoserie" };
@@ -68,6 +69,12 @@ export function parseSchedule(html) {
   return out;
 }
 
+// A group's results with a club player (newest first, at most 40)
+async function groupResults(id, name, who) {
+  return parseResults(await page(BHS + "/results/bygroup?id=" + id + "&name=" + encodeURIComponent(name) + "&mobile=false&lang=sv"))
+    .map(r => ({ ...r, pids: who(r.a).concat(who(r.b)) })).filter(r => r.pids.length).slice(0, 40);
+}
+
 async function page(url) {
   const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (padel.holmberg.st nightly)", "Accept": "text/html" }, signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error("Backhandsmash HTTP " + res.status);
@@ -90,8 +97,7 @@ export async function fetchBhs(budget, players = PLAYERS, env = {}) {
       const pids = [...new Set(rows.flatMap(r => r.pids))];
       if (!pids.length) continue;
       take();
-      const res = parseResults(await page(BHS + "/results/bygroup?id=" + id + "&name=" + encodeURIComponent(name) + "&mobile=false&lang=sv"))
-        .map(r => ({ ...r, pids: who(r.a).concat(who(r.b)) })).filter(r => r.pids.length).slice(0, 40);
+      const res = await groupResults(id, name, who);
       groups.push({ id: +id, lg, site: L.site, series: BHS_LEAGUES[lg], name, url: BHS + "/clubs/" + BHS_CLUB + "/" + lg + "/tables/" + encodeURIComponent(name), single: !rows.some(r => / \/ /.test(r.n)), rows, res, pids, next: [] });
     }
   }
@@ -224,4 +230,61 @@ export async function bhsLogin(env) {
     throw new Error("login refused" + (err ? ": " + err[1].trim() : "") + " (" + (page ? page[1] : b.res.status) + ")");
   }
   return { get: async path => { const r = await go(j, new URL(path, BHS).href); return { status: r.res.status, url: r.url, html: r.text }; } };
+}
+
+/* ---- results as notiser. A match is known by its group, its two sides (either order, partners either order) and its
+   day: the same key on the page (#serie/<group>/<key>), so a notis opens the match. ---- */
+const flat = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]+/g, "");
+export function matchKey(a, b, d) {
+  const side = x => String(x).split("/").map(flat).sort().join("+"), k = [side(a), side(b)].sort().join("|") + "|" + String(d).slice(0, 10);
+  let h = 5381;
+  for (let i = 0; i < k.length; i++) h = (h * 33 + k.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+// Sets won - lost from the first side's score ("6-3 4-6 6-2")
+export function setDiff(s) {
+  let w = 0, l = 0;
+  String(s || "").split(/\s+/).forEach(x => { const m = /^(\d+)-(\d+)$/.exec(x); if (m) { if (+m[1] > +m[2]) w++; else if (+m[2] > +m[1]) l++; } });
+  return w - l;
+}
+const flipScore = s => String(s).split(/\s+/).map(x => x.replace(/^(\d+)-(\d+)$/, "$2-$1")).join(" ");
+const SERIES_IN = { Seriespel: "seriespelet", Mixedserie: "mixedserien", Americanoserie: "americanoserien" }, SERIES_ES = { Seriespel: "la liga", Mixedserie: "la liga mixta", Americanoserie: "la liga americano" };
+const firstNames = (pids, by) => pids.map(p => by.get(p)).filter(Boolean).map(p => p.name);
+const and = (xs, w) => xs.length > 1 ? xs.slice(0, -1).join(", ") + " " + w + " " + xs[xs.length - 1] : xs[0] || "";
+// One result -> {pids, m} (the players' devices get it). Club players on the winning side: "... vann", else "... förlorade".
+export function resultNote(g, r, players = PLAYERS) {
+  const by = new Map(players.map(p => [p.pid, p])), who = matcher(players), sd = setDiff(r.s);
+  const aw = sd >= 0, win = aw ? r.a : r.b, lose = aw ? r.b : r.a, sc = aw ? r.s : flipScore(r.s);
+  const wn = firstNames(who(win), by), ln = firstNames(who(lose), by), draw = sd === 0;
+  const sv = draw ? and(wn.concat(ln), "och") + " spelade lika" : wn.length ? and(wn, "och") + " vann" + (ln.length ? " mot " + and(ln, "och") : "") : and(ln, "och") + " förlorade";
+  const es = draw ? and(wn.concat(ln), "y") + (wn.length + ln.length > 1 ? " empataron" : " empató") : wn.length ? and(wn, "y") + (wn.length > 1 ? " ganaron" : " ganó") + (ln.length ? " contra " + and(ln, "y") : "") : and(ln, "y") + (ln.length > 1 ? " perdieron" : " perdió");
+  const body = win + " – " + lose + "  " + sc + " · " + g.name;
+  return { pids: r.pids, m: { title: sv + " i " + (SERIES_IN[g.series] || g.series.toLowerCase()), body, tag: "padel-bhs-" + g.id + "-" + matchKey(r.a, r.b, r.d), url: "./#serie/" + g.id + "/" + matchKey(r.a, r.b, r.d),
+    es: { title: es + " en " + (SERIES_ES[g.series] || g.series.toLowerCase()), body } } };
+}
+// New results since the last look: groups seen before only (a new group's results are its baseline), and played in the
+// last 3 days (a page that came back empty once never turns old results into notiser).
+export function newResults(before, after, t, players = PLAYERS) {
+  const out = [], old = new Map((before || []).map(g => [g.id, new Set((g.res || []).map(r => matchKey(r.a, r.b, r.d)))]));
+  const fresh = r => { const d = localToDate(r.d); return d && +t - +d < 3 * 864e5 && +d - +t < 864e5; };
+  for (const g of after || []) {
+    const seen = old.get(g.id);
+    if (!seen) continue;
+    for (const r of (g.res || []).slice().reverse()) if (!seen.has(matchKey(r.a, r.b, r.d)) && fresh(r)) out.push(resultNote(g, r, players));
+  }
+  return out;
+}
+// Groups with a scheduled match that ended within the last 5 hours (from 10 min before its end) and no result yet:
+// those are looked at every 10 minutes.
+export function resultsDue(groups, t) {
+  return (groups || []).filter(g => (g.next || []).some(x => {
+    const st = localToDate(x.d), end = st ? +st + (x.min || 90) * 60e3 : 0;
+    return +t > end - 10 * 60e3 && +t < end + 5 * 3600e3 && !(g.res || []).some(r => matchKey(r.a, r.b, r.d) === matchKey(x.a, x.b, x.d));
+  }));
+}
+// One group's results again (1 subrequest)
+export async function fetchGroupResults(budget, g, players = PLAYERS) {
+  if (budget.left < 1) throw new Error("subrequest budget");
+  budget.left--;
+  return groupResults(g.id, g.name, matcher(players));
 }

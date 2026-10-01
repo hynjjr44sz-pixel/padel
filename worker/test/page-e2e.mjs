@@ -11,6 +11,7 @@ import { install, route } from "./fake-rankedin.mjs";
 import { suggestFor } from "../src/calendar.js";
 import { makeVapid } from "./helpers.mjs";
 import { readFileSync } from "node:fs";
+import { matchKey } from "../src/bhs.js";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
@@ -622,6 +623,32 @@ try {
   ok("worker down: Förslag says Inga förslag just nu. (no RankedIn calendar calls)", /Inga förslag just nu\./.test(await page.textContent("#sgList-kian")) && !api.paths.some(x => /Organisation|ClassesSection/i.test(x)));
   ok("worker down: Kian's page finds his events on RankedIn", /SPL|Herrar/.test(await page.textContent("#p-kian [data-r=round]").catch(() => "")), await page.textContent("#p-kian .dyn").catch(() => ""));
   await ctx.close();
+  // A series match (Backhandsmash): "Kommande" on the home page opens #serie/<group>/<key> (the worker's key, as in
+  // the notis), "dem mot dem" with both sides' table, earlier meetings and the favourite on paper.
+  {
+    const NX = { d: "2026-09-27 19:00", min: 90, c: "2", g: "Mix 1", a: "Kian Borgström / Thea Löving", b: "Andreas Lindgren / Rebecca Levander", pids: [1680004, 1675246] };
+    const G = { id: 92917, lg: "mix", site: 920, series: "Mixedserie", name: "Mix 1", url: "https://backhandsmash.com/x", single: false, pids: [1680004, 1675246],
+      rows: [{ id: 1, pos: 1, n: "Kian Borgström / Thea Löving", m: 4, w: 4, t: 0, l: 0, g: "60-30", d: 30, p: 20, pids: [1680004, 1675246] },
+        { id: 2, pos: 3, n: "Andreas Lindgren / Rebecca Levander", m: 4, w: 1, t: 0, l: 3, g: "40-50", d: -10, p: 8, pids: [] }],
+      res: [{ a: "Andreas Lindgren / Rebecca Levander", b: "Kian Borgström / Thea Löving", s: "3-6 4-6 6-2", d: "2026-09-10", pids: [1680004, 1675246] }], next: [NX] };
+    ({ page, ctx, errors, api } = await newPage({ events: { ...EVENTS, bhs: { at: "2026-09-27T01:33:00Z", groups: [G], hist: null } } }));
+    await page.goto(url("#/"));
+    const href = "#serie/92917/" + matchKey(NX.a, NX.b, NX.d);
+    await page.waitForSelector('#agenda a[href="' + href + '"]', { timeout: 8000 }).catch(() => {});
+    ok("series: Kommande links to the match (same key as the worker's notis)", await page.$('#agenda a[href="' + href + '"]') !== null, await page.$$eval("#agenda a", a => a.map(x => x.getAttribute("href"))));
+    await page.click('#agenda a[href="' + href + '"]').catch(() => {});
+    await page.waitForSelector("#match .vsb", { timeout: 8000 }).catch(() => {});
+    const mt = await page.textContent("#match").catch(() => "");
+    ok("series: match view, both sides, VS, favourite on paper", /Kian Borgström/.test(mt) && /Rebecca Levander/.test(mt) && /VS/.test(mt) && /Favorit på pappret/.test(mt) && /Kian & Thea/.test(mt), mt.slice(0, 300));
+    ok("series: earlier meeting and the comparison", /3-6 4-6 6-2/.test(mt) && /1–0/.test(mt) && /60–30/.test(mt) && /Placering/.test(mt), mt.slice(0, 600));
+    ok("series: the clash plays once", await page.$("#match .vsb.anim") !== null);
+    ok("series: no horizontal scroll, no errors", await noHScroll(page) && errors.length === 0, errors);
+    await shot(page, "serie-match");
+    await page.goto(url("#serie/92917/zzz"));
+    await page.waitForTimeout(800);
+    ok("series: an unknown match says so", /finns inte längre/.test(await page.textContent("#match").catch(() => "")));
+    await ctx.close();
+  }
   // Spanish: chosen with the SV | ES switch, kept on the device; everything the page writes follows it
   ({ page, ctx, errors, api } = await newPage());
   await page.goto(url("#/"));
