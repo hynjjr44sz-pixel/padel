@@ -623,6 +623,21 @@ try {
   ok("worker down: Förslag says Inga förslag just nu. (no RankedIn calendar calls)", /Inga förslag just nu\./.test(await page.textContent("#sgList-kian")) && !api.paths.some(x => /Organisation|ClassesSection/i.test(x)));
   ok("worker down: Kian's page finds his events on RankedIn", /SPL|Herrar/.test(await page.textContent("#p-kian [data-r=round]").catch(() => "")), await page.textContent("#p-kian .dyn").catch(() => ""));
   await ctx.close();
+  // A tournament under Kommande opens #tavling/<id>: every club player entered, per class (not the first player's page)
+  {
+    ({ page, ctx, errors, api } = await newPage());
+    await page.goto(url("#/"));
+    await page.waitForSelector('#agenda a[href^="#tavling/"]', { timeout: 8000 }).catch(() => {});
+    const th = await page.$eval('#agenda a[href^="#tavling/"]', a => a.getAttribute("href")).catch(() => "");
+    const tid = th.split("/")[1], want = EVENTS.events.filter(e => e.kind === "tournament" && String(e.tournamentId) === tid);
+    ok("tournament: Kommande links to the tournament", !!th && want.length > 0, th);
+    await page.click('#agenda a[href="' + th + '"]').catch(() => {});
+    await page.waitForSelector("#tour .tcls", { timeout: 8000 }).catch(() => {});
+    const tt = await page.textContent("#tour").catch(() => "");
+    ok("tournament: name, classes and the club's players", tt.includes(want[0].name) && want.every(e => tt.includes(e.cls)) && await page.$$eval("#tour .prow", a => a.length) > 0, tt.slice(0, 300));
+    ok("tournament: no horizontal scroll, no errors", await noHScroll(page) && errors.length === 0, errors);
+    await ctx.close();
+  }
   // A series match (Backhandsmash): "Kommande" on the home page opens #serie/<group>/<key> (the worker's key, as in
   // the notis), "dem mot dem" with both sides' table, earlier meetings and the favourite on paper.
   {

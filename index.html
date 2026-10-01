@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ACQMkWDuMeOOMU846opaC3d6p02YIwEOUCuHCkcqHu4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-4hGkfgi5lajvgycg6ObMRDjsKhFoyk8j5ui9FlHMH+o='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -166,6 +166,14 @@
   .appbar .x:hover{ background:var(--surface-2); color:var(--ink); }
 
 
+  /* ---------- #tavling/…: one tournament, the club's pairs per class ---------- */
+  .tinfo{ padding:4px 14px; margin-bottom:6px; }
+  .tinfo p{ display:grid; grid-template-columns:84px minmax(0,1fr); gap:10px; align-items:baseline; margin:0; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .tinfo p:last-child{ border-bottom:0; }
+  .tinfo span{ font:600 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .tcls{ margin-bottom:16px; }
+  .tcls .tblhd{ padding:2px 2px 8px; }
+  .tcls .tblhd span{ font:500 11px/1.3 "Chivo Mono", monospace; color:var(--dim); text-align:right; }
   /* ---------- #serie/…: one series match, "dem mot dem" ---------- */
   .vsb{ position:relative; margin:4px -16px 0; padding:18px 16px 18px; color:var(--board-ink); overflow:hidden; isolation:isolate;
     background:radial-gradient(60% 70% at 0% 40%, rgba(31,79,207,.55), transparent 70%), radial-gradient(60% 70% at 100% 60%, rgba(176,74,64,.42), transparent 70%), var(--board); }
@@ -1234,6 +1242,7 @@
   <!-- ================= LAG ================= -->
   <main class="view" id="team" tabindex="-1" aria-labelledby="th-h" hidden></main>
   <main class="view" id="match" tabindex="-1" hidden></main>
+  <main class="view" id="tour" tabindex="-1" hidden></main>
 
   <footer>
     <b>Nynäs Padel Club</b>
@@ -1292,6 +1301,7 @@
     " i ":" en ",
     " i matcher":" en partidos",
     " kl ":" a las ",
+    " klass":" categoría",
     " klasser":" categorías",
     " kvar":" pendientes",
     " lag i SPL":" equipos en la SPL",
@@ -1366,6 +1376,7 @@
     "3:e plats":"3.er puesto",
     "Americanoserie":"Liga americano",
     "Anmäl på RankedIn":"Inscríbete en RankedIn",
+    "Anmälan":"Inscripción",
     "Anmälan öppen":"Inscripción abierta",
     "Bana":"Pista",
     "Bana ":"Pista ",
@@ -1401,6 +1412,7 @@
     "Finaler":"Finales",
     "Flest platser uppåt på SPF-listan":"Más puestos ganados en la lista SPF",
     "Form, senaste matcherna":"Forma, últimos partidos",
+    "Från klubben":"Del club",
     "Följ":"Seguir",
     "Följ en spelare först. Tryck Följ på spelarens sida.":"Sigue primero a un jugador. Pulsa Seguir en su página.",
     "Följ {name}":"Seguir a {name}",
@@ -1461,6 +1473,7 @@
     "Inom&nbsp;20&nbsp;mil":"A&nbsp;200&nbsp;km",
     "Installera":"Instalar",
     "Installera appen":"Instala la app",
+    "Inte lottad än":"Sin cuadro todavía",
     "Inte publicerad":"Sin publicar",
     "Inte rankad":"Sin ranking",
     "Integritet & kontakt":"Privacidad y contacto",
@@ -1571,6 +1584,7 @@
     "Placering per omgång":"Puesto por jornada",
     "Plate":"Plate",
     "Plate-final":"Final de Plate",
+    "Plats":"Lugar",
     "Plats inte klar":"Lugar por confirmar",
     "Poäng":"Puntos",
     "På iPhone kommer notiser bara när sidan ligger på hemskärmen. Tryck Dela → Lägg till på hemskärmen och öppna den därifrån.":"En iPhone las notificaciones solo llegan si la página está en la pantalla de inicio. Pulsa Compartir → Añadir a pantalla de inicio y ábrela desde ahí.",
@@ -1644,6 +1658,7 @@
     "Tid och plats inte klart":"Hora y lugar por confirmar",
     "Tidigare möten":"Duelos anteriores",
     "Till Nynäs idag":"A Nynäs hoy",
+    "Till spelarsidan →":"A la ficha del jugador →",
     "Timmar":"Horas",
     "Topplistan":"Clasificación",
     "Topplistan, ":"Clasificación, ",
@@ -1654,6 +1669,8 @@
     "Tvåa i {cls}. Silver, starkt jobbat.":"Segundo puesto en {cls}. Plata, muy buen trabajo.",
     "Tävlingar":"Torneos",
     "Tävlingar & SPL":"Torneos y SPL",
+    "Tävlingen":"El torneo",
+    "Tävlingen finns inte här längre.":"El torneo ya no está aquí.",
     "Tävlingsbestämmelser":"Reglamento de competición",
     "Tävlingsklasser":"Categorías de competición",
     "Upp ":"Sube ",
@@ -1719,6 +1736,7 @@
     "klart":"terminado",
     "klassen":"la categoría",
     "klättring":"subida",
+    "med ":"con ",
     "mot ":"contra ",
     "mot paret ":"contra la pareja ",
     "nu":"ahora",
@@ -1733,12 +1751,15 @@
     "pågår":"en juego",
     "pågår / kommande":"en juego / próximos",
     "sedan ":"desde ",
+    "seedad ":"cabeza de serie ",
     "senast ändrad ":"último cambio ",
     "senaste året":"último año",
     "servern":"el servidor",
     "skickade":"enviados",
     "snitt ":"media ",
     "spelare per telefon":"jugadores por teléfono",
+    "start ":"inicio ",
+    "stänger ":"cierra el ",
     "svenska / spanska":"sueco / español",
     "telefoner":"teléfonos",
     "topp ":"máx. ",
@@ -1755,6 +1776,7 @@
     "{names} vann {cls}. Grattis!":"{names} ganaron {cls}. ¡Enhorabuena!",
     "{name} finns inte på SPF-rankingen just nu.":"{name} no está en el ranking de la SPF ahora mismo.",
     "{name} ligger på plats {rank} och är {lvl}-spelare.":"{name} está en el puesto {rank} y es jugador de nivel {lvl}.",
+    "{n} par anmälda":"{n} parejas inscritas",
     "{n} par anmälda i {cls}":"{n} parejas inscritas en {cls}",
     "{place} i {where}. Bra kämpat, {names}.":"{place} en {where}. Bien jugado, {names}.",
     "Årets vinster ":"Victorias ",
@@ -4116,6 +4138,44 @@
     };
   }
 
+  /* ---- #tavling/<id>: one tournament with every club player entered (all classes): when and where, the pairs per
+     class, how many pairs, the draw. From the worker's events (no RankedIn calls); a past one from "past". ---- */
+  function renderTour(tid){
+    var box = document.getElementById("tour");
+    if (!box) return;
+    if (!DISC){ box.innerHTML = '<p class="empty">' + _("Hämtar …") + '</p>'; return; }
+    var all = DISC.events.concat(DISC.past || []).filter(function(e){ return e.kind === "tournament" && String(e.tournamentId) === String(tid); });
+    if (!all.length){ box.innerHTML = '<div class="phead"><div class="pt"><h1>' + _("Tävlingen") + '</h1></div></div><p class="empty">' + _("Tävlingen finns inte här längre.") + ' <a href="#/">' + _("Till Nynäs idag") + '</a></p>'; return; }
+    var e0 = all[0], s = riDate(e0.start) || new Date(e0.windowFrom), en = riDate(e0.end) || s, multi = dayOf(s) !== dayOf(en);
+    var cls = {}, order = [];
+    all.forEach(function(e){
+      var k = String(e.classId);
+      if (!cls[k]){ cls[k] = {e:e, pairs:[], seen:{}}; order.push(k); }
+      var c = cls[k], pk = [e.pid, e.partnerId].map(Number).sort().join("-");
+      if (c.seen[pk]) return;
+      c.seen[pk] = 1;
+      if (e.published && !c.e.published) c.e = e;
+      c.pairs.push(e);
+    });
+    var n = 0, cards = order.map(function(k){
+      var c = cls[k], e = c.e;
+      return '<div class="tcls"><div class="tblhd"><b>' + esc(e.cls || _("Klass")) + '</b><span>' + esc([e.pairs ? _("{n} par anmälda", {n:e.pairs}) : "", e.published ? _("Lottningen är klar") : _("Inte lottad än")].filter(Boolean).join(" · ")) + '</span></div><ul class="plist">' +
+        c.pairs.map(function(x){
+          var P = BYPID[x.pid], Q = BYPID[x.partnerId], who = [P, Q].filter(Boolean);
+          n += who.length;
+          var names = [P ? P.name : x.me, Q ? Q.name : x.partner].filter(Boolean);
+          return '<li><a class="prow' + (who.some(function(p){ return isFollowed(p.pid); }) ? " fol" : "") + '" href="#' + esc((P || Q || {}).key || x.who) + '"><span class="avs">' + names.map(avatar).join("") + '</span><span><b>' + esc(names.map(function(m){ var p = BYNAME[slug(m)]; return p ? p.short : m; }).join(" & ")) + '</b>' +
+            '<span class="pmeta">' + esc((x.seed ? _("seedad ") + x.seed + " · " : "") + _("Till spelarsidan →")) + '</span></span></a></li>';
+        }).join("") + '</ul></div>';
+    }).join("");
+    var where = [e0.venue, e0.address].filter(Boolean).join(", "), closes = riDate(e0.closes);
+    box.innerHTML = '<div class="phead"><div class="pt"><h1>' + esc(e0.name || _("Turnering")) + '</h1><div class="pm">' + esc(cap(dayLabel(s)) + (multi ? " – " + dayLabel(en) : "") + (hm(s) !== "00:00" ? " · " + _("start ") + hm(s) : "")) + '</div></div></div>' +
+      '<div class="card tinfo">' + (where ? '<p><span>' + _("Plats") + '</span><a href="https://maps.google.com/?q=' + encodeURIComponent(where) + '" target="_blank" rel="noopener">' + esc(where) + ' ↗︎</a></p>' : "") +
+        (closes && closes > now() ? '<p><span>' + _("Anmälan") + '</span>' + esc(_("stänger ") + dayMonD(closes) + " " + hm(closes)) + '</p>' : "") +
+        '<p><span>RankedIn</span><a href="' + esc(e0.url || RI_WEB) + '" target="_blank" rel="noopener">' + _("Turneringen på RankedIn ↗︎") + '</a></p></div>' +
+      '<section aria-labelledby="h-tk"><div class="sh"><h2 id="h-tk">' + _("Från klubben") + '</h2><div class="meta">' + esc(n + _(" spelare ") + "· " + order.length + (order.length === 1 ? _(" klass") : _(" klasser"))) + '</div></div>' + cards + '</section>';
+  }
+
   /* ---- Förslag på tävlingar: the worker's calendar (GET /cal, built nightly: sanctioned tournaments within 20 mil, next
      8 weeks) and the SPF rules for the player (same as worker/src/calendar.js: eligibility, suggestFor). No RankedIn calls. ---- */
   var CAL_KEY = "padel.cal.v1", CAL = null, calBusy = false, calAt = 0;
@@ -4344,6 +4404,7 @@
     try { archive(d.events.concat(d.past || [])); } catch (e){}
     try { pubWatch(d.events.filter(function(e){ return e.kind === "tournament" && isFollowed(e.pid); })); } catch (e){}
     if (VIEW.name === "home") renderHome();
+    if (VIEW.name === "tour") try { renderTour(VIEW.tid); } catch (e){ warn("Tävlingen", e); }
     if (VIEW.name === "match") try { renderMatch(VIEW.gid, VIEW.key); } catch (e){ warn("Matchen", e); }
     if (VIEW.name === "team") try { renderTeam(TEAMS.filter(function(x){ return x.id === VIEW.team; })[0]); } catch (e){}
     Object.keys(PANELS).forEach(function(w){
@@ -4661,7 +4722,7 @@
       var k = "c" + e.classId, r = byCls[k];
       if (!r){
         var s = riDate(e.start) || new Date(e.windowFrom);
-        r = byCls[k] = {kind:"t", e:e, at:s, time:hm(s) === "00:00" ? "" : hm(s), title:e.name || _("Turnering"), cls:e.cls, href:"#" + e.who, players:[]};
+        r = byCls[k] = {kind:"t", e:e, at:s, time:hm(s) === "00:00" ? "" : hm(s), title:e.name || _("Turnering"), cls:e.cls, href:"#tavling/" + e.tournamentId, players:[]};
         rows.push(r);
       }
       [e.pid, e.partnerId].forEach(function(pid){ var p = BYPID[pid]; if (p && r.players.indexOf(p) < 0) r.players.push(p); });
@@ -5529,13 +5590,15 @@
     if (sk) return {view:"stats", key:sk[1] || null};
     var sm = /^#serie\/(\d+)\/([a-z0-9]+)$/.exec(h);
     if (sm) return {view:"match", gid:sm[1], key:sm[2]};
+    var tv = /^#tavling\/(\d+)$/.exec(h);
+    if (tv) return {view:"tour", tid:tv[1]};
     var t = /^#lag\/(\d+)/.exec(h);
     if (t) return {view:"team", teamId:+t[1]};
     var m = /^#([a-z0-9-]+)(?:\/m([\w-]+))?/i.exec(h), P = m && (BYKEY[m[1].toLowerCase()] || BYSLUG[m[1].toLowerCase()]);
     return P ? {view:"player", who:P.key, P:P, mid:m[2] || null} : {view:"home"};
   }
   function showView(id){
-    ["home", "team", "stats", "match"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
+    ["home", "team", "stats", "match", "tour"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
       var el = document.getElementById(v);
       if (el) el.hidden = v !== id;
     });
@@ -5600,6 +5663,11 @@
       renderStats(); showView("stats");
       VIEW = {name:"stats", who:null};
       document.title = _("Statistik") + " · Nynäs Padel";
+    } else if (x.view === "tour"){
+      renderTour(x.tid); showView("tour");
+      VIEW = {name:"tour", who:null, team:"t" + x.tid, tid:x.tid};
+      var te = DISC && DISC.events.concat(DISC.past || []).filter(function(e){ return String(e.tournamentId) === String(x.tid); })[0];
+      document.title = (te && te.name || _("Tävlingen")) + " · Nynäs Padel";
     } else if (x.view === "match"){
       renderMatch(x.gid, x.key); showView("match");
       VIEW = {name:"match", who:null, team:x.gid + "/" + x.key, gid:x.gid, key:x.key};
