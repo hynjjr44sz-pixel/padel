@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-PsXqNfS7fXWlRaKe/y+eB+GGBbqkZR/IlCJqBiwR5N0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-QRcpYP3y3BDY68grnX/U19mi5hyQ/Ix4dc5drLqPESw='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -176,6 +176,7 @@
   .chb{ display:block; height:8px; border-radius:5px; background:var(--loss-soft); overflow:hidden; }
   .chb b{ display:block; height:100%; border-radius:5px; background:linear-gradient(90deg, #2A5BE0, var(--racket)); }
   .chv{ font:700 13px/1 "Chivo Mono", monospace; color:var(--ink); min-width:40px; text-align:right; }
+  .res .rch small{ grid-column:1 / -1; font:500 10px/1.35 "Chivo Mono", monospace; letter-spacing:0; text-transform:none; color:var(--faint); }
   .res .rch{ display:grid; grid-template-columns:auto minmax(50px,1fr) auto; gap:10px; align-items:center; padding-top:6px; padding-bottom:10px; border-top:1px dashed var(--line);
     font:600 10px/1.2 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
   .nowrow.team .avs{ flex:none; }
@@ -1697,6 +1698,7 @@
     "Upp ":"Sube ",
     "Upp från plats ":"Sube desde el puesto ",
     "Uppgivet":"Abandono",
+    "Uppskattad: en spelare saknar skill och räknas som lagets snitt idag.":"Estimada: a un jugador le falta el nivel y cuenta como la media de su equipo hoy.",
     "Utveckling":"Evolución",
     "V":"G",
     "VIN%":"VIC%",
@@ -1715,7 +1717,7 @@
     "Vinnare av ":"Ganador de ",
     "Vinst":"Victoria",
     "Vinstchans":"Probabilidad de ganar",
-    "Vinstchansen är på pappret: parens snitt-skill (SPF) mot motståndarnas. Lagmatchen räknar spelade matcher som de slutade.":"La probabilidad es sobre el papel: el nivel medio (SPF) de cada pareja contra el de sus rivales. Para la eliminatoria, los partidos jugados cuentan con su resultado.",
+    "Vinstchansen är på pappret: parens snitt-skill (SPF) mot motståndarnas. En spelare utan skill räknas som lagets snitt idag, och chansen märks ≈. Lagmatchen räknar spelade matcher som de slutade.":"La probabilidad es sobre el papel: el nivel medio (SPF) de cada pareja contra el de sus rivales. Un jugador sin nivel cuenta como la media de su equipo hoy, y la probabilidad lleva ≈. Para la eliminatoria, los partidos jugados cuentan con su resultado.",
     "Vinster":"Victorias",
     "Visa":"Mostrar",
     "Visa alla ":"Ver todos ",
@@ -3503,21 +3505,39 @@
     var box = document.createElement("div"); box.className = "tblwrap"; host.appendChild(box);
     tlTable(e).then(function(d){ if (d.rows.length) box.innerHTML = tlTableHtml(e, d); }, function(){});
   }
-  // Win chance on paper for one match: the pairs' average SPF skill (1 skill = about 75 %). null without both pairs' skill.
-  function rubberChance(mt, us){
-    var them = us === "a" ? "b" : "a", P = mt[us] && mt[us].pair, Q = mt[them] && mt[them].pair;
-    var sk = function(x){ var v = x ? pskill(x) : null, a = avgSkill(v); if (a != null || !v) return a; v = v.filter(function(y){ return y != null; }); return v.length ? v[0] : null; };   // one player without skill: the other one's
-    var a = sk(P), b = sk(Q);
-    return a == null || b == null ? null : 1 / (1 + Math.exp(-1.1 * (a - b)));
+  // Win chance on paper for one match: the pairs' average SPF skill (1 skill = about 75 %). A player without skill
+  // counts as the average of their team's players with skill that day (x: the tie), and the chance is then held closer
+  // to 50 % (est: true). -> {p, est} or null (a pair unknown, or no skill at all on a side).
+  function sideAvg(x, sd){
+    var v = [];
+    x.mts.forEach(function(mt){ var q = mt[sd] && mt[sd].pair, s = q ? pskill(q) : null; (s || []).forEach(function(y){ if (y != null) v.push(y); }); });
+    return v.length ? v.reduce(function(a, y){ return a + y; }, 0) / v.length : null;
+  }
+  function rubberChance(mt, us, x){
+    var them = us === "a" ? "b" : "a", P = mt[us] && mt[us].pair, Q = mt[them] && mt[them].pair, est = false;
+    function sk(q, sd){
+      if (!q) return null;
+      var v = pskill(q) || [], fill = x ? sideAvg(x, sd) : null, n = q.n.length, out = 0;
+      for (var i = 0; i < n; i++){
+        var y = v[i] != null ? v[i] : null;
+        if (y == null){ if (fill == null) return null; y = fill; est = true; }
+        out += y;
+      }
+      return out / n;
+    }
+    var a = sk(P, us), b = sk(Q, them);
+    if (a == null || b == null) return null;
+    return {p:1 / (1 + Math.exp(-(est ? .6 : 1.1) * (a - b))), est:est};
   }
   // The tie: matches decided count as they are, the rest by their chance (50 % without lineups) -> {win, draw, n}; null
   // when no lineup is known for any match still to play
   function tieChance(x){
-    var dist = [1], n = 0, known = 0;
+    var dist = [1], n = 0, known = 0, est = false;
     x.mts.forEach(function(mt){
       if (mt.w) return;
-      var p = rubberChance(mt, x.us), nd = [];
-      if (p == null) p = .5; else known++;
+      var c = rubberChance(mt, x.us, x), p = c ? c.p : .5, nd = [];
+      if (c) known++;
+      if (c && c.est) est = true;
       n++;
       for (var k = 0; k <= dist.length; k++) nd[k] = (dist[k] || 0) * (1 - p) + (dist[k - 1] || 0) * p;
       dist = nd;
@@ -3525,21 +3545,21 @@
     if (n && !known) return null;
     var win = 0, draw = 0;
     dist.forEach(function(pk, k){ var W = x.W + k, L = x.L + n - k; if (W > L) win += pk; else if (W === L) draw += pk; });
-    return {win:win, draw:draw, n:n};
+    return {win:win, draw:draw, n:n, est:est || known < n};
   }
-  function chanceBar(p){ var v = Math.round(100 * p); return '<i class="chb" aria-hidden="true"><b style="width:' + v + '%"></b></i><b class="chv">' + v + ' %</b>'; }
+  function chanceBar(p, est){ var v = Math.round(100 * p); return '<i class="chb" aria-hidden="true"><b style="width:' + v + '%"></b></i><b class="chv">' + (est ? "≈" : "") + v + ' %</b>'; }
   function tlListHtml(e, m, day, chances){
     return m.ties.map(function(x){
       var tt = x.tie, home = tt.home ? e.team : tt.opp, away = tt.home ? tt.opp : e.team;
       var meta = [x.start ? dayLabel(x.start) + " " + hm(x.start) : dayLabel(day), tt.venue, tt.home ? _("hemma") : _("borta")].filter(Boolean).join(" · ");
       return '<div class="tie"><div class="tiehd"><div><div class="tt">' + esc(home) + ' <i>–</i> ' + esc(away) + '</div><div class="tm">' + esc(meta) + '</div></div>' +
         (x.W + x.L ? '<div class="ts">' + x.W + '–' + x.L + '<small>' + (x.done ? _("Slut") : _("Ställning")) + '</small></div>' : '<div></div>') + '</div>' +
-        (chances && !x.done ? (function(){ var c = tieChance(x); return c ? '<div class="tch"><span>' + esc(_("Chans att vinna lagmatchen")) + '</span>' + chanceBar(c.win) + '</div>' + (c.draw > .005 ? '<div class="tchd">' + esc(_("Oavgjort {p} %", {p:Math.round(100 * c.draw)})) + '</div>' : "") : ""; })() : "") +
+        (chances && !x.done ? (function(){ var c = tieChance(x); return c ? '<div class="tch"><span>' + esc(_("Chans att vinna lagmatchen")) + '</span>' + chanceBar(c.win, c.est) + '</div>' + (c.draw > .005 ? '<div class="tchd">' + esc(_("Oavgjort {p} %", {p:Math.round(100 * c.draw)})) + '</div>' : "") : ""; })() : "") +
         (x.mts.length ? '<div class="results">' + x.mts.map(function(mt){
           var r = mt.r, st2 = mt.w ? (mt.w === x.us ? "Vinst" : "Förlust") : (inWin(e) && x.start && now() >= x.start ? "Pågår" : "");
-          var ch = chances && !mt.w ? rubberChance(mt, x.us) : null;
+          var ch = chances && !mt.w ? rubberChance(mt, x.us, x) : null;
           return '<div class="res' + (mt.hasMe ? " mine" : "") + '" data-mid="' + esc(r.id) + '"><div class="mh"><span>' + esc(_("Match ") + r.k + (r.kind ? " · " + _(r.kind) : "")) + '</span><span class="st' + (st2 === "Pågår" ? " nx" : "") + '">' + esc(_(st2)) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") +
-            (ch != null ? '<div class="mf rch"><span>' + esc(_("Vinstchans")) + '</span>' + chanceBar(ch) + '</div>' : "") + '</div>';
+            (ch ? '<div class="mf rch"><span>' + esc(_("Vinstchans")) + '</span>' + chanceBar(ch.p, ch.est) + (ch.est ? '<small>' + esc(_("Uppskattad: en spelare saknar skill och räknas som lagets snitt idag.")) + '</small>' : "") + '</div>' : "") + '</div>';
         }).join("") + '</div>' : '<p class="empty">' + _("Laguppställningarna är inte publicerade än.") + '</p>') + '</div>';
     }).join("");
   }
@@ -4922,7 +4942,7 @@
     var html = '<section class="tday" aria-labelledby="h-td"><div class="tdh"><span class="pill ' + (done ? "done" : on ? "live" : "next") + '">' + (on ? "<i></i>" : "") + esc(pill) + '</span>' +
       '<h2 id="h-td">' + esc(_(done ? "{t} spelade idag" : "{t} spelar idag", {t:teamWord(e)})) + '</h2><div class="tdm">' + esc([e.name + (e.round ? _(" omgång ") + e.round : ""), e.division].filter(Boolean).join(" · ")) + '</div></div>' +
       tlListHtml(e, m, riDate(e.date + "T12:00"), true) +
-      '<p class="vnote">' + esc(_("Vinstchansen är på pappret: parens snitt-skill (SPF) mot motståndarnas. Lagmatchen räknar spelade matcher som de slutade.")) + '</p></section>';
+      '<p class="vnote">' + esc(_("Vinstchansen är på pappret: parens snitt-skill (SPF) mot motståndarnas. En spelare utan skill räknas som lagets snitt idag, och chansen märks ≈. Lagmatchen räknar spelade matcher som de slutade.")) + '</p></section>';
     if (host._h !== html){ host.innerHTML = html; host._h = html; }
     if (!TD.busy && Date.now() - TD.at > 55000){
       TD.busy = true;
