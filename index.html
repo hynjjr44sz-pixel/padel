@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-snHWk0WS7gJRzB4XuSdlHCgLw+Ao/vA8R3M4sD01hgo='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-5XlH/94RIBKTgEBTgkSbA5qCI5OrE8s0OX1Oo7l4mWg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -166,6 +166,22 @@
   .appbar .x:hover{ background:var(--surface-2); color:var(--ink); }
 
 
+  /* ---------- played rounds on the team page ---------- */
+  .tround{ background:var(--surface); border:1px solid var(--line); border-radius:16px; margin-bottom:10px; overflow:hidden; }
+  .tround > summary{ list-style:none; cursor:pointer; padding:12px 14px 10px; position:relative; }
+  .tround > summary::-webkit-details-marker{ display:none; }
+  .tround > summary::after{ content:"›"; position:absolute; right:14px; top:10px; font:600 20px/1 "Instrument Sans", sans-serif; color:var(--dim); transition:transform .2s; }
+  .tround[open] > summary::after{ transform:rotate(90deg); }
+  .trh{ display:flex; gap:10px; align-items:baseline; padding-right:22px; margin-bottom:6px; }
+  .trh b{ font:800 18px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; }
+  .trh span{ font:500 11px/1.2 "Chivo Mono", monospace; color:var(--dim); }
+  .trt{ display:grid; grid-template-columns:64px minmax(0,1fr) auto; gap:10px; align-items:baseline; padding:4px 0; font-size:14px; }
+  .trt > span:first-child{ font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .trt.w > span:first-child{ color:var(--accent); }
+  .trt.l > span:first-child{ color:var(--loss); }
+  .trt .o{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .trt b{ font:800 20px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; }
+  .trd{ padding:6px 14px 14px; border-top:1px solid var(--line); }
   /* ---------- a team's play day (#lag/…) and its row in "Spelar nu" ---------- */
   .tday{ margin:6px 0 22px; }
   .tdh{ margin-bottom:14px; }
@@ -1514,6 +1530,7 @@
     "Klubbserier":"Ligas del club",
     "Klättrare":"Suben",
     "Kommande":"Próximamente",
+    "Kommande omgångar":"Próximas jornadas",
     "Kommande seriematcher":"Próximos partidos de liga",
     "Krocka igen":"Chocar otra vez",
     "Kunde inte hämta just nu.":"No se pudo cargar ahora.",
@@ -1548,6 +1565,7 @@
     "Matchen":"El partido",
     "Matchen finns inte längre här. Serierna uppdateras varje natt.":"El partido ya no está aquí. Las ligas se actualizan cada noche.",
     "Matcher":"Partidos",
+    "Matcherna gick inte att hämta just nu.":"No se pudieron cargar los partidos ahora.",
     "Matchkort →":"Ficha del partido →",
     "Matchskillnad":"Diferencia de partidos",
     "Med ":"Con ",
@@ -1591,7 +1609,9 @@
     "Oavgjort {p} %":"Empate {p} %",
     "Om ":"En ",
     "Omg":"Jor.",
+    "Omgång":"Jornada",
     "Omgång 1":"Ronda 1",
+    "Omgång {n}":"Jornada {n}",
     "Omgångar":"Jornadas",
     "Omgången":"Jornada",
     "Omgången hittills":"La ronda hasta ahora",
@@ -1655,6 +1675,7 @@
     "Som junior spelar du i 18-årsklassen och får även spela seniorklasser. Du har både junior- och seniorranking. När du blir senior följer 25 procent av poängen med.":"Como júnior juegas en la categoría sub-18 y también puedes jugar categorías absolutas. Tienes ranking júnior y absoluto. Al pasar a absoluto conservas el 25 % de los puntos.",
     "Spelad ":"Jugado el ",
     "Spelade":"Jugados",
+    "Spelade omgångar":"Jornadas jugadas",
     "Spelar nu":"Jugando ahora",
     "Spelare":"Jugadores",
     "Spelare i ":"Jugadores de ",
@@ -1806,6 +1827,7 @@
     "{place} i {where}. Bra kämpat, {names}.":"{place} en {where}. Bien jugado, {names}.",
     "{t} spelade idag":"{t} jugó hoy",
     "{t} spelar idag":"{t} juega hoy",
+    "{w} vunna · {d} oavgjorda · {l} förlorade":"{w} ganadas · {d} empatadas · {l} perdidas",
     "Årets vinster ":"Victorias ",
     "Åttondelsfinal":"Octavos de final"
   };
@@ -4956,6 +4978,87 @@
     if (VIEW.name !== "team" || document.hidden) return;
     try { renderTeamDay(TEAMS.filter(function(x){ return x.id === VIEW.team; })[0]); } catch (e){}
   }, 20000);
+  /* ---- played rounds (#lag/<id>): the season so far from RankedIn in one call (GetTeamMatchesAsync: each tie with the
+     team result), newest first. The latest round is open with its matches; an older one opens on a tap, its matches
+     fetched then and kept in localStorage (a finished tie does not change). ---- */
+  var TMS = {}, TIE_PRE = "padel.tie.";
+  function teamMatches(T){
+    var c = TMS[T.id], ttl = teamToday(T) ? 2 * 60000 : 30 * 60000;
+    if (c && Date.now() - c.t < ttl) return c.p;
+    var p = riGet("/teamleague/GetTeamMatchesAsync?teamid=" + T.id + "&language=en", 12000).then(function(x){ return (x && x.matches) || []; });
+    TMS[T.id] = {t:Date.now(), p:p};
+    p.catch(function(){ delete TMS[T.id]; });
+    return p;
+  }
+  function playedRounds(T, ms){
+    var today = dayOf(now()), by = {}, out = [];
+    ms.forEach(function(m){
+      var d = m.details || {}, day = isoDay(d.date || d.time);
+      if (!/^\d{4}-\d\d-\d\d$/.test(day) || day >= today || m.showCanceledInfoText) return;
+      var home = !!(m.team1 && m.team1.id === T.id), us = (home ? m.team1 : m.team2) || {}, op = (home ? m.team2 : m.team1) || {};
+      var r = by[day];
+      if (!r){ r = by[day] = {day:day, round:d.round || null, ties:[]}; out.push(r); }
+      r.ties.push({id:m.matchId, home:home, opp:op.name || "", venue:String(d.locationName || m.location || "").trim(), shown:!!m.showResults,
+        W:+us.result || 0, L:+op.result || 0, won:!!us.isWinner, lost:!!op.isWinner});
+    });
+    return out.sort(function(a, b){ return b.day.localeCompare(a.day); });
+  }
+  function tieRaw(id){
+    var k = TIE_PRE + id, sv = CACHE_OFF ? null : store.json(k);
+    if (sv) return Promise.resolve(sv);
+    return riGet(rubbersPath(id), 12000).then(function(x){
+      var rs = parseTie(x);
+      if (rs.length && rs.every(function(r){ return r.w; }) && !CACHE_OFF) store.set(k, JSON.stringify(x));
+      return x;
+    });
+  }
+  function roundEv(T, r){
+    return {kind:"teamleague", team:T.name, name:leagueName(T), division:T.division, pid:(T.players[0] || {}).pid, date:r.day, round:r.round,
+      ties:r.ties.map(function(x){ return {id:x.id, home:x.home, opp:x.opp, time:"", venue:x.venue}; }), windowFrom:r.day + "T07:00:00+02:00", windowTo:r.day + "T23:00:00+02:00"};
+  }
+  // A round's matches: the score in its rows (matches won, not RankedIn's league points) and, once open, every match
+  function loadRound(T, r, el){
+    if (el._p) return el._p;
+    var e = roundEv(T, r);
+    el._p = Promise.all(r.ties.map(function(x){ return tieRaw(x.id); })).then(function(datas){
+      var m = buildTL(e, datas);
+      m.ties.forEach(function(x, i){
+        var row = el.querySelectorAll(".trt")[i];
+        if (!row || !x.rubbers.length) return;
+        var c = x.W > x.L ? "w" : x.W < x.L ? "l" : "d";
+        row.className = "trt " + c;
+        row.children[0].textContent = c === "w" ? _("Vinst") : c === "l" ? _("Förlust") : _("Oavgjort");
+        row.children[2].textContent = x.W + "–" + x.L;
+      });
+      el._html = tlListHtml(e, m, riDate(r.day + "T12:00"));
+      if (el.open) el.querySelector(".trd").innerHTML = el._html;
+    }, function(){ el._p = null; el.querySelector(".trd").innerHTML = '<p class="empty">' + _("Matcherna gick inte att hämta just nu.") + '</p>'; });
+    return el._p;
+  }
+  function renderPlayedRounds(T){
+    var host = document.getElementById("teamPlayed");
+    if (!host) return;
+    teamMatches(T).then(function(ms){
+      if (!host.isConnected) return;
+      var rs = playedRounds(T, ms), w = 0, l = 0, dr = 0;
+      if (!rs.length){ host.innerHTML = ""; return; }
+      rs.forEach(function(r){ r.ties.forEach(function(x){ if (!x.shown) return; if (x.won) w++; else if (x.lost) l++; else dr++; }); });
+      var html = '<section aria-labelledby="h-tpr"><div class="sh"><h2 id="h-tpr">' + _("Spelade omgångar") + '</h2><div class="meta">' + esc(_("{w} vunna · {d} oavgjorda · {l} förlorade", {w:w, d:dr, l:l})) + '</div></div>' +
+        rs.map(function(r, i){
+          return '<details class="tround"' + (i === 0 ? " open" : "") + ' data-day="' + esc(r.day) + '"><summary><div class="trh"><b>' + esc(r.round ? _("Omgång {n}", {n:r.round}) : _("Omgång")) + '</b><span>' + esc(cap(dayLabel(riDate(r.day + "T12:00")))) + '</span></div>' +
+            r.ties.map(function(x){
+              var c = !x.shown ? "" : x.won ? "w" : x.lost ? "l" : "d";
+              return '<div class="trt ' + c + '"><span>' + esc(!x.shown ? "–" : x.won ? _("Vinst") : x.lost ? _("Förlust") : _("Oavgjort")) + '</span><span class="o">' + esc(_("mot ") + x.opp) + '</span><b></b></div>';
+            }).join("") + '</summary><div class="trd"><p class="empty">' + _("Hämtar …") + '</p></div></details>';
+        }).join("") + '</section>';
+      if (host._h === html) return;
+      host.innerHTML = html; host._h = html;
+      [].forEach.call(host.querySelectorAll("details.tround"), function(el, i){
+        loadRound(T, rs[i], el);
+        el.addEventListener("toggle", function(){ if (el.open && el._html) el.querySelector(".trd").innerHTML = el._html; });
+      });
+    }, function(){ if (host.isConnected) host.innerHTML = ""; });
+  }
   function renderTeam(T){
     var box = document.getElementById("team");
     if (!box || !T) return;
@@ -4965,7 +5068,7 @@
       return tlCard(e, days.slice(i + 1, i + 4).map(function(x){ return dayMonD(riDate(x.date + "T12:00")); }));
     });
     box.innerHTML = '<div class="phead"><div class="pt"><h1 id="th-h">' + esc(T.name) + '</h1><div class="pm">' + esc(leagueName(T) + " · " + T.division) + '</div></div></div>' +
-      '<div id="teamDay"></div>' +
+      '<div id="teamDay"></div><div id="teamPlayed"></div>' +
       '<section aria-labelledby="h-tsp"><div class="sh"><h2 id="h-tsp">' + _("Laget") + '</h2><div class="meta">' + T.players.length + _(" spelare ") + '</div></div><ul class="plist">' +
       T.players.map(function(p){
         var tr = trendOf(p);
@@ -4973,9 +5076,10 @@
           esc([p.captain ? _("kapten") : "", tr.skill[0] != null ? "skill " + tr.skill[0].toFixed(2) : "", tr.rank[0] != null ? "#" + tr.rank[0] : ""].filter(Boolean).join(" · ")) + '</span></span></a></li>';
       }).join("") + '</ul></section>' +
       '<div id="teamTbl"><p class="tblload">' + _("Hämtar tabellen …") + '</p></div>' +
-      '<section aria-labelledby="h-tom"><div class="sh"><h2 id="h-tom">' + _("Omgångar") + '</h2><div class="meta">' + (days.length ? days.length + _(" kvar") : "") + '</div></div>' +
+      '<section aria-labelledby="h-tom"><div class="sh"><h2 id="h-tom">' + _("Kommande omgångar") + '</h2><div class="meta">' + (days.length ? days.length + _(" kvar") : "") + '</div></div>' +
       '<div class="ups">' + (cards.join("") || '<p class="empty">' + _("Inga fler omgångar inlagda.") + '</p>') + '</div></section>';
     try { renderTeamDay(T); } catch (e){ warn("Lagdagen", e); }
+    try { renderPlayedRounds(T); } catch (e){ warn("Spelade omgångar", e); }
     var host = document.getElementById("teamTbl");
     tlTable(e0).then(function(d){ if (host.isConnected) host.innerHTML = d.rows.length ? tlTableHtml(e0, d) : '<p class="tblload">' + _("Ingen tabell än.") + '</p>'; },
       function(){ if (host.isConnected) host.innerHTML = '<p class="tblload">' + _("Tabellen gick inte att hämta just nu.") + '</p>'; });

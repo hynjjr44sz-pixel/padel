@@ -656,6 +656,23 @@ try {
     r = await gyro("0", "granted");
     ok("motion: after a no, never asked again", r[0] === 0 && r[1] === 0, r);
   }
+  // Played rounds on the team page: the season so far (one RankedIn call), the score in matches won (not the league points
+  // RankedIn gives as "result"), the latest round open with its matches
+  {
+    const TM = JSON.parse(readFileSync(new URL("./fixtures/auto/tm_127649_matches.json", import.meta.url)));
+    const tms = { matches: [
+      { matchId: 127649, showResults: true, team1: { id: 3355655, name: "Nynäs Damlag", result: 1, isWinner: false }, team2: { id: 9, name: "Padelverket Damlag", result: 3, isWinner: true }, details: { date: "20/09/2026", round: 3, locationName: "Padelverket" } },
+      { matchId: 999, showResults: false, team1: { id: 9, name: "Vista Padel Club Dam Lag5", result: 0 }, team2: { id: 3355655, name: "Nynäs Damlag", result: 0 }, details: { date: "08/11/2026", round: 5 } }] };
+    ({ page, ctx, errors, api } = await newPage({ over: {
+      "/teamleague/GetTeamMatchesAsync?teamid=3355655&language=en": tms,
+      "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=127649&language=en": TM } }));
+    await page.goto(url("#lag/3355655"));
+    await page.waitForSelector("#teamPlayed .tround .tie", { timeout: 8000 }).catch(() => {});
+    const pt = await page.$eval("#teamPlayed", e => e.innerText.replace(/\s+/g, " ")).catch(() => "");
+    ok("played rounds: the round, its result in matches (1–2, not the points 1–3), the matches open", /Omgång 3/i.test(pt) && /Förlust mot Padelverket Damlag 1–2/i.test(pt) && !/1–3/.test(pt) && /Match 1/.test(pt) && !/Omgång 5/i.test(pt), pt.slice(0, 400));
+    ok("played rounds: no horizontal scroll, no errors", await noHScroll(page) && errors.length === 0, errors);
+    await ctx.close();
+  }
   // A team's play day: "Spelar nu" has one row for the team ("… spelar idag"), not one per player; it opens the team page
   // with the day's ties (lineups, results, win chances) and the table
   {
