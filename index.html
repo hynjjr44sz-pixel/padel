@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ATEgRvs2qNJ8KabyO+HRNePw71u1nN6OxJ8x4zh39ds='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-snHWk0WS7gJRzB4XuSdlHCgLw+Ao/vA8R3M4sD01hgo='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -5944,7 +5944,11 @@
   window.addEventListener("hashchange", handleHash);
   // A newer app (service worker "padel-update", fetched while this one started from the cache): taken the next time
   // the app comes back to the screen, never in the middle of use.
-  var UPDATE = false, hiddenAt = 0;
+  // Also at once when it arrives within the first 8 s of the start, before any tap or key (the usual case: the network
+  // copy is in a second or two after the cached start).
+  var UPDATE = false, hiddenAt = 0, T0 = Date.now(), touched = false;
+  ["pointerdown", "touchstart", "keydown"].forEach(function(t){ window.addEventListener(t, function(){ touched = true; }, {passive:true, capture:true}); });
+  function updateNow(){ if (!touched && Date.now() - T0 < 8000) try { location.reload(); } catch (e){} }
   document.addEventListener("visibilitychange", function(){
     if (document.hidden){ hiddenAt = Date.now(); return; }
     if (UPDATE && hiddenAt && Date.now() - hiddenAt > 2000) try { location.reload(); } catch (e){}
@@ -5953,7 +5957,7 @@
   try {
     if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", function(e){
       var d = e.data || {};
-      if (d.type === "padel-update"){ UPDATE = true; return; }
+      if (d.type === "padel-update"){ UPDATE = true; updateNow(); return; }
       if (d.type !== "padel-open" || typeof d.hash !== "string") return;
       if (location.hash !== d.hash) history.replaceState(null, "", d.hash);
       handleHash();
