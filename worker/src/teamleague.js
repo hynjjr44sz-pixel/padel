@@ -94,10 +94,19 @@ function tieNotesIn(ev, tie, rubbers, before, lang) {
   rubbers.forEach(r => {
     if (r.w || !isMe(r[us]) || !r[them]) return;
     if (unpack(before[r.id])[them]) return;
-    mine.push({ id: cid + ":opp:r" + r.id + ":" + r[them].id, mid: r.id, pids: pidsOf(r[us]), title: lang.meets(r[us], r[them]),
+    mine.push({ opp: true, id: cid + ":opp:r" + r.id + ":" + r[them].id, mid: r.id, pids: pidsOf(r[us]), title: lang.meets(r[us], r[them]),
       body: [ev.name, ev.team + lang.vs + tie.opp, tie.time, tie.venue].filter(Boolean).join(" · ") });
   });
-  const out = mine.map(o => ({ title: o.title, body: o.body, tag: "padel-" + o.id, url: linkTo(whoOf(o.pids), o.mid), pids: o.pids }));
+  // team: the team's id on every notis (a device that follows the team gets them too, bhs/index.js fanOut)
+  const team = ev.teamId || null;
+  // ("möter" goes to the pair's followers only: the team's followers get the whole lineup in one notis below)
+  const out = mine.map(o => ({ title: o.title, body: o.body, tag: "padel-" + o.id, url: linkTo(whoOf(o.pids), o.mid), pids: o.pids, team: o.opp ? null : team }));
+  // The lineups against them just became known: one notis with every match, to the team's followers only
+  const fresh = rubbers.filter(r => !r.w && r[us] && r[them] && !unpack(before[r.id])[them]);
+  if (team && fresh.length && !before._done) {
+    out.push({ title: lang.lineup(ev.team, tie.opp), body: rubbers.filter(r => r[us] && r[them]).map(r => lang.match + r.k + ": " + short(r[us]) + lang.vs + short(r[them])).join("\n"),
+      tag: "padel-" + cid + ":lineup", url: "./#lag/" + team, pids: [], team });
+  }
   if (finishing) {
     const t = lang.tie(ev.team, tie.opp, W, L);
     const head = ev.name + (ev.round ? lang.round + ev.round : ""), tag = "padel-" + cid + ":klar", played = [];
@@ -105,10 +114,10 @@ function tieNotesIn(ev, tie, rubbers, before, lang) {
     rubbers.filter(r => isMe(r[us]) && newly.has(r.id)).forEach(r => {
       const pids = pidsOf(r[us]);
       played.push(...pids);
-      out.push({ title: t, body: head + ". " + (r.w === us ? lang.won(r[us]) : lang.lost(r[us])) + lang.own + lang.note(sideScore(r, us)) + ".", tag, url: linkTo(whoOf(pids), r.id), pids });
+      out.push({ title: t, body: head + ". " + (r.w === us ? lang.won(r[us]) : lang.lost(r[us])) + lang.own + lang.note(sideScore(r, us)) + ".", tag, url: linkTo(whoOf(pids), r.id), pids, team });
     });
     const rest = roster.map(p => p.pid).filter(p => !played.includes(p));
-    if (rest.length) out.push({ title: t, body: head + ".", tag, url: linkTo(whoOf(rest)), pids: rest });
+    if (rest.length || team) out.push({ title: t, body: head + ".", tag, url: team ? "./#lag/" + team : linkTo(whoOf(rest)), pids: rest, team });
   }
   return out;
 }

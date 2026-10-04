@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-5XlH/94RIBKTgEBTgkSbA5qCI5OrE8s0OX1Oo7l4mWg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-sJozsEkcpbTw9tOlE+Xx1VOWsifZsiB6R0gffcHG8QQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1450,9 +1450,11 @@
     "Från klubben":"Del club",
     "Följ":"Seguir",
     "Följ en spelare först. Tryck Följ på spelarens sida.":"Sigue primero a un jugador. Pulsa Seguir en su página.",
+    "Följ laget":"Seguir al equipo",
     "Följ {name}":"Seguir a {name}",
     "Följer":"Siguiendo",
     "Följer i snitt":"Siguen de media",
+    "Följer laget":"Sigues al equipo",
     "För tidigt att säga":"Aún es pronto",
     "Föregående":"Anterior",
     "Föregående rond":"Ronda anterior",
@@ -1540,6 +1542,7 @@
     "Kvartsfinal":"Cuartos de final",
     "Kvartsfinalen blev slutstation. Topp åtta, bra kämpat.":"Fuera en cuartos. Top 8, bien jugado.",
     "Lag":"Equipo",
+    "Lag som följs":"Equipos seguidos",
     "Lagen":"Los equipos",
     "Laget":"El equipo",
     "Laget: ":"Equipo: ",
@@ -1585,6 +1588,7 @@
     "Notiser av.":"Notificaciones desactivadas.",
     "Notiser för spelarna du följer":"Notificaciones de los jugadores que sigues",
     "Notiser för {gen} matcher.":"Notificaciones de los partidos de {name}.",
+    "Notiser när laguppställningen är klar, för lagets matcher och lagresultatet.":"Avisos cuando se publique la alineación, de los partidos del equipo y del resultado de la eliminatoria.",
     "Notiser per dag":"Avisos por día",
     "Notiser på för {who}, även när appen är stängd.":"Notificaciones activadas para {who}, incluso con la app cerrada.",
     "Notiser på för {who}. Funkar medan appen är öppen.":"Notificaciones activadas para {who}. Funcionan con la app abierta.",
@@ -1667,6 +1671,7 @@
     "Skill efter varje match, ":"Skill tras cada partido, ",
     "Slut":"Final",
     "Slutspel":"Eliminatorias",
+    "Slå på Notiser för att få lagets resultat.":"Activa los avisos para recibir los resultados del equipo.",
     "Slå på Notiser för att få {gen} resultat.":"Activa las notificaciones para recibir los resultados de {name}.",
     "Slår på notiser …":"Activando notificaciones …",
     "Snitt skill · +":"Skill media · +",
@@ -1975,8 +1980,31 @@
       b.querySelector("span").textContent = on ? _("Följer") : _("Följ");
     });
   }
+  // Followed teams (SPL): the team's notiser (each club pair's match, the lineup, the tie result), whoever plays
+  var TEAMS_KEY = "padel.teams.v1";
+  function followsTeams(){
+    var f = store.json(TEAMS_KEY);
+    return Array.isArray(f) ? f.map(Number).filter(function(id){ return TEAMS.some(function(T){ return T.id === id; }); }) : [];
+  }
+  function isTeamFollowed(id){ return followsTeams().indexOf(Number(id)) >= 0; }
+  function setTeamFollowed(id, on){
+    var f = followsTeams().filter(function(x){ return x !== Number(id); });
+    if (on) f.push(Number(id));
+    store.set(TEAMS_KEY, JSON.stringify(f));
+    followChanged();
+  }
+  function teamFollowBtn(T){
+    var on = isTeamFollowed(T.id);
+    return '<button class="follow" type="button" data-follow-team="' + T.id + '" aria-pressed="' + (on ? "true" : "false") + '" aria-label="' + esc(_("Följ {name}", {name:T.name})) + '">' +
+      STAR_O + '<span>' + (on ? _("Följer laget") : _("Följ laget")) + '</span></button>';
+  }
   function followChanged(){
     syncFollowBtns();
+    [].forEach.call(document.querySelectorAll("[data-follow-team]"), function(b){
+      var on = isTeamFollowed(b.getAttribute("data-follow-team"));
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.querySelector("span").textContent = on ? _("Följer laget") : _("Följ laget");
+    });
     renderChips(VIEW.who);
     try { renderPlayerList(); renderNow(); renderLatest(); renderTop(); } catch (e){}
     if (pushOn()) enablePush();   // the server sends only what this device follows
@@ -2554,7 +2582,12 @@
           return reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64uBytes(key)});
         });
       })
-      .then(function(sub){ return api("/subscribe", {subscription:sub.toJSON(), prefs:LANG === "es" ? {follow:follows(), lang:"es"} : {follow:follows()}}); })
+      .then(function(sub){
+        var prefs = {follow:follows()}, tm = followsTeams();
+        if (tm.length) prefs.teams = tm;
+        if (LANG === "es") prefs.lang = "es";
+        return api("/subscribe", {subscription:sub.toJSON(), prefs:prefs});
+      })
       .then(function(){ store.set(PUSH_KEY, "1"); return true; })
       .catch(function(e){ store.set(PUSH_KEY, "0"); if (window.console) console.warn("Push gick inte att slå på:", e && e.message); return false; });
   }
@@ -4929,6 +4962,10 @@
           (d.following.length ? d.following.map(function(f){ var P = BYPID[f.pid]; if (!P) return ""; var pct = Math.round(100 * f.n / Math.max(1, d.n));
             return '<a class="parow" href="#' + esc(P.key) + '"><span class="avs">' + avatar(P.name) + '</span><span class="pn"><b>' + esc(P.name) + '</b><span>' + f.n + " " + _("telefoner") + " · " + pct + ' %</span><span class="bar" aria-hidden="true"><i style="width:' + pct + '%"></i></span></span><span class="pv"><b>' + f.n + '</b></span></a>'; }).join("") :
             '<p class="empty" style="padding:12px 0">' + _("Ingen följer någon än.") + '</p>') + '</div></section>' +
+        ((d.teams || []).length ? '<section><div class="sh"><h2>' + _("Lag som följs") + '</h2><div class="meta"></div></div><div class="card partners">' + d.teams.map(function(f){
+          var T = TEAMS.filter(function(x){ return x.id === f.id; })[0], pct = Math.round(100 * f.n / Math.max(1, d.n));
+          return T ? '<a class="parow" href="#lag/' + T.id + '"><span class="pn"><b>' + esc(T.name) + '</b><span>' + f.n + " " + _("telefoner") + " · " + pct + ' %</span><span class="bar" aria-hidden="true"><i style="width:' + pct + '%"></i></span></span><span class="pv"><b>' + f.n + '</b></span></a>' : "";
+        }).join("") + '</div></section>' : "") +
         '<section><div class="sh"><h2>' + _("Data") + '</h2><div class="meta">' + _("servern") + '</div></div><div class="bchips stt">' +
           tile(_("RankedIn kollad"), when(dt.checked), _("senast ändrad ") + when(dt.changed)) + tile(_("Tävlingar"), dt.active + " / " + dt.upcoming, _("pågår / kommande")) +
           tile(_("Förslag"), String(dt.calendar), _("tävlingar inom 20 mil")) + tile(_("Serier"), String(dt.series), _("grupper · {n} inbokade", {n:dt.schedule})) +
@@ -5067,7 +5104,7 @@
     var cards = days.map(function(e, i){
       return tlCard(e, days.slice(i + 1, i + 4).map(function(x){ return dayMonD(riDate(x.date + "T12:00")); }));
     });
-    box.innerHTML = '<div class="phead"><div class="pt"><h1 id="th-h">' + esc(T.name) + '</h1><div class="pm">' + esc(leagueName(T) + " · " + T.division) + '</div></div></div>' +
+    box.innerHTML = '<div class="phead"><div class="pt"><h1 id="th-h">' + esc(T.name) + '</h1><div class="pm">' + esc(leagueName(T) + " · " + T.division) + '</div></div>' + teamFollowBtn(T) + '</div>' +
       '<div id="teamDay"></div><div id="teamPlayed"></div>' +
       '<section aria-labelledby="h-tsp"><div class="sh"><h2 id="h-tsp">' + _("Laget") + '</h2><div class="meta">' + T.players.length + _(" spelare ") + '</div></div><ul class="plist">' +
       T.players.map(function(p){
@@ -6038,6 +6075,13 @@
     if (a && a.classList.contains("pchip") && !e.metaKey && !e.ctrlKey){ e.preventDefault(); goPlayer(a.getAttribute("href").slice(1)); return; }
     // Tapping the same "Senaste resultat" card twice: no hashchange, so focus again by hand.
     if (a && a.closest(".recent") && a.getAttribute("href") === location.hash){ e.preventDefault(); handleHash(); return; }
+    var tb = e.target && e.target.closest && e.target.closest("[data-follow-team]");
+    if (tb){
+      var tid = Number(tb.getAttribute("data-follow-team")), ton = !isTeamFollowed(tid), TT = TEAMS.filter(function(x){ return x.id === tid; })[0];
+      setTeamFollowed(tid, ton);
+      if (TT) hint(ton ? _("Du följer {name}. ", {name:TT.name}) + (notiOn() ? _("Notiser när laguppställningen är klar, för lagets matcher och lagresultatet.") : _("Slå på Notiser för att få lagets resultat.")) : _("Du följer inte längre {name}.", {name:TT.name}));
+      return;
+    }
     var fb = e.target && e.target.closest && e.target.closest("[data-follow]");
     if (fb){
       var pid = Number(fb.getAttribute("data-follow")), on = !isFollowed(pid), P = BYPID[pid];

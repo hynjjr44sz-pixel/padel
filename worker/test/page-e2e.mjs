@@ -673,6 +673,21 @@ try {
     ok("played rounds: no horizontal scroll, no errors", await noHScroll(page) && errors.length === 0, errors);
     await ctx.close();
   }
+  // Follow a team: the button on the team page, kept on the device, sent to the push server with the players followed
+  {
+    ({ page, ctx, errors, api } = await newPage());
+    await page.goto(url("#lag/3355655"));
+    await page.waitForSelector("#team [data-follow-team]", { timeout: 8000 });
+    await page.evaluate(() => { localStorage.setItem("padel.push", "1"); localStorage.setItem("padel.notify", "1"); window.__sub = { endpoint: "https://fcm.googleapis.com/fcm/send/e2e", options: { applicationServerKey: null }, toJSON() { return { endpoint: this.endpoint, keys: { p256dh: "x", auth: "y" } }; }, unsubscribe() { return Promise.resolve(true); } }; });
+    await page.click("#team [data-follow-team]");
+    await page.waitForTimeout(1500);
+    const st = await page.evaluate(() => [document.querySelector("#team [data-follow-team]").getAttribute("aria-pressed"), document.querySelector("#team [data-follow-team]").textContent, localStorage.getItem("padel.teams.v1")]);
+    ok("follow a team: the button follows, kept on the device", st[0] === "true" && /Följer laget/.test(st[1]) && st[2] === "[3355655]", st);
+    const sub = api.posts.filter(x => x.path === "/subscribe").pop();
+    ok("follow a team: sent to the push server with the players followed", !!sub && JSON.stringify(sub.body.prefs.teams) === "[3355655]" && Array.isArray(sub.body.prefs.follow), sub && sub.body.prefs);
+    ok("follow a team: no errors", errors.length === 0, errors);
+    await ctx.close();
+  }
   // A team's play day: "Spelar nu" has one row for the team ("… spelar idag"), not one per player; it opens the team page
   // with the day's ties (lineups, results, win chances) and the table
   {

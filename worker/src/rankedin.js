@@ -80,7 +80,8 @@ export const LANG = {
     quarter: "Kvartsfinalen blev slutstation. Topp åtta, bra kämpat.",
     // team league
     own: " sin match ", standing: "Ställning", round: " omgång ",
-    tie: (team, opp, W, L) => W > L ? team + " vann mot " + opp + " " + W + "–" + L : W < L ? team + " förlorade mot " + opp + " " + W + "–" + L : team + " och " + opp + " delade " + W + "–" + L
+    tie: (team, opp, W, L) => W > L ? team + " vann mot " + opp + " " + W + "–" + L : W < L ? team + " förlorade mot " + opp + " " + W + "–" + L : team + " och " + opp + " delade " + W + "–" + L,
+    lineup: (team, opp) => team + ": laguppställningen mot " + opp + " är klar", match: "Match "
   },
   es: {
     names: esNames, vs: " contra ", Vs: "Contra ", dow: d => dowOf(d, ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"]), court: esCourt, at: esCourt,
@@ -96,7 +97,8 @@ export const LANG = {
     silver: cls => "Segundo puesto en " + cls + ". Plata tras un gran día.", semi: "Fuera en semifinales. Top 4, muy buen trabajo.",
     quarter: "Fuera en cuartos. Top 8, bien jugado.",
     own: " su partido ", standing: "Marcador", round: " jornada ",
-    tie: (team, opp, W, L) => (W > L ? team + " ganó a " + opp : W < L ? team + " perdió contra " + opp : team + " y " + opp + " empataron") + " " + W + "–" + L
+    tie: (team, opp, W, L) => (W > L ? team + " ganó a " + opp : W < L ? team + " perdió contra " + opp : team + " y " + opp + " empataron") + " " + W + "–" + L,
+    lineup: (team, opp) => team + ": alineación contra " + opp + " publicada", match: "Partido "
   }
 };
 // A notis per language -> the Swedish one with the Spanish wording alongside ({..., es: {title, body}}).

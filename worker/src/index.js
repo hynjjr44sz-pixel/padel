@@ -173,7 +173,8 @@ async function handle(req, env) {
     const s = b && b.subscription;
     if (!(await validSub(s, env))) return json({ error: "bad subscription" }, 400, h);
     // lang: "es" only (Swedish is the default, so the records of Swedish devices stay as they were)
-    const prefs = { follow: followOf((b && b.prefs) || {}) };
+    const prefs = { follow: followOf((b && b.prefs) || {}) }, tms = teamsOf(b && b.prefs);
+    if (tms.length) prefs.teams = tms;   // followed teams (SPL): only when there are any, so older records stay as they were
     if (langOf(b && b.prefs) === "es") prefs.lang = "es";
     const rec = JSON.stringify({ sub: { endpoint: s.endpoint, keys: { p256dh: s.keys.p256dh, auth: s.keys.auth } }, prefs });
     const key = await subKey(s.endpoint);
@@ -202,6 +203,11 @@ export function followOf(p) {
   p = p || {};
   if (Array.isArray(p.follow)) return [...new Set(p.follow.map(Number).filter(x => BY_PID.has(x)))].sort((a, b) => a - b).slice(0, 60);
   return [p.thea !== false && LEGACY.thea, p.kian !== false && LEGACY.kian].filter(Boolean).sort((a, b) => a - b);
+}
+// prefs -> followed teams: {teams:[teamId,...]} (only the roster's teams)
+const TEAM_IDS = new Set(PLAYERS.map(p => p.teamId).filter(Boolean));
+export function teamsOf(p) {
+  return p && Array.isArray(p.teams) ? [...new Set(p.teams.map(Number).filter(x => TEAM_IDS.has(x)))].sort((a, b) => a - b) : [];
 }
 // Language of a device's notiser: "sv" (default) or "es".
 export function langOf(p) { return p && p.lang === "es" ? "es" : "sv"; }
@@ -324,9 +330,10 @@ async function countPushes(env, t, sent, removed) {
 }
 // -> the numbers for the owner: devices (language, push service, who they follow), pushes per day, the data's age.
 export async function ownerStats(env, t) {
-  const subs = await subscribers(env), per = {}, lang = { sv: 0, es: 0 }, svc = {}, nf = [];
+  const subs = await subscribers(env), per = {}, lang = { sv: 0, es: 0 }, svc = {}, nf = [], teams = {};
   for (const { rec } of subs) {
     const f = (rec.prefs && rec.prefs.follow) || [];
+    teamsOf(rec.prefs).forEach(id => { teams[id] = (teams[id] || 0) + 1; });
     f.forEach(pid => { per[pid] = (per[pid] || 0) + 1; });
     nf.push(f.length);
     lang[rec.prefs && rec.prefs.lang === "es" ? "es" : "sv"]++;
@@ -342,7 +349,8 @@ export async function ownerStats(env, t) {
   const rec = await loadRecord(env), list = merge(rec ? rec.events : []), bhs = await loadBhs(env), cal = await loadCal(env);
   return {
     at: t.toISOString(), cap: MAX_SUBS,
-    devices: { n: subs.length, lang, services: svc, followAvg: nf.length ? +(nf.reduce((a, b) => a + b, 0) / nf.length).toFixed(1) : 0, following: Object.entries(per).map(([pid, n]) => ({ pid: +pid, n })).sort((a, b) => b.n - a.n) },
+    devices: { n: subs.length, lang, services: svc, followAvg: nf.length ? +(nf.reduce((a, b) => a + b, 0) / nf.length).toFixed(1) : 0, following: Object.entries(per).map(([pid, n]) => ({ pid: +pid, n })).sort((a, b) => b.n - a.n),
+      teams: Object.entries(teams).map(([id, n]) => ({ id: +id, n })).sort((a, b) => b.n - a.n) },
     pushes: { days, total: days.reduce((a, x) => a + x.sent, 0) },
     data: { roster: PLAYERS.length, checked: checkedAt(rec, t), changed: rec ? rec.at : null, active: activeEvents(t, list).length, upcoming: list.filter(e => new Date(e.windowFrom) > t).length,
       past: ((rec && rec.past) || []).length, calendar: cal ? (cal.events || []).length : 0, calAt: cal ? cal.at : null,
@@ -579,8 +587,8 @@ function dedupe(msgs) {
   const out = [], byTag = new Map();
   for (const x of msgs) {
     const k = x.m.tag + "\u0000" + x.m.title + "\u0000" + x.m.body, was = byTag.get(k);
-    if (was) { x.pids.forEach(p => { if (!was.pids.includes(p)) was.pids.push(p); }); continue; }
-    const y = { pids: x.pids.slice(), m: x.m };
+    if (was) { x.pids.forEach(p => { if (!was.pids.includes(p)) was.pids.push(p); }); if (x.team && !was.team) was.team = x.team; continue; }
+    const y = { pids: x.pids.slice(), m: x.m, ...(x.team ? { team: x.team } : {}) };
     byTag.set(k, y); out.push(y);
   }
   return out;
@@ -852,7 +860,7 @@ export async function tick(env, events) {
         const rubbers = parseTie(raw);
         if (!rubbers.length) continue;
         after = snapshotTie(rubbers);
-        if (prev) tieNotes(u.ev, u.tie, rubbers, prev).forEach(n => { const { pids, ...m } = n; msgs.push({ pids, m }); });
+        if (prev) tieNotes(u.ev, u.tie, rubbers, prev).forEach(n => { const { pids, team, ...m } = n; msgs.push({ pids, team, m }); });
         after._sum = tieSummary(u.ev, u.tie, rubbers);
       }
     } catch (e) {
@@ -1000,8 +1008,8 @@ async function fanOut(env, msgs, budget, log) {
   const jobs = old.slice();   // the outbox first
   if (msgs.length) {
     const devs = (await subscribers(env)).map(({ name, rec }) => {
-      const f = new Set(followOf(rec.prefs)), lang = langOf(rec.prefs);
-      const out = mergeForDevice(msgs.filter(x => x.pids.some(p => f.has(Number(p)))).map(x => localize(x.m, lang)));
+      const f = new Set(followOf(rec.prefs)), tm = new Set(teamsOf(rec.prefs)), lang = langOf(rec.prefs);
+      const out = mergeForDevice(msgs.filter(x => x.pids.some(p => f.has(Number(p))) || (x.team && tm.has(Number(x.team)))).map(x => localize(x.m, lang)));
       return out.length ? { n: name, s: rec.sub, m: out, q: nowMs, lang } : null;
     }).filter(Boolean);
     // Fold into one notis per device when there are many pushes (subrequests, and CPU: about 0.3 ms per encrypted push).

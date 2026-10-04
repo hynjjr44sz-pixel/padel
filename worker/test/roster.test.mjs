@@ -287,3 +287,41 @@ test("GET /stats: only with STATS_KEY; devices by language, service and followed
   assert.equal(s.pushes.total, 5);
   assert.deepEqual(s.pushes.days[2], { d: "2026-09-27", sent: 5, removed: 1 });
 });
+
+// Following a team (prefs.teams): the team's notiser (each club pair's match, the lineup, the tie result) reach a device
+// that follows none of its players; the subscription keeps only the roster's teams.
+test("follow a team: subscribe keeps known teams; the team's notiser reach its followers only", async () => {
+  const st = install({}), v = await makeVapid(), PUSH = kv();
+  const env = { PUSH, ...v, VAPID_SUBJECT: ORIGIN, ORIGIN, NOW: "2026-11-08T12:00:00+01:00" };
+  const devs = { team: await makeSubscription("https://fcm.googleapis.com/fcm/send/team"), other: await makeSubscription("https://fcm.googleapis.com/fcm/send/other"),
+    none: await makeSubscription("https://fcm.googleapis.com/fcm/send/none") };
+  await post(env, { subscription: devs.team.sub, prefs: { follow: [], teams: [3355655, 42, "x"] } });
+  await post(env, { subscription: devs.other.sub, prefs: { follow: [], teams: [3383536] } });
+  await post(env, { subscription: devs.none.sub, prefs: { follow: [] } });
+  const recs = [...PUSH.m.entries()].filter(([k]) => k.startsWith("sub:")).map(([, x]) => JSON.parse(x).prefs);
+  assert.deepEqual(recs.map(p => p.teams || null).sort(), [[3355655], [3383536], null].sort(), "only roster teams are kept");
+  const ev = { key: "l947-3355655-2026-11-08", kind: "teamleague", who: "thea", pid: THEA, pids: ROSTER.filter(p => p.teamId === 3355655).map(p => p.pid), teamId: 3355655,
+    me: "Thea Holmberg Löving", team: "Nynäs Damlag", name: "SPL Damer", round: 2, ties: [{ id: 127649, home: true, opp: "Padelverket Damlag", time: "10:00", venue: "Padelverket" }],
+    windowFrom: "2026-11-08T07:00:00+01:00", windowTo: "2026-11-08T23:00:00+01:00", cover: ["tm127649"] };
+  const P = "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=127649&language=en";
+  const bare = A("tm_127649_matches");   // our pairs known, theirs not yet
+  bare[0].matches.matches.forEach(m => { m.matchResult = null; m.state = 2; m.challenged = null; });
+  st.over = { [P]: bare };
+  await tick(env, [ev]);
+  const lined = A("tm_127649_matches");   // their lineup published
+  lined[0].matches.matches.forEach(m => { m.matchResult = null; m.state = 2; });
+  st.over = { [P]: lined };
+  await tick(env, [ev]);
+  let got = await received(st, devs);
+  assert.deepEqual(got.team.map(m => [m.title, m.tag]), [["Nynäs Damlag: laguppställningen mot Padelverket Damlag är klar", "padel-tm127649:lineup"]]);
+  assert.match(got.team[0].body, /^Match 1: .+ mot .+\nMatch 2: .+\nMatch 3: /);
+  assert.equal(got.team[0].url, "./#lag/3355655");
+  assert.deepEqual([got.other, got.none], [[], []]);
+  st.pushes.length = 0;
+  st.over = { [P]: A("tm_127649_matches") };   // every match decided in one look
+  await tick(env, [ev]);
+  got = await received(st, devs);
+  assert.deepEqual(got.team.map(m => m.title), ["Nynäs Damlag förlorade mot Padelverket Damlag 1–2"], "the tie result, one notis");
+  assert.match(got.team[0].body, /Thea och Rebecca vann sin match 6-3 6-2/);
+  assert.deepEqual([got.other, got.none], [[], []]);
+});
