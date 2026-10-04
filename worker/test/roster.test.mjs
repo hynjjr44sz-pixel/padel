@@ -142,7 +142,7 @@ test("many pushes folded into one notis per device: the summary in the device's 
   const devs = {};
   for (const k of ["a", "b", "c", "d", "es"]) {
     devs[k] = await makeSubscription("https://fcm.googleapis.com/fcm/send/fold-" + k);
-    await post(env, { subscription: devs[k].sub, prefs: { follow: [REB], ...(k === "es" ? { lang: "es" } : {}) } });
+    await post(env, { subscription: devs[k].sub, prefs: { follow: [REB, CAS], ...(k === "es" ? { lang: "es" } : {}) } });
   }
   const ev = { key: "l947-3355655-2026-11-08", kind: "teamleague", who: "thea", pid: THEA, pids: ROSTER.filter(p => p.teamId === 3355655).map(p => p.pid),
     me: "Thea Holmberg Löving", team: "Nynäs Damlag", name: "SPL Damer", round: 2, ties: [{ id: 127649, home: true, opp: "Padelverket Damlag", time: "10:00", venue: "Padelverket" }],
@@ -151,13 +151,15 @@ test("many pushes folded into one notis per device: the summary in the device's 
   partial[0].matches.matches.forEach(m => { m.matchResult = null; m.state = 2; });
   st.over = { "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=127649&language=en": partial };
   await tick(env, [ev]);
-  st.over = { "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=127649&language=en": A("tm_127649_matches") };
+  const two = A("tm_127649_matches");   // two matches decided, the tie still on
+  two[0].matches.matches[2].matchResult = null; two[0].matches.matches[2].state = 2;
+  st.over = { "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=127649&language=en": two };
   await tick(env, [ev]);   // two notiser for each of 5 devices: more than 8, so folded
   const got = await received(st, devs);
   assert.deepEqual(got.a.map(m => [m.title, m.body, m.tag]), [["2 nya resultat",
-    "Thea och Rebecca vann sin match 6-3 6-2\nNynäs Damlag förlorade mot Padelverket Damlag 1–2", "padel-sammanfattning"]]);
+    "Thea och Rebecca vann sin match 6-3 6-2\nCassandra och Cecilia förlorade sin match 5-7 1-6", "padel-sammanfattning"]]);
   assert.deepEqual(got.es.map(m => [m.title, m.body, m.tag]), [["2 resultados nuevos",
-    "Thea y Rebecca ganaron su partido 6-3 6-2\nNynäs Damlag perdió contra Padelverket Damlag 1–2", "padel-sammanfattning"]]);
+    "Thea y Rebecca ganaron su partido 6-3 6-2\nCassandra y Cecilia perdieron su partido 5-7 1-6", "padel-sammanfattning"]]);
 });
 
 test("SPL tie: each pair's own rubber to its followers, the tie result to the whole team (merged per device)", async () => {
@@ -168,13 +170,21 @@ test("SPL tie: each pair's own rubber to its followers, the tie result to the wh
   delete before._done;
   Object.keys(before).forEach(k => { before[k] = before[k].replace(/,[ab]$/, ","); });
   delete before._done;
-  const n = tieNotes(ev, tie, all, before);
-  const rub = n.filter(x => /:r\d+$/.test(x.tag));
+  // Two matches decided first: each pair's own notis to its followers
+  const two = all.map(r => r.id === "5433850" ? { ...r, w: null, s: null } : r);
+  const rub = tieNotes(ev, tie, two, before);
   assert.deepEqual(rub.map(x => [x.title.replace(/ [\d-]+( [\d-]+)*$/, ""), x.pids]), [
     ["Thea och Rebecca vann sin match", [THEA, REB]],
-    ["Cassandra och Cecilia förlorade sin match", [CAS]],
-    ["Amanda och Sanna förlorade sin match", [SANNA]]]);
+    ["Cassandra och Cecilia förlorade sin match", [CAS]]]);
   assert.equal(rub[1].url, "./#cassandra/m5433849");
+  // Then the last one: the tie result only; Amanda and Sanna's match rides in it, the earlier two are not repeated
+  const last = tieNotes(ev, tie, all, snapshotTie(two));
+  assert.ok(last.every(x => x.tag === "padel-tm127649:klar"), last.map(x => x.tag).join(" "));
+  assert.deepEqual(last.map(x => [x.pids.sort(), x.body.replace(/ [\d-]+ [\d-]+\.$/, "")]), [[[SANNA], "SPL Damer omgång 2. Amanda och Sanna förlorade sin match"],
+    [[THEA, CAS, REB, LISA, 428692].sort(), "SPL Damer omgång 2."]]);
+  // All in one look: one notis per device, the tie result with the device's pairs' matches
+  const n = tieNotes(ev, tie, all, before);
+  assert.equal(n.filter(x => /:r\d+$/.test(x.tag)).length, 0, "no separate match notiser when the tie ends with them");
   const klar = n.filter(x => x.tag === "padel-tm127649:klar");
   assert.ok(klar.every(x => x.title === "Nynäs Damlag förlorade mot Padelverket Damlag 1–2"));
   assert.deepEqual(klar.at(-1).pids.sort(), [LISA, 428692].sort(), "team players who did not play: the result without a match line");
@@ -184,8 +194,8 @@ test("SPL tie: each pair's own rubber to its followers, the tie result to the wh
   const { mergeForDevice } = _internals();
   const forPids = f => mergeForDevice(n.filter(x => x.pids.some(p => f.includes(p))));
   const tc = forPids([THEA, CAS]);
-  assert.deepEqual(tc.map(x => x.title.split(" ").slice(0, 3).join(" ")), ["Thea och Rebecca", "Cassandra och Cecilia", "Nynäs Damlag förlorade"]);
-  assert.match(tc[2].body, /^SPL Damer omgång 2\. Thea och Rebecca vann sin match 6-3 6-2\. Cassandra och Cecilia förlorade sin match [\d-]+ [\d-]+\.$/);
+  assert.deepEqual(tc.map(x => x.title.split(" ").slice(0, 3).join(" ")), ["Nynäs Damlag förlorade"]);
+  assert.match(tc[0].body, /^SPL Damer omgång 2\. Thea och Rebecca vann sin match 6-3 6-2\. Cassandra och Cecilia förlorade sin match [\d-]+ [\d-]+\.$/);
   assert.deepEqual(forPids([LISA]).map(x => x.body), ["SPL Damer omgång 2."]);
   assert.deepEqual(forPids([KIAN]), []);
 
@@ -214,8 +224,8 @@ test("tick: SPL team play day (roster in the event) pushes to the right follower
   st.over = { "/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=127649&language=en": A("tm_127649_matches") };
   await tick(env, [ev]);
   const got = await received(st, devs);
-  assert.deepEqual(got.reb.map(m => m.title), ["Thea och Rebecca vann sin match 6-3 6-2", "Nynäs Damlag förlorade mot Padelverket Damlag 1–2"]);
-  assert.equal(got.reb[1].body, "SPL Damer omgång 2. Thea och Rebecca vann sin match 6-3 6-2.");
+  // every match decided in one look: the tie result only, with the pair's own match in it (no notis twice)
+  assert.deepEqual(got.reb.map(m => [m.title, m.body]), [["Nynäs Damlag förlorade mot Padelverket Damlag 1–2", "SPL Damer omgång 2. Thea och Rebecca vann sin match 6-3 6-2."]]);
   assert.deepEqual(got.lisa.map(m => [m.title, m.body]), [["Nynäs Damlag förlorade mot Padelverket Damlag 1–2", "SPL Damer omgång 2."]]);
   assert.deepEqual(got.kian, []);
   // The tie's KV record carries the home view summary; GET /events serves it

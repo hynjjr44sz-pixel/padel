@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-4hGkfgi5lajvgycg6ObMRDjsKhFoyk8j5ui9FlHMH+o='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-PsXqNfS7fXWlRaKe/y+eB+GGBbqkZR/IlCJqBiwR5N0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -166,6 +166,19 @@
   .appbar .x:hover{ background:var(--surface-2); color:var(--ink); }
 
 
+  /* ---------- a team's play day (#lag/…) and its row in "Spelar nu" ---------- */
+  .tday{ margin:6px 0 22px; }
+  .tdh{ margin-bottom:14px; }
+  .tdh h2{ margin:10px 0 0; font:900 clamp(28px, 8.5vw, 38px)/.9 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.01em; }
+  .tdm{ font:500 11.5px/1.4 "Chivo Mono", monospace; color:var(--dim); margin-top:6px; }
+  .tch{ display:grid; grid-template-columns:auto minmax(60px,1fr) auto; gap:10px; align-items:center; margin:-2px 0 10px; font:600 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .tchd{ margin:-6px 0 10px; font:500 10.5px/1.2 "Chivo Mono", monospace; color:var(--dim); text-align:right; }
+  .chb{ display:block; height:8px; border-radius:5px; background:var(--loss-soft); overflow:hidden; }
+  .chb b{ display:block; height:100%; border-radius:5px; background:linear-gradient(90deg, #2A5BE0, var(--racket)); }
+  .chv{ font:700 13px/1 "Chivo Mono", monospace; color:var(--ink); min-width:40px; text-align:right; }
+  .res .rch{ display:grid; grid-template-columns:auto minmax(50px,1fr) auto; gap:10px; align-items:center; padding-top:6px; padding-bottom:10px; border-top:1px dashed var(--line);
+    font:600 10px/1.2 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .nowrow.team .avs{ flex:none; }
   /* ---------- #tavling/…: one tournament, the club's pairs per class ---------- */
   .tinfo{ padding:4px 14px; margin-bottom:6px; }
   .tinfo p{ display:grid; grid-template-columns:84px minmax(0,1fr); gap:10px; align-items:baseline; margin:0; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; }
@@ -1389,6 +1402,7 @@
     "Bäst":"Mejor",
     "Bäst ihop med ":"Mejor pareja: ",
     "C":"C",
+    "Chans att vinna lagmatchen":"Probabilidad de ganar la eliminatoria",
     "Dagar":"Días",
     "Dagen är slut.":"Fin del día.",
     "Dagen är slut. Bra kämpat, {names}.":"Fin del día. Bien jugado, {names}.",
@@ -1397,6 +1411,7 @@
     "Damer":"Mujeres",
     "Damer 51–160 är B-klass, 161–700 är C-klass.":"En mujeres, del 51 al 160 es categoría B y del 161 al 700 categoría C.",
     "Damer eller herrar":"Mujeres u hombres",
+    "Damlaget":"El equipo femenino",
     "Data":"Datos",
     "De har inte mötts tidigare i den här omgången.":"No se han enfrentado antes en esta ronda.",
     "Dela → Lägg till på hemskärmen":"Compartir → Añadir a pantalla de inicio",
@@ -1445,6 +1460,8 @@
     "Herrar":"Hombres",
     "Herrar 61–200 är B-klass, 201–1200 är C-klass.":"En hombres, del 61 al 200 es categoría B y del 201 al 1200 categoría C.",
     "Herrar huvudlista":"Lista principal masculina",
+    "Herrlag {n}":"Equipo masculino {n}",
+    "Herrlaget":"El equipo masculino",
     "Hämtar förslag …":"Cargando sugerencias …",
     "Hämtar matcher och lottning …":"Cargando partidos y cuadro …",
     "Hämtar resultatet …":"Cargando el resultado …",
@@ -1570,6 +1587,7 @@
     "Oavgjorda":"Empatados",
     "Oavgjort":"Empate",
     "Oavgjort mot ":"Empate contra ",
+    "Oavgjort {p} %":"Empate {p} %",
     "Om ":"En ",
     "Omg":"Jor.",
     "Omgång 1":"Ronda 1",
@@ -1696,6 +1714,8 @@
     "Vinnare ":"Ganador ",
     "Vinnare av ":"Ganador de ",
     "Vinst":"Victoria",
+    "Vinstchans":"Probabilidad de ganar",
+    "Vinstchansen är på pappret: parens snitt-skill (SPF) mot motståndarnas. Lagmatchen räknar spelade matcher som de slutade.":"La probabilidad es sobre el papel: el nivel medio (SPF) de cada pareja contra el de sus rivales. Para la eliminatoria, los partidos jugados cuentan con su resultado.",
     "Vinster":"Victorias",
     "Visa":"Mostrar",
     "Visa alla ":"Ver todos ",
@@ -1782,6 +1802,8 @@
     "{n} par anmälda":"{n} parejas inscritas",
     "{n} par anmälda i {cls}":"{n} parejas inscritas en {cls}",
     "{place} i {where}. Bra kämpat, {names}.":"{place} en {where}. Bien jugado, {names}.",
+    "{t} spelade idag":"{t} jugó hoy",
+    "{t} spelar idag":"{t} juega hoy",
     "Årets vinster ":"Victorias ",
     "Åttondelsfinal":"Octavos de final"
   };
@@ -3194,9 +3216,12 @@
     var W = 0, L = 0;
     rubbers.forEach(function(r){ if (r.w){ if (r.w === us) W++; else L++; } });
     var tieScore = ev.team + " " + W + "–" + L + " " + tie.opp, mine = [], others = [];
+    var done = rubbers.length && rubbers.every(function(r){ return r.w; });
+    var wasDone = before._done || (rubbers.length && rubbers.every(function(r){ return unpackSnap(before[r.id]).w; }));
+    var finishing = done && !wasDone;   // the last match: its result rides in the tie result (one notis, not two)
     rubbers.forEach(function(r){
       var was = unpackSnap(before[r.id]);
-      if (!r.w || was.w) return;
+      if (!r.w || was.w || finishing) return;
       var ours = r[us], theirs = r[them], won = r.w === us, sc = score(r), id = cid + ":r" + r.id;
       if (isMe(ours)) mine.push({id:id, mid:r.id, title:firstNames(ours) + (won ? _(" vann sin match ") : _(" förlorade sin match ")) + sc, body:(_("Mot ") + short(theirs) + _(". Ställning: ") + tieScore + ".").trim()});
       else others.push({id:id, title:ev.team + ": " + short(ours) + (won ? _(" vann ") : _(" förlorade ")) + sc, body:_("Mot ") + short(theirs) + " · " + tieScore});
@@ -3210,11 +3235,9 @@
     var out = [];
     // Only the player's own matches notify; everything else is shown on the page only.
     mine.forEach(function(o){ out.push({id:o.id, title:o.title, body:o.body, tag:"padel-" + o.id, url:linkTo(ev.who, o.mid)}); });
-    var done = rubbers.length && rubbers.every(function(r){ return r.w; });
-    var wasDone = before._done || (rubbers.length && rubbers.every(function(r){ return unpackSnap(before[r.id]).w; }));
-    if (done && !wasDone){
+    if (finishing){
       var t = W > L ? ev.team + _(" vann mot ") + tie.opp + " " + W + "–" + L : W < L ? ev.team + _(" förlorade mot ") + tie.opp + " " + W + "–" + L : ev.team + _(" och ") + tie.opp + _(" delade ") + W + "–" + L;
-      var myR = rubbers.filter(function(r){ return isMe(r[us]); })[0];
+      var myR = rubbers.filter(function(r){ return isMe(r[us]) && !unpackSnap(before[r.id]).w; })[0];   // own result only when decided now
       var body = [ev.name + (ev.round ? _(" omgång ") + ev.round : ""), myR ? firstNames(myR[us]) + (myR.w === us ? _(" vann sin match ") : _(" förlorade sin match ")) + score(myR) : ""].filter(Boolean).join(". ") + ".";
       out.push({id:cid + ":klar", title:t, body:body, tag:"padel-" + cid + ":klar", url:linkTo(ev.who, myR && myR.id)});
     }
@@ -3480,15 +3503,43 @@
     var box = document.createElement("div"); box.className = "tblwrap"; host.appendChild(box);
     tlTable(e).then(function(d){ if (d.rows.length) box.innerHTML = tlTableHtml(e, d); }, function(){});
   }
-  function tlListHtml(e, m, day){
+  // Win chance on paper for one match: the pairs' average SPF skill (1 skill = about 75 %). null without both pairs' skill.
+  function rubberChance(mt, us){
+    var them = us === "a" ? "b" : "a", P = mt[us] && mt[us].pair, Q = mt[them] && mt[them].pair;
+    var sk = function(x){ var v = x ? pskill(x) : null, a = avgSkill(v); if (a != null || !v) return a; v = v.filter(function(y){ return y != null; }); return v.length ? v[0] : null; };   // one player without skill: the other one's
+    var a = sk(P), b = sk(Q);
+    return a == null || b == null ? null : 1 / (1 + Math.exp(-1.1 * (a - b)));
+  }
+  // The tie: matches decided count as they are, the rest by their chance (50 % without lineups) -> {win, draw, n}; null
+  // when no lineup is known for any match still to play
+  function tieChance(x){
+    var dist = [1], n = 0, known = 0;
+    x.mts.forEach(function(mt){
+      if (mt.w) return;
+      var p = rubberChance(mt, x.us), nd = [];
+      if (p == null) p = .5; else known++;
+      n++;
+      for (var k = 0; k <= dist.length; k++) nd[k] = (dist[k] || 0) * (1 - p) + (dist[k - 1] || 0) * p;
+      dist = nd;
+    });
+    if (n && !known) return null;
+    var win = 0, draw = 0;
+    dist.forEach(function(pk, k){ var W = x.W + k, L = x.L + n - k; if (W > L) win += pk; else if (W === L) draw += pk; });
+    return {win:win, draw:draw, n:n};
+  }
+  function chanceBar(p){ var v = Math.round(100 * p); return '<i class="chb" aria-hidden="true"><b style="width:' + v + '%"></b></i><b class="chv">' + v + ' %</b>'; }
+  function tlListHtml(e, m, day, chances){
     return m.ties.map(function(x){
       var tt = x.tie, home = tt.home ? e.team : tt.opp, away = tt.home ? tt.opp : e.team;
       var meta = [x.start ? dayLabel(x.start) + " " + hm(x.start) : dayLabel(day), tt.venue, tt.home ? _("hemma") : _("borta")].filter(Boolean).join(" · ");
       return '<div class="tie"><div class="tiehd"><div><div class="tt">' + esc(home) + ' <i>–</i> ' + esc(away) + '</div><div class="tm">' + esc(meta) + '</div></div>' +
         (x.W + x.L ? '<div class="ts">' + x.W + '–' + x.L + '<small>' + (x.done ? _("Slut") : _("Ställning")) + '</small></div>' : '<div></div>') + '</div>' +
+        (chances && !x.done ? (function(){ var c = tieChance(x); return c ? '<div class="tch"><span>' + esc(_("Chans att vinna lagmatchen")) + '</span>' + chanceBar(c.win) + '</div>' + (c.draw > .005 ? '<div class="tchd">' + esc(_("Oavgjort {p} %", {p:Math.round(100 * c.draw)})) + '</div>' : "") : ""; })() : "") +
         (x.mts.length ? '<div class="results">' + x.mts.map(function(mt){
           var r = mt.r, st2 = mt.w ? (mt.w === x.us ? "Vinst" : "Förlust") : (inWin(e) && x.start && now() >= x.start ? "Pågår" : "");
-          return '<div class="res' + (mt.hasMe ? " mine" : "") + '" data-mid="' + esc(r.id) + '"><div class="mh"><span>' + esc(_("Match ") + r.k + (r.kind ? " · " + _(r.kind) : "")) + '</span><span class="st' + (st2 === "Pågår" ? " nx" : "") + '">' + esc(_(st2)) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") + '</div>';
+          var ch = chances && !mt.w ? rubberChance(mt, x.us) : null;
+          return '<div class="res' + (mt.hasMe ? " mine" : "") + '" data-mid="' + esc(r.id) + '"><div class="mh"><span>' + esc(_("Match ") + r.k + (r.kind ? " · " + _(r.kind) : "")) + '</span><span class="st' + (st2 === "Pågår" ? " nx" : "") + '">' + esc(_(st2)) + '</span></div>' + entrantRow(mt, "a") + entrantRow(mt, "b") +
+            (ch != null ? '<div class="mf rch"><span>' + esc(_("Vinstchans")) + '</span>' + chanceBar(ch) + '</div>' : "") + '</div>';
         }).join("") + '</div>' : '<p class="empty">' + _("Laguppställningarna är inte publicerade än.") + '</p>') + '</div>';
     }).join("");
   }
@@ -4538,9 +4589,17 @@
     if (!host) return;
     if (!DISC){ host.innerHTML = '<p class="empty">' + _("Hämtar …") + '</p>'; return; }
     if (DISC.failed && !DISC.events.length){ host.innerHTML = '<p class="empty">' + _("Kunde inte hämta tävlingarna just nu. Försöker igen om en stund.") + '</p>'; return; }
-    var f = follows(), rows = [];
+    var f = follows(), rows = [], teams = {};
     ROSTER.forEach(function(P){
       var e = liveNow(P)[0];
+      if (e && e.kind === "teamleague"){   // a team's play day: one row for the team ("Damlaget spelar idag")
+        var k = String(e.teamId), s = nowStatus(P, e), tr = teams[k];
+        if (!tr){ tr = teams[k] = {team:true, e:e, players:[], fol:false, s:s}; rows.push(tr); }
+        tr.players.push(P);
+        if (f.indexOf(P.pid) >= 0) tr.fol = true;
+        if (s.pcls === "live" && tr.s.pcls !== "live") tr.s = s;
+        return;
+      }
       if (e) rows.push({P:P, e:e, fol:f.indexOf(P.pid) >= 0, s:nowStatus(P, e)});
       else {   // a club series match (Backhandsmash) on now or within 30 min
         var t0 = +now(), n = bhsNext(P).filter(function(x){ return +x.at - 30 * 60000 <= t0; })[0];
@@ -4552,13 +4611,22 @@
       }
     });
     rows.sort(function(a, b){ return (b.fol ? 1 : 0) - (a.fol ? 1 : 0) || (b.s.pcls === "live" ? 1 : 0) - (a.s.pcls === "live" ? 1 : 0); });
-    if (meta) meta.textContent = rows.length ? rows.length + (rows.length === 1 ? _(" spelare") : _(" spelare ")) : "";
+    var np = rows.reduce(function(a, r){ return a + (r.team ? r.players.length : 1); }, 0);
+    if (meta) meta.textContent = np ? np + (np === 1 ? _(" spelare") : _(" spelare ")) : "";
     if (!rows.length){
       host.innerHTML = '<p class="empty">' + _("Ingen spelar just nu.") + '</p>';   // what comes next: Kommande, right below
       return;
     }
     host.innerHTML = rows.map(function(r){
       var e = r.e, P = r.P;
+      if (r.team){
+        var x = DISC.live && r.players.map(function(p){ return DISC.live[p.pid]; }).filter(function(v){ return v && v.key === e.key && v.sc; })[0];
+        var vs = (e.ties || []).map(function(t){ return t.opp; }).join(_(" och "));
+        return '<a class="nowrow team' + (r.fol ? " fol" : "") + '" href="#lag/' + esc(e.teamId) + '">' + avatarsOf(r.players.slice(0, 3), "") +
+          '<span><b>' + esc(_("{t} spelar idag", {t:teamWord(e)})) + '</b><span class="ne">' + esc([e.name + (e.round ? _(" omgång ") + e.round : ""), e.team].join(" · ")) + '</span>' +
+          '<span class="ns">' + esc(_("mot ") + vs + (x && x.sc && x.sc !== "0–0" ? " · " + x.sc : "")) + '</span></span>' +
+          '<span class="pill ' + r.s.pcls + '">' + (r.s.pcls === "live" ? "<i></i>" : "") + esc(r.s.pill) + '</span></a>';
+      }
       return '<a class="nowrow' + (r.fol ? " fol" : "") + '" href="' + esc(r.href || "#" + P.key) + '">' + '<span class="avs">' + avatar(P.name) + '</span>' +
         '<span><b>' + esc(P.short) + (r.fol ? '<span class="sr">' + _(" (följer)") + '</span>' : "") + '</b><span class="ne">' + esc([e.name, e.kind === "teamleague" ? e.team : e.cls].filter(Boolean).join(" · ")) + '</span>' +
         (r.s.line ? '<span class="ns">' + esc(r.s.line) + '</span>' : "") + '</span>' +
@@ -4827,6 +4895,47 @@
   }
 
   /* ================= team view (#lag/<teamId>) ================= */
+  /* ---- the team's play day (#lag/<id>, from "Spelar nu"): every tie of the day with lineups, results and the win
+     chances on paper (SPF skill), from the live relay (or RankedIn); refreshed each minute while open ---- */
+  function teamToday(T){
+    if (!DISC || !T) return null;
+    var d = dayOf(now());
+    return DISC.events.filter(function(e){ return e.kind === "teamleague" && e.teamId === T.id && e.date === d; })[0] || null;
+  }
+  function teamWord(e){
+    if (/dam/i.test((e.name || "") + " " + (e.team || ""))) return _("Damlaget");
+    var n = /\s(\d+)\s*$/.exec(e.team || "");
+    return n ? _("Herrlag {n}", {n:n[1]}) : _("Herrlaget");
+  }
+  var TD = {k:null, m:null, at:0, busy:false};
+  function renderTeamDay(T){
+    var host = document.getElementById("teamDay"), e = teamToday(T);
+    if (!host) return;
+    if (!e){ host.innerHTML = ""; return; }
+    if (TD.k !== e.key) TD = {k:e.key, m:null, at:0, busy:false};
+    var m = TD.m || buildTL(e, []), pairs = [], t = now();
+    m.ties.forEach(function(x){ x.mts.forEach(function(mt){ ["a", "b"].forEach(function(sd){ if (mt[sd].pair) pairs.push(mt[sd].pair); }); }); });
+    wantSkills(pairs);
+    var done = m.ties.length && m.ties.every(function(x){ return x.done; }), on = !done && m.ties.some(function(x){ return x.start ? t >= x.start : x.rubbers.some(function(r){ return r.w; }); });
+    var first = m.ties.filter(function(x){ return x.start; }).map(function(x){ return x.start; }).sort(function(a, b){ return a - b; })[0];
+    var pill = done ? _("Klart") : on ? _("Pågår") : first && first > t ? _("Om ") + fmtLeft(first - t) : _("Idag");
+    var html = '<section class="tday" aria-labelledby="h-td"><div class="tdh"><span class="pill ' + (done ? "done" : on ? "live" : "next") + '">' + (on ? "<i></i>" : "") + esc(pill) + '</span>' +
+      '<h2 id="h-td">' + esc(_(done ? "{t} spelade idag" : "{t} spelar idag", {t:teamWord(e)})) + '</h2><div class="tdm">' + esc([e.name + (e.round ? _(" omgång ") + e.round : ""), e.division].filter(Boolean).join(" · ")) + '</div></div>' +
+      tlListHtml(e, m, riDate(e.date + "T12:00"), true) +
+      '<p class="vnote">' + esc(_("Vinstchansen är på pappret: parens snitt-skill (SPF) mot motståndarnas. Lagmatchen räknar spelade matcher som de slutade.")) + '</p></section>';
+    if (host._h !== html){ host.innerHTML = html; host._h = html; }
+    if (!TD.busy && Date.now() - TD.at > 55000){
+      TD.busy = true;
+      dynFetch({e:e}).then(function(datas){ TD.m = buildTL(e, datas); }, function(){}).then(function(){
+        TD.at = Date.now(); TD.busy = false;
+        if (VIEW.name === "team" && VIEW.team === T.id) renderTeamDay(T);
+      });
+    }
+  }
+  setInterval(function(){
+    if (VIEW.name !== "team" || document.hidden) return;
+    try { renderTeamDay(TEAMS.filter(function(x){ return x.id === VIEW.team; })[0]); } catch (e){}
+  }, 20000);
   function renderTeam(T){
     var box = document.getElementById("team");
     if (!box || !T) return;
@@ -4836,6 +4945,7 @@
       return tlCard(e, days.slice(i + 1, i + 4).map(function(x){ return dayMonD(riDate(x.date + "T12:00")); }));
     });
     box.innerHTML = '<div class="phead"><div class="pt"><h1 id="th-h">' + esc(T.name) + '</h1><div class="pm">' + esc(leagueName(T) + " · " + T.division) + '</div></div></div>' +
+      '<div id="teamDay"></div>' +
       '<section aria-labelledby="h-tsp"><div class="sh"><h2 id="h-tsp">' + _("Laget") + '</h2><div class="meta">' + T.players.length + _(" spelare ") + '</div></div><ul class="plist">' +
       T.players.map(function(p){
         var tr = trendOf(p);
@@ -4845,6 +4955,7 @@
       '<div id="teamTbl"><p class="tblload">' + _("Hämtar tabellen …") + '</p></div>' +
       '<section aria-labelledby="h-tom"><div class="sh"><h2 id="h-tom">' + _("Omgångar") + '</h2><div class="meta">' + (days.length ? days.length + _(" kvar") : "") + '</div></div>' +
       '<div class="ups">' + (cards.join("") || '<p class="empty">' + _("Inga fler omgångar inlagda.") + '</p>') + '</div></section>';
+    try { renderTeamDay(T); } catch (e){ warn("Lagdagen", e); }
     var host = document.getElementById("teamTbl");
     tlTable(e0).then(function(d){ if (host.isConnected) host.innerHTML = d.rows.length ? tlTableHtml(e0, d) : '<p class="tblload">' + _("Ingen tabell än.") + '</p>'; },
       function(){ if (host.isConnected) host.innerHTML = '<p class="tblload">' + _("Tabellen gick inte att hämta just nu.") + '</p>'; });

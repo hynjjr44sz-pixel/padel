@@ -623,6 +623,26 @@ try {
   ok("worker down: Förslag says Inga förslag just nu. (no RankedIn calendar calls)", /Inga förslag just nu\./.test(await page.textContent("#sgList-kian")) && !api.paths.some(x => /Organisation|ClassesSection/i.test(x)));
   ok("worker down: Kian's page finds his events on RankedIn", /SPL|Herrar/.test(await page.textContent("#p-kian [data-r=round]").catch(() => "")), await page.textContent("#p-kian .dyn").catch(() => ""));
   await ctx.close();
+  // A team's play day: "Spelar nu" has one row for the team ("… spelar idag"), not one per player; it opens the team page
+  // with the day's ties (lineups, results, win chances) and the table
+  {
+    const tl = EVENTS.events.find(e => e.kind === "teamleague");
+    ok("team day: the fixture has a team league day", !!tl, EVENTS.events.map(e => e.kind));
+    if (tl) {
+      ({ page, ctx, errors, api } = await newPage());
+      await page.goto(url("#/", "", tl.date + "T10:30:00+02:00"));
+      await page.waitForSelector("#nowList a.team", { timeout: 8000 }).catch(() => {});
+      const rows = await page.$$eval("#nowList a", a => a.map(x => [x.getAttribute("href"), x.innerText.replace(/\s+/g, " ")]));
+      const team = rows.filter(r => r[0] === "#lag/" + tl.teamId);
+      ok("team day: one row for the team, no player rows for it", team.length === 1 && /spelar idag/i.test(team[0][1]) && !rows.some(r => tl.players.some(n => r[1].startsWith(n.split(" ")[0] + " ")) && r[0] !== team[0][0]), rows);
+      await page.click("#nowList a.team").catch(() => {});
+      await page.waitForSelector("#teamDay .tday", { timeout: 8000 }).catch(() => {});
+      const td = await page.textContent("#teamDay").catch(() => "");
+      ok("team day: the team page shows the day's ties", /spelar idag/i.test(td) && (tl.ties || []).every(x => td.includes(x.opp)), td.slice(0, 300));
+      ok("team day: no horizontal scroll, no errors", await noHScroll(page) && errors.length === 0, errors);
+      await ctx.close();
+    }
+  }
   // A tournament under Kommande opens #tavling/<id>: every club player entered, per class (not the first player's page)
   {
     ({ page, ctx, errors, api } = await newPage());

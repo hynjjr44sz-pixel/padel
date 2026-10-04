@@ -27,17 +27,26 @@ test("tie notiser: own rubber highlighted, team rubbers, tie result; nothing twi
   const before = clone(full);
   before["5433848"] = before["5433848"].replace(/,a$/, ",");
   delete before._done;
+  // Her match is the last one: one notis (the tie result with her match in it), not her match and then the tie
   const n = tieNotes(THEA, TIE, all, before);
-  assert.deepEqual(n.map(x => x.title), ["Thea och Rebecca vann sin match 6-3 6-2", "Nynäs Damlag förlorade mot Padelverket Damlag 1–2"]);
-  assert.equal(n[0].body, "Mot Frohlund / Spong. Ställning: Nynäs Damlag 1–2 Padelverket Damlag.");
-  assert.equal(n[0].tag, "padel-tm127649:r5433848");
-  assert.equal(n[1].body, "SPL Damer omgång 3. Thea och Rebecca vann sin match 6-3 6-2.");
-  assert.equal(n[0].url, "./#thea/m5433848", "deep link to the rubber");
+  assert.deepEqual(n.map(x => x.title), ["Nynäs Damlag förlorade mot Padelverket Damlag 1–2"]);
+  assert.equal(n[0].body, "SPL Damer omgång 3. Thea och Rebecca vann sin match 6-3 6-2.");
   assert.deepEqual(n.map(x => x.es), [
-    { title: "Thea y Rebecca ganaron su partido 6-3 6-2", body: "Contra Frohlund / Spong. Marcador: Nynäs Damlag 1–2 Padelverket Damlag." },
     { title: "Nynäs Damlag perdió contra Padelverket Damlag 1–2", body: "SPL Damer jornada 3. Thea y Rebecca ganaron su partido 6-3 6-2." }], "Spanish wording alongside");
-  assert.equal(n[1].url, "./#thea/m5433848", "tie result links to her own rubber");
+  assert.equal(n[0].url, "./#thea/m5433848", "tie result links to her own rubber");
   assert.deepEqual(tieNotes(THEA, TIE, all, full), []);
+
+  // Her match first (the tie still on): her own notis; then the tie ends: the tie result without her match again
+  const mid = clone(before);
+  mid["5433849"] = mid["5433849"].replace(/,b$/, ",");
+  const part = all.map(r => r.id === "5433849" ? { ...r, w: null, s: null } : r);
+  const n1 = tieNotes(THEA, TIE, part, mid);
+  assert.deepEqual(n1.map(x => x.title), ["Thea och Rebecca vann sin match 6-3 6-2"]);
+  assert.equal(n1[0].body, "Mot Frohlund / Spong. Ställning: Nynäs Damlag 1–1 Padelverket Damlag.");
+  assert.equal(n1[0].tag, "padel-tm127649:r5433848");
+  assert.equal(n1[0].url, "./#thea/m5433848", "deep link to the rubber");
+  const n3 = tieNotes(THEA, TIE, all, snapshotTie(part));
+  assert.deepEqual(n3.map(x => [x.title, x.body]), [["Nynäs Damlag förlorade mot Padelverket Damlag 1–2", "SPL Damer omgång 3."]], "no repeat of her match");
 
   // A teammate's rubber finishing is not pushed on its own; only the tie result (now complete) is.
   const b2 = clone(full);
@@ -108,8 +117,8 @@ test("tick: SPL play day end to end: baseline, a finished rubber is pushed, KV o
   st.over = {};
   st.over["/teamleague/GetTeamLeagueTeamsMatchesAsync?teamMatchId=127649&language=en"] = A("tm_127649_matches");
   r = await tick(env, [ev]);
-  assert.deepEqual([r.writes, r.sent], [2, 2]);
+  assert.deepEqual([r.writes, r.sent], [2, 1]);
   const msgs = await Promise.all(st.pushes.map(async p => JSON.parse(await a.decrypt(p.init.body))));
-  assert.deepEqual(msgs.map(x => x.title), ["Thea och Rebecca vann sin match 6-3 6-2", "Nynäs Damlag förlorade mot Padelverket Damlag 1–2"]);
+  assert.deepEqual(msgs.map(x => [x.title, x.body]), [["Nynäs Damlag förlorade mot Padelverket Damlag 1–2", "SPL Damer omgång 2. Thea och Rebecca vann sin match 6-3 6-2."]], "her match (the last) and the tie: one notis");
   assert.ok(JSON.parse(m.get("st:tm127649"))._done);
 });
