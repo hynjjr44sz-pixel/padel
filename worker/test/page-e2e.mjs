@@ -623,6 +623,39 @@ try {
   ok("worker down: Förslag says Inga förslag just nu. (no RankedIn calendar calls)", /Inga förslag just nu\./.test(await page.textContent("#sgList-kian")) && !api.paths.some(x => /Organisation|ClassesSection/i.test(x)));
   ok("worker down: Kian's page finds his events on RankedIn", /SPL|Herrar/.test(await page.textContent("#p-kian [data-r=round]").catch(() => "")), await page.textContent("#p-kian .dyn").catch(() => ""));
   await ctx.close();
+  // iOS motion permission: never at start or on other taps (a home-screen app forgets the answer and would ask on every
+  // launch), only on a tap on the player card; a no is kept and never asked again
+  {
+    const gyro = async (stored, answer) => {
+      ({ page, ctx, errors, api } = await newPage());
+      await page.addInitScript(([st, ans]) => {
+        window.__asked = 0;
+        if (st) try { localStorage.setItem("padel.gyro", st); } catch (e) {}
+        window.DeviceOrientationEvent = function () {};
+        window.DeviceOrientationEvent.requestPermission = () => { window.__asked++; return Promise.resolve(ans); };
+        const mm = window.matchMedia.bind(window);
+        window.matchMedia = q => /hover: none/.test(q) ? { matches: true, addEventListener() {}, addListener() {} } : mm(q);
+      }, [stored, answer]);
+      await page.goto(url("#thea"));
+      await page.waitForSelector("#p-thea .pc", { timeout: 8000 });
+      await page.tap("#chips").catch(() => {});
+      await page.click("#h-kom").catch(() => {});
+      const before = await page.evaluate(() => window.__asked);
+      await page.$eval("#p-thea .pc", el => el.click()).catch(() => {});
+      await page.waitForTimeout(200);
+      const after = await page.evaluate(() => window.__asked), kept = await page.evaluate(() => localStorage.getItem("padel.gyro"));
+      await ctx.close();
+      return [before, after, kept];
+    };
+    let r = await gyro(null, "granted");
+    ok("motion: not asked at start or on other taps, asked on a tap on the card", r[0] === 0 && r[1] === 1 && r[2] === "1", r);
+    r = await gyro("1", "granted");
+    ok("motion: granted before (a new launch): still only on a card tap", r[0] === 0 && r[1] === 1, r);
+    r = await gyro(null, "denied");
+    ok("motion: a no is kept", r[2] === "0", r);
+    r = await gyro("0", "granted");
+    ok("motion: after a no, never asked again", r[0] === 0 && r[1] === 0, r);
+  }
   // A team's play day: "Spelar nu" has one row for the team ("… spelar idag"), not one per player; it opens the team page
   // with the day's ties (lineups, results, win chances) and the table
   {

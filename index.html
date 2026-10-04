@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-QRcpYP3y3BDY68grnX/U19mi5hyQ/Ix4dc5drLqPESw='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ATEgRvs2qNJ8KabyO+HRNePw71u1nN6OxJ8x4zh39ds='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -5895,7 +5895,7 @@
     }, {passive:true});
 
     // Phones: the motion sensor tilts the card (on :root, the cards inherit it). The neutral position follows the
-    // way the phone is held, so only the small movements show. iOS asks once, on the first tap on a card.
+    // way the phone is held, so only the small movements show.
     if (!window.DeviceOrientationEvent || !(window.matchMedia && matchMedia("(hover: none)").matches)) return;
     var root = document.documentElement, base = null, cur = null, raf = 0, seen = false;
     function clamp(v, m){ return Math.max(-m, Math.min(m, v)); }
@@ -5919,16 +5919,13 @@
     function listen(){ window.addEventListener("deviceorientation", onTilt, {passive:true}); }
     var ask = typeof DeviceOrientationEvent.requestPermission === "function";
     if (!ask){ listen(); return; }
-    if (store.get("padel.gyro") === "1"){
-      // granted before: iOS keeps the answer for the site, but a call still needs a tap
-      document.addEventListener("touchend", function once(){ document.removeEventListener("touchend", once);
-        DeviceOrientationEvent.requestPermission().then(function(r){ if (r === "granted") listen(); }).catch(function(){}); }, {passive:true});
-      return;
-    }
+    // iOS: an app on the home screen forgets the answer when it closes, so asking at start (or on any touch) would ask
+    // on every launch. Asked only on a tap on a player card (the card's own effect), never again after a no ("0").
+    if (store.get("padel.gyro") === "0") return;
     document.addEventListener("click", function tap(e){
       if (!(e.target.closest && e.target.closest(".pc")) || (e.target.closest && e.target.closest("button, a"))) return;
       document.removeEventListener("click", tap);
-      DeviceOrientationEvent.requestPermission().then(function(r){ if (r === "granted"){ store.set("padel.gyro", "1"); listen(); } }).catch(function(){});
+      DeviceOrientationEvent.requestPermission().then(function(r){ store.set("padel.gyro", r === "granted" ? "1" : "0"); if (r === "granted") listen(); }).catch(function(){});
     });
   })();
 
