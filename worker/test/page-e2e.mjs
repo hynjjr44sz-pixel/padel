@@ -12,6 +12,7 @@ import { suggestFor } from "../src/calendar.js";
 import { makeVapid } from "./helpers.mjs";
 import { readFileSync } from "node:fs";
 import { matchKey } from "../src/bhs.js";
+import { parseMedia } from "../src/tv.js";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
@@ -686,6 +687,22 @@ try {
     const sub = api.posts.filter(x => x.path === "/subscribe").pop();
     ok("follow a team: sent to the push server with the players followed", !!sub && JSON.stringify(sub.body.prefs.teams) === "[3355655]" && Array.isArray(sub.body.prefs.follow), sub && sub.body.prefs);
     ok("follow a team: no errors", errors.length === 0, errors);
+    await ctx.close();
+  }
+  // MATCHi TV: Järfälla (a hall with cameras): Thea's matches found in the court's recording, links to matchi.tv
+  {
+    const TVS = parseMedia(JSON.parse(readFileSync(new URL("./fixtures/tv-jarfalla.json", import.meta.url), "utf8")));
+    const ev = { ...EVENTS_WEEK, tv: { 595: { n: "Järfälla Padel Club", s: TVS } } };
+    ok("tv: the worker marks Järfälla's events with the hall", EVENTS_WEEK.past.concat(EVENTS_WEEK.events).some(e => /Järfälla/.test(e.name || "") && e.tv === 595), EVENTS_WEEK.past.map(e => [e.name, e.venue, e.tv]));
+    ({ page, ctx, errors, api } = await newPage({ events: ev, over: FINAL }));
+    await page.goto(url("#thea", "", "2026-09-29T12:00:00+02:00"));
+    await page.waitForSelector("#dyn-thea .tvbox", { timeout: 8000 }).catch(() => {});
+    const tv = await page.$eval("#dyn-thea .tvbox", e => ({ txt: e.innerText.replace(/\s+/g, " "), links: [...e.querySelectorAll("a")].map(a => a.href) })).catch(() => null);
+    ok("tv: a MATCHi TV box with links to the recordings", !!tv && /MATCHi TV/.test(tv.txt) && tv.links.length > 0 && tv.links.every(h => /^https:\/\/matchi\.tv\/watch\?s=\w+$/.test(h)), tv);
+    ok("tv: Thea's semifinal and final found in their courts' recordings, with the time into it", !!tv && /Semifinal Bana 2 · ca 1 h 20 min/.test(tv.txt) && /Final Bana 1 · ca 3 h 50 min/.test(tv.txt), tv && tv.txt);
+    if (process.env.DEBUG) console.log("TV", JSON.stringify(tv));
+    ok("tv: no horizontal scroll, no errors", await noHScroll(page) && errors.length === 0, errors);
+    if (SHOTS) await page.$eval("#dyn-thea .tvbox", e => e.scrollIntoView()).then(async () => (await page.$("#dyn-thea .tvbox")).screenshot({ path: SHOTS + "/tvbox.png" })).catch(() => {});
     await ctx.close();
   }
   // A team's play day: "Spelar nu" has one row for the team ("… spelar idag"), not one per player; it opens the team page

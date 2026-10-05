@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-fdAvukaPWA1DY7A0Fo8Hhv4Z2jQ4dw3g9SC6UKp4cHI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-uu52Q8LF8qPW7zma1XGGduXPGdYi0Fi82ISXv3W2byQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -182,6 +182,16 @@
   .trt .o{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .trt b{ font:800 20px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; }
   .trd{ padding:6px 14px 14px; border-top:1px solid var(--line); }
+  /* ---------- MATCHi TV ---------- */
+  .tvbox{ margin-top:18px; }
+  .tvlist{ padding:2px 0; overflow:hidden; }
+  .tvrow{ display:grid; grid-template-columns:34px minmax(0,1fr) auto; gap:12px; align-items:center; padding:11px 14px; color:var(--ink); text-decoration:none; border-top:1px solid var(--line); }
+  .tvrow:first-child{ border-top:0; }
+  .tvrow b{ display:block; font:700 14.5px/1.2 "Instrument Sans", sans-serif; }
+  .tvrow small{ display:block; font:500 11px/1.35 "Chivo Mono", monospace; color:var(--dim); margin-top:2px; }
+  .tvp{ display:grid; place-items:center; width:34px; height:34px; border-radius:50%; background:var(--navy); color:#fff; font-size:13px; padding-left:2px; }
+  .tvrow.live .tvp{ background:#E5322D; }
+  .tvgo{ color:var(--dim); font-size:15px; }
   /* ---------- a team's play day (#lag/…) and its row in "Spelar nu" ---------- */
   .tday{ margin:6px 0 22px; }
   .tdh{ margin-bottom:14px; }
@@ -1474,6 +1484,7 @@
     "Gruppmatchen":"Partido de grupo",
     "Gruppsegrar":"Grupos ganados",
     "Gruppspel":"Fase de grupos",
+    "Hallen har kameror. Sändningarna dyker upp här när de börjar.":"El club tiene cámaras. Las emisiones aparecerán aquí cuando empiecen.",
     "Hemma":"En casa",
     "Herr":"Masculino",
     "Herrar":"Hombres",
@@ -1554,6 +1565,7 @@
     "Laguppställningarna är inte publicerade än.":"Las alineaciones aún no están publicadas.",
     "Laguppställningen ej klar":"Alineación por confirmar",
     "Lika":"Empate",
+    "Live":"En directo",
     "Lottning":"Cuadro",
     "Lottningen ej klar":"Cuadro sin publicar",
     "Lottningen klar i ":"Cuadro publicado: ",
@@ -1563,6 +1575,7 @@
     "Lottningen är klar":"Cuadro publicado",
     "Lottningen är klar.":"Cuadro publicado.",
     "Lottningen är klar. {name} har inga matcher inlagda än.":"Cuadro publicado. {name} aún no tiene partidos.",
+    "MATCHi TV":"MATCHi TV",
     "Match":"Partido",
     "Match ":"Partido ",
     "Matchen":"El partido",
@@ -1694,6 +1707,7 @@
     "Ställning mot ":"Marcador contra ",
     "Stäng":"Cerrar",
     "Svep för nästa rond →":"Desliza a la siguiente ronda →",
+    "Sänds av hallen på MATCHi TV. Tiden i inspelningen är ungefärlig.":"Emitido por el club en MATCHi TV. El momento en la grabación es aproximado.",
     "Säsong ":"Temporada ",
     "Så funkar rankingen":"Cómo funciona el ranking",
     "Sök spelare":"Buscar jugador",
@@ -1765,10 +1779,12 @@
     "av {n}, snitt ett år":"de {n}, media de un año",
     "borta":"fuera",
     "börjar om ":"empieza en ",
+    "ca {t} in":"aprox. {t} dentro",
     "de senaste 12 månaderna":"de los últimos 12 meses",
     "dubbel · ":"dobles · ",
     "ej rankad":"sin ranking",
     "eller":"o",
+    "från början av inspelningen":"desde el inicio de la grabación",
     "fullt":"completo",
     "följer":"sigues",
     "förlorade ":"perdieron ",
@@ -1801,6 +1817,7 @@
     "på {n} tävlingar":"en {n} torneos",
     "pågår":"en juego",
     "pågår / kommande":"en juego / próximos",
+    "pågår nu":"en juego ahora",
     "sedan ":"desde ",
     "seedad ":"cabeza de serie ",
     "senast ändrad ":"último cambio ",
@@ -1812,6 +1829,7 @@
     "start ":"inicio ",
     "stänger ":"cierra el ",
     "svenska / spanska":"sueco / español",
+    "sänds {when}":"se emite {when}",
     "telefoner":"teléfonos",
     "topp ":"máx. ",
     "tvåa":"2.º puesto",
@@ -3318,6 +3336,55 @@
     return {tl:true, e:e, ties:ties};
   }
 
+  /* ---- MATCHi TV: an event in a hall with cameras (worker: e.tv = the hall's id, DISC.tv = its streams around the play
+     days). The player's own matches with a known court and time are found in the court's stream ("live", or "ca 1 h 20
+     min in" a recording); else the hall's streams of the event days. Watched on matchi.tv (their player). ---- */
+  function tvStreams(e){
+    var c = e && e.tv && DISC && DISC.tv && DISC.tv[e.tv];
+    if (!c) return null;
+    var lo = dayOf(new Date(e.windowFrom || e.start)), hi = dayOf(new Date(e.windowTo || e.end || e.start)), seen = {};
+    var s = (c.s || []).filter(function(x){ var d = x.a.slice(0, 10); if (d < lo || d > hi || seen[x.c + x.a]) return false; seen[x.c + x.a] = 1; return true; })
+      .map(function(x){ return {x:x.x, c:x.c, a:riDate(x.a), b:x.b ? riDate(x.b) : null, e:x.e, t:x.t}; }).filter(function(x){ return x.a; });
+    return {n:c.n, s:s.sort(function(a, b){ return a.a - b.a || String(a.c).localeCompare(String(b.c)); })};
+  }
+  function tvLive(x, t){ return !x.e && t >= x.a && (!x.b || t < +x.b + 30 * 60000); }
+  function courtNo(c){ var m = /(\d+)/.exec(String(c || "")); return m ? m[1] : null; }
+  function tvLink(x, label, sub, live){
+    return '<a class="tvrow' + (live ? " live" : "") + '" href="https://matchi.tv/watch?s=' + encodeURIComponent(x.x) + '" target="_blank" rel="noopener"><span class="tvp" aria-hidden="true">▶</span>' +
+      '<span><b>' + esc(label) + '</b><small>' + esc(sub) + '</small></span>' + (live ? '<span class="pill live"><i></i>' + _("Live") + '</span>' : '<span class="tvgo">↗︎</span>') + '</a>';
+  }
+  // mts: [{mt, lab}] the player's matches (with time and court) in this event
+  function tvHtml(e, mts){
+    var tv = tvStreams(e), t = now();
+    if (!tv) return "";
+    var rows = [], used = {};
+    (mts || []).forEach(function(o){
+      var mt = o.mt, no = courtNo(mt.c);
+      if (!mt.at || !no) return;
+      var x = tv.s.filter(function(y){ return courtNo(y.c) === no && +y.a <= +mt.at + 15 * 60000 && (!y.b || +mt.at < +y.b); })[0];
+      if (!x) return;
+      used[x.x] = 1;
+      var live = tvLive(x, t) && t >= +mt.at - 15 * 60000 && !mt.w, off = Math.max(0, Math.round((+mt.at - x.a) / 60000));
+      var sub = mt.c + " · " + (live ? _("pågår nu") : mt.w || t > +mt.at ? (off < 5 ? _("från början av inspelningen") : _("ca {t} in", {t:fmtLeft(off * 60000).trim()})) : _("sänds {when}", {when:dayLabel(mt.at) + " " + hm(mt.at)}));
+      if (!mt.w && t < +mt.at - 15 * 60000 && !tvLive(x, t)) return;   // a coming match: its stream once it is close
+      rows.push(tvLink(x, o.lab, sub, live));
+    });
+    if (!rows.length) tv.s.filter(function(x){ return !used[x.x]; }).slice(-6).forEach(function(x){
+      rows.push(tvLink(x, x.c || tv.n, [cap(dayLabel(x.a)), hm(x.a) + (x.b ? "–" + hm(x.b) : "")].join(" · "), tvLive(x, t)));
+    });
+    var head = '<div class="sh"><h2>' + _("MATCHi TV") + '</h2><div class="meta">' + esc(tv.n) + '</div></div>';
+    if (!rows.length) return '<section class="tvbox">' + head + '<p class="empty">' + _("Hallen har kameror. Sändningarna dyker upp här när de börjar.") + '</p></section>';
+    return '<section class="tvbox">' + head + '<div class="card tvlist">' + rows.join("") + '</div><p class="vnote">' + _("Sänds av hallen på MATCHi TV. Tiden i inspelningen är ungefärlig.") + '</p></section>';
+  }
+  function setTv(D, html){ var el = D.el && D.el.tv; if (el && el._h !== html){ el.innerHTML = html; el._h = html; } }
+  function tourMine(ev){
+    var out = [];
+    ev.draws.forEach(function(d){
+      if (d.format === "groups") d.groups.forEach(function(g){ g.matches.forEach(function(mt){ if (mt.hasMe) out.push({mt:mt, lab:_(g.name === "Gruppspel" ? "Grupp" : g.name)}); }); });
+      else d.rounds.forEach(function(rd){ rd.matches.forEach(function(mt){ if (mt.hasMe) out.push({mt:mt, lab:(d.places > 1 || /^Plate/.test(d.label) ? "Plate " : "") + _(rd.label || rd.short)}); }); });
+    });
+    return out.sort(function(a, b){ return (a.mt.at || 0) - (b.mt.at || 0); });
+  }
   /* ---- rendering (reuses the page's hero, board, route, bracket and group styles) ---- */
   var COURT_SVG = '<svg class="court" viewBox="0 0 390 230" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1"><path d="M20 229 L110 20 H280 L370 229 Z"/><path d="M58 140 H332"/><path d="M195 140 V229"/><path d="M92 62 H298" stroke-dasharray="3 5"/></svg>';
   function dynShell(who){
@@ -3329,6 +3396,7 @@
       '<div class="board t-off" aria-live="polite"><div class="countdown" data-r="cd"><span class="l"><span class="dot"></span><span data-r="cdt">–</span></span><a data-r="rl" target="_blank" rel="noopener">RankedIn ↗︎</a></div>' +
       '<div class="lastres" data-r="last" hidden></div><div class="vs" data-r="vs"></div><div class="nextev" data-r="next" hidden></div></div>' +
       '<ol class="route t-off" data-r="route" aria-label="' + _("Vägen genom tävlingen") + '" hidden></ol>' +
+      '<div class="t-off" data-r="tv"></div>' +
       '<section class="t-off" data-r="sec" aria-labelledby="dh-' + who + '"><div class="sh"><h2 id="dh-' + who + '" data-r="h">' + _("Spelträd") + '</h2><div class="meta" data-r="meta"></div></div><div data-r="draw"></div></section>';
   }
   function meTeamRow(p, right){
@@ -3436,6 +3504,7 @@
     try { liveMHist(D.who, e, ev); } catch (er){ warn("Matcher", er); }
     setHero(D, o);
     renderTourDraw(D, ev, st);
+    try { setTv(D, tvHtml(e, tourMine(ev))); } catch (er){ warn("MATCHi TV", er); }
   }
   function renderTourDraw(D, ev, st){
     var host = D.el.draw, W = WHO[D.who], x = st.next || st.last;
@@ -3525,6 +3594,7 @@
     setHero(D, o);
     D.el.draw.innerHTML = tlListHtml(e, m, day);
     tlTableInto(D.el.draw, e);
+    try { setTv(D, tvHtml(e, [])); } catch (er){ warn("MATCHi TV", er); }
   }
   /* ---- team league: division table (RankedIn pools -> standings), own team highlighted ---- */
   // Kept 6 h (10 min on a play day) in memory and in localStorage: standings change after a play day.
@@ -3756,7 +3826,7 @@
       });
     } else {
       var st = riDate(rc.start) || new Date(rc.windowFrom);
-      p = loadTour(who, {cid:rc.classId, tid:rc.tournamentId, st:rc.draws || null, c:rc.cls, d:dayOf(st), u:rc.url}).then(function(det){ return det.sum; });
+      p = loadTour(who, {cid:rc.classId, tid:rc.tournamentId, st:rc.draws || null, c:rc.cls, d:dayOf(st), u:rc.url}).then(function(det){ D.recentEv = det.ev; return det.sum; });
     }
     p.then(function(sum){ if (D.dead || D.sumFor !== rc.key) return; D.sum = sum; dynRender(D); },
       function(){ if (D.dead || D.sumFor !== rc.key) return; D.sum = {label:"Klart", b:"Klart", w:null, l:null, text:_("Resultatet finns på RankedIn.")}; dynRender(D); });
@@ -3795,13 +3865,16 @@
       o.link = W.name; o.url = RI_WEB; o.pill = _("Paus"); o.pcls = "done"; o.round = _("Inget inbokat"); o.big = "–";
       o.txt = _("Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva."); o.sub = _("Inget inbokat");
     }
-    if (!e){ o.nosec = true; setHero(D, o); D.el.draw.innerHTML = ""; return; }
+    // MATCHi TV: the latest event's recordings (own matches found once its draw is loaded), else the next event's hall
+    var tvRc = rc ? tvHtml(rc, rc.kind === "tournament" && D.recentEv ? tourMine(D.recentEv) : []) : "";
+    if (!e){ o.nosec = true; setHero(D, o); D.el.draw.innerHTML = ""; setTv(D, tvRc); return; }
     if (e.kind === "teamleague"){
       var m = D.model || buildTL(e, []);
       o.h = m.ties.length > 1 ? _("Lagmatcher") : _("Lagmatch"); o.meta = e.team + (e.division ? " · " + e.division : "");
       setHero(D, o);
       D.el.draw.innerHTML = tlListHtml(e, m, riDate(e.date + "T12:00"));
       tlTableInto(D.el.draw, e);
+      try { setTv(D, tvRc || tvHtml(e, [])); } catch (er){ warn("MATCHi TV", er); }
       return;
     }
     var ev = D.model || buildTour(e, []), st = tourState(ev), npairs = Object.keys(ev.pairs).length || e.pairs || 0;
@@ -3809,6 +3882,7 @@
     o.meta = e.cls + (npairs ? " · " + npairs + _(" par") : "");
     setHero(D, o);
     renderTourDraw(D, ev, st);
+    try { setTv(D, tvRc || tvHtml(e, tourMine(ev))); } catch (er){ warn("MATCHi TV", er); }
   }
 
   /* ---- draw published: local notis when the push server does not cover it (same text/tag as the worker) ---- */
@@ -5000,7 +5074,7 @@
     var pill = done ? _("Klart") : on ? _("Pågår") : first && first > t ? _("Om ") + fmtLeft(first - t) : _("Idag");
     var html = '<section class="tday" aria-labelledby="h-td"><div class="tdh"><span class="pill ' + (done ? "done" : on ? "live" : "next") + '">' + (on ? "<i></i>" : "") + esc(pill) + '</span>' +
       '<h2 id="h-td">' + esc(_(done ? "{t} spelade idag" : "{t} spelar idag", {t:teamWord(e)})) + '</h2><div class="tdm">' + esc([e.name + (e.round ? _(" omgång ") + e.round : ""), e.division].filter(Boolean).join(" · ")) + '</div></div>' +
-      tlListHtml(e, m, riDate(e.date + "T12:00"), true) +
+      tlListHtml(e, m, riDate(e.date + "T12:00"), true) + tvHtml(e, []) +
       '<p class="vnote">' + esc(_("Vinstchansen är på pappret: parens snitt-skill (SPF) mot motståndarnas. En spelare utan skill räknas som lagets snitt idag, och chansen märks ≈. Lagmatchen räknar spelade matcher som de slutade.")) + '</p></section>';
     if (host._h !== html){ host.innerHTML = html; host._h = html; }
     if (!TD.busy && Date.now() - TD.at > 55000){
