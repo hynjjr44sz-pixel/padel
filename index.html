@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-sJozsEkcpbTw9tOlE+Xx1VOWsifZsiB6R0gffcHG8QQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-fdAvukaPWA1DY7A0Fo8Hhv4Z2jQ4dw3g9SC6UKp4cHI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -4725,9 +4725,9 @@
     }).join("") + '</ol>';
   }
   // Veckans vinnare: club players who won a class (worker "wins", place 1) the week after, finals lost (place 2)
-  // as smaller rows under them. Shown from the day of the final through the 8th day after it (the week after,
-  // Monday to Monday). Only from the worker: no RankedIn calls here.
-  var WIN_DAYS = 8;
+  // as smaller rows under them. Shown from the day of the final through the 7th day after it (a Sunday final: the
+  // week after, through Sunday; gone on Monday). Only from the worker: no RankedIn calls here.
+  var WIN_DAYS = 7;
   function addDays(iso, n){ var d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
   function weekWins(place){
     var today = dayOf(now());
@@ -5190,7 +5190,7 @@
   // Tier: gold from skill 15.5 (the top fifth of the club, which spans about 11.3 to 16.2), silver from 13, bronze
   // below. A class won in the last seven days (from the day of the final) turns the card blue, whatever the skill;
   // without the worker's wins the card simply keeps its metal.
-  var CARD_GOLD = 15.5, CARD_SILVER = 13, CHAMP_DAYS = 8;   // same week as "Veckans vinnare" (WIN_DAYS)
+  var CARD_GOLD = 15.5, CARD_SILVER = 13, CHAMP_DAYS = 7;   // same week as "Veckans vinnare" (WIN_DAYS)
   function cardSkill(P){ var s = trendOf(P).skill[0], b = boardOf(P); return num(s) != null ? s : num(b.sk) != null ? b.sk : num(P.skill); }
   function cardChamp(P){
     var today = dayOf(now());

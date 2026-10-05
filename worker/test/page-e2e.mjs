@@ -503,36 +503,36 @@ try {
     await ctx.close();
   }
   ({ page, ctx, errors, api } = await newPage({ events: EVENTS_WEEK, over: FINAL, width: 360 }));
-  await page.goto(url("", "", "2026-10-05T09:00:00+02:00"));
+  await page.goto(url("", "", "2026-10-04T09:00:00+02:00"));
   await page.waitForSelector("#nowList .nowrow, #nowList .empty");
   await page.waitForTimeout(300);
-  ok("mån 5 okt: still in Veckans vinnare", !(await page.$eval("#secWin", s => s.hidden)) && /Thea/i.test(await page.textContent("#winList")));
-  ok("mån 5 okt 360: no horizontal scroll", await noHScroll(page));
-  await page.goto(url("#thea", "", "2026-10-05T12:00:00+02:00"));
+  ok("sön 4 okt: still in Veckans vinnare", !(await page.$eval("#secWin", s => s.hidden)) && /Thea/i.test(await page.textContent("#winList")));
+  ok("sön 4 okt 360: no horizontal scroll", await noHScroll(page));
+  await page.goto(url("#thea", "", "2026-10-03T12:00:00+02:00"));   // (Sunday 4 Oct she plays SPL: that day comes first)
   await page.waitForFunction(() => /Vinnare/i.test(document.querySelector("#dyn-thea [data-r=time]")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
   const heroT = await page.$eval("#dyn-thea", d => ({ time: d.querySelector("[data-r=time]").textContent, pill: d.querySelector("[data-r=pill]").textContent, link: d.querySelector("[data-r=link]").textContent }));
-  ok("mån 5 okt 12:00: Thea's hero still shows VINNARE (Järfälla)", /vinnare/i.test(heroT.time) && /vinnare/i.test(heroT.pill) && /Järfälla/.test(heroT.link), heroT);
-  { const c = await cardOf("thea"); ok("mån 5 okt: Thea's card is still the champion card (same week as Veckans vinnare)", /\bt-champ\b/.test(c.cls), c); }
-  await page.goto(url("#thea", "", "2026-10-06T12:00:00+02:00"));
+  ok("lör 3 okt 12:00: Thea's hero still shows VINNARE (Järfälla)", /vinnare/i.test(heroT.time) && /vinnare/i.test(heroT.pill) && /Järfälla/.test(heroT.link), heroT);
+  { const c = await cardOf("thea"); ok("sön 4 okt: Thea's card is still the champion card (same week as Veckans vinnare)", /\bt-champ\b/.test(c.cls), c); }
+  await page.goto(url("#thea", "", "2026-10-05T12:00:00+02:00"));
   await page.waitForTimeout(800);
-  { const c = await cardOf("thea"); ok("tis 6 okt: Thea's card is back to gold, no ribbon", /\bt-gold\b/.test(c.cls) && !c.win, c); }
-  await page.goto(url("#kian", "", "2026-10-05T12:00:00+02:00"));
+  { const c = await cardOf("thea"); ok("mån 5 okt: Thea's card is back to gold, no ribbon", /\bt-gold\b/.test(c.cls) && !c.win, c); }
+  await page.goto(url("#kian", "", "2026-10-04T12:00:00+02:00"));
   await page.waitForSelector("#p-kian:not([hidden]) #dyn-kian [data-r=link]");
   await page.waitForTimeout(500);
   const heroK = await page.$eval("#dyn-kian", d => d.querySelector("[data-r=link]").textContent + " | " + d.querySelector("[data-r=round]").textContent);
-  ok("mån 5 okt: Kian (no win) no longer shows his Järfälla result", !/Järfälla|Herrar C/.test(heroK), heroK);
-  ok("mån 5 okt: no console errors", errors.length === 0, errors);
+  ok("sön 4 okt: Kian (no win) no longer shows his Järfälla result", !/Järfälla|Herrar C/.test(heroK), heroK);
+  ok("sön 4 okt: no console errors", errors.length === 0, errors);
   await ctx.close();
   ({ page, ctx, errors, api } = await newPage({ events: EVENTS_WEEK, over: FINAL }));
-  await page.goto(url("", "", "2026-10-06T00:00:00+02:00"));
+  await page.goto(url("", "", "2026-10-05T00:00:00+02:00"));
   await page.waitForSelector("#nowList .nowrow, #nowList .empty");
   await page.waitForTimeout(300);
-  ok("tis 6 okt 00:00: Veckans vinnare gone", await page.$eval("#secWin", s => s.hidden));
-  await page.goto(url("#thea", "", "2026-10-06T00:00:00+02:00"));
+  ok("mån 5 okt 00:00: Veckans vinnare gone", await page.$eval("#secWin", s => s.hidden));
+  await page.goto(url("#thea", "", "2026-10-05T00:00:00+02:00"));
   await page.waitForSelector("#p-thea:not([hidden]) #dyn-thea [data-r=link]");
   await page.waitForTimeout(500);
   const heroT2 = await page.$eval("#dyn-thea", d => d.querySelector("[data-r=link]").textContent + " | " + d.querySelector("[data-r=time]").textContent);
-  ok("tis 6 okt: Thea's hero moved on from Järfälla", !/Järfälla/.test(heroT2), heroT2);
+  ok("mån 5 okt: Thea's hero moved on from Järfälla", !/Järfälla/.test(heroT2), heroT2);
   await ctx.close();
 
   // ---- Förslag: 360 wide, light and dark; screenshots (SUGG_SHOTS=<prefix>) of Thea's and Kian's module at 390 ----
