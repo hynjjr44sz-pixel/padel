@@ -100,6 +100,8 @@ self.addEventListener("notificationclick", function(e){
   e.notification.close();
   var target = new URL((e.notification.data && e.notification.data.url) || "./", self.registration.scope).href;
   var hash = target.indexOf("#") >= 0 ? target.slice(target.indexOf("#")) : "";
+  // A link outside the app (MATCHi TV: "sänds live"): opened as it is
+  if (target.indexOf(self.registration.scope) !== 0){ e.waitUntil(self.clients.openWindow ? self.clients.openWindow(target) : Promise.resolve()); return; }
   e.waitUntil(self.clients.matchAll({type:"window", includeUncontrolled:true}).then(function(list){
     for (var i = 0; i < list.length; i++){
       var c = list[i];

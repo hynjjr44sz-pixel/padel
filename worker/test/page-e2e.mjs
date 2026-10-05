@@ -699,9 +699,15 @@ try {
     await page.waitForSelector("#dyn-thea .tvbox", { timeout: 8000 }).catch(() => {});
     const tv = await page.$eval("#dyn-thea .tvbox", e => ({ txt: e.innerText.replace(/\s+/g, " "), links: [...e.querySelectorAll("a")].map(a => a.href) })).catch(() => null);
     ok("tv: a MATCHi TV box with links to the recordings", !!tv && /MATCHi TV/.test(tv.txt) && tv.links.length > 0 && tv.links.every(h => /^https:\/\/matchi\.tv\/watch\?s=\w+$/.test(h)), tv);
-    ok("tv: Thea's semifinal and final found in their courts' recordings, with the time into it", !!tv && /Semifinal Bana 2 · ca 1 h 20 min/.test(tv.txt) && /Final Bana 1 · ca 3 h 50 min/.test(tv.txt), tv && tv.txt);
+    ok("tv: Thea's final found in its court's recording (PadelGo times are UTC), with the time into it", !!tv && /Final Bana 1 · ca 1 h 49 min in/.test(tv.txt), tv && tv.txt);
     if (process.env.DEBUG) console.log("TV", JSON.stringify(tv));
     ok("tv: no horizontal scroll, no errors", await noHScroll(page) && errors.length === 0, errors);
+    // Opening the tournament under Senaste tävlingar (where one looks for it later): the same links
+    await page.waitForSelector('#p-thea .tr-item[data-key="164681"] .tr', { timeout: 8000 }).catch(() => {});
+    await page.click('#p-thea .tr-item[data-key="164681"] .tr').catch(() => {});
+    await page.waitForSelector('#p-thea .tr-item[data-key="164681"] .tx .tvbox', { timeout: 8000 }).catch(() => {});
+    const tb = await page.$eval('#p-thea .tr-item[data-key="164681"] .tx .tvbox', e => e.innerText.replace(/\s+/g, " ")).catch(() => "");
+    ok("tv: in the tournament under Senaste tävlingar too", /Final Bana 1 · ca 1 h 49 min in/.test(tb), tb);
     if (SHOTS) await page.$eval("#dyn-thea .tvbox", e => e.scrollIntoView()).then(async () => (await page.$("#dyn-thea .tvbox")).screenshot({ path: SHOTS + "/tvbox.png" })).catch(() => {});
     await ctx.close();
   }

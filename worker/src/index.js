@@ -2,7 +2,7 @@
 // event is active, diffs against the last state in KV and pushes new results to the devices that follow
 // the player(s) concerned. Events come from discover.js (every event the club's players in players.json
 // enter on RankedIn, a few players per run) merged with events.js.
-import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL } from "./tv.js";
+import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, tvNotes } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
 import { parse, snapshot, unpack, notes, drawNote, summary, classResult, flip } from "./rankedin.js";
@@ -108,6 +108,14 @@ async function handle(req, env) {
     } catch (e) { return json({ ok: false, error: String(e && e.message) }, 200, {}); }
   }
   // Admin: log in to Backhandsmash with the captain's account and return a few pages (to build and check the parser).
+  if (req.method === "POST" && url.pathname === "/tv-run") {   // admin: MATCHi TV streams now (else hourly/daily)
+    if (!env.ADMIN_KEY || !sameSecret(req.headers.get("X-Admin-Key"), env.ADMIN_KEY)) return json({ error: "forbidden" }, 403, {});
+    try {
+      const t = now(env), rec = await loadRecord(env), tg = tvTargets(merge(rec ? rec.events : []).concat((rec && rec.past) || []), t);
+      const v = await runTv(env, t, { left: SUBREQUESTS }, tg);
+      return json({ ok: true, targets: tg.map(x => x.n), streams: Object.fromEntries(Object.entries((v && v.clubs) || {}).map(([k, c]) => [c.n, c.s.length])) }, 200, {});
+    } catch (e) { return json({ ok: false, error: String(e && e.message) }, 200, {}); }
+  }
   if (req.method === "POST" && url.pathname === "/bhs-probe") {
     if (!env.ADMIN_KEY || !sameSecret(req.headers.get("X-Admin-Key"), env.ADMIN_KEY)) return json({ error: "forbidden" }, 403, {});
     let b = {};
@@ -325,8 +333,9 @@ export async function runBhsResults(env, t, budget, log = {}) {
   return send;
 }
 /* ---- MATCHi TV (tv.js): the streams of the halls with cameras where club players play, KV "tv" = {at, clubs: {id: {n,
-   s: [streams]}}}. Every 10 min (minute 8, 18, ...) while an event there is on, hourly (minute 28) from an hour before
-   until two days after (recordings), never at night. Written only when the streams changed. ---- */
+   s: [streams]}}, sent}. Every 5 min while an event there is on (and the "on MATCHi TV" notis), hourly (minute 28) from
+   an hour before until two days after, then once a day (07:28) up to 30 days after (recordings); never at night.
+   Written only when the streams changed. ---- */
 let TVM = { v: undefined, at: 0 }, TVL = { at: 0 };
 // The halls with cameras: KV "tvclubs" (refreshed once a day from the weekly list, tvRefresh), read at most every 6 h
 // per isolate; without it the list bundled in the worker (tvclubs.js).
@@ -358,9 +367,10 @@ export function tvTargets(list, t) {
     const c = eventClub(e);
     if (!c || !e.windowFrom || !e.windowTo) continue;
     const from = Date.parse(e.windowFrom), to = Date.parse(e.windowTo);
-    if (+t < from - H || +t > to + 2 * DAY) continue;
-    const x = out.get(c.id) || { id: c.id, n: c.n, live: false, from, to };
+    if (+t < from - H || +t > to + 30 * DAY) continue;   // recordings: up to 30 days after
+    const x = out.get(c.id) || { id: c.id, n: c.n, live: false, recent: false, from, to };
     x.live = x.live || (+t >= from && +t <= to);
+    x.recent = x.recent || +t <= to + 2 * DAY;
     x.from = Math.min(x.from, from); x.to = Math.max(x.to, to);
     out.set(c.id, x);
   }
@@ -369,19 +379,21 @@ export function tvTargets(list, t) {
 export function tvDue(targets, t) {
   const mm = t.getUTCMinutes(), lh = new Date(+t + offsetAt(+t) * H).getUTCHours();
   if (!targets.length || lh < 7) return false;
-  return targets.some(x => x.live) ? mm % 10 === 8 : mm === 28;
+  if (targets.some(x => x.live)) return mm % 5 === 3;   // live: every 5 min (the "on MATCHi TV" notis)
+  if (targets.some(x => x.recent)) return mm === 28;   // the first two days after: hourly
+  return mm === 28 && lh === 7;   // then once a day, up to 30 days
 }
 export async function runTv(env, t, budget, targets, log = {}) {
   const was = await loadTv(env), clubs = {};
-  for (const x of targets.slice(0, 4)) {
+  for (const x of targets.slice(0, 6)) {
     try {
       const lo = dayOf(new Date(x.from - DAY)), hi = dayOf(new Date(x.to + DAY));
-      const s = (await fetchClubMedia(budget, x.id)).filter(m => m.a.slice(0, 10) >= lo && m.a.slice(0, 10) <= hi).slice(0, 24);
+      const s = (await fetchClubMedia(budget, x.id)).filter(m => dayOf(new Date(m.a)) >= lo && dayOf(new Date(m.a)) <= hi).slice(0, 24);
       clubs[x.id] = { n: x.n, s };
     } catch (e) { console.warn("matchi tv", x.id, e.message); if (was && was.clubs && was.clubs[x.id]) clubs[x.id] = was.clubs[x.id]; }
   }
   if (was && JSON.stringify(was.clubs) === JSON.stringify(clubs)) return was;
-  const v = { at: t.toISOString(), clubs };
+  const v = { at: t.toISOString(), clubs, ...(was && was.sent ? { sent: was.sent } : {}) };
   await env.PUSH.put("tv", JSON.stringify(v));
   TVM = { v, at: Date.now() };
   log.writes = (log.writes || 0) + 1; log.tv = Object.keys(clubs).length;
@@ -847,7 +859,17 @@ export async function tick(env, events) {
     if (t.getUTCHours() === 4 && mm === 47) try { await tvRefresh(env, budget, log); } catch (e) { console.warn("matchi tv list", e.message); }   // once a day
     await tvClubs(env);
     const tg = tvTargets(list.concat((rec && rec.past) || []), t);
-    if (tvDue(tg, t)) try { await runTv(env, t, budget, tg, log); } catch (e) { console.warn("matchi tv", e.message); }
+    if (tvDue(tg, t)) try {
+      const v = await runTv(env, t, budget, tg, log);
+      if (v && tg.some(x => x.live)) {   // a club pair's court is on air as their match starts: one notis per stream and match
+        const all = list.concat((rec && rec.past) || []), lv = await liveView(env, t, all), n = tvNotes(v.clubs, lv.live, all, t, v.sent || []);
+        if (n.length) {
+          pubMsgs.push(...n.map(x => ({ pids: x.pids, m: x.m })));
+          const w = { ...v, sent: (v.sent || []).concat(n.map(x => x.k)).slice(-100) };
+          await env.PUSH.put("tv", JSON.stringify(w)); TVM = { v: w, at: Date.now() }; log.writes = (log.writes || 0) + 1; log.tvNotes = n.length;
+        }
+      }
+    } catch (e) { console.warn("matchi tv", e.message); }
   }
   if (!events && env.CAL_OFF !== "1" && calendarDue(t, env)) {   // CAL_OFF / CAL_ANY: local tests only
     try { await runCalendar(env, t, budget, rec, log); } catch (e) { console.warn("calendar", e.message); }

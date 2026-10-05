@@ -24,7 +24,7 @@ test("streams: court, start/end (local), ended, title", () => {
   const b1 = s.find(x => /27 sep/.test(x.t) && x.c === "Bana 1");
   assert.ok(b1, JSON.stringify(s));
   assert.match(b1.x, /^\w{11}$/);
-  assert.equal(b1.a, "2026-09-27T13:55:55");
+  assert.equal(b1.a, "2026-09-27T13:55:55Z", "PadelGo times are UTC");
   assert.equal(b1.t, "Järfälla Open söndag 27 sep");
 });
 test("when: hourly around the event, every 10 min while it is on, never at night", () => {
@@ -32,14 +32,18 @@ test("when: hourly around the event, every 10 min while it is on, never at night
   assert.deepEqual(tvTargets([ev], new Date("2026-09-20T12:00:00+02:00")), [], "a week before: nothing");
   const on = tvTargets([ev], new Date("2026-09-27T12:08:00+02:00"));
   assert.deepEqual(on.map(x => [x.id, x.live]), [[595, true]]);
-  assert.equal(tvDue(on, new Date("2026-09-27T12:08:00+02:00")), true);
+  assert.equal(tvDue(on, new Date("2026-09-27T12:08:00+02:00")), true, "every 5 min while on (minute 3, 8, ...)");
   assert.equal(tvDue(on, new Date("2026-09-27T12:09:00+02:00")), false);
   const after = tvTargets([ev], new Date("2026-09-28T10:28:00+02:00"));
   assert.deepEqual(after.map(x => x.live), [false]);
   assert.equal(tvDue(after, new Date("2026-09-28T10:28:00+02:00")), true);
   assert.equal(tvDue(after, new Date("2026-09-28T10:08:00+02:00")), false);
   assert.equal(tvDue(after, new Date("2026-09-29T03:28:00+02:00")), false, "night");
-  assert.deepEqual(tvTargets([ev], new Date("2026-09-30T10:28:00+02:00")), [], "two days after: done");
+  const old = tvTargets([ev], new Date("2026-10-05T10:28:00+02:00"));
+  assert.deepEqual(old.map(x => [x.live, x.recent]), [[false, false]], "a week after: still a target (recordings)");
+  assert.equal(tvDue(old, new Date("2026-10-05T10:28:00+02:00")), false, "but only once a day");
+  assert.equal(tvDue(old, new Date("2026-10-05T07:28:00+02:00")), true);
+  assert.deepEqual(tvTargets([ev], new Date("2026-10-28T10:28:00+02:00")), [], "a month after: done");
 });
 test("run: the hall's streams of the event days into KV, written only on a change", async () => {
   _resetMemory();
@@ -75,4 +79,25 @@ test("the weekly list: fetched once a day into KV (only when changed), replaces 
     await assert.rejects(tvRefresh({ PUSH }, { left: 5 }), /invalid/);
     assert.equal(matchClub("Nynäshamns Padelcenter").id, 99999, "the last good list stays");
   } finally { globalThis.fetch = orig; useClubs(CLUBS); }
+});
+
+test("notis: the court's stream is live as a club pair's match starts; once per stream and match; not too early", async () => {
+  const { tvNotes } = await import("../src/tv.js");
+  const ev = { key: "t164681-thea", kind: "tournament", venue: "Järfälla Padel", classId: 164681, windowFrom: "2026-09-25T07:00:00+02:00", windowTo: "2026-09-27T23:00:00+02:00" };
+  const clubs = { 595: { n: "Järfälla Padel Club", s: [{ x: "CaGtlcm3xJI", c: "Bana 1", a: "2026-09-27T13:55:55Z", b: "2026-09-27T18:00:00Z", e: 0 }, { x: "zzzzzzzzzzz", c: "Bana 2", a: "2026-09-27T13:55:55Z", b: "", e: 0 }] } };
+  const nx = { st: "next", mid: "6872156", lab: "Final", d: "2026-09-27T17:45:00", t: "17:45", c: "Bana 1", opp: "Persson / Bradbury", key: "t164681-thea" };
+  const live = { 1675246: nx, 1849853: nx };
+  assert.deepEqual(tvNotes(clubs, live, [ev], new Date("2026-09-27T17:00:00+02:00")), [], "45 min before: not yet");
+  const n = tvNotes(clubs, live, [ev], new Date("2026-09-27T17:35:00+02:00"));
+  assert.equal(n.length, 1);
+  assert.deepEqual(n[0].pids.sort(), [1675246, 1849853]);
+  assert.equal(n[0].k, "CaGtlcm3xJI:6872156");
+  assert.match(n[0].m.title, /^(Thea och Cassandra|Cassandra och Thea) sänds live på MATCHi TV$/);
+  assert.equal(n[0].m.body, "Final · Bana 1 · Järfälla Padel Club · mot Persson / Bradbury");
+  assert.equal(n[0].m.url, "https://matchi.tv/watch?s=CaGtlcm3xJI");
+  assert.match(n[0].m.es.title, /en directo en MATCHi TV$/);
+  assert.deepEqual(tvNotes(clubs, live, [ev], new Date("2026-09-27T17:40:00+02:00"), [n[0].k]), [], "sent once");
+  assert.deepEqual(tvNotes(clubs, { 1675246: { ...nx, c: "Bana 3" } }, [ev], new Date("2026-09-27T17:35:00+02:00")), [], "a court without a stream");
+  const ended = { 595: { n: "x", s: [{ ...clubs[595].s[0], e: 1 }] } };
+  assert.deepEqual(tvNotes(ended, live, [ev], new Date("2026-09-27T17:35:00+02:00")), [], "the stream has ended");
 });
