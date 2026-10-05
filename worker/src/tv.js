@@ -6,7 +6,14 @@ import CLUBS from "./tvclubs.js";
 const STOP = new Set(["padel", "club", "klubb", "sportklubb", "sports", "sport", "ab", "och", "and", "the", "at", "pa", "i", "of", "center", "centre", "padelcenter", "hall", "hallen", "arena"]);
 const words = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(w => w && !STOP.has(w));
 const flat = s => " " + String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim() + " ";
-const NAMES = CLUBS.map(([id, n]) => ({ id, n, w: words(n), f: flat(n) })).filter(c => c.w.length);
+const build = list => list.map(([id, n]) => ({ id, n, w: words(n), f: flat(n) })).filter(c => c.w.length);
+let NAMES = build(CLUBS);
+// The weekly list (tvclubs.json on the branch "tvdata", built by .github/workflows/tvclubs.yml) replaces the bundled one
+export const TV_LIST_URL = "https://raw.githubusercontent.com/hynjjr44sz-pixel/padel/tvdata/tvclubs.json";
+export function validClubs(list) {
+  return Array.isArray(list) && list.length >= 100 && list.every(c => Array.isArray(c) && Number.isInteger(c[0]) && typeof c[1] === "string" && Array.isArray(c[2]));
+}
+export function useClubs(list) { if (validClubs(list)) NAMES = build(list); return NAMES.length; }
 
 // A place ("Padelverket Haninge Sportklubb", or an away team "Golden Padel A") -> the camera hall whose distinctive
 // words are all in it (the most words wins), else null. A hall with one distinctive word ("Golden Padel") only when its

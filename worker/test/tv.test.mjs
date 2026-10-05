@@ -56,3 +56,23 @@ test("run: the hall's streams of the event days into KV, written only on a chang
     assert.deepEqual(puts, ["tv"], "unchanged: no write");
   } finally { globalThis.fetch = orig; _resetMemory(); }
 });
+test("the weekly list: fetched once a day into KV (only when changed), replaces the bundled one; a bad list is refused", async () => {
+  const { tvRefresh } = await import("../src/index.js"), { useClubs, TV_LIST_URL } = await import("../src/tv.js");
+  const CLUBS = (await import("../src/tvclubs.js")).default;
+  const list = CLUBS.concat([[99999, "Nynäshamns Padelcenter", ["Bana 1"]]]), m = new Map(), puts = [];
+  const PUSH = { async get(k) { return m.get(k) ?? null; }, async put(k, v) { puts.push(k); m.set(k, v); } };
+  const orig = globalThis.fetch, seen = [];
+  let body = JSON.stringify(list);
+  globalThis.fetch = async u => { seen.push(String(u)); return new Response(body); };
+  try {
+    assert.equal(matchClub("Nynäshamns Padelcenter"), null, "not in the bundled list");
+    await tvRefresh({ PUSH }, { left: 5 });
+    assert.deepEqual([seen, puts], [[TV_LIST_URL], ["tvclubs"]]);
+    assert.equal(matchClub("Nynäshamns Padelcenter").id, 99999, "a new hall with cameras");
+    await tvRefresh({ PUSH }, { left: 5 });
+    assert.deepEqual(puts, ["tvclubs"], "unchanged: no write");
+    body = JSON.stringify(list.slice(0, 5));
+    await assert.rejects(tvRefresh({ PUSH }, { left: 5 }), /invalid/);
+    assert.equal(matchClub("Nynäshamns Padelcenter").id, 99999, "the last good list stays");
+  } finally { globalThis.fetch = orig; useClubs(CLUBS); }
+});

@@ -1,0 +1,38 @@
+# The halls with MATCHi TV cameras, once a week: worker/tv-clubs.mjs -> tvclubs.json on the branch "tvdata" (only that
+# file; the app's branches are untouched). The worker reads it once a day (worker/src/tv.js TV_LIST_URL).
+name: MATCHi TV halls
+on:
+  schedule:
+    - cron: "17 3 * * 1"   # Mondays 03:17 UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: tvclubs
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build the list
+        run: node worker/tv-clubs.mjs --json "$RUNNER_TEMP/tvclubs.json"
+      - name: Commit to tvdata when changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin tvdata >/dev/null; then
+            git fetch --depth 1 origin tvdata
+            git switch -C tvdata FETCH_HEAD
+          else
+            git switch --orphan tvdata
+            git rm -rfq --cached . >/dev/null 2>&1 || true
+            find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          fi
+          cp "$RUNNER_TEMP/tvclubs.json" tvclubs.json
+          git add tvclubs.json
+          if git diff --cached --quiet; then echo "unchanged"; exit 0; fi
+          git commit -qm "MATCHi TV halls: $(node -e 'console.log(JSON.parse(require("fs").readFileSync("tvclubs.json")).length)') clubs"
+          git push origin tvdata

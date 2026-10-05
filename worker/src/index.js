@@ -2,7 +2,7 @@
 // event is active, diffs against the last state in KV and pushes new results to the devices that follow
 // the player(s) concerned. Events come from discover.js (every event the club's players in players.json
 // enter on RankedIn, a few players per run) merged with events.js.
-import { eventClub, fetchClubMedia } from "./tv.js";
+import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
 import { parse, snapshot, unpack, notes, drawNote, summary, classResult, flip } from "./rankedin.js";
@@ -154,6 +154,7 @@ async function handle(req, env) {
     // photos: roster players' RankedIn profile photos {pid: {url, thumb, placeholder}} (the page: only without own photo)
     // board: the club leaderboard per pid {sk skill, w/l/y this year's W–L, rk/rp/rd SPF standing/points/list date, up places
     // gained on that list} (home view: Topplistan; kept in "disc", so it costs no extra KV read)
+    await tvClubs(env);
     const bhs = await loadBhs(env), tv = await loadTv(env);
     // tv: the MATCHi TV hall of an event (e.tv = its club id) and the halls' streams around the play days
     const withTv = e => { const c = eventClub(e); return c ? { ...e, tv: c.id } : e; };
@@ -225,7 +226,7 @@ const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8;
 
 /* ---- discovered events: KV "disc" = {at, events, ended, none, past, photos, board}. Read at most every 5 min per isolate. ---- */
 let MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 };
-export function _resetMemory() { TVM = { v: undefined, at: 0 }; BHSM = { v: undefined, at: 0 }; MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 }; LV = { at: 0, v: null }; CAL = { v: undefined, at: 0 }; LIVE = { rec: null, at: 0 }; SUBS = { list: null, at: 0 }; SUBN = { n: 0, at: 0 }; LIVE_N = { min: 0, n: 0 }; }
+export function _resetMemory() { TVM = { v: undefined, at: 0 }; TVL = { at: 0 }; BHSM = { v: undefined, at: 0 }; MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 }; LV = { at: 0, v: null }; CAL = { v: undefined, at: 0 }; LIVE = { rec: null, at: 0 }; SUBS = { list: null, at: 0 }; SUBN = { n: 0, at: 0 }; LIVE_N = { min: 0, n: 0 }; }
 async function loadRecord(env) {
   if (MEM.rec !== undefined && Date.now() - MEM.readAt < 5 * 60e3) return MEM.rec;
   let rec = null;
@@ -326,7 +327,24 @@ export async function runBhsResults(env, t, budget, log = {}) {
 /* ---- MATCHi TV (tv.js): the streams of the halls with cameras where club players play, KV "tv" = {at, clubs: {id: {n,
    s: [streams]}}}. Every 10 min (minute 8, 18, ...) while an event there is on, hourly (minute 28) from an hour before
    until two days after (recordings), never at night. Written only when the streams changed. ---- */
-let TVM = { v: undefined, at: 0 };
+let TVM = { v: undefined, at: 0 }, TVL = { at: 0 };
+// The halls with cameras: KV "tvclubs" (refreshed once a day from the weekly list, tvRefresh), read at most every 6 h
+// per isolate; without it the list bundled in the worker (tvclubs.js).
+async function tvClubs(env) {
+  if (Date.now() - TVL.at < 6 * H) return;
+  TVL.at = Date.now();
+  try { const l = JSON.parse((await env.PUSH.get("tvclubs")) || "null"); if (l) useClubs(l); } catch (e) {}
+}
+export async function tvRefresh(env, budget, log = {}) {
+  if (budget.left < 1) return;
+  budget.left--;
+  const r = await fetch(TV_LIST_URL, { headers: { "User-Agent": "padel.holmberg.st" }, signal: AbortSignal.timeout(12000) });
+  if (!r.ok) throw new Error("tv list HTTP " + r.status);
+  const txt = await r.text(), list = JSON.parse(txt);
+  if (!validClubs(list)) throw new Error("tv list invalid");
+  if ((await env.PUSH.get("tvclubs")) !== txt) { await env.PUSH.put("tvclubs", txt); log.writes = (log.writes || 0) + 1; log.tvClubs = list.length; }
+  useClubs(list); TVL.at = Date.now();
+}
 async function loadTv(env) {
   if (TVM.v !== undefined && Date.now() - TVM.at < 5 * 60e3) return TVM.v;
   let v = null;
@@ -826,6 +844,8 @@ export async function tick(env, events) {
     try { pubMsgs.push(...await runBhsResults(env, t, budget, log)); } catch (e) { console.warn("backhandsmash results", e.message); }
   }
   if (!events && env.TV_OFF !== "1") {   // TV_OFF: local tests only
+    if (t.getUTCHours() === 4 && mm === 47) try { await tvRefresh(env, budget, log); } catch (e) { console.warn("matchi tv list", e.message); }   // once a day
+    await tvClubs(env);
     const tg = tvTargets(list.concat((rec && rec.past) || []), t);
     if (tvDue(tg, t)) try { await runTv(env, t, budget, tg, log); } catch (e) { console.warn("matchi tv", e.message); }
   }
