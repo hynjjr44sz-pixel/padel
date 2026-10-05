@@ -692,14 +692,14 @@ try {
   // MATCHi TV: Järfälla (a hall with cameras): Thea's matches found in the court's recording, links to matchi.tv
   {
     const TVS = parseMedia(JSON.parse(readFileSync(new URL("./fixtures/tv-jarfalla.json", import.meta.url), "utf8")));
-    const ev = { ...EVENTS_WEEK, tv: { 595: { n: "Järfälla Padel Club", s: TVS } } };
+    const ev = { ...EVENTS_WEEK, tv: { 595: { n: "Järfälla Padel Club", s: TVS } }, tvs: { 6872153: { x: "CaGtlcm3xJI", o: 4980 } } };
     ok("tv: the worker marks Järfälla's events with the hall", EVENTS_WEEK.past.concat(EVENTS_WEEK.events).some(e => /Järfälla/.test(e.name || "") && e.tv === 595), EVENTS_WEEK.past.map(e => [e.name, e.venue, e.tv]));
     ({ page, ctx, errors, api } = await newPage({ events: ev, over: FINAL }));
     await page.goto(url("#thea", "", "2026-09-29T12:00:00+02:00"));
     await page.waitForSelector("#dyn-thea .tvbox", { timeout: 8000 }).catch(() => {});
     const tv = await page.$eval("#dyn-thea .tvbox", e => ({ txt: e.innerText.replace(/\s+/g, " "), links: [...e.querySelectorAll("a")].map(a => a.href) })).catch(() => null);
     ok("tv: a MATCHi TV box with links to the recordings", !!tv && /MATCHi TV/.test(tv.txt) && tv.links.length > 0 && tv.links.every(h => /^https:\/\/matchi\.tv\/watch\?s=\w+$/.test(h)), tv);
-    ok("tv: Thea's final found in its court's recording (PadelGo times are UTC), with the time into it", !!tv && /Final Bana 1 · enligt tidtabellen ca 1 h 49 min in/.test(tv.txt), tv && tv.txt);
+    ok("tv: Thea's final in its court's recording, starting where the video shows play begin (tvstarts)", !!tv && /Final Bana 1 · startar 1 h 23 min in/.test(tv.txt) && tv.links.includes("https://matchi.tv/watch?s=CaGtlcm3xJI"), tv && tv.txt);
     if (process.env.DEBUG) console.log("TV", JSON.stringify(tv));
     ok("tv: no horizontal scroll, no errors", await noHScroll(page) && errors.length === 0, errors);
     // Opening the tournament under Senaste tävlingar (where one looks for it later): the same links
@@ -707,7 +707,7 @@ try {
     await page.click('#p-thea .tr-item[data-key="164681"] .tr').catch(() => {});
     await page.waitForSelector('#p-thea .tr-item[data-key="164681"] .tx .tvbox', { timeout: 8000 }).catch(() => {});
     const tb = await page.$eval('#p-thea .tr-item[data-key="164681"] .tx .tvbox', e => e.innerText.replace(/\s+/g, " ")).catch(() => "");
-    ok("tv: in the tournament under Senaste tävlingar too", /Final Bana 1 · enligt tidtabellen ca 1 h 49 min in/.test(tb), tb);
+    ok("tv: in the tournament under Senaste tävlingar too", /Final Bana 1 · startar 1 h 23 min in/.test(tb), tb);
     if (SHOTS) await page.$eval("#dyn-thea .tvbox", e => e.scrollIntoView()).then(async () => (await page.$("#dyn-thea .tvbox")).screenshot({ path: SHOTS + "/tvbox.png" })).catch(() => {});
     await ctx.close();
   }

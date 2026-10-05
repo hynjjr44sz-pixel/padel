@@ -1,0 +1,41 @@
+# MATCHi TV: when the club pairs' matches actually began in their courts' recordings (the schedule's time is often off).
+# worker/tv-jobs.mjs (which matches) -> worker/tvstarts.py (video: an empty court turning into play) -> tvstarts.json on
+# the branch "tvdata", read by the worker every hour (src/index.js tvStartsRefresh). Each match is looked at once.
+name: MATCHi TV match starts
+on:
+  schedule:
+    - cron: "41 7-21/2 * * *"   # every 2 h in the day (UTC)
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: tvdata
+jobs:
+  starts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install --quiet opencv-python-headless numpy
+      - name: Matches to look at
+        run: |
+          curl -sf https://raw.githubusercontent.com/${{ github.repository }}/tvdata/tvstarts.json -o "$RUNNER_TEMP/tvstarts.json" || echo '{}' > "$RUNNER_TEMP/tvstarts.json"
+          cd worker && node tv-jobs.mjs "$RUNNER_TEMP/tvstarts.json" "$RUNNER_TEMP/jobs.json"
+      - name: Find the starts in the recordings
+        run: python3 worker/tvstarts.py "$RUNNER_TEMP/jobs.json" "$RUNNER_TEMP/tvstarts.json"
+      - name: Commit to tvdata when changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --depth 1 origin tvdata
+          git switch -C tvdata FETCH_HEAD
+          cp "$RUNNER_TEMP/tvstarts.json" tvstarts.json
+          git add tvstarts.json
+          if git diff --cached --quiet; then echo "unchanged"; exit 0; fi
+          git commit -qm "MATCHi TV match starts: $(node -e 'console.log(Object.keys(JSON.parse(require("fs").readFileSync("tvstarts.json"))).length)') matches"
+          git push origin tvdata

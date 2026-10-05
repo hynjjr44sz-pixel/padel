@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
-concurrency: tvclubs
+concurrency: tvdata
 jobs:
   update:
     runs-on: ubuntu-latest

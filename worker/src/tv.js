@@ -13,6 +13,8 @@ const build = list => list.map(([id, n]) => ({ id, n, w: words(n), f: flat(n) })
 let NAMES = build(CLUBS);
 // The weekly list (tvclubs.json on the branch "tvdata", built by .github/workflows/tvclubs.yml) replaces the bundled one
 export const TV_LIST_URL = "https://raw.githubusercontent.com/hynjjr44sz-pixel/padel/tvdata/tvclubs.json";
+// When matches actually began in their recordings ({mid: {x, o seconds | null}}, .github/workflows/tvstarts.yml)
+export const TV_STARTS_URL = "https://raw.githubusercontent.com/hynjjr44sz-pixel/padel/tvdata/tvstarts.json";
 export function validClubs(list) {
   return Array.isArray(list) && list.length >= 100 && list.every(c => Array.isArray(c) && Number.isInteger(c[0]) && typeof c[1] === "string" && Array.isArray(c[2]));
 }
@@ -44,7 +46,7 @@ const utc = s => s ? String(s).slice(0, 19) + "Z" : "";
 export function parseMedia(list) {
   return (Array.isArray(list) ? list : []).filter(m => m && m.externalId && m.startDateTime).map(m => ({
     x: m.externalId, c: String(m.courtDescription || "").replace(/\s+(?:at|på)\s+.*$/i, "").trim(), a: utc(m.startDateTime),
-    b: utc(m.endDateTime), e: m.actualEndDateTime ? 1 : 0, t: String(m.description || "").replace(/\s+-\s+.*$/, "").trim().slice(0, 80)
+    b: utc(m.endDateTime), e: m.actualEndDateTime ? 1 : 0, g: m.bunnyVideoStreamGuid || "", t: String(m.description || "").replace(/\s+-\s+.*$/, "").trim().slice(0, 80)
   }));
 }
 export async function fetchClubMedia(budget, clubId) {

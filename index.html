@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-2LQOwFXwakI3dhCL21Ya+gXFbpZQb3oRFKcbWqCkL1E='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-7Epz2I9RJiX2rqEMClvf/d0XNela6I+/Q2n8ZNSG4RM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1707,7 +1707,7 @@
     "Ställning mot ":"Marcador contra ",
     "Stäng":"Cerrar",
     "Svep för nästa rond →":"Desliza a la siguiente ronda →",
-    "Sänds av hallen på MATCHi TV. Tiden i inspelningen räknas från tidtabellen: matcher börjar ofta tidigare eller senare, så spola gärna lite bakåt.":"Emitido por el club en MATCHi TV. El momento en la grabación sale del horario: los partidos a menudo empiezan antes o después, así que retrocede un poco.",
+    "Sänds av hallen på MATCHi TV. \"Startar\" är hittat i inspelningen (när banan går från tom till spel), annars räknat från tidtabellen.":"Emitido por el club en MATCHi TV. \"Empieza\" sale de la grabación (cuando la pista pasa de vacía a juego); si no, del horario.",
     "Säsong ":"Temporada ",
     "Så funkar rankingen":"Cómo funciona el ranking",
     "Sök spelare":"Buscar jugador",
@@ -1827,6 +1827,8 @@
     "snitt ":"media ",
     "spelare per telefon":"jugadores por teléfono",
     "start ":"inicio ",
+    "startar i början av inspelningen":"empieza al inicio de la grabación",
+    "startar {t} in":"empieza a {t}",
     "stänger ":"cierra el ",
     "svenska / spanska":"sueco / español",
     "sänds {when}":"se emite {when}",
@@ -3365,11 +3367,14 @@
     (mts || []).forEach(function(o){
       var mt = o.mt, no = courtNo(mt.c);
       if (!mt.at || !no) return;
-      var x = tv.s.filter(function(y){ return courtNo(y.c) === no && +y.a <= +mt.at + 15 * 60000 && (!y.b || +mt.at < +y.b); })[0];
+      // found in the recording (tvstarts: the video's empty court turning into play), else the schedule's time
+      var st = DISC.tvs && mt.mid && DISC.tvs[mt.mid], found = st && st.o != null ? tv.s.filter(function(y){ return y.x === st.x; })[0] : null;
+      var x = found || tv.s.filter(function(y){ return courtNo(y.c) === no && +y.a <= +mt.at + 15 * 60000 && (!y.b || +mt.at < +y.b); })[0];
       if (!x) return;
       used[x.x] = 1;
-      var live = tvLive(x, t) && t >= +mt.at - 15 * 60000 && !mt.w, off = Math.max(0, Math.round((+mt.at - x.a) / 60000));
-      var sub = mt.c + " · " + (live ? _("pågår nu") : mt.w || t > +mt.at ? (off < 5 ? _("från början av inspelningen") : _("enligt tidtabellen ca {t} in", {t:fmtLeft(off * 60000).trim()})) : _("sänds {when}", {when:dayLabel(mt.at) + " " + hm(mt.at)}));
+      var live = tvLive(x, t) && t >= +mt.at - 15 * 60000 && !mt.w, off = found ? Math.round(st.o / 60) : Math.max(0, Math.round((+mt.at - x.a) / 60000));
+      var sub = mt.c + " · " + (live ? _("pågår nu") : found ? (off < 1 ? _("startar i början av inspelningen") : _("startar {t} in", {t:fmtLeft(off * 60000).trim()})) :
+        mt.w || t > +mt.at ? (off < 5 ? _("från början av inspelningen") : _("enligt tidtabellen ca {t} in", {t:fmtLeft(off * 60000).trim()})) : _("sänds {when}", {when:dayLabel(mt.at) + " " + hm(mt.at)}));
       if (!mt.w && t < +mt.at - 15 * 60000 && !tvLive(x, t)) return;   // a coming match: its stream once it is close
       rows.push(tvLink(x, o.lab, sub, live));
     });
@@ -3378,7 +3383,7 @@
     });
     var head = '<div class="sh"><h2>' + _("MATCHi TV") + '</h2><div class="meta">' + esc(tv.n) + '</div></div>';
     if (!rows.length) return '<section class="tvbox">' + head + '<p class="empty">' + _("Hallen har kameror. Sändningarna dyker upp här när de börjar.") + '</p></section>';
-    return '<section class="tvbox">' + head + '<div class="card tvlist">' + rows.join("") + '</div><p class="vnote">' + _("Sänds av hallen på MATCHi TV. Tiden i inspelningen räknas från tidtabellen: matcher börjar ofta tidigare eller senare, så spola gärna lite bakåt.") + '</p></section>';
+    return '<section class="tvbox">' + head + '<div class="card tvlist">' + rows.join("") + '</div><p class="vnote">' + _("Sänds av hallen på MATCHi TV. \"Startar\" är hittat i inspelningen (när banan går från tom till spel), annars räknat från tidtabellen.") + '</p></section>';
   }
   function setTv(D, html){ var el = D.el && D.el.tv; if (el && el._h !== html){ el.innerHTML = html; el._h = html; } }
   function tourMine(ev){

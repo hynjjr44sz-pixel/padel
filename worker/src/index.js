@@ -2,7 +2,7 @@
 // event is active, diffs against the last state in KV and pushes new results to the devices that follow
 // the player(s) concerned. Events come from discover.js (every event the club's players in players.json
 // enter on RankedIn, a few players per run) merged with events.js.
-import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, tvNotes } from "./tv.js";
+import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
 import { parse, snapshot, unpack, notes, drawNote, summary, classResult, flip } from "./rankedin.js";
@@ -113,7 +113,8 @@ async function handle(req, env) {
     try {
       const t = now(env), rec = await loadRecord(env), tg = tvTargets(merge(rec ? rec.events : []).concat((rec && rec.past) || []), t);
       const v = await runTv(env, t, { left: SUBREQUESTS }, tg);
-      return json({ ok: true, targets: tg.map(x => x.n), streams: Object.fromEntries(Object.entries((v && v.clubs) || {}).map(([k, c]) => [c.n, c.s.length])) }, 200, {});
+      await tvStartsRefresh(env, { left: 2 });
+      return json({ ok: true, targets: tg.map(x => x.n), starts: Object.keys((await loadTvStarts(env)) || {}).length, streams: Object.fromEntries(Object.entries((v && v.clubs) || {}).map(([k, c]) => [c.n, c.s.length])) }, 200, {});
     } catch (e) { return json({ ok: false, error: String(e && e.message) }, 200, {}); }
   }
   if (req.method === "POST" && url.pathname === "/bhs-probe") {
@@ -163,10 +164,10 @@ async function handle(req, env) {
     // board: the club leaderboard per pid {sk skill, w/l/y this year's W–L, rk/rp/rd SPF standing/points/list date, up places
     // gained on that list} (home view: Topplistan; kept in "disc", so it costs no extra KV read)
     await tvClubs(env);
-    const bhs = await loadBhs(env), tv = await loadTv(env);
+    const bhs = await loadBhs(env), tv = await loadTv(env), tvs = await loadTvStarts(env);
     // tv: the MATCHi TV hall of an event (e.tv = its club id) and the halls' streams around the play days
     const withTv = e => { const c = eventClub(e); return c ? { ...e, tv: c.id } : e; };
-    return json({ at: rec ? rec.at : null, checked: checkedAt(rec, t), src: "worker", events: events.map(withTv), past: past.map(withTv), tv: tv ? tv.clubs : {}, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {}, bhs: bhs ? { at: bhs.at, groups: bhs.groups, hist: bhs.hist ? { at: bhs.hist.at, members: bhs.hist.members, rank: bhs.hist.rank, sw: bhs.hist.sw || [] } : null } : null,
+    return json({ at: rec ? rec.at : null, checked: checkedAt(rec, t), src: "worker", events: events.map(withTv), past: past.map(withTv), tv: tv ? tv.clubs : {}, tvs: tvs || {}, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {}, bhs: bhs ? { at: bhs.at, groups: bhs.groups, hist: bhs.hist ? { at: bhs.hist.at, members: bhs.hist.members, rank: bhs.hist.rank, sw: bhs.hist.sw || [] } : null } : null,
       board: (rec && rec.board) || {} }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
   if (route === "GET /live") return liveRoute(req, env, url, h);
@@ -234,7 +235,7 @@ const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8;
 
 /* ---- discovered events: KV "disc" = {at, events, ended, none, past, photos, board}. Read at most every 5 min per isolate. ---- */
 let MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 };
-export function _resetMemory() { TVM = { v: undefined, at: 0 }; TVL = { at: 0 }; BHSM = { v: undefined, at: 0 }; MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 }; LV = { at: 0, v: null }; CAL = { v: undefined, at: 0 }; LIVE = { rec: null, at: 0 }; SUBS = { list: null, at: 0 }; SUBN = { n: 0, at: 0 }; LIVE_N = { min: 0, n: 0 }; }
+export function _resetMemory() { TVM = { v: undefined, at: 0 }; TVL = { at: 0 }; TVS = { v: undefined, at: 0 }; BHSM = { v: undefined, at: 0 }; MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 }; LV = { at: 0, v: null }; CAL = { v: undefined, at: 0 }; LIVE = { rec: null, at: 0 }; SUBS = { list: null, at: 0 }; SUBN = { n: 0, at: 0 }; LIVE_N = { min: 0, n: 0 }; }
 async function loadRecord(env) {
   if (MEM.rec !== undefined && Date.now() - MEM.readAt < 5 * 60e3) return MEM.rec;
   let rec = null;
@@ -343,6 +344,26 @@ async function tvClubs(env) {
   if (Date.now() - TVL.at < 6 * H) return;
   TVL.at = Date.now();
   try { const l = JSON.parse((await env.PUSH.get("tvclubs")) || "null"); if (l) useClubs(l); } catch (e) {}
+}
+// The match starts found in the recordings (tvstarts.json): every hour (minute 51) while there are halls to watch, into
+// KV "tvstarts" when changed; GET /events serves them as "tvs".
+export async function tvStartsRefresh(env, budget, log = {}) {
+  if (budget.left < 1) return;
+  budget.left--;
+  const r = await fetch(TV_STARTS_URL, { headers: { "User-Agent": "padel.holmberg.st" }, signal: AbortSignal.timeout(12000) });
+  if (r.status === 404) return;
+  if (!r.ok) throw new Error("tv starts HTTP " + r.status);
+  const txt = await r.text(), v = JSON.parse(txt);
+  if (!v || typeof v !== "object" || Array.isArray(v)) throw new Error("tv starts invalid");
+  if ((await env.PUSH.get("tvstarts")) !== txt) { await env.PUSH.put("tvstarts", txt); TVS = { v, at: Date.now() }; log.writes = (log.writes || 0) + 1; }
+}
+let TVS = { v: undefined, at: 0 };
+async function loadTvStarts(env) {
+  if (TVS.v !== undefined && Date.now() - TVS.at < 10 * 60e3) return TVS.v;
+  let v = null;
+  try { v = JSON.parse((await env.PUSH.get("tvstarts")) || "null"); } catch (e) { v = null; }
+  TVS = { v, at: Date.now() };
+  return v;
 }
 export async function tvRefresh(env, budget, log = {}) {
   if (budget.left < 1) return;
@@ -859,6 +880,7 @@ export async function tick(env, events) {
     if (t.getUTCHours() === 4 && mm === 47) try { await tvRefresh(env, budget, log); } catch (e) { console.warn("matchi tv list", e.message); }   // once a day
     await tvClubs(env);
     const tg = tvTargets(list.concat((rec && rec.past) || []), t);
+    if (tg.length && mm === 51) try { await tvStartsRefresh(env, budget, log); } catch (e) { console.warn("matchi tv starts", e.message); }
     if (tvDue(tg, t)) try {
       const v = await runTv(env, t, budget, tg, log);
       if (v && tg.some(x => x.live)) {   // a club pair's court is on air as their match starts: one notis per stream and match

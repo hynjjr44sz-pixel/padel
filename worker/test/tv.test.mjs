@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { matchClub, eventClub, parseMedia } from "../src/tv.js";
-import { tvTargets, tvDue, runTv, _resetMemory } from "../src/index.js";
+import worker, { tvTargets, tvDue, runTv, _resetMemory } from "../src/index.js";
 
 const MEDIA = JSON.parse(readFileSync(new URL("./fixtures/tv-jarfalla.json", import.meta.url), "utf8"));
 
@@ -100,4 +100,33 @@ test("notis: the court's stream is live as a club pair's match starts; once per 
   assert.deepEqual(tvNotes(clubs, { 1675246: { ...nx, c: "Bana 3" } }, [ev], new Date("2026-09-27T17:35:00+02:00")), [], "a court without a stream");
   const ended = { 595: { n: "x", s: [{ ...clubs[595].s[0], e: 1 }] } };
   assert.deepEqual(tvNotes(ended, live, [ev], new Date("2026-09-27T17:35:00+02:00")), [], "the stream has ended");
+});
+test("match start in the recording (tvstarts.py): the empty court turning into play nearest the scheduled time", async t => {
+  const { spawnSync } = await import("node:child_process");
+  if (spawnSync("python3", ["-c", "import cv2"]).status !== 0) return t.skip("python3 with cv2 not here");
+  // Järfälla 27 sep, Bana 1, the final (scheduled 107 min in): motion per minute measured from the recording
+  const scores = { 40: 1.21, 43: 2.3, 46: 2.91, 49: 0.68, 52: 1.85, 55: 0.11, 58: 0.55, 61: 0.33, 64: 0.11, 67: 0.06, 70: 0.04, 73: 0.18, 76: 0.08, 79: 0.51, 82: 0.21,
+    85: 2.11, 88: 2.33, 91: 1.31, 94: 0.43, 97: 1.67, 100: 3.1, 103: 4.67, 106: 4.47, 109: 4.57, 112: 3.96, 115: 5.5, 118: 5.06, 121: 2.38 };
+  const py = "import json,sys; sys.path.insert(0,'.'); from tvstarts import start_of; s={int(k):v for k,v in json.loads(sys.argv[1]).items()}; print(json.dumps([start_of(s,107), start_of({k:v for k,v in s.items() if k>=85},107)]))";
+  const r = spawnSync("python3", ["-c", py, JSON.stringify(scores)], { cwd: new URL("..", import.meta.url).pathname, encoding: "utf8" });
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(JSON.parse(r.stdout), [85, null], "starts at 85; without an empty court before it: none");
+});
+test("match starts: read into KV only when changed, a 404 (none yet) is fine", async () => {
+  const { tvStartsRefresh } = await import("../src/index.js");
+  const m = new Map(), puts = [], PUSH = { async get(k) { return m.get(k) ?? null; }, async put(k, v) { puts.push(k); m.set(k, v); } };
+  const orig = globalThis.fetch;
+  let res = () => new Response("", { status: 404 });
+  globalThis.fetch = async () => res();
+  try {
+    await tvStartsRefresh({ PUSH }, { left: 5 });
+    assert.deepEqual(puts, []);
+    const body = JSON.stringify({ 6872153: { x: "CaGtlcm3xJI", o: 4980 } });
+    res = () => new Response(body);
+    await tvStartsRefresh({ PUSH }, { left: 5 });
+    await tvStartsRefresh({ PUSH }, { left: 5 });
+    assert.deepEqual(puts, ["tvstarts"]);
+    const r = await worker.fetch(new Request("https://w/events"), { PUSH });
+    assert.deepEqual((await r.json()).tvs, { 6872153: { x: "CaGtlcm3xJI", o: 4980 } });
+  } finally { globalThis.fetch = orig; _resetMemory(); }
 });
