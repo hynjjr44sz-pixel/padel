@@ -742,7 +742,9 @@ try {
     await page.click('#agenda a[href="' + th + '"]').catch(() => {});
     await page.waitForSelector("#tour .tcls", { timeout: 8000 }).catch(() => {});
     const tt = await page.textContent("#tour").catch(() => "");
-    ok("tournament: name, classes and the club's players", tt.includes(want[0].name) && want.every(e => tt.includes(e.cls)) && await page.$$eval("#tour .prow", a => a.length) > 0, tt.slice(0, 300));
+    ok("tournament: name, classes and the club's players", tt.includes(want[0].name) && want.every(e => tt.includes(e.cls)) && await page.$$eval("#tour a.tp", a => a.length) > 0, tt.slice(0, 300));
+    const links = await page.$$eval("#tour .tpair", ps => ps.map(p => [...p.querySelectorAll("a.tp")].map(a => a.getAttribute("href"))));
+    ok("tournament: each club player in a pair links to their own page", links.every(l => new Set(l).size === l.length && l.every(h => /^#[a-z0-9-]+$/.test(h))) && links.some(l => l.length === 2), links);
     ok("tournament: no horizontal scroll, no errors", await noHScroll(page) && errors.length === 0, errors);
     await ctx.close();
   }
