@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-iWMfu7VTToTb7klB75Yq9oF9QWJco5SfS/RPwniXc4k='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-T2ZxbrU6MTuX8Tsh/p+bBsWJ0uoqkJY2+RrnVo4sNvc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -4741,6 +4741,16 @@
   }
   function warn(what, e){ if (window.console) console.warn(what + ":", e && e.message); }
   // One row per player with an event on right now: next match (from the worker's live monitoring) or status
+  // The player's next match in an ongoing tournament, from the worker's live view: {x, at} (at: null without a time)
+  function tourNext(P, e){
+    var x = DISC && DISC.live && DISC.live[P.pid];
+    if (!x || x.st !== "next" || !(x.key === e.key || String(x.key).indexOf("t" + e.classId + "-") === 0)) return null;
+    return {x:x, at:x.t && x.d ? riDate(x.d) : null};
+  }
+  function tourOnNow(P, e){
+    var n = tourNext(P, e), t = +now();
+    return !!(n && n.at && +n.at - 30 * 60000 <= t && t - n.at < 4 * HOUR);
+  }
   function nowStatus(P, e){
     var x = DISC && DISC.live && DISC.live[P.pid], t = now(), o = {pill:_("Idag"), pcls:"next", line:""};
     if (x && !(x.key === e.key || (e.kind === "tournament" && String(x.key).indexOf("t" + e.classId + "-") === 0))) x = null;
@@ -4779,6 +4789,9 @@
         if (s.pcls === "live" && tr.s.pcls !== "live") tr.s = s;
         return;
       }
+      // a tournament: only from 30 min before the player's match (time from the worker's live view) until it is decided;
+      // a later match is under Kommande (tourNext)
+      if (e && e.kind === "tournament" && !tourOnNow(P, e)) e = null;
       if (e) rows.push({P:P, e:e, fol:f.indexOf(P.pid) >= 0, s:nowStatus(P, e)});
       else {   // a club series match (Backhandsmash) on now or within 30 min
         var t0 = +now(), n = bhsNext(P).filter(function(x){ return +x.at - 30 * 60000 <= t0; })[0];
@@ -4982,6 +4995,18 @@
         var others = r.e.partnerId && !BYPID[r.e.partnerId] ? _(" · med ") + r.e.partner : "";
         r.sub = namesOf(r.players) + others;
       }
+    });
+    // Ongoing tournaments: each club pair's next match (not yet in Spelar nu), at its time
+    var seenM = {};
+    DISC.events.forEach(function(e){
+      if (e.kind !== "tournament" || !inWin(e)) return;
+      var P = BYPID[e.pid], n = P && tourNext(P, e);
+      if (!n || !n.at || tourOnNow(P, e)) return;
+      var href = "#" + P.key + (n.x.mid ? "/m" + n.x.mid : ""), was = seenM[n.x.mid];
+      if (was){ if (isFollowed(P.pid) && !isFollowed(was.P.pid)){ was.href = href; was.P = P; } return; }   // the link: a followed player of the pair
+      var pl = [P, BYPID[e.partnerId]].filter(Boolean);
+      rows.push(seenM[n.x.mid] = {kind:"tm", P:P, e:e, at:n.at, time:hm(n.at), title:e.name || _("Turnering"), cls:e.cls, href:href, players:pl,
+        sub:[_(n.x.lab || "Match"), n.x.opp ? _("mot ") + n.x.opp : "", n.x.c].filter(Boolean).join(" · ")});
     });
     return rows.filter(function(r){ return r.at; }).sort(function(a, b){ return a.at - b.at; });
   }

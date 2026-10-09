@@ -711,6 +711,28 @@ try {
     if (SHOTS) await page.$eval("#dyn-thea .tvbox", e => e.scrollIntoView()).then(async () => (await page.$("#dyn-thea .tvbox")).screenshot({ path: SHOTS + "/tvbox.png" })).catch(() => {});
     await ctx.close();
   }
+  // Spelar nu during a tournament: only from 30 min before the player's next match; before that the match is under Kommande
+  {
+    const x = EVENTS.live["1675246"], ev = EVENTS.events.find(e => e.key === x.key);
+    const at = x && x.t && x.d ? new Date(x.d + "+02:00") : null;
+    ok("now: the fixture has Thea's next match with a time", !!(at && ev), x);
+    if (at && ev) {
+      const live = { ...EVENTS.live };
+      const run = async ms => {
+        ({ page, ctx, errors, api } = await newPage({ events: { ...EVENTS, live } }));
+        await page.goto(url("#/", "", new Date(+at - ms).toISOString()));
+        await page.waitForSelector("#nowList .nowrow, #nowList .empty", { timeout: 8000 });
+        await page.waitForTimeout(400);
+        const r = { now: await page.$$eval("#nowList a", a => a.map(y => y.getAttribute("href"))), agenda: await page.$$eval("#agenda a", a => a.map(y => y.getAttribute("href"))) };
+        await ctx.close();
+        return r;
+      };
+      let r = await run(2 * 3600e3);
+      ok("now: 2 h before her match Thea is not in Spelar nu, her match is under Kommande", !r.now.includes("#thea") && r.agenda.some(h => h === "#thea/m" + x.mid), r);
+      r = await run(10 * 60e3);
+      ok("now: 10 min before it she is in Spelar nu", r.now.includes("#thea"), r);
+    }
+  }
   // A team's play day: "Spelar nu" has one row for the team ("… spelar idag"), not one per player; it opens the team page
   // with the day's ties (lineups, results, win chances) and the table
   {
