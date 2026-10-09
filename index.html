@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-09lTGbZFaBuUEb1Jsf9entmquG+y5cttWjfe4FyShEI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-iWMfu7VTToTb7klB75Yq9oF9QWJco5SfS/RPwniXc4k='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1846,7 +1846,9 @@
     "topp ":"máx. ",
     "tvåa":"2.º puesto",
     "tävlingar inom 20 mil":"torneos a 200 km",
+    "utan match":"sin partido",
     "vann ":"ganaron ",
+    "vidare utan match":"pasa sin jugar",
     "vinst":"victoria",
     "vinster":"victorias",
     "vunna matcher":"partidos ganados",
@@ -3448,6 +3450,8 @@
   function whenText(mt){ return [mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : ""); }
   function setHero(D, o){
     var el = D.el;
+    // A court with a name ("Balingsholm Herrgård", a sponsor) does not fit the big court number: it goes on the round line
+    if (o.court && !o.clab && String(o.court).trim().length > 4){ o.round = (o.round ? o.round + " · " : "") + String(o.court).trim(); o.court = ""; }
     el.link.textContent = o.link || ""; el.link.href = o.url || RI_WEB; el.rl.href = o.url || RI_WEB;
     el.round.textContent = o.round || "";
     el.time.textContent = o.big || "–";
@@ -3515,7 +3519,8 @@
       var L = st.next && st.last;
       if (L){
         var lop = L.mt[meSide(L.mt) === "a" ? "b" : "a"];
-        o.last = '<span>' + esc(_(L.rd.label)) + ': <b>' + (L.mt.meWon ? _("vinst") : _("förlust")) + '</b>' + _(" mot ") + esc(lop.pair ? short(lop.pair) : "–") + '</span><span class="sc">' + esc(mePersp(L.mt) || L.mt.note || "") + '</span>';
+        o.last = lop && lop.pair ? '<span>' + esc(_(L.rd.label)) + ': <b>' + (L.mt.meWon ? _("vinst") : _("förlust")) + '</b>' + _(" mot ") + esc(short(lop.pair)) + '</span><span class="sc">' + esc(mePersp(L.mt) || L.mt.note || "") + '</span>'
+          : '<span>' + esc(_(L.rd.label)) + ': <b>' + _("vidare utan match") + '</b></span><span class="sc">' + esc(L.mt.note && L.mt.note !== "W.O." ? _(L.mt.note) : "") + '</span>';   // a bye: no opponent
       }
       o.route = dynRouteHtml(ev, st);
     }
@@ -3557,7 +3562,9 @@
       main.rounds.forEach(function(rd, r){ rd.matches.forEach(function(m, i){ if (m.hasMe && i0 < 0) i0 = i << r; }); });
       main.rounds.forEach(function(rd, r){
         var mt = rd.matches.filter(function(m){ return m.hasMe; })[0], slot = rd.matches[Math.max(0, i0) >> r] || rd.matches[0], cls = "", right, meta = whenText(slot);
-        if (mt && mt.w){ cls = mt.meWon ? "done" : "lost"; right = tilesFor(mt); meta = whenText(mt); }
+        var bye = mt && mt.w && !(mt[meSide(mt) === "a" ? "b" : "a"] || {}).pair;   // no opponent: through without a match
+        if (bye){ cls = "done"; right = '<span class="rs">' + _("Vidare") + '</span>'; meta = _("utan match"); }
+        else if (mt && mt.w){ cls = mt.meWon ? "done" : "lost"; right = tilesFor(mt); meta = whenText(mt); }
         else if (mt){ cls = "next"; var s3 = matchState(ev, mt); right = '<span class="rs">' + (s3 === "live" ? _("Pågår") : s3 === "nr" ? _("Väntar på resultat") : _("Nästa")) + '</span>'; meta = whenText(mt); }
         else if (out){ cls = "out"; right = '<span class="rs"></span>'; }
         else right = '<span class="rs">' + _("Vid vinst") + '</span>';
