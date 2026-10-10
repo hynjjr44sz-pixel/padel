@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-T2ZxbrU6MTuX8Tsh/p+bBsWJ0uoqkJY2+RrnVo4sNvc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-gT/cJC/t8eaVKAgPzHXBWifMP6jkBAUlpPcjdi6EnPQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -6048,7 +6048,9 @@
     }
     var calm = false;
     try { calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e){}
-    try { el.scrollIntoView({block:"center", behavior:calm ? "auto" : "smooth"}); } catch (e){ el.scrollIntoView(); }
+    // Vertical only: scrollIntoView would also pan the page sideways when the card sits off to the side in the bracket (iOS).
+    var r = el.getBoundingClientRect(), top = Math.max(0, window.scrollY + r.top - (window.innerHeight - r.height) / 2);
+    try { window.scrollTo({left:0, top:top, behavior:calm ? "auto" : "smooth"}); } catch (e){ window.scrollTo(0, top); }
     el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
     setTimeout(function(){ el.classList.remove("flash"); }, 2700);
   }

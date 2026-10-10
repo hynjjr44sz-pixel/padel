@@ -202,6 +202,8 @@ try {
   await page.waitForSelector('#p-thea [data-mid="6872156"]');
   await page.waitForTimeout(600);
   ok("deep link #thea/m6872156: Thea's page, match flashed", await page.$eval('#p-thea [data-mid="6872156"]', e => e.classList.contains("flash") || !!e.closest("#p-thea:not([hidden])")));
+  await page.waitForTimeout(900);
+  ok("deep link: the page scrolls to the match vertically only (no sideways pan)", await page.evaluate(() => window.scrollX === 0 && window.scrollY > 0), await page.evaluate(() => [window.scrollX, window.scrollY]));
   ok("Thea: hero photo (cut-out)", await page.$eval("#p-thea .hero .pmed img", i => i.getAttribute("src")) === "img/cut/thea-holmberg-loving.webp");
   ok("Thea: chips show followed first and Thea current", (await page.$$eval("#chips .pchip", a => a.map(x => x.getAttribute("href") + (x.getAttribute("aria-current") ? "*" : "")))).slice(0, 2).join() === "#thea*,#kian");
   ok("Thea: trend numbers", /#\d+/.test(await page.textContent("#tv-thea-rank")));
