@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-W4pVMFFZ8teb3sakPTh3jRah4WrUfFUE4ukhZfr317s='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-P63QMEO3K5CCQI3337Zl4FYzux9kIoJiqCAGZLsvwAU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -3600,21 +3600,28 @@
         h += '<li class="' + cls + '"><span class="node"></span><div><div class="rn">' + esc(_(g.name === "Gruppspel" ? "Grupp" : g.name) + " · " + n) + '</div><div class="rm">' + esc(_("mot ") + (op.pair ? short(op.pair) : "–") + (whenText(mt) ? " · " + whenText(mt) : "")) + '</div></div>' + right + '</li>';
       }); });
     });
-    var main = ev.draws[ev.mainIdx];
-    if (main && main.rounds.some(function(rd){ return rd.matches.some(function(m){ return m.hasMe; }); })){
-      var i0 = -1;
-      main.rounds.forEach(function(rd, r){ rd.matches.forEach(function(m, i){ if (m.hasMe && i0 < 0) i0 = i << r; }); });
-      main.rounds.forEach(function(rd, r){
+    // Knockout: the main draw, then each plate the pair went on to (after a loss in the main draw). A round that is
+    // out of reach is greyed; the main draw's are left out once a plate takes over.
+    var kos = ev.draws.map(function(d, di){ return {d:d, di:di}; }).filter(function(z){
+      return z.d.format !== "groups" && z.d.rounds && z.d.rounds.some(function(rd){ return rd.matches.some(function(m){ return m.hasMe; }); });
+    }).sort(function(a, b){ return (a.di === ev.mainIdx ? -1 : 0) - (b.di === ev.mainIdx ? -1 : 0) || a.di - b.di; });
+    kos.forEach(function(z, k){
+      var d = z.d, isMain = z.di === ev.mainIdx, later = k < kos.length - 1, i0 = -1, r0 = -1;
+      var lost = d.rounds.some(function(rd){ return rd.matches.some(function(m){ return m.hasMe && m.w && !m.meWon; }); });
+      d.rounds.forEach(function(rd, r){ rd.matches.forEach(function(m, i){ if (m.hasMe && i0 < 0){ i0 = i << r; r0 = r; } }); });
+      d.rounds.forEach(function(rd, r){
+        if (!isMain && r < r0) return;   // a plate: from the round the pair came in
         var mt = rd.matches.filter(function(m){ return m.hasMe; })[0], slot = rd.matches[Math.max(0, i0) >> r] || rd.matches[0], cls = "", right, meta = whenText(slot);
         var bye = mt && mt.w && !(mt[meSide(mt) === "a" ? "b" : "a"] || {}).pair;   // no opponent: through without a match
         if (bye){ cls = "done"; right = '<span class="rs">' + _("Vidare") + '</span>'; meta = _("utan match"); }
         else if (mt && mt.w){ cls = mt.meWon ? "done" : "lost"; right = tilesFor(mt); meta = whenText(mt); }
         else if (mt){ cls = "next"; var s3 = matchState(ev, mt); right = '<span class="rs">' + (s3 === "live" ? _("Pågår") : s3 === "nr" ? _("Väntar på resultat") : _("Nästa")) + '</span>'; meta = whenText(mt); }
-        else if (out){ cls = "out"; right = '<span class="rs"></span>'; }
+        else if (lost || (isMain && out)){ if (later) return; cls = "out"; right = '<span class="rs"></span>'; }
         else right = '<span class="rs">' + _("Vid vinst") + '</span>';
-        h += '<li class="' + cls + '"><span class="node"></span><div><div class="rn">' + esc(_(rd.label)) + '</div><div class="rm">' + esc(meta || _("Tid kommer")) + '</div></div>' + right + '</li>';
+        var lab = isMain || /final$/i.test(rd.label) ? _(rd.label) : _(d.label) + " · " + _(rd.label);
+        h += '<li class="' + cls + '"><span class="node"></span><div><div class="rn">' + esc(lab) + '</div><div class="rm">' + esc(meta || _("Tid kommer")) + '</div></div>' + right + '</li>';
       });
-    }
+    });
     return h;
   }
 
