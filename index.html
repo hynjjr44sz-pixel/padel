@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-SegDtXZbCXKHNgZVFD816L2RWl/4qphSyTbspPBVLTY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-W4pVMFFZ8teb3sakPTh3jRah4WrUfFUE4ukhZfr317s='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -264,7 +264,7 @@
   .vrow span{ font:600 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); text-align:center; }
   .vrow b{ font:600 14px/1.2 "Chivo Mono", monospace; color:var(--dim); font-weight:500; }
   .vrow b:last-child{ text-align:right; }
-  .vrow b.up{ color:var(--ink); font-weight:700; }
+  .vrow b.vup{ color:var(--ink); font-weight:700; }
   .vmeet{ padding:4px 14px 10px; margin:0; border-top:0; }
   .vmeet > div{ grid-template-columns:74px minmax(0,1fr) auto; }
   /* the clash: both sides fly in and hit in the middle, the VS slams down, a flash and sparks, the card shakes, then
@@ -4381,7 +4381,7 @@
     } else if (!r) favHtml = '<div class="vfav"><div class="vfl"><span>' + _("Favorit på pappret") + '</span><b>' + _("För tidigt att säga") + '</b></div></div>';
     var cmp = [], pct = function(x){ return x == null ? "–" : Math.round(100 * x) + " %"; }, row = function(lab, x, y, va, vb, hi){
       var better = va == null || vb == null || va === vb ? 0 : (hi ? va > vb : va < vb) ? 1 : -1;
-      cmp.push('<div class="vrow"><b' + (better > 0 ? ' class="up"' : "") + '>' + esc(x) + '</b><span>' + esc(lab) + '</span><b' + (better < 0 ? ' class="up"' : "") + '>' + esc(y) + '</b></div>');
+      cmp.push('<div class="vrow"><b' + (better > 0 ? ' class="vup"' : "") + '>' + esc(x) + '</b><span>' + esc(lab) + '</span><b' + (better < 0 ? ' class="vup"' : "") + '>' + esc(y) + '</b></div>');
     };
     if (A.rows.length || B.rows.length){
       var avgPos = function(S){ return S.rows.length ? S.rows.reduce(function(s, x){ return s + x.pos; }, 0) / S.rows.length : null; };
@@ -4506,7 +4506,7 @@
     var rows = [], row = function(lab, x, y, va, vb, hi){
       if (va == null && vb == null) return;
       var better = va == null || vb == null || va === vb ? 0 : (hi ? va > vb : va < vb) ? 1 : -1;
-      rows.push('<div class="vrow"><b' + (better > 0 ? ' class="up"' : "") + '>' + esc(x) + '</b><span>' + esc(lab) + '</span><b' + (better < 0 ? ' class="up"' : "") + '>' + esc(y) + '</b></div>');
+      rows.push('<div class="vrow"><b' + (better > 0 ? ' class="vup"' : "") + '>' + esc(x) + '</b><span>' + esc(lab) + '</span><b' + (better < 0 ? ' class="vup"' : "") + '>' + esc(y) + '</b></div>');
     };
     var each = function(p, f){ return p.n.map(function(n, i){ return f(inf(p, i) || {}, i); }); };
     var sum = function(v){ var x = v.filter(function(y){ return y != null; }); return x.length ? x.reduce(function(a, y){ return a + y; }, 0) : null; };
@@ -5190,7 +5190,7 @@
       var P = x.P, fol = f.indexOf(P.pid) >= 0;
       return '<li' + (fol ? ' class="fol"' : "") + '><a class="trow' + (i === 0 ? " first" : "") + '" href="#' + esc(P.key) + '"><span class="tpos">' + (i + 1) + '</span>' +
         '<span class="avs">' + avatar(P.name) + '</span><span class="tn"><b>' + esc(P.name) + (fol ? '<span class="sr">' + _(" (följer)") + '</span>' : "") + '</b><span>' + esc(P.team || "") + '</span></span>' +
-        '<span class="tv"><b' + (x.up ? ' class="up"' : "") + '>' + esc(x.big) + (x.up ? '<span class="sr">' + _(" platser") + '</span>' : "") + '</b>' + (x.sub ? '<span>' + esc(x.sub) + '</span>' : "") + '</span></a></li>';
+        '<span class="tv"><b' + (x.up ? ' class="vup"' : "") + '>' + esc(x.big) + (x.up ? '<span class="sr">' + _(" platser") + '</span>' : "") + '</b>' + (x.sub ? '<span>' + esc(x.sub) + '</span>' : "") + '</span></a></li>';
     }).join("") + '</ol>' : '<p class="empty">' + esc(_(tab === "wins" ? "Inga vunna matcher inlagda i år än." : tab === "climb" ? "Ingen i klubben klättrade på veckans lista." :
       tab === "rank" ? "Ingen rankad just nu." : "Ingen skill inlagd än.")) + '</p>';
     note.textContent = tab === "climb" ? (list.length ? _("Flest platser uppåt på SPF-listan") + (r.latest ? " " + dayMon(r.latest) : "") + "." : "") :
