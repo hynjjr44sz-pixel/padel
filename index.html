@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-gT/cJC/t8eaVKAgPzHXBWifMP6jkBAUlpPcjdi6EnPQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-SegDtXZbCXKHNgZVFD816L2RWl/4qphSyTbspPBVLTY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -602,6 +602,34 @@
   @media (hover:hover) and (pointer:fine){ .bk-nav{ display:inline-flex; } .bk-note .swipe{ display:none; } }
   .e .n .sk{ display:block; font:500 10px/1.3 "Chivo Mono", monospace; color:var(--dim); letter-spacing:0; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .opt .osk{ display:block; font:500 10.5px/1.3 "Chivo Mono", monospace; color:var(--board-dim); margin-top:2px; }
+  /* ---------- a draw match opened: "Dem mot dem" over the page ---------- */
+  .bk .m[data-mid], .gm [data-mid]{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .bk .m[data-mid]:active, .gm [data-mid]:active{ transform:scale(.985); }
+  html.duelon, html.duelon body{ overflow:hidden; }
+  .duel{ position:fixed; inset:0; z-index:60; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; background:var(--bg); outline:0;
+    padding:0 16px max(32px, env(safe-area-inset-bottom)); animation:dIn .26s cubic-bezier(.2,.8,.2,1) both; }
+  .duel[hidden]{ display:none; }
+  .dsheet{ max-width:640px; margin:0 auto; }
+  .dbar{ position:sticky; top:0; z-index:3; display:flex; justify-content:flex-end; padding:max(10px, env(safe-area-inset-top)) 0 8px; margin:0 -16px; padding-right:12px; background:linear-gradient(var(--bg) 70%, transparent); }
+  .dclose{ appearance:none; width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:400 26px/1 "Instrument Sans", sans-serif; cursor:pointer; }
+  .duel .vsb{ margin-top:0; }
+  .dpls{ padding:4px 14px; }
+  .duel .vrow b{ white-space:nowrap; font-size:13px; }
+  .duel .vrow{ gap:6px; }
+  .duel .vhd{ flex-wrap:wrap; }
+  .dpl{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:10px; align-items:center; padding:10px 0; color:inherit; text-decoration:none; border-bottom:1px solid var(--line); }
+  .dpl:last-child, .dpl:has(+ .dsep){ border-bottom:0; }
+  .dsep{ height:0; border-top:2px solid var(--ink); margin:2px 0; opacity:.5; }
+  .dpn{ min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .dpn b{ font:600 14px/1.2 "Instrument Sans", sans-serif; overflow-wrap:anywhere; }
+  a.dpl .dpn b{ color:var(--accent); }
+  .dcl{ font:600 12px/1.25 "Instrument Sans", sans-serif; color:var(--ink); opacity:.8; overflow-wrap:anywhere; }
+  .dln{ font:500 10.5px/1.35 "Chivo Mono", monospace; color:var(--dim); }
+  .dpips{ display:inline-flex; gap:3px; }
+  .dpips i{ width:6px; height:14px; border-radius:2px; background:var(--loss); opacity:.75; }
+  .dpips i.w{ background:var(--accent); opacity:1; }
+  @keyframes dIn{ from{ opacity:0; transform:translateY(24px); } }
+  @media (prefers-reduced-motion: reduce){ .duel{ animation:none; } }
   /* ---------- bracket ---------- */
   .bk-wrap{ position:relative; margin:0 -16px; }
   .bk-wrap::after{
@@ -1330,6 +1358,21 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Flickor":"Chicas",
+    "Pojkar":"Chicos",
+    "Seed ":"Cabeza de serie ",
+    "Snitt ":"Media ",
+    "Snitt skill":"Skill medio",
+        "Säsong V–F":"Temporada V–D",
+    "Matcher totalt":"Partidos en total",
+    "Form, 5 senaste":"Forma, últimos 5",
+    "Form: ":"Forma: ",
+    " år":" años",
+    "Paren":"Las parejas",
+    "Spelarna":"Jugadores",
+    "RankedIn":"RankedIn",
+    "Favorit på pappret räknas på parens snitt i skill. Ranking och statistik från RankedIn, ranking för veckan.":"El favorito sobre el papel se calcula con el skill medio de cada pareja. Ranking y estadísticas de RankedIn, ranking de la semana.",
+    "Matchen ":"El partido ",
     " % vinster":" % victorias",
     " (följer)":" (sigues)",
     " (kapten)":" (capitán)",
@@ -2205,6 +2248,7 @@
   function renderEvent(ev, host, nextMatch, who, sel){
     sel = sel && sel < ev.draws.length ? sel : 0;
     REG = host._rs = [];
+    host._ev = ev;   // a match card opens "Dem mot dem" (duelOpen)
     var seg = document.createElement("div"); seg.className = "seg"; seg.setAttribute("role", "group"); seg.setAttribute("aria-label", _("Välj lottning"));
     var views = [];
     ev.draws.forEach(function(d, i){
@@ -2977,13 +3021,13 @@
     if (!ev.rid){ var any = ko.concat(rr)[0]; if (any && [64, 65, 66].indexOf(any.RatingId) >= 0) ev.rid = any.RatingId; }
     ev.flat = flatParse(ko, rr);
     function pairOf(players, seed){
-      var names = [], ids = [], rb = [];
+      var names = [], ids = [], rk = [], rb = [];
       players.forEach(function(x){
-        if (x && x.Name && !/^(pending|bye)$/i.test(String(x.Name).trim())){ names.push(x.Name); ids.push(x.Id || null); rb.push(typeof x.RatingBegin === "number" ? x.RatingBegin : null); }
+        if (x && x.Name && !/^(pending|bye)$/i.test(String(x.Name).trim())){ names.push(x.Name); ids.push(x.Id || null); rk.push(x.RankedinId || null); rb.push(typeof x.RatingBegin === "number" ? x.RatingBegin : null); }
       });
       if (!names.length) return null;
       var k = pairSig(names), p = ev.pairs[k];
-      if (!p) p = ev.pairs[k] = {key:k, n:names, ids:ids, rb:rb, rid:ev.rid, me:ids.indexOf(e.pid) >= 0 || names.some(function(n){ return slug(n) === slug(e.me); })};
+      if (!p) p = ev.pairs[k] = {key:k, n:names, ids:ids, rk:rk, rb:rb, rid:ev.rid, me:ids.indexOf(e.pid) >= 0 || names.some(function(n){ return slug(n) === slug(e.me); })};
       if (seed && !p.seed) p.seed = String(seed);
       return p;
     }
@@ -3113,7 +3157,7 @@
   // Only the fields the draw model reads are kept, so a few finished tournaments fit in localStorage.
   var KEEP = {};
   ("Elimination RoundRobin BaseType RatingId PlacesStartPos PlacesEndPos Width Height DrawData Round MatchOrder MaxRound MatchId Date CourtName " +
-   "WinnerParticipantId ChallengerParticipant ChallengedParticipant EventParticipantId Seed FirstPlayer SecondPlayer Id Name RatingBegin " +
+   "WinnerParticipantId ChallengerParticipant ChallengedParticipant EventParticipantId Seed FirstPlayer SecondPlayer Id Name RankedinId RatingBegin " +
    "MatchViewModel CancellationStatus HasCancellation Score DetailedScoring FirstParticipantScore SecondParticipantScore LoserTiebreak " +
    "TournamentClassId Pool ParticipantCell Players MatchCell Court MatchResults HasScore IsFirstParticipantWinner Standings " +
    "DoublesPlayer1Model DoublesPlayer2Model Standing Wins Losses Played GamesDifference").split(" ").forEach(function(k){ KEEP[k] = 1; });
@@ -4367,6 +4411,207 @@
     };
   }
 
+  /* ---- a tournament match opened from the draw: "Dem mot dem" for the two pairs. Per player from RankedIn (looked up
+     when the card opens, kept 12 h): club, age, form, season and career, SPF ranking (main list and own age list).
+     Favourite on paper: the pairs' average skill (rubberChance). Back closes it. ---- */
+  var PINFO_KEY = "padel.pinfo.v1", PINFO = store.json(PINFO_KEY) || {}, PINFO_BUSY = {};
+  function pinfoLists(rid, P){
+    if (P && P.rt && P.ag) return [{rt:P.rt, ag:P.ag}];
+    return rid === 64 ? [{rt:3, ag:82}] : rid === 65 ? [{rt:4, ag:83}] : [{rt:4, ag:83}, {rt:3, ag:82}];
+  }
+  // "Women Over 35" -> "Dam 35+", "Boys Under 16" -> "Pojkar U16"
+  function ageLabel(t){
+    var m = /^(Women|Men|Girls|Boys)\s+(Over|Under)\s+(\d+)/i.exec(String(t || ""));
+    if (!m) return null;
+    var w = {women:"Dam", men:"Herr", girls:"Flickor", boys:"Pojkar"}[m[1].toLowerCase()];
+    return _(w) + " " + (/over/i.test(m[2]) ? m[3] + "+" : "U" + m[3]);
+  }
+  function pinfoFetch(id, rk, name, rid){
+    var k = String(id), c = PINFO[k];
+    if ((c && Date.now() - c.t < 12 * HOUR) || PINFO_BUSY[k]) return Promise.resolve(c);
+    PINFO_BUSY[k] = true;
+    var o = {}, Q = BYPID[id] || BYNAME[slug(name)], q = "&weekFromNow=0&language=en&searchTerm=" + encodeURIComponent(name) + "&skip=0&take=20&rankingDate=" + dayOf(now());
+    var prof = function(rk){ return riGet("/player/playerprofileinfoasync?rankedinId=" + encodeURIComponent(rk) + "&language=en").then(function(x){
+      var h = (x && x.Header) || {}, s = (x && x.Statistics) || {};
+      o.club = h.HomeClubName || ""; o.age = h.Age || ""; o.form = Array.isArray(h.Form) ? h.Form.slice(0, 5) : [];
+      o.season = s.WinLossDoublesCurrentYear || ""; o.career = s.CareerWinLossDoubles || "";
+      var img = h.ImageThumbnailUrl || "";
+      if (RIN_IMG.test(img) && !/rin_logo/i.test(img)) o.img = img;
+    }).catch(function(){}); };
+    var lists = pinfoLists(rid, Q), i = 0;
+    function mine(x){ return ((x && x.Payload) || []).filter(function(p){ return p && p.Participant && p.Participant.NewParticipantId === id && p.ParticipantPoints; })[0] || null; }
+    function rank(){
+      if (i >= lists.length) return null;
+      var L = lists[i++], base = "/Ranking/SearchRankingPlayersAsync?rankingId=1917&rankingType=" + L.rt + "&ageGroup=";
+      return riGet(base + L.ag + q).then(function(x){
+        var p = mine(x);
+        if (!p) return rank();
+        var pp = p.ParticipantPoints;
+        if (!rk && p.RankedinId) o.rk = p.RankedinId;
+        o.rank = {pos:pp.Standing, pts:pp.Points, diff:typeof p.StandingDiff === "number" ? p.StandingDiff : 0, w:L.rt === 4};
+        if (!o.club && p.HomeClubName) o.club = p.HomeClubName;
+        var lab = ageLabel(p.PlayerAgeGroup), g = ((x && x.AvailableParticipantAgeGroups) || []).filter(function(a){ return a.AgeGroupText === p.PlayerAgeGroup; })[0];
+        if (!lab || !g || g.AgeGroupId === L.ag) return null;
+        return riGet(base + g.AgeGroupId + q).then(function(y){ var z = mine(y); if (z) o.ageRank = {pos:z.ParticipantPoints.Standing, lab:lab}; }, function(){});
+      }, function(){ return rank(); });
+    }
+    // the draw carries the RankedIn id; an older stored draw does not: then the ranking's
+    return Promise.all([rk ? prof(rk) : null, Promise.resolve().then(rank).then(function(){ if (!rk && o.rk) return prof(o.rk); })]).then(function(){
+      PINFO_BUSY[k] = false;
+      if (!o.rank && o.club == null) return c;   // RankedIn down: keep what we have
+      o.t = Date.now(); PINFO[k] = o;
+      var keys = Object.keys(PINFO);
+      if (keys.length > 120) keys.sort(function(a, b){ return PINFO[a].t - PINFO[b].t; }).slice(0, keys.length - 120).forEach(function(x){ delete PINFO[x]; });
+      store.set(PINFO_KEY, JSON.stringify(PINFO));
+      return o;
+    }, function(){ PINFO_BUSY[k] = false; return c; });
+  }
+  function duelFind(ev, mid){
+    var hit = null;
+    (ev.draws || []).forEach(function(d){
+      (d.rounds || []).forEach(function(rd){ rd.matches.forEach(function(mt){ if (!hit && midOf(mt) === mid) hit = {mt:mt, lab:_(rd.label) + (ev.draws.length > 1 && d.label !== "Lottning" ? " · " + _(d.label) : "")}; }); });
+      (d.groups || []).forEach(function(g){ g.matches.forEach(function(mt){ if (!hit && midOf(mt) === mid) hit = {mt:mt, lab:_(g.name)}; }); });
+    });
+    return hit;
+  }
+  function duelFig(n, inf){
+    var s = slug(n), Q = BYNAME[s], ph = PHOTOS[s], u = Q ? (Q.avatar || rinPhoto(Q, true)) : ph ? "img/av/" + (ph.src || s) + ".jpg" : inf && inf.img;
+    if (u) return '<span class="vfig' + (Q ? " vclub" : "") + '" data-ini="' + esc(initials(n)) + '"><img' + (/^https:/.test(u) ? ' class="rin"' : "") + ' src="' + esc(u) + '" alt="" width="64" height="64" decoding="async" referrerpolicy="no-referrer"></span>';
+    return '<span class="vfig' + (Q ? " vclub" : "") + '" aria-hidden="true">' + esc(initials(n)) + '</span>';
+  }
+  var DUEL = null;
+  function duelHtml(D){
+    var mt = D.mt, ev = D.ev, A = mt.a.pair, B = mt.b.pair, inf = function(p, i){ return PINFO[String((p.ids || [])[i])] || null; };
+    var side = function(p, cls){
+      return '<div class="vside ' + cls + '"><div class="vfigs">' + p.n.map(function(n, i){ return duelFig(n, inf(p, i)); }).join("") + '</div>' +
+        '<div class="vnames">' + p.n.map(function(n){ var Q = BYNAME[slug(n)]; return Q ? '<a href="#' + esc(Q.key) + '"><b>' + esc(n) + '</b></a>' : '<b>' + esc(n) + '</b>'; }).join("") + '</div>' +
+        '<div class="vtl">' + esc([p.seed ? _("Seed ") + p.seed : "", avgSkill(pskill(p)) != null ? _("Snitt ") + avgSkill(pskill(p)).toFixed(2) : ""].filter(Boolean).join(" · ")) + '</div></div>';
+    };
+    var burst = '<span class="vburst" aria-hidden="true">' + [0, 36, 72, 108, 144, 180, 216, 252, 288, 324].map(function(d){ return '<i style="--r:' + d + 'deg"></i>'; }).join("") + '</span>';
+    var ss = mt.s ? sets(mt.s) : [], sw = ss.filter(function(x){ return +x[0] > +x[1]; }).length, sl = ss.filter(function(x){ return +x[1] > +x[0]; }).length;
+    // sets() reads the score from the winner's side: turn it to a vs b
+    var sc = mt.w === "b" ? ss.map(function(x){ return x[1] + "-" + x[0]; }) : ss.map(function(x){ return x[0] + "-" + x[1]; });
+    var mid = mt.w ? '<div class="vmid vres">' + burst + '<b>' + (ss.length ? (mt.w === "a" ? sw + "–" + sl : sl + "–" + sw) : esc(_(mt.note || "Klar"))) + '</b>' + (sc.length ? '<span class="vsets">' + esc(sc.join(" ")) + '</span>' : "") + '</div>' :
+      '<div class="vmid" role="button" tabindex="0" aria-label="' + _("Krocka igen") + '">' + burst + '<b>VS</b></div>';
+    var when = mt.at ? cap(dayLabel(mt.at)) + " " + hm(mt.at) : mt.t || "";
+    if (mt.c) when += (when ? " · " : "") + mt.c;
+    var fav = "", ch = mt.w ? null : rubberChance(mt, "a");
+    if (ch){
+      var pc = Math.max(5, Math.min(95, Math.round(100 * ch.p))), close = Math.abs(pc - 50) < 8, who = pc >= 50 ? A : B;
+      fav = '<div class="vfav"><div class="vfl"><span>' + _("Favorit på pappret") + '</span><b>' + esc(close ? _("Jämnt") : who.n.map(function(n){ return n.split(" ")[0]; }).join(" & ")) + '</b></div>' +
+        '<div class="vbar" role="img" aria-label="' + esc(pc + " % – " + (100 - pc) + " %") + '"><i style="width:' + pc + '%"></i></div>' +
+        '<div class="vpct"><span>' + pc + ' %</span><span>' + (100 - pc) + ' %</span></div></div>';
+    }
+    // pair against pair
+    var rows = [], row = function(lab, x, y, va, vb, hi){
+      if (va == null && vb == null) return;
+      var better = va == null || vb == null || va === vb ? 0 : (hi ? va > vb : va < vb) ? 1 : -1;
+      rows.push('<div class="vrow"><b' + (better > 0 ? ' class="up"' : "") + '>' + esc(x) + '</b><span>' + esc(lab) + '</span><b' + (better < 0 ? ' class="up"' : "") + '>' + esc(y) + '</b></div>');
+    };
+    var each = function(p, f){ return p.n.map(function(n, i){ return f(inf(p, i) || {}, i); }); };
+    var sum = function(v){ var x = v.filter(function(y){ return y != null; }); return x.length ? x.reduce(function(a, y){ return a + y; }, 0) : null; };
+    var wl = function(s){ var m = /^(\d+)-(\d+)$/.exec(s || ""); return m ? [+m[1], +m[2]] : null; };
+    var sa = pskill(A), sb = pskill(B);
+    row(_("Snitt skill"), avgSkill(sa) != null ? avgSkill(sa).toFixed(2) : "–", avgSkill(sb) != null ? avgSkill(sb).toFixed(2) : "–", avgSkill(sa), avgSkill(sb), true);
+    var rk = function(p){ return each(p, function(o){ return o.rank ? o.rank.pos : null; }); }, ra = rk(A), rb = rk(B), best = function(v){ var x = v.filter(function(y){ return y != null; }); return x.length ? Math.min.apply(null, x) : null; };
+    var rtxt = function(v){ return v.some(function(y){ return y != null; }) ? v.map(function(y){ return y == null ? "–" : "#" + y; }).join(" · ") : "–"; };
+    row(_("SPF-ranking"), rtxt(ra), rtxt(rb), best(ra), best(rb), false);
+    var pa = sum(each(A, function(o){ return o.rank ? o.rank.pts : null; })), pb = sum(each(B, function(o){ return o.rank ? o.rank.pts : null; }));
+    row(_("Rankingpoäng"), pa == null ? "–" : String(Math.round(pa)), pb == null ? "–" : String(Math.round(pb)), pa, pb, true);
+    var season = function(p, key){ var w = 0, l = 0, any = false; each(p, function(o){ var x = wl(o[key]); if (x){ w += x[0]; l += x[1]; any = true; } }); return any ? {w:w, l:l, r:w + l ? w / (w + l) : null} : null; };
+    var xa = season(A, "season"), xb = season(B, "season");
+    row(_("Säsong V–F"), xa ? xa.w + "–" + xa.l : "–", xb ? xb.w + "–" + xb.l : "–", xa && xa.r, xb && xb.r, true);
+    var ca = season(A, "career"), cb = season(B, "career");
+    row(_("Matcher totalt"), ca ? String(ca.w + ca.l) : "–", cb ? String(cb.w + cb.l) : "–", ca && ca.w + ca.l, cb && cb.w + cb.l, true);
+    var fw = function(p){ var n = 0, any = false; each(p, function(o){ (o.form || []).forEach(function(f){ any = true; if (f === "W") n++; }); }); return any ? n : null; }, fa = fw(A), fb = fw(B);
+    row(_("Form, 5 senaste"), fa == null ? "–" : String(fa), fb == null ? "–" : String(fb), fa, fb, true);
+    // earlier meetings: a club player's own match history on this device
+    var h2 = null;
+    [["a", A, B], ["b", B, A]].forEach(function(z){
+      if (h2) return;
+      var Q = null; z[1].n.some(function(n){ Q = BYNAME[slug(n)]; return !!Q; });
+      if (Q && mhGet(Q).t){ var r = h2hPair(Q, z[2].n); if (r.w + r.l) h2 = z[0] === "a" ? [r.w, r.l] : [r.l, r.w]; }
+    });
+    if (h2) row(_("Tidigare möten"), String(h2[0]), String(h2[1]), h2[0], h2[1], true);
+    // the players
+    var form = function(f){ return f && f.length ? '<span class="dpips" aria-label="' + esc(_("Form: ") + f.map(function(x){ return x === "W" ? _("V") : _("F"); }).join(" ")) + '">' + f.map(function(x){ return '<i class="' + (x === "W" ? "w" : "l") + '"></i>'; }).join("") + '</span>' : ""; };
+    var nb = function(v){ return v.map(function(x){ return x.replace(/ /g, "\u00a0"); }).join(" · "); };   // "27 år" never split
+    var player = function(p, i, sd){
+      var n = p.n[i], o = inf(p, i), Q = BYNAME[slug(n)], sk = (pskill(p) || [])[i], tag = Q ? "a" : "div";
+      var l1 = [], l2 = [];
+      if (o && o.rank) l1.push("#" + o.rank.pos + " " + (o.rank.w ? _("Dam") : _("Herr")) + (o.rank.diff ? (o.rank.diff > 0 ? " ▲" + o.rank.diff : " ▼" + -o.rank.diff) : ""));
+      if (o && o.ageRank) l1.push(o.ageRank.lab + " #" + o.ageRank.pos);
+      if (o && o.rank) l1.push(String(o.rank.pts).replace(".", ",").replace(/,(\d)\d*$/, ",$1") + " p");
+      if (sk != null) l2.push("Skill " + sk.toFixed(2));
+      if (o && o.season) l2.push(_("Säsong ") + o.season.replace("-", "–"));
+      if (o && o.age) l2.push(o.age + _(" år"));
+      return '<' + tag + ' class="dpl ' + sd + '"' + (Q ? ' href="#' + esc(Q.key) + '"' : "") + '>' + '<span class="avs md">' + avatar(n) + '</span><span class="dpn"><b>' + esc(n) + '</b>' +
+        '<span class="dcl">' + esc(o ? o.club || "–" : _("Hämtar …")) + '</span>' +
+        (l1.length ? '<span class="dln">' + esc(nb(l1)) + '</span>' : "") + (l2.length ? '<span class="dln">' + esc(nb(l2)) + '</span>' : "") + '</span>' + form(o && o.form) + '</' + tag + '>';
+    };
+    var plist = function(p, sd){ return p.n.map(function(n, i){ return player(p, i, sd); }).join(""); };
+    var cls = esc(_(ev.cls || "")) + (D.lab ? " · " + esc(D.lab) : "");
+    return '<div class="dbar"><button type="button" class="dclose" aria-label="' + _("Stäng") + '">×</button></div>' +
+      '<div class="vsb' + (D.fresh ? " anim" : "") + '"><div class="vhd"><b>' + esc(cleanName((ev.e && ev.e.name) || "")) + '</b><span>' + cls + '</span></div>' + (when ? '<div class="vwhen">' + esc(when) + '</div>' : "") +
+      '<div class="vgrid">' + side(A, "a" + (mt.w === "a" ? " won" : mt.w === "b" ? " lost" : "")) + mid + side(B, "b" + (mt.w === "b" ? " won" : mt.w === "a" ? " lost" : "")) + '</div>' + fav + '</div>' +
+      '<section aria-labelledby="h-dc"><div class="sh"><h2 id="h-dc">' + _("Paren") + '</h2><div class="meta">' + esc(short(A) + " – " + short(B)) + '</div></div><div class="card vcmp">' + rows.join("") + '</div></section>' +
+      '<section aria-labelledby="h-dp"><div class="sh"><h2 id="h-dp">' + _("Spelarna") + '</h2><div class="meta">' + _("RankedIn") + '</div></div><div class="card dpls">' + plist(A, "a") + '<div class="dsep"></div>' + plist(B, "b") + '</div></section>' +
+      '<p class="vnote">' + _("Favorit på pappret räknas på parens snitt i skill. Ranking och statistik från RankedIn, ranking för veckan.") + '</p>';
+  }
+  function duelPaint(){
+    if (!DUEL) return;
+    var box = DUEL.box, top = box.scrollTop;
+    box.querySelector(".dsheet").innerHTML = duelHtml(DUEL);
+    box.scrollTop = top;
+    DUEL.fresh = false;
+    var vm = box.querySelector(".vmid"), vb = box.querySelector(".vsb");
+    if (vm && vb && !DUEL.mt.w) vm.onclick = vm.onkeydown = function(e){
+      if (e.type === "keydown" && e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault(); vb.classList.remove("anim"); void vb.offsetWidth; vb.classList.add("anim");
+    };
+  }
+  function duelOpen(ev, mid){
+    var f = duelFind(ev, mid);
+    if (!f || !f.mt.a.pair || !f.mt.b.pair) return false;
+    var box = document.getElementById("duel");
+    if (!box){
+      box = document.createElement("div"); box.id = "duel"; box.className = "duel"; box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true"); box.tabIndex = -1;
+      box.innerHTML = '<div class="dsheet"></div>';
+      document.body.appendChild(box);
+      box.addEventListener("click", function(e){
+        if (e.target === box || (e.target.closest && e.target.closest(".dclose"))) duelClose(true);
+        else if (e.target.closest && e.target.closest("a[href^='#']")) duelClose(false);
+      });
+    }
+    var pushed = DUEL && DUEL.pushed;
+    DUEL = {ev:ev, mt:f.mt, lab:f.lab, box:box, fresh:true, pushed:pushed};
+    box.setAttribute("aria-label", _("Matchen ") + short(f.mt.a.pair) + " – " + short(f.mt.b.pair));
+    if (!pushed){ try { history.pushState({duel:mid}, ""); DUEL.pushed = true; } catch (e){} }
+    box.hidden = false; box.scrollTop = 0;
+    document.documentElement.classList.add("duelon");
+    duelPaint();
+    try { box.focus({preventScroll:true}); } catch (e){}
+    var all = [];
+    [f.mt.a.pair, f.mt.b.pair].forEach(function(p){ p.n.forEach(function(n, i){ var id = (p.ids || [])[i]; if (id) all.push(pinfoFetch(id, (p.rk || [])[i], n, ev.rid).then(function(){ duelPaint(); })); }); });
+    return true;
+  }
+  // back: from the button (history.back closes it through popstate), or a link inside (the page moves on)
+  function duelClose(back){
+    if (!DUEL) return;
+    var pushed = DUEL.pushed, box = DUEL.box;
+    DUEL = null; box.hidden = true;
+    document.documentElement.classList.remove("duelon");
+    if (back && pushed) try { history.back(); } catch (e){}
+  }
+  window.addEventListener("popstate", function(){ if (DUEL){ DUEL.pushed = false; duelClose(false); } });
+  document.addEventListener("keydown", function(e){ if (DUEL && e.key === "Escape") duelClose(true); });
+  document.addEventListener("click", function(e){
+    var c = e.target && e.target.closest && e.target.closest(".bk .m[data-mid], .gm [data-mid]");
+    if (!c || e.target.closest("a, button")) return;
+    var h = c; while (h && !h._ev) h = h.parentNode;
+    if (h && duelOpen(h._ev, c.getAttribute("data-mid"))) e.preventDefault();
+  });
+
   /* ---- #tavling/<id>: one tournament with every club player entered (all classes): when and where, the pairs per
      class, how many pairs, the draw. From the worker's events (no RankedIn calls); a past one from "past". ---- */
   function renderTour(tid){
@@ -5451,7 +5696,8 @@
     RIN_BAD[im.getAttribute("src")] = 1;
     var box = im.parentNode, h = box && box.classList;
     if (!h) return;
-    if (h.contains("av")){
+    if (h.contains("vfig")) box.textContent = box.getAttribute("data-ini") || "";
+    else if (h.contains("av")){
       h.add("ini"); box.setAttribute("aria-hidden", "true");
       box.textContent = box.getAttribute("data-ini") || "";
     } else if (h.contains("pmed")){

@@ -204,6 +204,15 @@ try {
   ok("deep link #thea/m6872156: Thea's page, match flashed", await page.$eval('#p-thea [data-mid="6872156"]', e => e.classList.contains("flash") || !!e.closest("#p-thea:not([hidden])")));
   await page.waitForTimeout(900);
   ok("deep link: the page scrolls to the match vertically only (no sideways pan)", await page.evaluate(() => window.scrollX === 0 && window.scrollY > 0), await page.evaluate(() => [window.scrollX, window.scrollY]));
+  { // a match card in the draw opens "Dem mot dem"; the close button (Back) closes it
+    await page.$eval('#p-thea .bk .m[data-mid="6872156"]', e => e.click());
+    await page.waitForSelector("#duel:not([hidden]) .vsb", { timeout: 5000 }).catch(() => {});
+    const d = await page.evaluate(() => { const b = document.getElementById("duel"); return b && !b.hidden ? { names: [...b.querySelectorAll(".vnames b")].map(x => x.textContent), pl: b.querySelectorAll(".dpl").length, rows: b.querySelectorAll(".vrow").length } : null; });
+    ok("draw card -> Dem mot dem: both pairs, four players, pair rows", d && d.names.length === 4 && d.pl === 4 && d.rows >= 2 && d.names.includes("Thea Holmberg Löving"), d);
+    await page.click("#duel .dclose");
+    await page.waitForTimeout(400);
+    ok("Dem mot dem: close returns to Thea's page", await page.evaluate(() => document.getElementById("duel").hidden && location.hash === "#thea/m6872156"), await page.evaluate(() => location.hash));
+  }
   ok("Thea: hero photo (cut-out)", await page.$eval("#p-thea .hero .pmed img", i => i.getAttribute("src")) === "img/cut/thea-holmberg-loving.webp");
   ok("Thea: chips show followed first and Thea current", (await page.$$eval("#chips .pchip", a => a.map(x => x.getAttribute("href") + (x.getAttribute("aria-current") ? "*" : "")))).slice(0, 2).join() === "#thea*,#kian");
   ok("Thea: trend numbers", /#\d+/.test(await page.textContent("#tv-thea-rank")));
