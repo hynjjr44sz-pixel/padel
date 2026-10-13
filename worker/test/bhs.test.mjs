@@ -79,13 +79,17 @@ test("new result -> notis to the club players' devices (Swedish and Spanish), on
   assert.equal(lost.m.title, "Kian förlorade i americanoserien");
   assert.match(lost.m.body, /^Daniel Strömvall \/ Andreas Mickos – Javier Castilla \/ Kian Borgström  6-4 6-2 2-6/);
 });
-test("results due: from 10 min before a scheduled match ends until 5 h after, until its result is in", async () => {
+test("results due: from 10 min before a scheduled match ends, every 10 min for 5 h, then hourly up to 3 days, until its result is in", async () => {
   const { resultsDue } = await import("../src/bhs.js");
   const g = { ...G, next: [{ d: "2026-09-30 20:00", min: 90, a: R.a, b: R.b }] };
   assert.equal(resultsDue([g], new Date("2026-09-30T19:00:00+02:00")).length, 0);
   assert.equal(resultsDue([g], new Date("2026-09-30T21:25:00+02:00")).length, 1);
   assert.equal(resultsDue([g], new Date("2026-10-01T02:00:00+02:00")).length, 1);
-  assert.equal(resultsDue([g], new Date("2026-10-01T03:00:00+02:00")).length, 0);
+  assert.equal(resultsDue([g], new Date("2026-10-01T03:03:00+02:00")).length, 1);   // hourly after 5 h
+  assert.equal(resultsDue([g], new Date("2026-10-01T03:13:00+02:00")).length, 0);
+  assert.equal(resultsDue([g], new Date("2026-10-03T21:03:00+02:00")).length, 1);
+  assert.equal(resultsDue([g], new Date("2026-10-03T22:03:00+02:00")).length, 0);   // three days after the end
+  assert.equal(resultsDue([{ ...g, res: [R] }], new Date("2026-10-01T12:03:00+02:00")).length, 0);
   assert.equal(resultsDue([{ ...g, res: [R] }], new Date("2026-09-30T22:00:00+02:00")).length, 0);
 });
 test("series notiser wait over the night (23-07) and go out with the first look after", async () => {

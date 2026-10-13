@@ -279,7 +279,9 @@ export function newResults(before, after, t, players = PLAYERS) {
 export function resultsDue(groups, t) {
   return (groups || []).filter(g => (g.next || []).some(x => {
     const st = localToDate(x.d), end = st ? +st + (x.min || 90) * 60e3 : 0;
-    return +t > end - 10 * 60e3 && +t < end + 5 * 3600e3 && !(g.res || []).some(r => matchKey(r.a, r.b, r.d) === matchKey(x.a, x.b, x.d));
+    // every 10 min for 5 h after the end, then hourly (minute 3) up to three days: results come in late
+    const near = +t < end + 5 * 3600e3, late = !near && +t < end + 72 * 3600e3 && t.getUTCMinutes() < 10;
+    return +t > end - 10 * 60e3 && (near || late) && !(g.res || []).some(r => matchKey(r.a, r.b, r.d) === matchKey(x.a, x.b, x.d));
   }));
 }
 // One group's results again (1 subrequest)

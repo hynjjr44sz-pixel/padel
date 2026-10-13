@@ -10,7 +10,7 @@
 
 // The fields the page's draw model reads (index.html KEEP, checked by a test): everything else is dropped.
 export const KEEP = new Set(("Elimination RoundRobin BaseType RatingId PlacesStartPos PlacesEndPos Width Height DrawData Round MatchOrder MaxRound MatchId Date CourtName " +
-  "WinnerParticipantId ChallengerParticipant ChallengedParticipant EventParticipantId Seed FirstPlayer SecondPlayer Id Name RatingBegin " +
+  "WinnerParticipantId ChallengerParticipant ChallengedParticipant EventParticipantId Seed FirstPlayer SecondPlayer Id Name RankedinId RatingBegin " +
   "MatchViewModel CancellationStatus HasCancellation Score DetailedScoring FirstParticipantScore SecondParticipantScore LoserTiebreak " +
   "TournamentClassId Pool ParticipantCell Players MatchCell Court MatchResults HasScore IsFirstParticipantWinner Standings " +
   "DoublesPlayer1Model DoublesPlayer2Model Standing Wins Losses Played GamesDifference").split(" "));

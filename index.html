@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-P63QMEO3K5CCQI3337Zl4FYzux9kIoJiqCAGZLsvwAU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-x+TX6tAxGSNE7MCqkwYq4ZVDvOXk8xCHC7bTPQ+EfYc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -966,6 +966,8 @@
   .recent li{ flex:0 0 auto; width:min(62vw, 214px); scroll-snap-align:start; display:flex; }
   .recent a{ display:block; width:100%; padding:8px 10px 9px; border-radius:12px; background:var(--surface); border:1px solid var(--line); color:var(--ink); text-decoration:none; }
   .recent a.mine{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); background:var(--accent-soft); }
+  .recent a.wait{ border-style:dashed; }
+  .recent a.wait .rv{ color:var(--accent); }
   .recent .rh{ display:flex; justify-content:space-between; gap:6px; font:500 10.5px/1.2 "Chivo Mono", monospace; color:var(--dim); white-space:nowrap; }
   .recent .rh b{ font-weight:600; color:var(--accent); text-transform:uppercase; letter-spacing:.06em; }
   .recent .rh b{ flex:none; }
@@ -4216,6 +4218,15 @@
       var won = bhsSets(r.s) >= 0, pl = bhsPlayers(r);
       out.push({at:+at, x:{lab:g.series, day:r.d, win:won ? r.a : r.b, lose:won ? r.b : r.a, s:won ? r.s : flip(r.s), name:"", cls:g.name, pids:r.pids, who:pl[0] ? pl[0].key : "", href:bhsHref(g, r)}});
     }); });
+    // played (time over) but no result yet: waits here up to three days (the worker keeps looking)
+    ((b && b.groups) || []).forEach(function(g){ (g.next || []).forEach(function(x){
+      var at = riDate(String(x.d).replace(" ", "T")), k = bhsKey(g, x);
+      if (!at || seen[k] || +at + (x.min || 90) * 60000 > t || t - at > 3 * 864e5) return;
+      if ((g.res || []).some(function(r){ return bhsMKey(r.a, r.b, r.d) === bhsMKey(x.a, x.b, x.d); })) return;
+      seen[k] = 1;
+      var pl = bhsPlayers(x);
+      out.push({at:+at, x:{lab:g.series, day:String(x.d).slice(0, 10), win:x.a, lose:x.b, s:"", name:_("Väntar på resultat"), cls:g.name, pids:x.pids, who:pl[0] ? pl[0].key : "", href:bhsHref(g, x), wait:true}});
+    }); });
     return out;
   }
   function bhsAgenda(lim){
@@ -5089,7 +5100,7 @@
     host.innerHTML = RNAV + '<ol aria-label="' + _("Senaste resultat") + '">' + list.map(function(x){
       var mine = (x.pids || []).some(function(p){ return f.indexOf(Number(p)) >= 0; }), who = x.who || (BYPID[(x.pids || [])[0]] || {}).key || "";
       var ev = x.team ? x.team + " – " + x.opp : [x.name, x.cls].filter(Boolean).join(" · ");
-      return '<li><a href="' + esc(x.href || "#" + who + (x.mid ? '/m' + x.mid : "")) + '"' + (mine ? ' class="mine"' : "") + '><div class="rh"><b>' + esc(_(x.lab || "")) + '</b><span>' + esc(x.day ? dayMon(x.day) : whenOf(x.d)) + '</span></div>' +
+      return '<li><a href="' + esc(x.href || "#" + who + (x.mid ? '/m' + x.mid : "")) + '"' + (mine || x.wait ? ' class="' + [mine ? "mine" : "", x.wait ? "wait" : ""].join(" ").trim() + '"' : "") + '><div class="rh"><b>' + esc(_(x.lab || "")) + '</b><span>' + esc(x.day ? dayMon(x.day) : whenOf(x.d)) + '</span></div>' +
         '<div class="rw">' + esc(x.win) + '</div><div class="rl">' + esc(((x.s ? x.s + " " : "") + (x.lose ? _("mot ") + x.lose : "")).trim()) + '</div><div class="rv">' + esc(ev) + '</div></a></li>';
     }).join("") + '</ol>';
   }
