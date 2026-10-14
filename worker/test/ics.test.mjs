@@ -19,3 +19,11 @@ test("calendar feed: a tournament over its days, its next match timed, a series 
   assert.equal((ics.match(/BEGIN:VEVENT/g) || []).length, 3);
   ics.split("\r\n").forEach(l => assert.ok(l.length <= 75, l));
 });
+test("a pair on a class's reserve list is dropped from the class itself", async () => {
+  const { merge } = await import("../src/events.js");
+  const l = merge([
+    { kind: "tournament", tournamentId: 1, classId: 10, cls: "Herr C", me: "Kian Borgström", partner: "Andreas Mickos", who: "kian", windowFrom: "a" },
+    { kind: "tournament", tournamentId: 1, classId: 11, cls: "Reservlista Herr C", me: "Andreas Mickos", partner: "Kian Borgström", who: "andreas", windowFrom: "a" },
+    { kind: "tournament", tournamentId: 1, classId: 10, cls: "Herr C", me: "Magnus Olsson", partner: "Viktor Daneli", who: "magnus", windowFrom: "a" }], []);
+  assert.deepEqual(l.map(e => e.who + ":" + e.cls), ["andreas:Reservlista Herr C", "magnus:Herr C"]);
+});
