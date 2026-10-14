@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Yw4KI7oMQIlI4uPRnk0Xtokd1WG2thRqFngmD0NwKas='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-QVaiM3NExzQHDWqUBbPwb3I+/yil9NvJQ+p3UFpzCgk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -760,6 +760,9 @@
   .record b{ display:block; font:900 30px/1 "Big Shoulders Display", sans-serif; margin-top:5px; font-variant-numeric:tabular-nums; }
   .record span{ font-size:12px; color:var(--dim); }
   .formrow{ margin-top:16px; }
+  .hist .r .dv{ display:block; margin-top:2px; font:600 11px/1 "Chivo Mono", monospace; }
+  .hist .r .dv.up{ color:#2E8A57; }
+  .hist .r .dv.dn{ color:var(--loss); }
   .rk{ padding:14px; }
   .rkh{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
   .rkh b{ font:800 22px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; }
@@ -1377,6 +1380,7 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Skill efter matchen":"Skill tras el partido",
     "Klass och poäng":"Categoría y puntos",
     "{name} finns inte på SPF-rankingen just nu. En placering i en sanktionerad tävling räcker för att komma in.":"{name} no está en el ranking SPF ahora mismo. Basta con un resultado en un torneo sancionado para entrar.",
     "{cls}-spelare":"Jugador/a {cls}",
@@ -2369,13 +2373,13 @@
   function abbr(n){ if (SHORT[n]) return SHORT[n]; var p = String(n).split(" "); return p.length > 1 ? p[0][0] + ". " + p.slice(1).join(" ") : n; }
   function liveMHist(who, e, ev){
     if (!inWin(e)) return;
-    var me = slug(e.me || ""), rows = [], name = e.name || _("Turnering");
+    var me = slug(e.me || ""), rows = [], name = e.name || _("Turnering"), sd = BYKEY[who] ? skillDeltas(BYKEY[who]) : null;
     ev.draws.forEach(function(d){
       (d.format === "groups" ? d.groups : d.rounds).forEach(function(rd){ rd.matches.forEach(function(mt){
         if (!mt.hasMe || !mt.w) return;
         var ms = meSide(mt), op = mt[ms === "a" ? "b" : "a"].pair, mp = mt[ms].pair;
         rows.push({r:mt.meWon ? "W" : "L", at:mt.at ? +mt.at : 0, date:dayMonD(mt.at || riDate(e.start) || now()), opp:op ? op.n.map(abbr).join(" / ") : "–", ev:name,
-          partner:mp ? mp.n.filter(function(n){ return slug(n) !== me; }).join(" / ") : "", s:mePersp(mt) || mt.note || "", isNew:!!mt.at && dayOf(mt.at) === dayOf(now())});
+          partner:mp ? mp.n.filter(function(n){ return slug(n) !== me; }).join(" / ") : "", s:mePersp(mt) || mt.note || "", dv:sd && mt.at ? sd.at(dayOf(mt.at), hm(mt.at)) : null, isNew:!!mt.at && dayOf(mt.at) === dayOf(now())});
       }); });
     });
     rows.sort(function(a, b){ return b.at - a.at; });
@@ -2386,13 +2390,25 @@
   }
   // The finished tournaments' matches (counted for Partners, every player), newest first, at most 15; the seed list
   // until they are counted.
+  // Skill change of one match: RankedIn's rating history has a point per rated match at its start time ("2026-10-11T12:45").
+  // Without a time (an older count): the n-th match of the day, when the day has as many points as matches.
+  function skillDeltas(P){
+    var rh = (TRD[P.pid] || {}).rh, by = {}, day = {};
+    if (!rh || !rh.length) return null;
+    rh.forEach(function(x, i){ var dv = i ? Math.round((x[1] - rh[i - 1][1]) * 100) / 100 : null; by[x[0]] = dv; (day[x[0].slice(0, 10)] = day[x[0].slice(0, 10)] || []).push(dv); });
+    return {at:function(d, t, n, of){ if (t && by.hasOwnProperty(d + "T" + t)) return by[d + "T" + t]; var l = day[d]; return l && l.length === of ? l[n] : null; }};
+  }
+  function dvHtml(dv){ return dv == null || Math.abs(dv) < 0.005 ? "" : '<span class="dv ' + (dv > 0 ? "up" : "dn") + '" title="' + _("Skill efter matchen") + '">' + (dv > 0 ? "+" : "−") + Math.abs(dv).toFixed(2) + '</span>'; }
   function mhRows(who){
     var P = BYKEY[who], rec = P && mhGet(P), out = [];
     if (!rec || !rec.t) return MHIST[who] || [];
+    var sd = skillDeltas(P), perDay = {};
+    Object.keys(rec.cls).forEach(function(c){ (rec.cls[c].m || []).forEach(function(x){ var d = x.d || rec.cls[c].d; perDay[d] = (perDay[d] || 0) + 1; }); });
     Object.keys(rec.cls).forEach(function(c){
-      var k = rec.cls[c];
+      var k = rec.cls[c], seen = {};
       (k.m || []).forEach(function(x, i){
-        out.push({r:x.w ? "W" : "L", d:x.d || k.d, i:i, date:dayMonD(riDate((x.d || k.d) + "T12:00")), opp:(x.o || []).map(abbr).join(" / ") || "–", ev:k.n || _("Turnering"), partner:(x.p || []).join(" / "), s:x.s || ""});
+        var d = x.d || k.d, n = seen[d] = (seen[d] || 0) + 1;
+        out.push({r:x.w ? "W" : "L", d:d, i:i, dv:sd ? sd.at(d, x.t, n - 1, perDay[d]) : null, date:dayMonD(riDate((x.d || k.d) + "T12:00")), opp:(x.o || []).map(abbr).join(" / ") || "–", ev:k.n || _("Turnering"), partner:(x.p || []).join(" / "), s:x.s || ""});
       });
     });
     out.sort(function(a, b){ return a.d < b.d ? 1 : a.d > b.d ? -1 : b.i - a.i; });
@@ -2413,7 +2429,7 @@
       var c = cnt && cnt[x.opp.split(" / ").map(function(n){ return slug(n); }).sort().join("+")];
       return '<div class="hrow ' + (x.r === "W" ? "w" : "l") + (x.isNew ? " new" : "") + '"><div><div class="o">' + esc(x.opp) + '</div><div class="ev">' + esc(x.ev) + (x.partner ? _(" · med ") + esc(x.partner) : "") +
         (c && c.w + c.l > 1 ? ' · <span class="mt">' + _("mot paret ") + c.w + "–" + c.l + '</span>' : "") + '</div></div>' +
-        '<div class="r"><b>' + (x.r === "W" ? _("Vinst") : _("Förlust")) + (x.s ? " " + esc(x.s) : "") + '</b>' + esc(_(x.date)) + '</div></div>';
+        '<div class="r"><b>' + (x.r === "W" ? _("Vinst") : _("Förlust")) + (x.s ? " " + esc(x.s) : "") + '</b>' + esc(_(x.date)) + dvHtml(x.dv) + '</div></div>';
     }).join("");
     document.getElementById("histMeta-" + who).textContent = all.length + _(" matcher");
   }
@@ -5960,11 +5976,12 @@
       (Array.isArray(a) ? a : []).slice().sort(function(x, y){ return (x.UnixTimestamp || 0) - (y.UnixTimestamp || 0); }).forEach(function(r){
         if (typeof r.Rating !== "number") return;
         var last = pts[pts.length - 1];
-        if (!last || last.at !== r.Date) pts.push({at:r.Date, d:String(r.Date).slice(0, 10), v:r.Rating});   // each match appears twice
+        if (!last || last.at !== r.Date || last.v !== r.Rating) pts.push({at:r.Date, d:String(r.Date).slice(0, 10), v:r.Rating});   // each match appears twice (two matches at the same time: both kept)
       });
       if (pts.length){
         out.skill = [pts[pts.length - 1].v, pts.length > 1 ? pts[pts.length - 2].v : null];
         out.hist = pts.slice(-12).map(function(p){ return {d:p.d, v:p.v}; });
+        out.rh = pts.slice(-80).map(function(p){ return [String(p.at).slice(0, 16), p.v]; });   // per match: start time, skill after
       }
     }).catch(function(){});
     var prof = P.rankedinId ? riGet("/player/playerprofileinfoasync?rankedinId=" + encodeURIComponent(P.rankedinId) + "&language=en").then(function(x){
@@ -5985,11 +6002,12 @@
       TREND_BUSY[P.pid] = false;
       if (!r.rankOk && !r.skill && !r.prof) return;   // RankedIn down: keep what we have
       var n = TRD[P.pid] || {};
-      ["rank", "pts", "skill", "hist", "prof"].forEach(function(k){ if (r[k]) n[k] = r[k]; });
+      ["rank", "pts", "skill", "hist", "prof", "rh"].forEach(function(k){ if (r[k]) n[k] = r[k]; });
       n.t = Date.now();
       TRD[P.pid] = n;
       store.set(TREND_KEY, JSON.stringify(TRD));
       renderTrend(P.key); renderInfo(P);
+      try { renderMHist(P.key); } catch (e){}
       try { renderPlayerList(); } catch (e){}
     }, function(){ TREND_BUSY[P.pid] = false; });
   }
@@ -6189,7 +6207,7 @@
       if (!mp || !op || (mt.note && !mt.s)) return;
       var pn = [], pi = [];
       mp.n.forEach(function(n, i){ if (mp.ids[i] !== P.pid && slug(n) !== me){ pn.push(n); pi.push(mp.ids[i] || null); } });
-      out.push({d:mt.at ? dayOf(mt.at) : dflt, w:mt.meWon ? 1 : 0, s:mePersp(mt) || "", p:pn, pi:pi, o:op.n.slice(), oi:(op.ids || []).slice()});
+      out.push({d:mt.at ? dayOf(mt.at) : dflt, t:mt.at ? hm(mt.at) : "", w:mt.meWon ? 1 : 0, s:mePersp(mt) || "", p:pn, pi:pi, o:op.n.slice(), oi:(op.ids || []).slice()});
     });
     return out;
   }
