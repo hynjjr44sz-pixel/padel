@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bbAzdnoos7DMMwqv2JqMSCQHEoq83tAUNK7MW9fz1tM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-aa2xxkRmoC47ueS/WHvSPpIuMXhsCYAmfVf7Vgda43k='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1360,6 +1360,9 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "På reservlistan till {cls}. Får paret en plats flyttas det in i klassen.":"En la lista de reserva de {cls}. Si la pareja obtiene plaza, pasa a la categoría.",
+    "En reservlista lottas inte. Lottningen för {cls} visas här om paret får en plats.":"Una lista de reserva no tiene cuadro. El cuadro de {cls} aparece aquí si la pareja obtiene plaza.",
+    "klassen":"la categoría",
     "Flickor":"Chicas",
     "Pojkar":"Chicos",
     "Seed ":"Cabeza de serie ",
@@ -2351,10 +2354,24 @@
     MLIVE[who] = rows.length ? {ev:name, rows:rows, sig:sig} : null;
     renderMHist(who);
   }
+  // The finished tournaments' matches (counted for Partners, every player), newest first, at most 15; the seed list
+  // until they are counted.
+  function mhRows(who){
+    var P = BYKEY[who], rec = P && mhGet(P), out = [];
+    if (!rec || !rec.t) return MHIST[who] || [];
+    Object.keys(rec.cls).forEach(function(c){
+      var k = rec.cls[c];
+      (k.m || []).forEach(function(x, i){
+        out.push({r:x.w ? "W" : "L", d:x.d || k.d, i:i, date:dayMonD(riDate((x.d || k.d) + "T12:00")), opp:(x.o || []).map(abbr).join(" / ") || "–", ev:k.n || _("Turnering"), partner:(x.p || []).join(" / "), s:x.s || ""});
+      });
+    });
+    out.sort(function(a, b){ return a.d < b.d ? 1 : a.d > b.d ? -1 : b.i - a.i; });
+    return out.slice(0, 15);
+  }
   function renderMHist(who){
     var host = document.getElementById("hist-" + who);
     if (!host) return;
-    var lv = MLIVE[who], all = (lv ? lv.rows : []).concat((MHIST[who] || []).filter(function(x){ return !lv || x.ev !== lv.ev; }));
+    var lv = MLIVE[who], all = (lv ? lv.rows : []).concat(mhRows(who).filter(function(x){ return !lv || x.ev !== lv.ev; }));
     document.getElementById("hs-" + who).hidden = !all.length;
     // Record against the same pair (12 months), when the player's matches are counted already (never fetched for this)
     var P = BYKEY[who], cnt = null, sigA = function(names){ return names.map(function(n){ return slug(abbr(n)); }).sort().join("+"); };
@@ -2456,7 +2473,7 @@
       }
       item._row = r;
       var wl = r.w == null ? "–" : r.w + "–" + r.l;
-      var pts = r.pts == null ? (r.b === "Pågår" ? _("pågår") : "– p") : String(r.pts) + " p";
+      var pts = r.pts == null ? (r.b === "Pågår" ? _("pågår") : +now() - Date.parse(r.d + "T12:00:00Z") < 21 * 864e5 ? _("poäng kommer") : "") : String(r.pts) + " p";   // RankedIn posts points a few days after
       item.firstChild.innerHTML = '<div>' + badge(r.b) + '<span class="dt">' + esc(dayMon(r.d)) + '</span></div>' +
         '<div><span class="tn">' + esc(r.n) + '</span>' +
         '<div class="tm">' + esc(r.c + (r.p ? _(" · med ") + r.p : "") + (r.x ? " · " + _(r.x) : "")) + '</div></div>' +
@@ -3576,11 +3593,13 @@
     renderTourDraw(D, ev, st);
     try { setTv(D, tvHtml(e, tourMine(ev))); } catch (er){ warn("MATCHi TV", er); }
   }
+  // "Reservlista Herr C" -> "Herr C" (a reserve list: never drawn), else ""
+  function resOf(e){ var m = /^reserv\S*\s*(?:lista|list)?\s*(.*)$/i.exec((e && e.cls) || ""); return m ? m[1] || _("klassen") : ""; }
   function renderTourDraw(D, ev, st){
     var host = D.el.draw, W = WHO[D.who], x = st.next || st.last;
     if (!ev.draws.length){
       dropResize(host); host._model = null;
-      host.innerHTML = '<p class="empty">' + _("Lottningen är inte publicerad än. Den dyker upp här när arrangören lägger ut den.") + '</p>';
+      host.innerHTML = '<p class="empty">' + (resOf(D.e) ? _("En reservlista lottas inte. Lottningen för {cls} visas här om paret får en plats.", {cls:resOf(D.e)}) : _("Lottningen är inte publicerad än. Den dyker upp här när arrangören lägger ut den.")) + '</p>';
       return;
     }
     var nm = st.next && st.next.mt, sel = 0, has = !!host.querySelector(".seg");
@@ -3883,7 +3902,7 @@
     else {
       var mp = {n:[e.me, e.partner].filter(Boolean), ids:[e.pid, e.partnerId || null], rid:ev.rid, me:true, seed:e.seed || ""};
       wantSkills([mp]);
-      h += '<div class="nd">' + _("Lottningen ej klar") + '</div>';
+      h += '<div class="nd">' + (resOf(e) ? _("På reservlistan till {cls}. Får paret en plats flyttas det in i klassen.", {cls:resOf(e)}) : _("Lottningen ej klar")) + '</div>';
     }
     return h;
   }
@@ -4651,7 +4670,8 @@
     });
     var n = 0, cards = order.map(function(k){
       var c = cls[k], e = c.e;
-      return '<div class="tcls"><div class="tblhd"><b>' + esc(e.cls || _("Klass")) + '</b><span>' + esc([e.pairs ? _("{n} par anmälda", {n:e.pairs}) : "", e.published ? _("Lottningen är klar") : _("Inte lottad än")].filter(Boolean).join(" · ")) + '</span></div><ul class="plist">' +
+      var np = c.pairs.slice().sort(function(x, y){ return String(y.scanned || "").localeCompare(String(x.scanned || "")); })[0].pairs || e.pairs;   // the latest look
+      return '<div class="tcls"><div class="tblhd"><b>' + esc(e.cls || _("Klass")) + '</b><span>' + esc([np ? _("{n} par anmälda", {n:np}) : "", e.published ? _("Lottningen är klar") : _("Inte lottad än")].filter(Boolean).join(" · ")) + '</span></div><ul class="plist">' +
         c.pairs.map(function(x){
           var P = BYPID[x.pid], Q = BYPID[x.partnerId], who = [P, Q].filter(Boolean);
           n += who.length;
@@ -5787,9 +5807,10 @@
   var TREND_KEY = "padel.trend.v2", TRD = {};
   (function(){ var c = store.json(TREND_KEY); if (c && typeof c === "object") TRD = c; })();
   function trendOf(P){
-    var c = TRD[P.pid] || {};
-    return {rank:c.rank || [P.rank == null ? null : P.rank, null], pts:c.pts || [P.points == null ? null : P.points, null],
-      skill:c.skill || [P.skill == null ? null : P.skill, null], hist:c.hist || null, prof:c.prof || null, t:c.t || 0};
+    // this device's own look (opened player) first, then the worker's board (every player, fresh), then players.json
+    var c = TRD[P.pid] || {}, b = boardOf(P) || {}, pick = function(x, y){ return num(x) != null ? x : y == null ? null : y; };
+    return {rank:c.rank || [pick(b.rk, P.rank), null], pts:c.pts || [pick(b.rp, P.points), null],
+      skill:c.skill || [pick(b.sk, P.skill), null], hist:c.hist || null, prof:c.prof || null, t:c.t || 0};
   }
   function fmtPts(v){ return v.toFixed(v >= 20 ? 1 : 2); }
   function signed(d, n){ return (d > 0 ? "+" : "−") + Math.abs(d).toFixed(n); }
