@@ -5,6 +5,7 @@
 import { buildIcs } from "./ics.js";
 import { weekDigest, weekNote } from "./week.js";
 import { remindNotes } from "./remind.js";
+import { soonNotes } from "./soon.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
@@ -925,6 +926,19 @@ export async function tick(env, events) {
         await env.PUSH.put("week:sent", day); log.writes = (log.writes || 0) + 1; log.week = sv ? 1 : 0;
       }
     } catch (e) { console.warn("veckan", e.message); }
+  }
+  // Snart match: every 5 min (minute 1, 6, ...) while something is on, a quarter of an hour before a club pair's match
+  if (!events && env.SOON_OFF !== "1" && mm % 5 === 1 && activeEvents(t, list).length) {   // SOON_OFF: local tests only
+    try {
+      const lv = await liveView(env, t, list);
+      let sent = [];
+      try { sent = JSON.parse((await env.PUSH.get("soon:sent")) || "[]"); } catch (e) { sent = []; }
+      const n = soonNotes(lv.live, t, sent, PLAYERS);
+      if (n.length) {
+        pubMsgs.push(...n.map(x => ({ pids: x.pids, m: x.m })));
+        await env.PUSH.put("soon:sent", JSON.stringify(sent.concat(n.map(x => x.k)).slice(-200))); log.writes = (log.writes || 0) + 1; log.soon = n.length;
+      }
+    } catch (e) { console.warn("snart match", e.message); }
   }
   // Sista anmälan: 18:22 local, suggested tournaments whose sign-up closes within about two days (remind.js)
   if (!events && env.REMIND_OFF !== "1" && mm === 22 && new Date(+t + offsetAt(+t) * H).getUTCHours() === 18) {   // REMIND_OFF: local tests only
