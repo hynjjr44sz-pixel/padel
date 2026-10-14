@@ -4,6 +4,7 @@
 // enter on RankedIn, a few players per run) merged with events.js.
 import { buildIcs } from "./ics.js";
 import { weekDigest, weekNote } from "./week.js";
+import { remindNotes } from "./remind.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
@@ -924,6 +925,24 @@ export async function tick(env, events) {
         await env.PUSH.put("week:sent", day); log.writes = (log.writes || 0) + 1; log.week = sv ? 1 : 0;
       }
     } catch (e) { console.warn("veckan", e.message); }
+  }
+  // Sista anmälan: 18:22 local, suggested tournaments whose sign-up closes within about two days (remind.js)
+  if (!events && env.REMIND_OFF !== "1" && mm === 22 && new Date(+t + offsetAt(+t) * H).getUTCHours() === 18) {   // REMIND_OFF: local tests only
+    try {
+      const cal = await loadCal(env);
+      if (cal) {
+        const c = { ...cal, events: cal.events.map(e => ({ ...e })) }, regs = registrations(rec, c.events.map(e => e.id)), taken = {};
+        c.events.forEach(e => { e.regs = regs.filter(r => r.tid === e.id).map(r => ({ pid: r.pid, classId: r.classId })); });
+        list.forEach(e => { if (e.kind === "tournament" && e.tournamentId) (taken[e.pid] = taken[e.pid] || []).push(e.tournamentId); });
+        let sent = [];
+        try { sent = JSON.parse((await env.PUSH.get("remind:sent")) || "[]"); } catch (e) { sent = []; }
+        const n = remindNotes(c, PLAYERS, (rec && rec.board) || {}, taken, t, sent);
+        if (n.length) {
+          pubMsgs.push(...n.map(x => ({ pids: x.pids, m: x.m })));
+          await env.PUSH.put("remind:sent", JSON.stringify(sent.concat(n.map(x => x.k)).slice(-300))); log.writes = (log.writes || 0) + 1; log.remind = n.length;
+        }
+      }
+    } catch (e) { console.warn("sista anmälan", e.message); }
   }
   const evs = activeEvents(t, list);
   if (!evs.length && !pubMsgs.length) {
