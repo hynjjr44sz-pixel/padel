@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-uf+0bvguNH/hbIyOC+31lnlFGaU1zgET8HsdUrVYM98='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-3+3ACENYFRH5xZW8M+8Z/h3LasgKQiVTUNwJLM5XTMo='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -610,7 +610,7 @@
     padding:0 16px max(32px, env(safe-area-inset-bottom)); animation:dIn .26s cubic-bezier(.2,.8,.2,1) both; }
   .duel[hidden]{ display:none; }
   .dsheet{ max-width:640px; margin:0 auto; }
-  .dbar{ position:sticky; top:0; z-index:3; display:flex; justify-content:flex-end; padding:max(10px, env(safe-area-inset-top)) 0 8px; margin:0 -16px; padding-right:12px; background:linear-gradient(var(--bg) 70%, transparent); }
+  .dbar{ position:sticky; top:0; z-index:3; display:flex; justify-content:flex-end; align-items:center; gap:10px; padding:max(10px, env(safe-area-inset-top)) 0 8px; margin:0 -16px; padding-right:12px; background:linear-gradient(var(--bg) 70%, transparent); }
   .dclose{ appearance:none; width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:400 26px/1 "Instrument Sans", sans-serif; cursor:pointer; }
   .duel .vsb{ margin-top:0; }
   .dpls{ padding:4px 14px; }
@@ -660,6 +660,13 @@
 
   .m{ width:var(--cw); background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; position:relative; z-index:2; }
   .m.path{ border-color:var(--accent); }
+  .shbtn{ appearance:none; display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 12px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    font:600 12px/1 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; }
+  .shbtn:disabled{ opacity:.5; }
+  .wwrap{ position:relative; }
+  .vshare{ margin-top:16px; }
+  .wwrap .shbtn{ position:absolute; top:12px; right:12px; z-index:2; }
+  .shbtn.on-dark{ background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.25); color:#fff; }
   .mh .dby{ font-weight:600; color:#B8860B; text-transform:uppercase; letter-spacing:.06em; }
   .m.next{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
   .mh{ display:flex; justify-content:space-between; gap:8px; padding:6px 10px 5px; font:500 10.5px/1.2 "Chivo Mono", monospace; color:var(--dim); background:var(--surface-2); letter-spacing:.02em; }
@@ -1400,6 +1407,10 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Resultat":"Resultado",
+    "Dem mot dem":"Cara a cara",
+    "Dela som bild":"Compartir como imagen",
+    "Dela":"Compartir",
     "Mot klubbkompisar":"Contra compañeros del club",
     "Klubbmöte":"Duelo del club",
     "Matchstatistik":"Estadísticas de partidos",
@@ -4523,6 +4534,7 @@
         var q = x.r;
         return '<div class="' + (x.us > 0 ? "w" : x.us < 0 ? "l" : "") + '"><span>' + esc(x.us ? x.won : _("Lika")) + '</span><span class="o">' + esc(q.a + " – " + q.b) + '</span><b>' + esc(q.s) + '</b><small>' + esc(q.d ? dayMon(q.d) : "") + '</small></div>';
       }).join("") + '</div>' : '<p class="empty">' + _("De har inte mötts tidigare i den här omgången.") + '</p>') + '</section>' +
+      '<div class="vshare">' + shareBtn({kicker:r ? _("Resultat") : _("Dem mot dem"), date:when, title:a + " – " + b, sub:_(g.series) + " · " + g.name, score:r ? sc : "", note:fav != null ? _("Favorit på pappret") + ": " + (Math.abs(fav - 50) < 8 ? _("Jämnt") : (fav >= 50 ? a : b) + " " + Math.max(fav, 100 - fav) + " %") : "", names:bhsNames(a).concat(bhsNames(b))}) + '</div>' +
       '<p class="vnote">' + _("Favorit på pappret räknas på tabellen i omgången (vunna game och vunna matcher) och tidigare möten. Seriematcher räknas inte in i form eller statistik på spelarkorten.") + ' <a href="' + esc(g.url) + '" target="_blank" rel="noopener">' + _("Serien på Backhandsmash ↗︎") + '</a></p>';
     var vm = box.querySelector(".vmid"), vb = box.querySelector(".vsb");
     if (vm && vb) vm.onclick = vm.onkeydown = function(e){
@@ -4671,7 +4683,9 @@
     };
     var plist = function(p, sd){ return p.n.map(function(n, i){ return player(p, i, sd); }).join(""); };
     var cls = esc(_(ev.cls || "")) + (D.lab ? " · " + esc(D.lab) : "");
-    return '<div class="dbar"><button type="button" class="dclose" aria-label="' + _("Stäng") + '">×</button></div>' +
+    var shr = {kicker:mt.w ? _("Resultat") : _("Dem mot dem"), date:when, title:short(A) + " – " + short(B), sub:[cleanName((ev.e && ev.e.name) || ""), ev.cls, D.lab].filter(Boolean).join(" · "),
+      score:mt.w ? sc.join(" ") : "", note:ch ? _("Favorit på pappret") + ": " + (Math.abs(Math.round(100 * ch.p) - 50) < 8 ? _("Jämnt") : (ch.p >= .5 ? short(A) : short(B)) + " " + Math.round(100 * Math.max(ch.p, 1 - ch.p)) + " %") : "", names:A.n.concat(B.n)};
+    return '<div class="dbar">' + shareBtn(shr) + '<button type="button" class="dclose" aria-label="' + _("Stäng") + '">×</button></div>' +
       '<div class="vsb' + (D.fresh ? " anim" : "") + '"><div class="vhd"><b>' + esc(cleanName((ev.e && ev.e.name) || "")) + '</b><span>' + cls + '</span></div>' + (when ? '<div class="vwhen">' + esc(when) + '</div>' : "") +
       '<div class="vgrid">' + side(A, "a" + (mt.w === "a" ? " won" : mt.w === "b" ? " lost" : "")) + mid + side(B, "b" + (mt.w === "b" ? " won" : mt.w === "a" ? " lost" : "")) + '</div>' + fav + '</div>' +
       '<section aria-labelledby="h-dc"><div class="sh"><h2 id="h-dc">' + _("Paren") + '</h2><div class="meta">' + esc(short(A) + " – " + short(B)) + '</div></div><div class="card vcmp">' + rows.join("") + '</div></section>' +
@@ -5259,13 +5273,14 @@
     if (meta) meta.textContent = wins.length ? (wins.length === 1 ? _("1 klass") : wins.length + _(" klasser")) : "";
     host.innerHTML = wins.map(function(w){
       var P = winPlayers(w)[0], day = riDate(w.date + "T12:00"), res = w.rr ? _("Vann gruppen ") + (w.s || "") : (w.s || "");
-      return '<a class="wcard" href="#' + esc(P ? P.key : "") + '" aria-label="' + esc(pairLabel(w) + _(" vann ") + (w.cls || _("klassen")) + (w.name ? _(" i ") + w.name : "")) + '">' +
+      var pn = (w.pair || []).length ? w.pair : winPlayers(w).map(function(q){ return q.name; });
+      return '<div class="wwrap">' + shareBtn({kicker:_("Vinnare"), date:day ? dayLabel(day) : "", title:pairLabel(w), sub:[w.cls, w.name].filter(Boolean).join(" · "), score:res.trim(), note:w.opp && !w.rr ? _("mot ") + w.opp : "", names:pn}, "on-dark") + '<a class="wcard" href="#' + esc(P ? P.key : "") + '" aria-label="' + esc(pairLabel(w) + _(" vann ") + (w.cls || _("klassen")) + (w.name ? _(" i ") + w.name : "")) + '">' +
         '<svg class="court" viewBox="0 0 390 230" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1.4"><path d="M20 229 L110 20 H280 L370 229 Z"/><path d="M58 140 H332"/><path d="M195 140 V229"/></svg>' +
         '<span><span class="wh"><span class="pb win">' + _("Vinnare") + '</span>' + esc(day ? dayLabel(day) : "") + '</span>' +
         '<b>' + esc(pairLabel(w)) + '</b>' +
         '<span class="we">' + esc([w.cls, w.name].filter(Boolean).join(" · ")) + '</span>' +
         (res.trim() || w.opp ? '<span class="ws">' + esc(res.trim()) + (w.opp && !w.rr ? ' <span>' + _("mot ") + esc(w.opp) + '</span>' : "") + '</span>' : "") + '</span>' +
-        winAvatars(w) + '</a>';
+        winAvatars(w) + '</a></div>';
     }).join("") + (fins.length ? '<ul class="winfin" aria-label="' + _("Finaler") + '">' + fins.map(function(w){
       var P = winPlayers(w)[0];
       return '<li><a href="#' + esc(P ? P.key : "") + '"><span class="pb hi">Final</span><span><b>' + esc(pairLabel(w)) + '</b>' +
@@ -5278,6 +5293,72 @@
         '<span class="wm">' + esc(_(w.series) + " · " + w.group + " · " + _("omgång ") + bhsRound(w.round)) + '</span></span>' + avatarsOf(pl, "sm") + '</a></li>';
     }).join("") + '</ul>' : "");
   }
+  /* ================= Dela: a picture of a win or a match (canvas, 1080 x 1350) for the phone's share sheet ================= */
+  // Only this site's own photos are drawn (a RankedIn photo would taint the canvas): others get their initials.
+  function sharePhoto(n){
+    var Q = BYNAME[slug(n)], ph = PHOTOS[slug(n)];
+    return Q ? (Q.avatar || Q.img || null) : ph ? "img/av/" + (ph.src || slug(n)) + ".jpg" : null;
+  }
+  function loadImg(src){ return new Promise(function(ok){ if (!src) return ok(null); var i = new Image(); i.onload = function(){ ok(i); }; i.onerror = function(){ ok(null); }; i.src = src; }); }
+  function wrapText(c, text, max){ var w = String(text).split(" "), lines = [], cur = ""; w.forEach(function(x){ var t = cur ? cur + " " + x : x; if (c.measureText(t).width > max && cur){ lines.push(cur); cur = x; } else cur = t; }); if (cur) lines.push(cur); return lines; }
+  // o: {kicker, date, title, sub, score, note, names:[...]} -> Promise<Blob>
+  function shareCard(o){
+    var W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    var c = cv.getContext("2d"), BS = '"Big Shoulders Display", Impact, sans-serif', MONO = '"Chivo Mono", ui-monospace, monospace', SANS = '"Instrument Sans", system-ui, sans-serif';
+    var fonts = document.fonts && document.fonts.load ? Promise.all(["800 120px Big Shoulders Display", "600 40px Chivo Mono", "600 40px Instrument Sans"].map(function(f){ return document.fonts.load(f).catch(function(){}); })) : Promise.resolve();
+    return Promise.all([fonts, loadImg("img/nynas-logo.png")].concat((o.names || []).slice(0, 4).map(function(n){ return loadImg(sharePhoto(n)); }))).then(function(r){
+      var logo = r[1], faces = r.slice(2);
+      var g = c.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#0A1733"); g.addColorStop(1, "#13285A"); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = "rgba(255,255,255,.10)"; c.lineWidth = 4;   // the court
+      c.beginPath(); c.moveTo(80, H - 40); c.lineTo(300, 520); c.lineTo(W - 300, 520); c.lineTo(W - 80, H - 40); c.closePath(); c.stroke();
+      c.beginPath(); c.moveTo(170, 960); c.lineTo(W - 170, 960); c.moveTo(W / 2, 960); c.lineTo(W / 2, H - 40); c.stroke();
+      if (logo) c.drawImage(logo, 72, 64, 78, 100);
+      c.fillStyle = "#fff"; c.font = "600 34px " + MONO; c.textBaseline = "middle"; c.fillText("NYNÄS PADEL CLUB", 176, 114);
+      var y = 250;
+      var kx = 72;
+      if (o.kicker){ c.font = "800 46px " + BS; var kw = c.measureText(o.kicker.toUpperCase()).width; c.fillStyle = "#FFD84A"; c.beginPath(); if (c.roundRect) c.roundRect(72, y - 38, kw + 48, 76, 14); else c.rect(72, y - 38, kw + 48, 76); c.fill(); c.fillStyle = "#0A1733"; c.fillText(o.kicker.toUpperCase(), 96, y + 2); kx = 72 + kw + 80; }
+      if (o.date){ c.fillStyle = "rgba(255,255,255,.7)"; c.font = "600 32px " + MONO; c.fillText(o.date.toUpperCase(), kx, y + 2); }
+      y += 110;
+      c.fillStyle = "#fff"; c.font = "800 128px " + BS; c.textBaseline = "alphabetic";
+      wrapText(c, String(o.title || "").toUpperCase(), W - 144).slice(0, 3).forEach(function(l){ y += 118; c.fillText(l, 72, y); });
+      if (o.sub){ y += 18; c.font = "500 38px " + SANS; c.fillStyle = "rgba(255,255,255,.75)"; wrapText(c, o.sub, W - 144).slice(0, 2).forEach(function(l){ y += 56; c.fillText(l, 72, y); }); }
+      if (o.score){ y += 92; c.font = "700 64px " + MONO; c.fillStyle = "#FFD84A"; c.fillText(o.score, 72, y); }
+      if (o.note){ y += 64; c.font = "500 34px " + MONO; c.fillStyle = "rgba(255,255,255,.75)"; wrapText(c, o.note, W - 144).slice(0, 2).forEach(function(l, i){ c.fillText(l, 72, y + i * 46); }); }
+      // the faces, bottom right
+      var R = 110, x = W - 72 - R;
+      (o.names || []).slice(0, 4).forEach(function(n, i){
+        var cx = x - i * (R * 1.55), cy = H - 190, im = faces[i];
+        c.save(); c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.closePath(); c.fillStyle = "#1B3570"; c.fill(); c.clip();
+        if (im){ var s = Math.max(2 * R / im.width, 2 * R / im.height); c.drawImage(im, cx - im.width * s / 2, cy - im.height * s / 2, im.width * s, im.height * s); }
+        else { c.fillStyle = "#8EC5FF"; c.font = "800 90px " + BS; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(initials(n), cx, cy + 4); c.textAlign = "left"; }
+        c.restore(); c.lineWidth = 8; c.strokeStyle = BYNAME[slug(n)] ? "#FFD84A" : "rgba(255,255,255,.4)"; c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.stroke();
+      });
+      c.textBaseline = "alphabetic"; c.font = "600 30px " + MONO; c.fillStyle = "rgba(255,255,255,.6)"; c.fillText("padel.holmberg.st", 72, H - 60);
+      return new Promise(function(ok){ cv.toBlob(function(b){ ok(b); }, "image/png"); });
+    });
+  }
+  function shareNow(o, btn){
+    if (btn) btn.disabled = true;
+    shareCard(o).then(function(blob){
+      if (btn) btn.disabled = false;
+      if (!blob) return;
+      var file = typeof File === "function" ? new File([blob], "nynas-padel.png", {type:"image/png"}) : null;
+      if (file && navigator.canShare && navigator.canShare({files:[file]})) return navigator.share({files:[file], title:o.title || "Nynäs Padel"}).catch(function(){});
+      var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "nynas-padel.png"; document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    }, function(){ if (btn) btn.disabled = false; });
+  }
+  var SHARE_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>';
+  var SHARES = {}, SHN = 0;   // what each share button draws (data-share = id; the oldest are dropped)
+  function shareBtn(o, cls){ SHARES[++SHN] = o; delete SHARES[SHN - 400]; return '<button type="button" class="shbtn' + (cls ? " " + cls : "") + '" data-share="' + SHN + '" aria-label="' + _("Dela som bild") + '">' + SHARE_ICON + '<span>' + _("Dela") + '</span></button>'; }
+  document.addEventListener("click", function(e){
+    var b = e.target && e.target.closest && e.target.closest("[data-share]");
+    if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var o = SHARES[+b.getAttribute("data-share")];
+    if (o) shareNow(typeof o === "function" ? o() : o, b);
+  }, true);
+
   /* ================= Topplistan: the club's leaderboard ================= */
   // From GET /events ("board": the worker keeps it up to date during its own rounds), else players.json. The home
   // view makes no RankedIn calls for it. The chosen list and Damer/Herrar are remembered on this device.
