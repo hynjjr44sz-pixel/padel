@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-aa2xxkRmoC47ueS/WHvSPpIuMXhsCYAmfVf7Vgda43k='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Yw4KI7oMQIlI4uPRnk0Xtokd1WG2thRqFngmD0NwKas='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -760,6 +760,23 @@
   .record b{ display:block; font:900 30px/1 "Big Shoulders Display", sans-serif; margin-top:5px; font-variant-numeric:tabular-nums; }
   .record span{ font-size:12px; color:var(--dim); }
   .formrow{ margin-top:16px; }
+  .rk{ padding:14px; }
+  .rkh{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .rkh b{ font:800 22px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; }
+  .rkh span{ font:600 12px/1 "Chivo Mono", monospace; color:var(--dim); }
+  .rkbar{ position:relative; height:10px; margin-top:10px; border-radius:6px; background:var(--surface-2); overflow:hidden; }
+  .rkbar i{ position:absolute; inset:0 auto 0 0; border-radius:6px; background:linear-gradient(90deg, var(--accent), #3FA06A); }
+  .rkl{ display:flex; justify-content:space-between; gap:10px; margin-top:6px; font:500 10.5px/1.3 "Chivo Mono", monospace; color:var(--dim); }
+  .rkt{ margin:10px 0 0; font-size:13.5px; line-height:1.45; }
+  .rkn{ margin:10px 0 0; font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); }
+  .rkf{ margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+  .rkf .k{ font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin-bottom:4px; }
+  .rkr{ display:grid; grid-template-columns:52px minmax(0,1fr) auto; grid-template-rows:auto auto; column-gap:10px; padding:8px 0; border-bottom:1px solid var(--line); align-items:baseline; }
+  .rkr:last-child{ border-bottom:0; }
+  .rkr .d{ font:600 12px/1.2 "Chivo Mono", monospace; grid-row:span 2; }
+  .rkr .n{ font-size:13px; overflow-wrap:anywhere; }
+  .rkr b{ font:600 13px/1.2 "Chivo Mono", monospace; color:var(--loss); text-align:right; }
+  .rkr small{ grid-column:2 / 4; font:500 10.5px/1.3 "Chivo Mono", monospace; color:var(--dim); }
   .formrow .k{ display:flex; justify-content:space-between; font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin-bottom:6px; }
   .form{ display:grid; grid-template-columns:repeat(10, minmax(0, 1fr)); gap:4px; max-width:340px; }
   .chip{ aspect-ratio:1; border-radius:7px; display:flex; align-items:center; justify-content:center; font:800 15px/1 "Big Shoulders Display", sans-serif; }
@@ -1360,6 +1377,19 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Klass och poäng":"Categoría y puntos",
+    "{name} finns inte på SPF-rankingen just nu. En placering i en sanktionerad tävling räcker för att komma in.":"{name} no está en el ranking SPF ahora mismo. Basta con un resultado en un torneo sancionado para entrar.",
+    "{cls}-spelare":"Jugador/a {cls}",
+    "{p} av vägen till {cls}":"{p} del camino a {cls}",
+    "{p} p kvar till {cls}-klass.":"Faltan {p} p para la categoría {cls}.",
+    "{p} p över gränsen till {cls}.":"{p} p por encima del límite a {cls}.",
+    "Under gränsen: nästa vecka kan {name} bli {cls}-spelare.":"Por debajo del límite: la semana que viene {name} puede pasar a {cls}.",
+    "Faller bort de närmaste tre månaderna":"Caducan en los próximos tres meses",
+    "sen {p} p":"después {p} p",
+    "Utan nya resultat: {p} p om tre månader.":"Sin nuevos resultados: {p} p dentro de tres meses.",
+    "Det är under dagens gräns för {cls}.":"Está por debajo del límite actual de {cls}.",
+    "Inga poäng faller bort de närmaste tre månaderna.":"No caducan puntos en los próximos tres meses.",
+    "{n} tävlingar räknas just nu (högst 12) plus seriematcher i SPL. Gränserna är poängen på plats {a} och {b} den här veckan.":"Cuentan {n} torneos ahora (máximo 12) más los partidos de liga SPL. Los límites son los puntos del puesto {a} y {b} esta semana.",
     "På reservlistan till {cls}. Får paret en plats flyttas det in i klassen.":"En la lista de reserva de {cls}. Si la pareja obtiene plaza, pasa a la categoría.",
     "En reservlista lottas inte. Lottningen för {cls} visas här om paret får en plats.":"Una lista de reserva no tiene cuadro. El cuadro de {cls} aparece aquí si la pareja obtiene plaza.",
     "klassen":"la categoría",
@@ -5562,6 +5592,7 @@
         '<div class="record" id="rec-' + k + '" hidden></div>' +
         '<div class="formrow" id="formrow-' + k + '" hidden><div class="k"><span>' + _("Form, senaste matcherna") + '</span><span>RankedIn</span></div><div class="form" id="form-' + k + '"></div></div>' +
       '</section>' +
+      '<section class="t-off" aria-labelledby="h-rk-' + k + '"><div class="sh"><h2 id="h-rk-' + k + '">' + _("Klass och poäng") + '</h2><div class="meta">' + _("SPF-ranking") + '</div></div><div class="card rk" id="rk-' + k + '"></div></section>' +
       '<section class="t-off" aria-labelledby="h-tt-' + k + '"><div class="sh"><h2 id="h-tt-' + k + '">' + _("Senaste tävlingar") + '</h2><div class="meta"></div></div><p class="tsum" id="' + k + 'Sum"></p><div class="card tours" id="' + k + 'Tours"></div></section>' +
       '<section class="t-off" aria-labelledby="h-pa-' + k + '" id="pa-' + k + '"><div class="sh"><h2 id="h-pa-' + k + '">' + _("Partners") + '</h2><div class="meta" id="paMeta-' + k + '">' + _("12 mån") + '</div></div><div class="card partners" id="paList-' + k + '"></div><p class="panote" id="paNote-' + k + '"></p></section>' +
       '<section class="t-off" aria-labelledby="h-hist-' + k + '" id="hs-' + k + '" hidden><div class="sh"><h2 id="h-hist-' + k + '">' + _("Senaste matcher") + '</h2><div class="meta" id="histMeta-' + k + '"></div></div><div class="card hist" id="hist-' + k + '"></div></section>' +
@@ -5784,6 +5815,7 @@
     panel(P);
     if (DISC) try { setMode(P.key, pickHero(P.key)); } catch (e){ warn("Visning", e); }
     loadTrend(P);
+    try { renderRk(P.key); rkLoad(P); } catch (e){ warn("Klass och poäng", e); }
     loadHistory(P);
     loadCal();
     clientFallback(P);
@@ -5960,6 +5992,92 @@
       renderTrend(P.key); renderInfo(P);
       try { renderPlayerList(); } catch (e){}
     }, function(){ TREND_BUSY[P.pid] = false; });
+  }
+
+  /* ================= Klass och poäng: the SPF ranking's own breakdown (RankedIn getparticipantpointsdetails) ================= */
+  // Which results count now (best 12 tournaments of the last 12 months, plus league matches), when each falls out
+  // (a year after), the points at the class limits (the players on those places this week) and what is left without new
+  // results. Looked up when the player page opens, kept 12 h (the list changes once a week, Sunday night).
+  var RK_PRE = "padel.rk.v1.", RKC = {}, RK_BUSY = {}, RK_LIM = {};
+  function rkLimits(P){ return P.gender === "F" ? [["A", 50], ["B", 160], ["C", 700]] : [["A", 60], ["B", 200], ["C", 1200]]; }
+  function rkGet(P){ if (!RKC[P.key]) RKC[P.key] = CACHE_OFF ? null : store.json(RK_PRE + P.pid); return RKC[P.key]; }
+  function rkDate(s){ var m = /^(\d\d)\/(\d\d)\/(\d{4})/.exec(String(s || "")); return m ? m[3] + "-" + m[2] + "-" + m[1] : String(s || "").slice(0, 10); }
+  function rkLoad(P){
+    var c = rkGet(P);
+    if ((c && Date.now() - c.t < 12 * HOUR) || RK_BUSY[P.key] || !P.pid) return;
+    RK_BUSY[P.key] = true;
+    var rt = P.rt || (P.gender === "F" ? 4 : 3), ag = P.ag || (P.gender === "F" ? 83 : 82), base = "/Ranking/SearchRankingPlayersAsync?rankingId=1917&rankingType=" + rt + "&ageGroup=" + ag + "&weekFromNow=0&language=en";
+    var o = {t:Date.now(), ev:[], lim:{}};
+    riGet(base + "&searchTerm=" + encodeURIComponent(P.name) + "&skip=0&take=20&rankingDate=" + dayOf(now())).then(function(x){
+      var p = ((x && x.Payload) || []).filter(function(q){ return q && q.Participant && q.Participant.NewParticipantId === P.pid; })[0];
+      if (!p) return null;
+      o.pos = p.ParticipantPoints.Standing; o.pts = p.ParticipantPoints.Points;
+      return riGet("/ranking/getparticipantpointsdetailsasync?id=" + p.Participant.Id + "&agegroup=" + ag + "&weekfromnow=0&showAll=true&language=en&skip=0&take=60").then(function(d){
+        var w = d && d.ParticipantWithPoints, list = (w && w.EventPoints && w.EventPoints.Payload) || [];
+        o.ev = list.map(function(r){ var e = r.EventPoint || {}; return {d:rkDate(e.Date), p:parseFloat(e.Points) || 0, c:!!e.IsInCalculation, tour:e.EventType === 4, n:cleanName(String(r.EventName || e.EventName || "").split(" | ")[0]), st:e.Standing || ""}; });
+      });
+    }).then(function(){
+      // the points at the class limits this week (one call each, shared by every player of the list for 12 h)
+      return Promise.all(rkLimits(P).map(function(l){
+        var k = rt + ":" + ag + ":" + l[1], m = RK_LIM[k] || (RK_LIM[k] = store.json("padel.rkl.v1." + k));
+        if (m && Date.now() - m.t < 12 * HOUR){ o.lim[l[0]] = m.p; return null; }
+        return riGet(base + "&searchTerm=&skip=" + (l[1] - 1) + "&take=1&rankingDate=" + dayOf(now())).then(function(x){
+          var q = ((x && x.Payload) || [])[0];
+          if (!q) return;
+          RK_LIM[k] = {t:Date.now(), p:q.ParticipantPoints.Points};
+          store.set("padel.rkl.v1." + k, JSON.stringify(RK_LIM[k]));
+          o.lim[l[0]] = q.ParticipantPoints.Points;
+        }, function(){});
+      }));
+    }).then(function(){
+      RK_BUSY[P.key] = false;
+      if (o.pts == null && !(c && c.pts != null)) { if (!c) { RKC[P.key] = o; } renderRk(P.key); return; }
+      if (o.pts == null) return;
+      RKC[P.key] = o;
+      if (!CACHE_OFF) store.set(RK_PRE + P.pid, JSON.stringify(o));
+      renderRk(P.key);
+    }, function(){ RK_BUSY[P.key] = false; });
+  }
+  // Points on a later day without new results: the 12 best tournaments still inside the year, plus the league matches.
+  function rkAt(ev, day){
+    var lim = addDays(day, -365), live = ev.filter(function(e){ return e.d > lim; });
+    var tour = live.filter(function(e){ return e.tour; }).sort(function(a, b){ return b.p - a.p; }).slice(0, 12);
+    return Math.round((tour.concat(live.filter(function(e){ return !e.tour; })).reduce(function(s, e){ return s + e.p; }, 0)) * 100) / 100;
+  }
+  function fmtRp(v){ return String(Math.round(v * 10) / 10).replace(".", ","); }
+  function renderRk(who){
+    var host = document.getElementById("rk-" + who), P = BYKEY[who];
+    if (!host || !P) return;
+    var o = rkGet(P);
+    if (!o){ host.innerHTML = '<p class="empty">' + _("Hämtar …") + '</p>'; return; }
+    if (o.pts == null){ host.innerHTML = '<p class="empty">' + _("{name} finns inte på SPF-rankingen just nu. En placering i en sanktionerad tävling räcker för att komma in.", {name:P.short}) + '</p>'; return; }
+    var L = rkLimits(P), cls = classOf(P, o.pos), i = L.map(function(l){ return l[0]; }).indexOf(cls), up = i > 0 ? L[i - 1] : cls === "D" ? L[L.length - 1] : null, down = cls === "D" ? null : L[i];
+    var upP = up ? o.lim[up[0]] : null, downP = down ? o.lim[down[0]] : null, h = "";
+    // the meter: from the limit below to the limit above
+    var lo = downP != null ? downP : 0, hi = upP != null ? upP : Math.max(o.pts * 1.5, lo + 1), pct = Math.max(2, Math.min(98, 100 * (o.pts - lo) / Math.max(0.01, hi - lo)));
+    h += '<div class="rkm"><div class="rkh"><b>' + esc(_("{cls}-spelare", {cls:cls})) + '</b><span>#' + o.pos + " · " + fmtRp(o.pts) + ' p</span></div>' +
+      '<div class="rkbar" role="img" aria-label="' + esc(_("{p} av vägen till {cls}", {p:Math.round(pct) + " %", cls:up ? up[0] : "A"})) + '"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
+      '<div class="rkl"><span>' + (down ? esc(cls + "/" + (L[i + 1] ? L[i + 1][0] : "D") + " · #" + down[1] + (downP != null ? " · " + fmtRp(downP) + " p" : "")) : "") + '</span><span>' + (up ? esc(up[0] + " · #" + up[1] + (upP != null ? " · " + fmtRp(upP) + " p" : "")) : "") + '</span></div>';
+    var lines = [];
+    if (up && upP != null) lines.push(_("{p} p kvar till {cls}-klass.", {p:fmtRp(Math.max(0, upP - o.pts)), cls:up[0]}));
+    if (down && downP != null) lines.push(o.pts >= downP ? _("{p} p över gränsen till {cls}.", {p:fmtRp(o.pts - downP), cls:L[i + 1] ? L[i + 1][0] : "D"}) : _("Under gränsen: nästa vecka kan {name} bli {cls}-spelare.", {name:P.short, cls:L[i + 1] ? L[i + 1][0] : "D"}));
+    h += '<p class="rkt">' + esc(lines.join(" ")) + '</p></div>';
+    // what falls out in the coming three months
+    var today = dayOf(now()), until = addDays(today, 92), out = o.ev.filter(function(e){ var x = addDays(e.d, 365); return e.c && x > today && x <= until; })
+      .sort(function(a, b){ return a.d < b.d ? -1 : 1; });
+    if (out.length){
+      var by = {};
+      out.forEach(function(e){ var x = addDays(e.d, 365), g = by[x] = by[x] || {d:x, p:0, n:[]}; g.p += e.p; if (g.n.indexOf(e.n) < 0) g.n.push(e.n); });
+      h += '<div class="rkf"><div class="k">' + _("Faller bort de närmaste tre månaderna") + '</div>' + Object.keys(by).sort().map(function(k){
+        var g = by[k], after = rkAt(o.ev, addDays(k, 1));
+        return '<div class="rkr"><span class="d">' + esc(dayMonD(riDate(k + "T12:00"))) + '</span><span class="n">' + esc(g.n.join(", ")) + '</span><b>−' + esc(fmtRp(g.p)) + ' p</b><small>' + esc(_("sen {p} p", {p:fmtRp(after)})) + '</small></div>';
+      }).join("") + '</div>';
+      var end = rkAt(o.ev, until), dn = down ? o.lim[down[0]] : null;
+      h += '<p class="rkt">' + esc(_("Utan nya resultat: {p} p om tre månader.", {p:fmtRp(end)}) + (dn != null && o.pts >= dn && end < dn ? " " + _("Det är under dagens gräns för {cls}.", {cls:cls}) : "")) + '</p>';
+    } else h += '<p class="rkt">' + _("Inga poäng faller bort de närmaste tre månaderna.") + '</p>';
+    var cnt = o.ev.filter(function(e){ return e.c && e.tour; }).length;
+    h += '<p class="rkn">' + esc(_("{n} tävlingar räknas just nu (högst 12) plus seriematcher i SPL. Gränserna är poängen på plats {a} och {b} den här veckan.", {n:cnt, a:"#" + (up ? up[1] : L[0][1]), b:"#" + (down ? down[1] : L[L.length - 1][1])})) + '</p>';
+    host.innerHTML = h;
   }
 
   /* ================= Senaste tävlingar: the player's finished tournaments, looked up once ================= */

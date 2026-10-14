@@ -78,13 +78,18 @@ function pageApi(path, over, req) {
   if (p.endsWith("/rating/getplayerselectedopponentsstatsasync")) return req && req.method() === "POST" ? oppStats(JSON.parse(req.postData() || "{}").participantIds || []) : null;
   const byPid = id => ROSTER.find(x => String(x.pid) === String(id));
   if (p.endsWith("/ranking/searchrankingplayersasync")) {
+    if (!q("searchTerm")) return { Payload: [{ Participant: { Id: 1, NewParticipantId: 1 }, ParticipantPoints: { Standing: +q("skip") + 1, Points: Math.round(4000 / (+q("skip") + 1) * 10) / 10 } }] };   // the class limits
     const r = ROSTER.find(x => x.name === q("searchTerm"));
-    return { Payload: r && r.rank ? [{ Participant: { NewParticipantId: r.pid }, StandingDiff: 12, ParticipantPoints: { Standing: r.rank, Points: r.points, RankingDate: (q("rankingDate") < "2026-09-21" ? "2026-09-14" : "2026-09-21") + "T00:00:00" } }] : [] };
+    return { Payload: r && r.rank ? [{ Participant: { Id: 9000 + r.rank, NewParticipantId: r.pid }, StandingDiff: 12, ParticipantPoints: { Standing: r.rank, Points: r.points, RankingDate: (q("rankingDate") < "2026-09-21" ? "2026-09-14" : "2026-09-21") + "T00:00:00" } }] : [] };
   }
   if (p.endsWith("/rating/getplayerratinghistoryforchartasync")) {
     const r = byPid(q("playerId")), base = (r && r.skill) || 12;
     return r && r.skill ? Array.from({ length: 11 }, (_, i) => ({ Rating: +(base - 0.3 + ((i * 7) % 5) * 0.12).toFixed(2), Date: "2026-0" + (7 + Math.floor(i / 4)) + "-" + String(10 + i).padStart(2, "0") + "T10:00:00", UnixTimestamp: 1780000000000 + i * 864e5 })).concat([{ Rating: base, Date: "2026-09-27T10:00:00", UnixTimestamp: 1790000000000 }]) : [];
   }
+  if (p.endsWith("/ranking/getparticipantpointsdetailsasync")) return { ParticipantWithPoints: { EventPoints: { TotalCount: 3, Payload: [
+    { EventName: "Höstcupen", EventPoint: { EventType: 4, Points: "10.000", IsInCalculation: true, Date: "27/09/2026", Standing: "1" } },
+    { EventName: "Novembercupen", EventPoint: { EventType: 4, Points: "4.800", IsInCalculation: true, Date: "02/11/2025", Standing: "2" } },
+    { EventName: "SPL Swedish Padel League Damer 2025-26 | A vs B", EventPoint: { EventType: 3, Points: "0.500", IsInCalculation: true, Date: "14/12/2025", Standing: "" } }] } } };
   if (p.endsWith("/player/playerprofileinfoasync")) return { Header: { Form: ["W", "L", "W", "W", "L"] }, Statistics: { WinLossDoublesCurrentYear: "12-7", EventsParticipatedDoublesCurrentYear: "6", CareerWinLossDoubles: "30-21", CareerEventsParticipatedDoubles: "14" } };
   if (p.endsWith("/rating/getplayerratingasync")) return [{ RatingId: 65, RatingValue: 13.5 }, { RatingId: 64, RatingValue: 12.5 }];
   if (p.endsWith("/teamleague/getpoolsinfoasync")) return { pools: [{ id: 1, name: "R4 Öst - Div 3 Öst - Södra" }, { id: 2, name: "R4 Öst - Div 4 Öst-mitt" }] };
@@ -213,6 +218,9 @@ try {
     await page.waitForTimeout(400);
     ok("Dem mot dem: close returns to Thea's page", await page.evaluate(() => document.getElementById("duel").hidden && location.hash === "#thea/m6872156"), await page.evaluate(() => location.hash));
   }
+  await page.waitForFunction(() => /p kvar till/.test(document.querySelector("#rk-thea")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+  { const t = await page.$eval("#rk-thea", e => e.innerText);
+    ok("Klass och poäng: class, distance to the limits, what falls out", /B-SPELARE|B-spelare/i.test(t) && /p kvar till A-klass/.test(t) && /över gränsen till C/.test(t) && /Novembercupen/.test(t), t); }
   ok("Thea: hero photo (cut-out)", await page.$eval("#p-thea .hero .pmed img", i => i.getAttribute("src")) === "img/cut/thea-holmberg-loving.webp");
   ok("Thea: chips show followed first and Thea current", (await page.$$eval("#chips .pchip", a => a.map(x => x.getAttribute("href") + (x.getAttribute("aria-current") ? "*" : "")))).slice(0, 2).join() === "#thea*,#kian");
   ok("Thea: trend numbers", /#\d+/.test(await page.textContent("#tv-thea-rank")));
