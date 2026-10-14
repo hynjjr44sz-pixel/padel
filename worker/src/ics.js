@@ -26,7 +26,7 @@ export function buildIcs({ events = [], bhs = null, live = {} } = {}, pids = [],
   };
   const who = new Map();   // event -> the followed players in it (one entry per class/day)
   for (const e of events) {
-    const ps = [e.pid].concat(e.pids || []).map(Number).filter(p => want.has(p));
+    const ps = [e.pid, e.partnerId].concat(e.pids || []).map(Number).filter(p => want.has(p));   // the partner too (a reserve entry may be under the partner)
     if (!ps.length) continue;
     const end = String(e.end || e.date || e.start || "").slice(0, 10) || String(e.windowTo || "").slice(0, 10);
     if (end && end < today) continue;
