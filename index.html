@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-QVaiM3NExzQHDWqUBbPwb3I+/yil9NvJQ+p3UFpzCgk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-2kMB5ez/aFNv6VQGTZ7lSKuQuUgKjKS0QL9s9/pdWe4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -763,6 +763,21 @@
   .hist .r .dv{ display:block; margin-top:2px; font:600 11px/1 "Chivo Mono", monospace; }
   .hist .r .dv.up{ color:#2E8A57; }
   .hist .r .dv.dn{ color:var(--loss); }
+  .ms{ padding:6px 14px 12px; }
+  .mst{ display:grid; grid-template-columns:1fr 1fr; }
+  .mst > div{ padding:10px 0; border-bottom:1px solid var(--line); min-width:0; }
+  .mst > div:nth-child(odd){ padding-right:10px; border-right:1px solid var(--line); }
+  .mst > div:nth-child(even){ padding-left:12px; }
+  .mst span{ display:block; font:500 10px/1.25 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .mst b{ display:block; margin-top:4px; font:800 26px/1 "Big Shoulders Display", sans-serif; }
+  .mst small{ display:block; margin-top:3px; font:500 11px/1.3 "Chivo Mono", monospace; color:var(--dim); }
+  .msl{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:10px; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--line); }
+  .msl span{ font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .msl b{ font-size:13.5px; overflow-wrap:anywhere; }
+  .msl em{ font:600 13px/1 "Chivo Mono", monospace; font-style:normal; }
+  .msl.l em{ color:var(--loss); }
+  .msl.w em{ color:#2E8A57; }
+  .msn{ margin:10px 0 0; font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); }
   .rk{ padding:14px; }
   .rkh{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
   .rkh b{ font:800 22px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; }
@@ -1380,6 +1395,19 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Matchstatistik":"Estadísticas de partidos",
+    "Avgörande set":"Set decisivo",
+    "Supertiebreak":"Supertiebreak",
+    "Tiebreak 7–6":"Tiebreak 7–6",
+    "Vänt efter förlorat första set":"Remontadas tras perder el 1.er set",
+    "Vunnit första set":"Ganó el 1.er set",
+    " vunna":" ganados",
+    "inga än":"ninguno aún",
+    " av ":" de ",
+    " vann matchen":" ganó el partido",
+    "Svårast":"Más difícil",
+    "Bäst mot":"Mejor contra",
+    "{n} set vunna med 6–0.":"{n} sets ganados 6–0.",
     "Skill efter matchen":"Skill tras el partido",
     "Klass och poäng":"Categoría y puntos",
     "{name} finns inte på SPF-rankingen just nu. En placering i en sanktionerad tävling räcker för att komma in.":"{name} no está en el ranking SPF ahora mismo. Basta con un resultado en un torneo sancionado para entrar.",
@@ -5611,6 +5639,7 @@
       '<section class="t-off" aria-labelledby="h-rk-' + k + '"><div class="sh"><h2 id="h-rk-' + k + '">' + _("Klass och poäng") + '</h2><div class="meta">' + _("SPF-ranking") + '</div></div><div class="card rk" id="rk-' + k + '"></div></section>' +
       '<section class="t-off" aria-labelledby="h-tt-' + k + '"><div class="sh"><h2 id="h-tt-' + k + '">' + _("Senaste tävlingar") + '</h2><div class="meta"></div></div><p class="tsum" id="' + k + 'Sum"></p><div class="card tours" id="' + k + 'Tours"></div></section>' +
       '<section class="t-off" aria-labelledby="h-pa-' + k + '" id="pa-' + k + '"><div class="sh"><h2 id="h-pa-' + k + '">' + _("Partners") + '</h2><div class="meta" id="paMeta-' + k + '">' + _("12 mån") + '</div></div><div class="card partners" id="paList-' + k + '"></div><p class="panote" id="paNote-' + k + '"></p></section>' +
+      '<section class="t-off" aria-labelledby="h-ms-' + k + '"><div class="sh"><h2 id="h-ms-' + k + '">' + _("Matchstatistik") + '</h2><div class="meta">' + _("12 mån") + '</div></div><div class="card ms" id="ms-' + k + '"></div></section>' +
       '<section class="t-off" aria-labelledby="h-hist-' + k + '" id="hs-' + k + '" hidden><div class="sh"><h2 id="h-hist-' + k + '">' + _("Senaste matcher") + '</h2><div class="meta" id="histMeta-' + k + '"></div></div><div class="card hist" id="hist-' + k + '"></div></section>' +
       '<section class="t-off" aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">' + _("Kommande") + '</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div></section>' +
       '<section class="t-off" aria-labelledby="h-sg-' + k + '" id="sg-' + k + '"><div class="sh"><h2 id="h-sg-' + k + '">' + _("Förslag på tävlingar") + '</h2><div class="meta">' + _("Inom&nbsp;20&nbsp;mil") + '</div></div>' +
@@ -5821,6 +5850,7 @@
     try { renderBhs(P.key); } catch (e){ warn("Serier", e); }
     try { renderMHist(P.key); } catch (e){ warn("Matcher", e); }
     try { renderPartners(P.key); } catch (e){ warn("Partners", e); }
+    try { renderMStats(P.key); } catch (e){ warn("Matchstatistik", e); }
     // Partners on screen (or close): the matches are counted (nothing while the page is hidden or not shown)
     var pa = m.querySelector("#pa-" + P.key);
     if (pa && "IntersectionObserver" in window) new IntersectionObserver(function(es){ if (es.some(function(x){ return x.isIntersecting; })) mhSoon(P); }, {rootMargin:"200px"}).observe(pa);
@@ -6243,9 +6273,47 @@
       mhChanged(P, true);
     });
   }
+  /* ---- Matchstatistik: the same counted tournament matches as Partners (12 months, own view of the score) ---- */
+  function setsOf(sc){ return String(sc || "").split(/\s+/).map(function(x){ var m = /^(\d+)-(\d+)$/.exec(x); return m ? [+m[1], +m[2]] : null; }).filter(Boolean); }
+  function mStats(list){
+    var o = {m:list.length, w:0, dec:[0, 0], stb:[0, 0], tb:[0, 0], back:[0, 0], lead:[0, 0], bagel:0, opp:{}};
+    list.forEach(function(x){
+      var ss = setsOf(x.s), win = !!x.w;
+      if (win) o.w++;
+      if (ss.length === 3){ o.dec[win ? 0 : 1]++; var t = ss[2]; if (Math.max(t[0], t[1]) >= 10) o.stb[t[0] > t[1] ? 0 : 1]++; }
+      ss.forEach(function(t){ if ((t[0] === 7 && t[1] === 6) || (t[0] === 6 && t[1] === 7)) o.tb[t[0] > t[1] ? 0 : 1]++; if (t[0] === 6 && t[1] === 0) o.bagel++; });
+      if (ss.length > 1){ if (ss[0][0] < ss[0][1]) o.back[win ? 0 : 1]++; else if (ss[0][0] > ss[0][1]) o.lead[win ? 0 : 1]++; }
+      var k = pairSig(x.o || []), q = o.opp[k] = o.opp[k] || {n:x.o, w:0, l:0};
+      if (win) q.w++; else q.l++;
+    });
+    var opp = Object.keys(o.opp).map(function(k){ return o.opp[k]; });
+    o.nem = opp.filter(function(q){ return q.l >= 2 && q.l > q.w; }).sort(function(a, b){ return b.l - a.l || a.w - b.w; })[0] || null;
+    o.fav = opp.filter(function(q){ return q.w >= 2; }).sort(function(a, b){ return b.w - a.w || a.l - b.l; })[0] || null;
+    return o;
+  }
+  function renderMStats(who){
+    var host = document.getElementById("ms-" + who), P = BYKEY[who];
+    if (!host || !P) return;
+    var ready = !!mhGet(P).t, list = ready ? mhMatches(P) : [];
+    if (!list.length){ host.innerHTML = '<p class="empty">' + (ready ? _("Inga turneringsmatcher det senaste året.") : _("Räknar matcher …")) + '</p>'; return; }
+    var o = mStats(list), pc = function(a){ return a[0] + a[1] ? Math.round(100 * a[0] / (a[0] + a[1])) + " %" : "–"; };
+    var tile = function(k, v, sub){ return '<div><span>' + esc(k) + '</span><b>' + esc(v) + '</b><small>' + esc(sub) + '</small></div>'; };
+    var h = '<div class="mst">' +
+      tile(_("Matcher"), o.w + "–" + (o.m - o.w), Math.round(100 * o.w / o.m) + _(" % vinster")) +
+      tile(_("Avgörande set"), o.dec[0] + "–" + o.dec[1], o.dec[0] + o.dec[1] ? pc(o.dec) + _(" vunna") : _("inga än")) +
+      tile(_("Supertiebreak"), o.stb[0] + "–" + o.stb[1], o.stb[0] + o.stb[1] ? pc(o.stb) + _(" vunna") : _("inga än")) +
+      tile(_("Tiebreak 7–6"), o.tb[0] + "–" + o.tb[1], o.tb[0] + o.tb[1] ? pc(o.tb) + _(" vunna") : _("inga än")) +
+      tile(_("Vänt efter förlorat första set"), o.back[0] + _(" av ") + (o.back[0] + o.back[1]), pc(o.back)) +
+      tile(_("Vunnit första set"), o.lead[0] + _(" av ") + (o.lead[0] + o.lead[1]), pc(o.lead) + _(" vann matchen")) + '</div>';
+    var line = function(lab, q, cls){ return q ? '<div class="msl ' + cls + '"><span>' + esc(lab) + '</span><b>' + esc((q.n || []).map(surname).join(" / ")) + '</b><em>' + q.w + "–" + q.l + '</em></div>' : ""; };
+    h += line(_("Svårast"), o.nem, "l") + line(_("Bäst mot"), o.fav, "w");
+    if (o.bagel) h += '<p class="msn">' + esc(_("{n} set vunna med 6–0.", {n:o.bagel})) + '</p>';
+    host.innerHTML = h;
+  }
   // What depends on the matches: Partners, the history rows, the hero and the draw (its cards).
   function mhChanged(P, all){
     try { renderPartners(P.key); } catch (e){ warn("Partners", e); }
+    try { renderMStats(P.key); } catch (e){ warn("Matchstatistik", e); }
     if (!all) return;
     try { renderMHist(P.key); } catch (e){ warn("Matcher", e); }
     var D = DYN[P.key];
