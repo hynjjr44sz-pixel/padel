@@ -80,12 +80,16 @@ async function tournament(p, e, get, ctx) {
   let found = old.map(x => ({ classId: x.classId, cls: x.cls, partner: x.partner, partnerId: x.partnerId || null, pairs: x.pairs, seed: x.seed, scanned: x.scanned }));
   const noneKey = e.Id + ":" + p.who + ":" + ctx.today;
   if (!found.length && ctx.none.has(noneKey)) return [];   // looked today, not in any class (withdrawn, reserve)
-  if (!found.length || ctx.now - new Date(old[0].scanned || 0) > DAY) {
+  // On a reserve list: looked at again every 2 h (a pair moved into the class is shown the same day), the list and its class.
+  const onRes = found.some(f => /^reserv/i.test(f.cls || ""));
+  if (!found.length || ctx.now - new Date(old[0].scanned || 0) > (onRes ? 2 * 3600e3 : DAY)) {
     // Ongoing or starting within 48 h (the classes are settled): only the known classes and the reserve lists
     // ("Reservlista Herr C": a pair can be moved there late) are checked, one call each, instead of every class of the
     // tournament (which would not fit the live-time discovery budget).
     const near = found.length && localToDate(info.StartDate || e.StartDate) - ctx.now < 2 * DAY;
-    const classes = near ? found.map(f => ({ Id: f.classId, Name: f.cls })).concat((info.Classes || []).filter(c => /^reserv/i.test(c.Name || "") && !found.some(f => f.classId === c.Id))) : info.Classes || [];
+    const main = n => String(n || "").replace(/^reserv\S*\s*(?:lista|list)?\s*/i, "").trim().toLowerCase();
+    const resMain = (info.Classes || []).filter(c => found.some(f => /^reserv/i.test(f.cls || "") && main(f.cls) === String(c.Name || "").trim().toLowerCase()));
+    const classes = near || onRes ? found.map(f => ({ Id: f.classId, Name: f.cls })).concat((info.Classes || []).filter(c => /^reserv/i.test(c.Name || "") || resMain.includes(c)).filter(c => !found.some(f => f.classId === c.Id))) : info.Classes || [];
     found = [];
     for (const c of classes) {
       const pl = await get("/tournament/GetPlayersForClassAsync?tournamentId=" + e.Id + "&tournamentClassId=" + c.Id + "&language=en");
