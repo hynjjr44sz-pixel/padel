@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-YOJ8XKRW6u3lja2VxTfAxelTTBp2Y8L2DxxFcohkJwk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mXEZ/eBxlsBTEYuT5MOuYER7pgHJS4aKLu25LRuHstY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -664,6 +664,11 @@
     font:600 12px/1 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; }
   .shbtn:disabled{ opacity:.5; }
   .wwrap{ position:relative; }
+  .wk{ padding:4px 14px; }
+  .wkr{ display:grid; grid-template-columns:92px minmax(0,1fr); gap:10px; padding:10px 0; border-bottom:1px solid var(--line); align-items:baseline; }
+  .wkr:last-child{ border-bottom:0; }
+  .wkr span{ font:600 10.5px/1.3 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .wkr b{ font:600 14px/1.35 "Instrument Sans", sans-serif; overflow-wrap:anywhere; }
   .calrow{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; margin:12px 0 0; font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); }
   .callink{ display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 14px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink);
     font:600 12px/1 "Chivo Mono", monospace; letter-spacing:.04em; text-decoration:none; }
@@ -1326,6 +1331,10 @@
       <div class="nowlist" id="nowList"><p class="empty" data-i18n>Hämtar …</p></div>
     </section>
 
+    <section aria-labelledby="h-wk" id="secWeek" hidden>
+      <div class="sh"><h2 id="h-wk" data-i18n>Veckan i klubben</h2><div class="meta" id="weekMeta"></div></div>
+      <div class="card wk" id="weekBody"></div>
+    </section>
     <section aria-labelledby="h-win" id="secWin" hidden>
       <div class="sh"><h2 id="h-win" data-i18n>Veckans vinnare</h2><div class="meta" id="winMeta"></div></div>
       <div class="winlist" id="winList"></div>
@@ -1411,6 +1420,12 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    " från klubben":" del club",
+    "Veckan i klubben":"La semana en el club",
+    "Vann":"Ganaron",
+    "Klättrade":"Subieron",
+    "{w} vunna, {l} förlorade":"{w} ganados, {l} perdidos",
+    "Den här veckan":"Esta semana",
     "Följda spelare i kalendern":"Jugadores seguidos en el calendario",
     "Tävlingar, lagmatcher och seriematcher. Uppdateras av sig själv.":"Torneos, partidos de equipo y de liga. Se actualiza solo.",
     "{name} i kalendern":"{name} en el calendario",
@@ -5131,6 +5146,7 @@
   function renderHome(){
     if (!ROSTER.length) return;
     try { renderNow(); } catch (e){ warn("Spelar nu", e); }
+    try { renderWeek(); } catch (e){ warn("Veckan i klubben", e); }
     try { renderWins(); } catch (e){ warn("Veckans vinnare", e); }
     try { renderLatest(); } catch (e){ warn("Senaste resultat", e); }
     try { renderAgenda(); } catch (e){ warn("Kommande", e); }
@@ -5268,6 +5284,23 @@
   function seriesWins(){
     var h = DISC && DISC.bhs && DISC.bhs.hist, t = +now();
     return ((h && h.sw) || []).filter(function(w){ return t - Date.parse(w.at) <= WIN_DAYS * 864e5; }).sort(function(a, b){ return String(b.at).localeCompare(String(a.at)); });
+  }
+  // Veckan i klubben (worker "week"): Monday to Wednesday, the week that went and the week ahead.
+  function renderWeek(){
+    var sec = document.getElementById("secWeek"), body = document.getElementById("weekBody"), meta = document.getElementById("weekMeta"), w = DISC && DISC.week;
+    if (!sec || !body) return;
+    var dow = (loc(now()).getUTCDay() + 6) % 7, rows = [];
+    if (w && dow <= 2){
+      var line = function(k, v){ rows.push('<div class="wkr"><span>' + esc(k) + '</span><b>' + esc(v) + '</b></div>'); };
+      if (w.won && w.won.length) line(_("Vann"), w.won.map(function(x){ return x.who + " · " + x.cls; }).join(", "));
+      if (w.fin && w.fin.length) line(_("Final"), w.fin.map(function(x){ return x.who + " · " + x.cls; }).join(", "));
+      if (w.climb && w.climb.length) line(_("Klättrade"), w.climb.map(function(x){ return x.who + " +" + x.up + (x.rk ? " (#" + x.rk + ")" : ""); }).join(", "));
+      if (w.series && w.series.w + w.series.l) line(_("Serier"), _("{w} vunna, {l} förlorade", {w:w.series.w, l:w.series.l}));
+      if (w.coming && w.coming.length) line(_("Den här veckan"), w.coming.map(function(x){ return x.name + " (" + x.n + _(" från klubben") + ")"; }).join(", "));
+    }
+    sec.hidden = !rows.length;
+    body.innerHTML = rows.join("");
+    if (meta) meta.textContent = rows.length ? dayMonD(riDate(w.from + "T12:00")) + " – " + dayMonD(riDate(w.to + "T12:00")) : "";
   }
   function renderWins(){
     var sec = document.getElementById("secWin"), host = document.getElementById("winList"), meta = document.getElementById("winMeta");

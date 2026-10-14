@@ -3,6 +3,7 @@
 // the player(s) concerned. Events come from discover.js (every event the club's players in players.json
 // enter on RankedIn, a few players per run) merged with events.js.
 import { buildIcs } from "./ics.js";
+import { weekDigest, weekNote } from "./week.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
@@ -168,7 +169,8 @@ async function handle(req, env) {
     const bhs = await loadBhs(env), tv = await loadTv(env), tvs = await loadTvStarts(env);
     // tv: the MATCHi TV hall of an event (e.tv = its club id) and the halls' streams around the play days
     const withTv = e => { const c = eventClub(e); return c ? { ...e, tv: c.id } : e; };
-    return json({ at: rec ? rec.at : null, checked: checkedAt(rec, t), src: "worker", events: events.map(withTv), past: past.map(withTv), tv: tv ? tv.clubs : {}, tvs: tvs || {}, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {}, bhs: bhs ? { at: bhs.at, groups: bhs.groups, hist: bhs.hist ? { at: bhs.hist.at, members: bhs.hist.members, rank: bhs.hist.rank, sw: bhs.hist.sw || [] } : null } : null,
+    const week = weekDigest({ wins: await loadWins(env), board: (rec && rec.board) || {}, bhs, events, players: WEEK_PLAYERS }, t, offsetAt(+t));
+    return json({ at: rec ? rec.at : null, checked: checkedAt(rec, t), src: "worker", week, events: events.map(withTv), past: past.map(withTv), tv: tv ? tv.clubs : {}, tvs: tvs || {}, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {}, bhs: bhs ? { at: bhs.at, groups: bhs.groups, hist: bhs.hist ? { at: bhs.hist.at, members: bhs.hist.members, rank: bhs.hist.rank, sw: bhs.hist.sw || [] } : null } : null,
       board: (rec && rec.board) || {} }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
   if (route === "GET /live") return liveRoute(req, env, url, h);
@@ -761,6 +763,12 @@ export async function runCalendar(env, t, budget, rec, log = {}) {
 //  in the pair), pair (full names), opp (the other pair, short), s (score from the pair's side; group: wins–losses), rr?}
 const WINS_MINUTE = 44, WIN_KEEP = 30 * DAY;
 const winAge = (x, t) => +t - Date.parse(x.date + "T12:00:00Z");
+const WEEK_PLAYERS = PLAYERS.map(p => ({ pid: p.pid, name: p.me, short: p.name }));
+// The week digest from what is kept anyway (one KV read each, cached in the isolate)
+async function weekOf(env, t, rec) {
+  rec = rec || await loadRecord(env);
+  return weekDigest({ wins: await loadWins(env), board: (rec && rec.board) || {}, bhs: await loadBhs(env), events: merge(rec ? rec.events : []), players: WEEK_PLAYERS }, t, offsetAt(+t));
+}
 export function recentWins(list, t) { return (list || []).filter(x => x && x.date && winAge(x, t) < WIN_KEEP && winAge(x, t) > -DAY); }
 export function winEntries(ev, fin, t) {
   if (!fin) return [];
@@ -904,6 +912,18 @@ export async function tick(env, events) {
   }
   if (!events && env.CAL_OFF !== "1" && calendarDue(t, env)) {   // CAL_OFF / CAL_ANY: local tests only
     try { await runCalendar(env, t, budget, rec, log); } catch (e) { console.warn("calendar", e.message); }
+  }
+  // "Veckan i klubben": Monday 08:16 local, once, to every device that follows someone (Swedish and Spanish)
+  if (!events && env.WEEK_OFF !== "1" && mm === 16) {   // WEEK_OFF: local tests only
+    const lt = new Date(+t + offsetAt(+t) * H);
+    if (lt.getUTCDay() === 1 && lt.getUTCHours() === 8) try {
+      const day = lt.toISOString().slice(0, 10);
+      if ((await env.PUSH.get("week:sent")) !== day) {
+        const w = await weekOf(env, t, rec), sv = weekNote(w, "sv"), es = weekNote(w, "es");
+        if (sv) pubMsgs.push({ pids: PLAYERS.map(p => p.pid), m: { ...sv, es: { title: es.title, body: es.body } } });
+        await env.PUSH.put("week:sent", day); log.writes = (log.writes || 0) + 1; log.week = sv ? 1 : 0;
+      }
+    } catch (e) { console.warn("veckan", e.message); }
   }
   const evs = activeEvents(t, list);
   if (!evs.length && !pubMsgs.length) {

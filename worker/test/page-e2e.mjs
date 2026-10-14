@@ -490,7 +490,7 @@ try {
     if (!dark) {
       ok("week after (tis 29 sep): Veckans vinnare shows Thea & Cassandra's Damer C win", /THEA & CASSANDRA|Thea & Cassandra/i.test(card) && /Damer C/.test(card) && /Järfälla Padel Open no 11/.test(card) && /6-1 6-4/.test(card) && /Persson \/ Bradbury/.test(card) && /sön 27 sep/.test(card), card);
       ok("week after: card links to Thea, one card, two avatars", await page.getAttribute("#winList .wcard", "href") === "#thea" && (await page.$$("#winList .wcard")).length === 1 && (await page.$$("#winList .wcard .av")).length === 2);
-      ok("week after: section sits after Spelar nu, before Senaste resultat", await page.evaluate(() => { const ids = [...document.querySelectorAll("#home section")].map(x => x.id); return ids.indexOf("secWin") === ids.indexOf("secNow") + 1; }));
+      ok("week after: section sits after Spelar nu (and Veckan i klubben), before Senaste resultat", await page.evaluate(() => { const ids = [...document.querySelectorAll("#home section")].map(x => x.id); return ids.indexOf("secWin") === ids.indexOf("secNow") + 2 && ids[ids.indexOf("secNow") + 1] === "secWeek"; }));
       ok("week after: home makes no extra RankedIn calls for it", api.ri <= 2, api.ri);
     }
     ok("week after " + (dark ? "dark" : "light") + ": no horizontal scroll at 390", await noHScroll(page));
