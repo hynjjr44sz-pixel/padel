@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-x+TX6tAxGSNE7MCqkwYq4ZVDvOXk8xCHC7bTPQ+EfYc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bbAzdnoos7DMMwqv2JqMSCQHEoq83tAUNK7MW9fz1tM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -4886,8 +4886,20 @@
       bh && !isNaN(bh) ? _("Serier: ") + dayMonD(bh).replace(" ", "\u00a0") : ""].filter(Boolean).join(" · ");
   }
   /* ---- load: cache -> worker -> RankedIn directly (opened player only); every 30 min ---- */
+  // A pair moved to a class's reserve list ("Reservlista Herr C") is not in that class any more: the worker re-checks
+  // a player's class once a day, so a reserve entry of the same pair drops the older class entry at once.
+  function dropReserved(list){
+    var res = list.filter(function(e){ return e && e.kind === "tournament" && /^reserv/i.test(e.cls || ""); });
+    if (!res.length) return list;
+    var who = function(e){ return [e.me, e.partner].map(function(n){ return slug(String(n || "")); }).sort().join("+"); };
+    return list.filter(function(e){
+      if (!e || e.kind !== "tournament" || /^reserv/i.test(e.cls || "")) return true;
+      return !res.some(function(r){ return String(r.tournamentId) === String(e.tournamentId) && who(r) === who(e) && slug(r.cls.replace(/^reserv\S*\s*(lista|list)?\s*/i, "")) === slug(e.cls); });
+    });
+  }
   function applyDisc(d){
     if (!d || !Array.isArray(d.events)) return;
+    d.events = dropReserved(d.events);
     DISC = d;
     try { renderDataAt(); } catch (e){}
     try { rinHeroes(); } catch (e){ warn("Profilbilder", e); }

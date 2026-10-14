@@ -81,10 +81,11 @@ async function tournament(p, e, get, ctx) {
   const noneKey = e.Id + ":" + p.who + ":" + ctx.today;
   if (!found.length && ctx.none.has(noneKey)) return [];   // looked today, not in any class (withdrawn, reserve)
   if (!found.length || ctx.now - new Date(old[0].scanned || 0) > DAY) {
-    // Ongoing or starting within 48 h (the classes are settled): only the known classes are checked, one call
-    // each, instead of every class of the tournament (which would not fit the live-time discovery budget).
+    // Ongoing or starting within 48 h (the classes are settled): only the known classes and the reserve lists
+    // ("Reservlista Herr C": a pair can be moved there late) are checked, one call each, instead of every class of the
+    // tournament (which would not fit the live-time discovery budget).
     const near = found.length && localToDate(info.StartDate || e.StartDate) - ctx.now < 2 * DAY;
-    const classes = near ? found.map(f => ({ Id: f.classId, Name: f.cls })) : info.Classes || [];
+    const classes = near ? found.map(f => ({ Id: f.classId, Name: f.cls })).concat((info.Classes || []).filter(c => /^reserv/i.test(c.Name || "") && !found.some(f => f.classId === c.Id))) : info.Classes || [];
     found = [];
     for (const c of classes) {
       const pl = await get("/tournament/GetPlayersForClassAsync?tournamentId=" + e.Id + "&tournamentClassId=" + c.Id + "&language=en");
