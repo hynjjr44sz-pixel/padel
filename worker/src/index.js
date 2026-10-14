@@ -2,6 +2,7 @@
 // event is active, diffs against the last state in KV and pushes new results to the devices that follow
 // the player(s) concerned. Events come from discover.js (every event the club's players in players.json
 // enter on RankedIn, a few players per run) merged with events.js.
+import { buildIcs } from "./ics.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
@@ -171,6 +172,14 @@ async function handle(req, env) {
       board: (rec && rec.board) || {} }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
   if (route === "GET /live") return liveRoute(req, env, url, h);
+  // A calendar feed for the phone: /ics?p=<pid>,<pid> (roster players only), refreshed by the phone every couple of hours.
+  if (route === "GET /ics") {
+    const pids = String(url.searchParams.get("p") || "").split(",").map(Number).filter(x => BY_PID.has(x)).slice(0, 40);
+    if (!pids.length) return json({ error: "no players" }, 400, h);
+    const t = now(env), rec = await loadRecord(env), events = merge(rec ? rec.events : []), lv = await liveView(env, t, events);
+    const body = buildIcs({ events, bhs: await loadBhs(env), live: lv.live }, pids, t);
+    return new Response(body, { headers: { ...h, "Content-Type": "text/calendar; charset=utf-8", "Content-Disposition": 'inline; filename="nynas-padel.ics"', "Cache-Control": "public, max-age=1800" } });
+  }
   if (route === "GET /cal") {
     // "Förslag på tävlingar": sanctioned tournaments within 200 km, next 8 weeks (built nightly), with the roster's
     // entries as the discovery record has them now. Separate from /events (which stays small), cached an hour.

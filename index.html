@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-3+3ACENYFRH5xZW8M+8Z/h3LasgKQiVTUNwJLM5XTMo='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-YOJ8XKRW6u3lja2VxTfAxelTTBp2Y8L2DxxFcohkJwk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -664,6 +664,9 @@
     font:600 12px/1 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; }
   .shbtn:disabled{ opacity:.5; }
   .wwrap{ position:relative; }
+  .calrow{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; margin:12px 0 0; font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); }
+  .callink{ display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 14px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    font:600 12px/1 "Chivo Mono", monospace; letter-spacing:.04em; text-decoration:none; }
   .vshare{ margin-top:16px; }
   .wwrap .shbtn{ position:absolute; top:12px; right:12px; z-index:2; }
   .shbtn.on-dark{ background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.25); color:#fff; }
@@ -1336,6 +1339,7 @@
     <section aria-labelledby="h-kom">
       <div class="sh"><h2 id="h-kom" data-i18n>Kommande</h2><div class="meta" id="agendaMeta"></div></div>
       <div class="agenda" id="agenda"><p class="empty" data-i18n>Hämtar …</p></div>
+      <p class="calrow" id="calHome" hidden></p>
     </section>
 
     <section aria-labelledby="h-top" id="secTop">
@@ -1407,6 +1411,9 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Följda spelare i kalendern":"Jugadores seguidos en el calendario",
+    "Tävlingar, lagmatcher och seriematcher. Uppdateras av sig själv.":"Torneos, partidos de equipo y de liga. Se actualiza solo.",
+    "{name} i kalendern":"{name} en el calendario",
     "Resultat":"Resultado",
     "Dem mot dem":"Cara a cara",
     "Dela som bild":"Compartir como imagen",
@@ -2166,7 +2173,7 @@
       b.querySelector("span").textContent = on ? _("Följer laget") : _("Följ laget");
     });
     renderChips(VIEW.who);
-    try { renderPlayerList(); renderNow(); renderLatest(); renderTop(); } catch (e){}
+    try { renderPlayerList(); renderNow(); renderLatest(); renderTop(); renderCalHome(); } catch (e){}
     if (pushOn()) enablePush();   // the server sends only what this device follows
     ensureWatch();
   }
@@ -5469,7 +5476,21 @@
     });
     return rows.filter(function(r){ return r.at; }).sort(function(a, b){ return a.at - b.at; });
   }
+  // A calendar the phone subscribes to (worker GET /ics): Apple devices open webcal: directly, others via Google Calendar.
+  function calUrl(pids){
+    var u = PUSH_API.replace(/^https:/, "webcal:") + "/ics?p=" + pids.join(",");
+    return /iPhone|iPad|Macintosh/.test(navigator.userAgent) ? u : "https://calendar.google.com/calendar/render?cid=" + encodeURIComponent(u);
+  }
+  var CAL_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+  function calLink(pids, label){ return PUSH_API && pids.length ? '<a class="callink" href="' + esc(calUrl(pids)) + '" target="_blank" rel="noopener">' + CAL_ICON + '<span>' + esc(label) + '</span></a>' : ""; }
+  function renderCalHome(){
+    var el = document.getElementById("calHome"), f = follows();
+    if (!el) return;
+    el.hidden = !f.length || !PUSH_API;
+    el.innerHTML = f.length ? calLink(f, _("Följda spelare i kalendern")) + '<span>' + esc(_("Tävlingar, lagmatcher och seriematcher. Uppdateras av sig själv.")) + '</span>' : "";
+  }
   function renderAgenda(){
+    try { renderCalHome(); } catch (e){}
     var host = document.getElementById("agenda"), meta = document.getElementById("agendaMeta");
     if (!host) return;
     if (!DISC){ host.innerHTML = '<p class="empty">' + _("Hämtar …") + '</p>'; return; }
@@ -5731,7 +5752,8 @@
       '<section class="t-off" aria-labelledby="h-pa-' + k + '" id="pa-' + k + '"><div class="sh"><h2 id="h-pa-' + k + '">' + _("Partners") + '</h2><div class="meta" id="paMeta-' + k + '">' + _("12 mån") + '</div></div><div class="card partners" id="paList-' + k + '"></div><p class="panote" id="paNote-' + k + '"></p></section>' +
       '<section class="t-off" aria-labelledby="h-ms-' + k + '"><div class="sh"><h2 id="h-ms-' + k + '">' + _("Matchstatistik") + '</h2><div class="meta">' + _("12 mån") + '</div></div><div class="card ms" id="ms-' + k + '"></div></section>' +
       '<section class="t-off" aria-labelledby="h-hist-' + k + '" id="hs-' + k + '" hidden><div class="sh"><h2 id="h-hist-' + k + '">' + _("Senaste matcher") + '</h2><div class="meta" id="histMeta-' + k + '"></div></div><div class="card hist" id="hist-' + k + '"></div></section>' +
-      '<section class="t-off" aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">' + _("Kommande") + '</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div></section>' +
+      '<section class="t-off" aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">' + _("Kommande") + '</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div>' +
+        '<p class="calrow">' + calLink([P.pid], _("{name} i kalendern", {name:P.short})) + '</p></section>' +
       '<section class="t-off" aria-labelledby="h-sg-' + k + '" id="sg-' + k + '"><div class="sh"><h2 id="h-sg-' + k + '">' + _("Förslag på tävlingar") + '</h2><div class="meta">' + _("Inom&nbsp;20&nbsp;mil") + '</div></div>' +
         '<p class="sgnote" id="sgNote-' + k + '" hidden></p><div class="ups" id="sgList-' + k + '"><p class="empty">' + _("Hämtar förslag …") + '</p></div></section>' +
       '<section class="t-off" aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">' + _("Bra att veta") + '</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>' +
