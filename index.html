@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-2kMB5ez/aFNv6VQGTZ7lSKuQuUgKjKS0QL9s9/pdWe4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-uf+0bvguNH/hbIyOC+31lnlFGaU1zgET8HsdUrVYM98='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -660,6 +660,7 @@
 
   .m{ width:var(--cw); background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; position:relative; z-index:2; }
   .m.path{ border-color:var(--accent); }
+  .mh .dby{ font-weight:600; color:#B8860B; text-transform:uppercase; letter-spacing:.06em; }
   .m.next{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
   .mh{ display:flex; justify-content:space-between; gap:8px; padding:6px 10px 5px; font:500 10.5px/1.2 "Chivo Mono", monospace; color:var(--dim); background:var(--surface-2); letter-spacing:.02em; }
   .mh .st{ text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; }
@@ -777,6 +778,10 @@
   .msl em{ font:600 13px/1 "Chivo Mono", monospace; font-style:normal; }
   .msl.l em{ color:var(--loss); }
   .msl.w em{ color:#2E8A57; }
+  .msc{ margin-top:12px; }
+  .msc .k{ font:500 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
+  a.msl{ color:inherit; text-decoration:none; }
+  a.msl .avs{ align-self:center; }
   .msn{ margin:10px 0 0; font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); }
   .rk{ padding:14px; }
   .rkh{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
@@ -1395,6 +1400,8 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Mot klubbkompisar":"Contra compañeros del club",
+    "Klubbmöte":"Duelo del club",
     "Matchstatistik":"Estadísticas de partidos",
     "Avgörande set":"Set decisivo",
     "Supertiebreak":"Supertiebreak",
@@ -2258,6 +2265,8 @@
   // Match id used by deep links ("#thea/m6872156"): RankedIn's MatchId, else a stable id for the static draw.
   function midOf(mt){ return (mt && ((mt.live && mt.live.mid) || mt.mid || mt.sid)) || ""; }
   function midAttr(mt){ var id = midOf(mt); return id ? ' data-mid="' + esc(id) + '"' : ""; }
+  // Both pairs have a club player: a club derby (marked on the card)
+  function clubBoth(mt){ var c = function(sd){ var p = mt[sd] && mt[sd].pair; return !!p && p.n.some(function(n){ return !!BYNAME[slug(n)]; }); }; return c("a") && c("b"); }
   function renderKnockout(ev, draw, host, nextMatch){
     var n1 = draw.rounds[0].matches.length;
     var wrap = document.createElement("div"); wrap.className = "bk-wrap";
@@ -2271,11 +2280,11 @@
       html += '<div class="bk-col"><div class="bk-hd"><b>' + esc(_(rd.label)) + '</b><span>' + (r + 1) + '/' + draw.rounds.length + ' · ' + times.join(", ") + '</span></div><div class="bk-body" style="--n:' + n1 + '">';
       rd.matches.forEach(function(mt, i){
         var isNext = mt === nextMatch;
-        var mcls = "m" + (isNext ? " next" : (mt.hasMe ? " path" : ""));
+        var mcls = "m" + (isNext ? " next" : (mt.hasMe ? " path" : "")) + (clubBoth(mt) ? " derby" : "");
         html += '<div class="slot ' + (i % 2 ? "odd" : "even") + '">';
         if (r > 0) html += '<span class="in' + (mt.hasMe && (mt.a.via || mt.b.via) ? " hot" : "") + '"></span>';
         if (!last){ var hot = mt.meWon ? " hot" : ""; html += '<span class="out' + hot + '"></span><span class="vl' + hot + '"></span>'; }
-        html += '<div class="' + mcls + '"' + midAttr(mt) + '><div class="mh"><span>' + esc([mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : "")) + '</span>' + statusLabel(ev, mt, isNext) + '</div>' +
+        html += '<div class="' + mcls + '"' + midAttr(mt) + '><div class="mh"><span>' + esc([mt.dl, mt.t].filter(Boolean).join(" ") + (mt.c ? " · " + mt.c : "")) + (clubBoth(mt) ? ' <b class="dby">' + _("Klubbmöte") + '</b>' : "") + '</span>' + statusLabel(ev, mt, isNext) + '</div>' +
           entrantRow(mt, "a") + entrantRow(mt, "b") + h2hMini(ev, mt) + '</div></div>';
       });
       html += '</div></div>';
@@ -6307,6 +6316,13 @@
       tile(_("Vunnit första set"), o.lead[0] + _(" av ") + (o.lead[0] + o.lead[1]), pc(o.lead) + _(" vann matchen")) + '</div>';
     var line = function(lab, q, cls){ return q ? '<div class="msl ' + cls + '"><span>' + esc(lab) + '</span><b>' + esc((q.n || []).map(surname).join(" / ")) + '</b><em>' + q.w + "–" + q.l + '</em></div>' : ""; };
     h += line(_("Svårast"), o.nem, "l") + line(_("Bäst mot"), o.fav, "w");
+    // against club mates: W–L per club player met on the other side
+    var cm = {};
+    list.forEach(function(x){ (x.o || []).forEach(function(n){ var Q = BYNAME[slug(n)]; if (!Q || Q.key === who) return; var c = cm[Q.key] = cm[Q.key] || {Q:Q, w:0, l:0}; if (x.w) c.w++; else c.l++; }); });
+    var cl = Object.keys(cm).map(function(k){ return cm[k]; }).sort(function(a, b){ return (b.w + b.l) - (a.w + a.l) || a.Q.name.localeCompare(b.Q.name); });
+    if (cl.length) h += '<div class="msc"><div class="k">' + _("Mot klubbkompisar") + '</div>' + cl.map(function(c){
+      return '<a class="msl ' + (c.w > c.l ? "w" : c.w < c.l ? "l" : "") + '" href="#' + esc(c.Q.key) + '"><span class="avs">' + avatar(c.Q.name) + '</span><b>' + esc(c.Q.name) + '</b><em>' + c.w + "–" + c.l + '</em></a>';
+    }).join("") + '</div>';
     if (o.bagel) h += '<p class="msn">' + esc(_("{n} set vunna med 6–0.", {n:o.bagel})) + '</p>';
     host.innerHTML = h;
   }
