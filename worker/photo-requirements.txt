@@ -1,4 +1,5 @@
 rembg[cpu]==2.0.67
-pillow
-scipy
-numpy
+onnxruntime==1.31.0
+pillow==13.0.0
+scipy==1.17.1
+numpy==2.4.6

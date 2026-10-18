@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-GZiGd3UEF0WPUoIqCCy114dKnsAaZwB30nwmeEXfyC4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-SD0mQ6X6LrCQjQ6hWa+zam1fSW2dyQQOW7mtulHBta0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1876,6 +1877,8 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Kontot går bara att använda i appen själv.":"La cuenta solo se puede usar en la propia app.",
+    "Öppna appen":"Abrir la app",
     "Storbild":"Pantalla grande",
     "Helskärm":"Pantalla completa",
     "Stäng storbild":"Cerrar pantalla grande",
@@ -8075,6 +8078,8 @@
   function renderKonto(){
     var box = document.getElementById("konto");
     if (!box) return;
+    // inside someone else's frame (clickjacking): no account actions; GitHub Pages cannot send frame-ancestors
+    if (window.top !== window.self){ box.innerHTML = '<div class="card ktxt"><p>' + _("Kontot går bara att använda i appen själv.") + ' <a href="' + esc(location.href) + '" target="_top" rel="noopener">' + _("Öppna appen") + '</a></p></div>'; return; }
     var me = AUTH && AUTH.me, h = '<div class="phead"><div class="pt"><h1>' + _("Konto") + '</h1><div class="pm">' + esc(me ? me.name : _("Inte inloggad")) + '</div></div></div>';
     if (KONTO.msg) h += '<p class="kmsg" role="status">' + esc(KONTO.msg) + '</p>';
     if (KONTO.code){

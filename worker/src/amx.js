@@ -170,7 +170,7 @@ export async function amxCreate(env, b, byPid, now, by) {
     if (players.length % 2 || teams.length !== players.length / 2 || !teams.every(p => Array.isArray(p) && p.length === 2 && p.every(i => Number.isInteger(i) && i >= 0 && i < players.length && !seen.has(i) && seen.add(i)))) return { err: "bad teams" };
   }
   const key = rid(16), t = { v: 1, id: rid(8), name: clean(b.name).slice(0, 60) || (fmt === "mexicano" ? "Mexicano" : fmt === "lag" ? "Lagamericano" : "Americano"), fmt, mode, pts: mode === "free" ? null : pts,
-    courts: Math.min(courts, Math.floor(players.length / 4)), players, ...(teams ? { teams } : {}), rounds: [], created: now, upd: now, ...(by ? { by: { id: by.id, n: by.name } } : {}), kh: await hash(key) };
+    courts: Math.min(courts, Math.floor(players.length / 4)), players, ...(teams ? { teams } : {}), rounds: [], created: now, upd: now, ...(by ? { by: { n: by.name } } : {}), kh: await hash(key) };
   if (!validRound(t, b.round)) return { err: "bad round" };
   t.rounds.push(b.round.map(x => ({ c: x.c || null, a: x.a, b: x.b, s: null })));
   await env.PUSH.put("amx:" + t.id, JSON.stringify(t), { expirationTtl: TTL });

@@ -55,7 +55,7 @@ export function applyMembers(rec) {
 }
 // For the page (GET /events "members"): the members shown, as roster rows
 export function membersOut() {
-  return PLAYERS.filter(p => ADDED.has(p.pid)).map(p => ({ key: p.who, pid: p.pid, name: p.me, short: p.name, gender: p.gender, rankedinId: p.rin, member: 1, age: p.age }));
+  return PLAYERS.filter(p => ADDED.has(p.pid)).map(p => ({ key: p.who, pid: p.pid, name: p.me, short: p.name, gender: p.gender, rankedinId: p.rin, member: 1 }));   // no age: not public
 }
 
 // Once a day the list; then up to PER_RUN members looked up (profile, then the women's and men's lists by full name)

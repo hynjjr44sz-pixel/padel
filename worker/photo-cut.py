@@ -19,6 +19,7 @@ from rembg import new_session, remove
 from scipy import ndimage
 
 API = "https://padel-push.holmberg-padel.workers.dev"
+Image.MAX_IMAGE_PIXELS = 2_000_000   # no decompression bombs
 AV_BOX = (170, 70, 630, 530)   # the avatar circle's square in the 800x1000 frame
 
 
@@ -48,7 +49,11 @@ def main(src, out):
         except Exception as e:   # removed or replaced since the list was made
             print(f"skip {pid}: {e}", file=sys.stderr)
             continue
-        im = Image.open(io.BytesIO(raw)).convert("RGB").resize((800, 1000))
+        im = Image.open(io.BytesIO(raw))
+        if im.width > 1000 or im.height > 1250:   # the worker only takes the phone's 800x1000; anything else is skipped
+            print(f"skip {pid}: {im.width}x{im.height}", file=sys.stderr)
+            continue
+        im = im.convert("RGB").resize((800, 1000))
         cut = main_figure(remove(im, session=session, post_process_mask=True).convert("RGBA"))
         cut.save(f"{out}/{pid}-{v}.webp", "WEBP", quality=85, method=6)
         cut.crop(AV_BOX).resize((150, 150), Image.LANCZOS).save(f"{out}/{pid}-{v}-av.webp", "WEBP", quality=85, method=6)

@@ -12,10 +12,12 @@ async function login(db, id, pid, roles = [], kids = []) {
   db.db.prepare("INSERT INTO users (id, org, name, pid, created) VALUES (?, 'nynas', ?, ?, 0)").run(id, id, pid);
   for (const r of roles) db.db.prepare("INSERT INTO roles (user, org, role) VALUES (?, 'nynas', ?)").run(id, r);
   for (const k of kids) db.db.prepare("INSERT INTO guardians (user, pid) VALUES (?, ?)").run(id, k);
-  db.db.prepare("INSERT INTO devices (hash, user, created, seen) VALUES (?, ?, 0, 0)").run(await sha(token), id);
+  db.db.prepare("INSERT INTO devices (hash, user, created, seen) VALUES (?, ?, 0, ?)").run(await sha(token), id, Date.parse("2026-10-18T00:00:00Z"));
   return { Authorization: "Bearer " + token };
 }
-const JPG = "/9j/" + "A".repeat(400), AV = "/9j/" + "B".repeat(100);
+// a JPEG start and frame header (SOF0) with the size, then filler
+const jpeg = (w, h, n) => Buffer.concat([Buffer.from([0xFF, 0xD8, 0xFF, 0xC0, 0, 17, 8, h >> 8, h & 255, w >> 8, w & 255, 3]), Buffer.alloc(n, 7)]).toString("base64");
+const JPG = jpeg(800, 1000, 300), AV = jpeg(150, 150, 60);
 
 test("profilbild: own, a parent's junior or the admin; served at once; the cut-out once the Action has committed it", async () => {
   _resetMemory();
@@ -25,6 +27,8 @@ test("profilbild: own, a parent's junior or the admin; served at once; the cut-o
   assert.equal((await call(env, "POST", "/me/photo", { pid: 1675246, jpg: JPG, av: AV }, kian)).status, 403);
   assert.equal((await call(env, "POST", "/me/photo", { pid: 1675246, jpg: "iVBOR" + "A".repeat(10), av: AV }, thea)).status, 400);   // a PNG
   assert.equal((await call(env, "POST", "/me/photo", { pid: 1675246, jpg: "/9j/" + "A".repeat(540000), av: AV }, thea)).status, 400);   // too big
+  assert.equal((await call(env, "POST", "/me/photo", { pid: 1675246, jpg: jpeg(20000, 20000, 300), av: AV }, thea)).status, 400);   // a huge picture in a small file
+  assert.equal((await call(env, "POST", "/me/photo", { pid: 1675246, jpg: "/9j/" + "A".repeat(400), av: AV }, thea)).status, 400);   // no frame header
   let r = await (await call(env, "POST", "/me/photo", { pid: 1675246, jpg: JPG, av: AV }, thea)).json();
   const v = r.v;
   assert.deepEqual(r.up, { 1675246: { v, cut: 0 } });
@@ -33,7 +37,8 @@ test("profilbild: own, a parent's junior or the admin; served at once; the cut-o
   // served at once, by version
   let g = await call(env, "GET", "/photo/1675246.jpg?v=" + v);
   assert.equal(g.headers.get("Content-Type"), "image/jpeg");
-  assert.equal((await g.arrayBuffer()).byteLength, 303);
+  assert.equal((await g.arrayBuffer()).byteLength, 312);
+  assert.equal(g.headers.get("X-Content-Type-Options"), "nosniff");
   assert.equal((await call(env, "GET", "/photo/1675246-av.jpg?v=" + v)).status, 200);
   assert.equal((await call(env, "GET", "/photo/1675246.jpg?v=old1")).status, 404);
   assert.equal((await call(env, "GET", "/photo/1675246.webp?v=" + v)).status, 404);

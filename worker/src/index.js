@@ -11,7 +11,7 @@ import { photoIndex, photoSet, photoGet, photosPending, photosCheck, canPhoto } 
 import { authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
 import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, amxAll, publicOf } from "./amx.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
-import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults, fetchGroupTable } from "./bhs.js";
+import { fetchBhs, fetchBhsHistory, seriesWinners, newResults, resultsDue, fetchGroupResults, fetchGroupTable } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
 import { parse, snapshot, unpack, notes, drawNote, summary, classResult, flip } from "./rankedin.js";
 import { discover, drawPath, rubbersPath, namesPath, drawsOf, ratingPath, skillOf, API, PLAYERS, BY_PID, LEGACY } from "./discover.js";
@@ -26,11 +26,14 @@ const PUSH_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(fcm\.googleapis\.com|android\.goo
 
 function cors(req, env) {
   const o = req.headers.get("Origin") || "";
-  const ok = o === env.ORIGIN || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o);
+  // the site; localhost only when the worker runs locally (wrangler dev, tests: ALLOW_LOCALHOST=1)
+  const ok = o === env.ORIGIN || (env.ALLOW_LOCALHOST === "1" && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o));
   return ok ? { "Access-Control-Allow-Origin": o, "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-Stats-Key, Authorization", "Access-Control-Max-Age": "86400", "Vary": "Origin" } : { "Vary": "Origin" };
 }
-const json = (data, status, h) => new Response(JSON.stringify(data), { status: status || 200, headers: { "Content-Type": "application/json", ...h } });
+// every answer: no MIME sniffing, no referrer
+const SEC = { "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" };
+const json = (data, status, h) => new Response(JSON.stringify(data), { status: status || 200, headers: { "Content-Type": "application/json", ...SEC, ...h } });
 async function subKey(endpoint) {
   const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(endpoint)));
   return "sub:" + [...h.slice(0, 16)].map(b => b.toString(16).padStart(2, "0")).join("");
@@ -95,7 +98,7 @@ async function handle(req, env) {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: h });
   // Admin test push: POST /test with X-Admin-Key = secret ADMIN_KEY (set with wrangler secret put). Off without the secret.
   if (req.method === "POST" && url.pathname === "/test") {
-    if (!env.ADMIN_KEY || req.headers.get("X-Admin-Key") !== env.ADMIN_KEY) return json({ error: "forbidden" }, 403, {});
+    if (!env.ADMIN_KEY || !sameSecret(req.headers.get("X-Admin-Key"), env.ADMIN_KEY)) return json({ error: "forbidden" }, 403, {});
     return json(await testPush(env), 200, {});
   }
   // Admin: the nightly Backhandsmash round now (after a change of the parser), -> a short summary
@@ -116,7 +119,6 @@ async function handle(req, env) {
       return json({ ok: true, at: v.at, written: log.bhs, sent: log.sent || 0, groups: v.groups.map(g => ({ series: g.series, name: g.name, players: g.pids.length, rows: g.rows.length, res: g.res.length, next: (g.next || []).length })) }, 200, {});
     } catch (e) { return json({ ok: false, error: String(e && e.message) }, 200, {}); }
   }
-  // Admin: log in to Backhandsmash with the captain's account and return a few pages (to build and check the parser).
   if (req.method === "POST" && url.pathname === "/tv-run") {   // admin: MATCHi TV streams now (else hourly/daily)
     if (!env.ADMIN_KEY || !sameSecret(req.headers.get("X-Admin-Key"), env.ADMIN_KEY)) return json({ error: "forbidden" }, 403, {});
     try {
@@ -124,19 +126,6 @@ async function handle(req, env) {
       const v = await runTv(env, t, { left: SUBREQUESTS }, tg);
       await tvStartsRefresh(env, { left: 2 });
       return json({ ok: true, targets: tg.map(x => x.n), starts: Object.keys((await loadTvStarts(env)) || {}).length, streams: Object.fromEntries(Object.entries((v && v.clubs) || {}).map(([k, c]) => [c.n, c.s.length])) }, 200, {});
-    } catch (e) { return json({ ok: false, error: String(e && e.message) }, 200, {}); }
-  }
-  if (req.method === "POST" && url.pathname === "/bhs-probe") {
-    if (!env.ADMIN_KEY || !sameSecret(req.headers.get("X-Admin-Key"), env.ADMIN_KEY)) return json({ error: "forbidden" }, 403, {});
-    let b = {};
-    try { b = await readBody(req); } catch (e) {}
-    try {
-      const s2 = await bhsLogin(env), out = [];
-      for (const p of (Array.isArray(b.paths) ? b.paths : []).slice(0, 6)) {
-        const r = await s2.get(p);
-        out.push({ path: p, status: r.status, url: r.url, len: r.html.length, html: r.html.slice(0, 300000) });
-      }
-      return json({ ok: true, pages: out }, 200, {});
     } catch (e) { return json({ ok: false, error: String(e && e.message) }, 200, {}); }
   }
   // Internal: a batch of pushes from this worker's own cron tick (service binding SELF). Secret FANOUT_KEY; off without it.
@@ -255,7 +244,7 @@ async function handle(req, env) {
     if ((ph[3] === "webp") !== kind.startsWith("cut")) return json({ error: "not found" }, 404, h);
     const r = await photoGet(env, ph[1], kind, url.searchParams.get("v"));
     if (!r) return json({ error: "not found" }, 404, h);
-    for (const [k, v] of Object.entries(h)) r.headers.set(k, v);
+    for (const [k, v] of Object.entries({ ...h, ...SEC, "Content-Security-Policy": "default-src 'none'" })) r.headers.set(k, v);
     return r;
   }
   // One's own choice (or a parent's for their junior): shown in the app or not

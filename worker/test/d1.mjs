@@ -24,7 +24,7 @@ export async function arrHeader(db, roles = ["arr"]) {
   if (!db.db.prepare("SELECT id FROM users WHERE id = ?").get(id)) {
     db.db.prepare("INSERT INTO users (id, org, name, pid, created) VALUES (?, 'nynas', 'Arr Test', NULL, 0)").run(id);
     for (const r of roles) db.db.prepare("INSERT INTO roles (user, org, role) VALUES (?, 'nynas', ?)").run(id, r);
-    db.db.prepare("INSERT INTO devices (hash, user, label, created, seen) VALUES (?, ?, NULL, 0, 0)").run(await sha(token), id);
+    db.db.prepare("INSERT INTO devices (hash, user, label, created, seen) VALUES (?, ?, NULL, 0, ?)").run(await sha(token), id, Date.parse("2026-10-18T00:00:00Z"));
   }
   return { Authorization: "Bearer " + token };
 }

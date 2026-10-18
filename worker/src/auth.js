@@ -4,7 +4,7 @@
 // Roles: admin (everything), arr (arrangör: may start americanos). Without a login the app is read-only as before.
 export const ORG = "nynas";
 export const ROLES = ["admin", "arr"];
-const INVITE_MS = 7 * 86400e3, MAX_DEVICES = 5, SEEN_MS = 3600e3, REQ_MS = 14 * 86400e3, REQ_OPEN = 30, REQ_TRIES = 5;
+const INVITE_MS = 7 * 86400e3, MAX_DEVICES = 5, SEEN_MS = 3600e3, IDLE_MS = 180 * 86400e3, REQ_MS = 14 * 86400e3, REQ_OPEN = 30, REQ_TRIES = 5;
 // the code a requesting phone shows (no 0/O, 1/I/L): "K7Q 42X"
 const REQ_ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 export const normCode = c => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -32,6 +32,8 @@ export async function authUser(env, req, t) {
   const hash = await sha(m[1]);
   const r = await env.DB.prepare("SELECT u.id, u.name, u.pid, d.seen FROM devices d JOIN users u ON u.id = d.user WHERE d.hash = ? AND u.disabled = 0 AND u.org = ?").bind(hash, ORG).first();
   if (!r) return null;
+  // a phone not used for half a year is logged out (a lost or sold phone does not stay logged in for ever)
+  if (t - r.seen > IDLE_MS) { await env.DB.prepare("DELETE FROM devices WHERE hash = ?").bind(hash).run(); return null; }
   if (t - r.seen > SEEN_MS) await env.DB.prepare("UPDATE devices SET seen = ? WHERE hash = ?").bind(t, hash).run();
   return meOf(env, r);
 }
@@ -124,6 +126,7 @@ export async function logout(env, req) {
 
 // Admin: everyone, with roles, phones and a pending invite
 export async function adminUsers(env, t) {
+  await env.DB.prepare("DELETE FROM log WHERE at < ?").bind(t - 365 * 86400e3).run();   // the log keeps a year
   const us = (await env.DB.prepare("SELECT id, name, pid, created, disabled FROM users WHERE org = ? ORDER BY name").bind(ORG).all()).results;
   const rs = (await env.DB.prepare("SELECT user, role FROM roles WHERE org = ?").bind(ORG).all()).results;
   const ds = (await env.DB.prepare("SELECT d.user, d.label, d.seen FROM devices d JOIN users u ON u.id = d.user WHERE u.org = ? ORDER BY d.seen DESC").bind(ORG).all()).results;

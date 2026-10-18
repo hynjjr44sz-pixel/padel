@@ -8,6 +8,19 @@ const MAX_JPG = 400000, MAX_AV = 50000, V_RE = /^[a-z0-9]{4,12}$/;
 const b64bytes = s => Math.floor(s.length * 3 / 4);
 const isJpeg = s => typeof s === "string" && /^\/9j\/[A-Za-z0-9+/]+=*$/.test(s);
 const dec = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+// A JPEG's size from its frame header (SOF0-SOF15 but DHT/JPG/DAC), or null when it is no JPEG we can read
+export function jpegSize(b) {
+  if (b[0] !== 0xFF || b[1] !== 0xD8) return null;
+  for (let i = 2; i + 9 < b.length;) {
+    if (b[i] !== 0xFF) return null;
+    const m = b[i + 1], len = (b[i + 2] << 8) | b[i + 3];
+    if (m >= 0xC0 && m <= 0xCF && m !== 0xC4 && m !== 0xC8 && m !== 0xCC) return { h: (b[i + 5] << 8) | b[i + 6], w: (b[i + 7] << 8) | b[i + 8] };
+    i += 2 + len;
+  }
+  return null;
+}
+// the phone sends 800x1000 and 150x150; a little room, but no huge picture packed into a small file
+const sizeOk = (b64, maxW, maxH) => { try { const z = jpegSize(dec(b64)); return !!z && z.w > 0 && z.h > 0 && z.w <= maxW && z.h <= maxH; } catch (e) { return false; } };
 
 export async function photoIndex(env) {
   try { return JSON.parse((await env.PUSH.get("photo:index")) || "{}") || {}; } catch (e) { return {}; }
@@ -26,7 +39,7 @@ export async function photoSet(env, me, b, byPid, t) {
     await env.PUSH.put("photo:index", JSON.stringify(idx));
     return { ok: true, up: idx };
   }
-  if (!isJpeg(b.jpg) || !isJpeg(b.av) || b64bytes(b.jpg) > MAX_JPG || b64bytes(b.av) > MAX_AV) return { err: "bad image", status: 400 };
+  if (!isJpeg(b.jpg) || !isJpeg(b.av) || b64bytes(b.jpg) > MAX_JPG || b64bytes(b.av) > MAX_AV || !sizeOk(b.jpg, 1000, 1250) || !sizeOk(b.av, 300, 300)) return { err: "bad image", status: 400 };
   const v = t.toString(36);
   await env.PUSH.put("photo:" + pid, JSON.stringify({ v, jpg: b.jpg, av: b.av, by: me.id, at: t }));
   idx[pid] = { v, cut: 0 };

@@ -84,7 +84,12 @@ test("HTTP API: CORS, vapid, unsubscribe", async () => {
   assert.equal((await res.json()).key, v.VAPID_PUBLIC_KEY);
   assert.equal(res.headers.get("Access-Control-Allow-Origin"), "https://padel.holmberg.st");
   res = await call("/vapid", {}, "http://localhost:8765");
-  assert.equal(res.headers.get("Access-Control-Allow-Origin"), "http://localhost:8765");
+  assert.equal(res.headers.get("Access-Control-Allow-Origin"), null, "localhost: not in production");
+  env.ALLOW_LOCALHOST = "1";
+  res = await call("/vapid", {}, "http://localhost:8765");
+  assert.equal(res.headers.get("Access-Control-Allow-Origin"), "http://localhost:8765", "a local run");
+  delete env.ALLOW_LOCALHOST;
+  assert.equal(res.headers.get("X-Content-Type-Options"), "nosniff");
   res = await call("/vapid", {}, "https://evil.example");
   assert.equal(res.headers.get("Access-Control-Allow-Origin"), null);
   assert.equal((await call("/health")).status, 200);
