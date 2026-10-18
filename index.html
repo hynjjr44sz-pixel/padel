@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-boIMfuZIed/VegEI/m8IrhBvPQRowbtB4DN5zZgbeWk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-zf7xP2UciEqHc2H2aJt/UbSK8BKMxTSyZu6R3OZOPS4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1528,6 +1528,7 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "{k} banor behöver minst {p} spelare, så {u} används.":"{k} pistas necesitan al menos {p} jugadores, así que se usan {u}.",
     "Lagamericano":"Americano por parejas",
     "först till {n} game":"a {n} juegos",
     "fri räkning":"marcador libre",
@@ -7026,8 +7027,9 @@
         '<div class="amxf"><span>' + _("Räkning") + '</span><div class="seg">' + chip("mode", "pts", _("Poäng"), d.mode === "pts") + chip("mode", "games", _("Game"), d.mode === "games") + chip("mode", "free", _("Fritt"), d.mode === "free") + '</div>' +
           (vals.length ? '<div class="seg amxvals">' + vals.map(function(v){ return chip("pts", v, String(v), d.pts === v); }).join("") + '</div>' : "") +
           '<small>' + esc(d.mode === "pts" ? _("Varje match är {n} poäng. Skriv ena lagets poäng, resten räknas ut.", {n:d.pts}) : d.mode === "games" ? _("Först till {n} game. Vid {m}–{m} avgör ett tiebreak, {n}–{m}.", {n:d.pts, m:d.pts - 1}) : _("Fritt resultat, till exempel matcher på tid. Tabellen räknar vunna matcher först.")) + '</small></div>' +
-        '<div class="amxf"><span>' + _("Banor") + '</span><div class="seg">' + [1, 2, 3, 4, 5, 6, 7, 8].filter(function(v){ return v <= Math.max(maxC, 1); }).map(function(v){ return chip("courts", v, String(v), useC === v); }).join("") + '</div>' +
-          '<small>' + esc(d.players.length >= 4 ? _("{n} spelare: {c} spelar per runda, {s} vilar.", {n:d.players.length, c:playing, s:d.players.length - playing}) : _("Minst 4 spelare.")) + '</small></div>' +
+        '<div class="amxf"><span>' + _("Banor") + '</span><div class="seg">' + [1, 2, 3, 4, 5, 6, 7, 8].map(function(v){ return chip("courts", v, String(v), d.courts === v); }).join("") + '</div>' +
+          '<small>' + esc((d.players.length >= 4 ? _("{n} spelare: {c} spelar per runda, {s} vilar.", {n:d.players.length, c:playing, s:d.players.length - playing}) : _("Minst 4 spelare.")) +
+            (d.courts > useC ? " " + _("{k} banor behöver minst {p} spelare, så {u} används.", {k:d.courts, p:4 * d.courts, u:d.players.length >= 4 ? useC : 1}) : "")) + '</small></div>' +
       '</div>' +
       '<section><div class="sh"><h2>' + (team ? _("Paren") : _("Spelare")) + '</h2><div class="meta">' + d.players.length + " / 32" + '</div></div>' +
         (team ? '<p class="amxnote">' + _("Spelarna paras i den ordning de läggs till.") + (d.players.length >= 4 ? ' <button type="button" class="amxlink" data-shuf="1">' + _("Slumpa par") + '</button>' : "") + '</p>' : "") +
