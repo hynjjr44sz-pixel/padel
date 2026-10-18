@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Q9cngxAepK635ki1tbJhzwPBbHLvH0QNWillO7Tk+CE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-3/HA/D8T4TbzgmT3ELizsMzuw1WEdxoKH3yFiU19EkA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -182,6 +182,24 @@
   .dtab.badge .dbadge{ transform:scale(1); }
   .dtab.live .dbadge{ animation:dk-pulse 1.6s ease-out infinite; }
   @keyframes dk-pulse{ 0%{ box-shadow:0 0 0 2px var(--surface), 0 0 0 2px rgba(229,72,77,.6); } 100%{ box-shadow:0 0 0 2px var(--surface), 0 0 0 12px rgba(229,72,77,0); } }
+  /* the padel ball: rests on the bar's edge above the active tab, flies in an arc to the next one (spin, squash on
+     landing, two dying bounces), hovers over the finger while sliding, drops in when the app opens */
+  .dock{ --bx:0px; }
+  .dball{ position:absolute; left:0; top:-11px; z-index:3; width:20px; height:20px; margin-left:-10px; pointer-events:none; will-change:transform; transform-origin:50% 100%; }
+  .dball i{ position:absolute; inset:0; border-radius:50%; overflow:hidden;
+    background:radial-gradient(circle at 34% 30%, #FFFBD0 0%, #F4EB4A 32%, #D9CC1E 70%, #A79A0C 100%);
+    box-shadow:inset -2px -3px 5px rgba(90,70,0,.35), inset 2px 2px 3px rgba(255,255,255,.5), 0 2px 5px rgba(6,13,34,.25); }
+  .dball i::before, .dball i::after{ content:""; position:absolute; top:-30%; width:80%; height:160%; border-radius:50%; border:1.6px solid rgba(255,255,255,.9); }
+  .dball i::before{ left:-58%; } .dball i::after{ right:-58%; }
+  .dball-sh{ position:absolute; left:0; top:4px; z-index:2; width:22px; height:7px; margin-left:-11px; border-radius:50%; pointer-events:none;
+    background:radial-gradient(closest-side, rgba(6,13,34,.42), rgba(6,13,34,0)); will-change:transform, opacity; }
+  .dball-ring{ position:absolute; left:0; top:-2px; z-index:2; width:40px; height:12px; margin-left:-20px; border-radius:50%; pointer-events:none;
+    border:2px solid var(--ball); opacity:0; transform:translateX(var(--bx)) scale(.2); }
+  .dball-ring.go{ animation:dk-ring .6s cubic-bezier(.2,.8,.3,1); }
+  @keyframes dk-ring{ 0%{ opacity:.9; transform:translateX(var(--bx)) scale(.2); } 100%{ opacity:0; transform:translateX(var(--bx)) scale(1.6); } }
+  /* opening the app: the dock rises in */
+  .dock.boot{ transform:translateX(-50%) translateY(150%); }
+  .dock.boot-in{ transition:transform .9s cubic-bezier(.2,1.3,.3,1); }
   /* scrolling down: the dock pulls in to an icon pill; up again: back */
   .dock.min .dkbar{ height:54px; border-radius:22px; }
   .dock.min .dtab span{ opacity:0; transform:translateY(8px); position:absolute; }
@@ -230,6 +248,7 @@
   @keyframes v-in-l{ from{ opacity:0; transform:translateX(-28px); } to{ opacity:1; transform:none; } }
   @media (prefers-reduced-motion: reduce){
     .dock, .dkbar, .dtab svg, .dtab span, .dlive, .sheet-in, .mtile, .dbadge{ transition:none !important; }
+    .dball-ring.go{ animation:none !important; }
     .dtab.pop svg, .dtab.pop svg *, .view.vin-r, .view.vin-l, .dlive-dot, .dtab.live .dbadge, .dlive-t.swap{ animation:none !important; }
   }
   /* ---------- Tävlingar ---------- */
@@ -285,6 +304,8 @@
   [data-rcode]{ text-transform:uppercase; letter-spacing:.1em; }
   #rPid{ width:100%; height:44px; padding:0 10px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:500 16px/1 "Instrument Sans", sans-serif; }
   .klist{ padding:0 16px; }
+  .missing{ display:grid; grid-template-columns:1fr auto; gap:3px 12px; align-items:center; margin:22px 0 4px; padding:15px 16px; border-radius:16px; border:1px dashed var(--accent); background:var(--accent-soft); color:var(--ink); text-decoration:none; }
+  .missing b{ font-size:15px; } .missing span{ grid-column:1; font-size:13px; line-height:1.4; color:var(--dim); } .missing i{ grid-row:1 / 3; grid-column:2; font-style:normal; font-size:22px; color:var(--accent); }
   .plet{ list-style:none; margin:14px 2px 4px; font:800 15px/1 "Big Shoulders Display", sans-serif; letter-spacing:.06em; color:var(--dim); }
   .kmemnote{ margin:0 0 8px !important; }
   .kmemq{ display:block; margin:0 0 10px; } .kmemq input{ width:100%; height:42px; padding:0 12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:500 16px/1 "Instrument Sans", sans-serif; }
@@ -1674,6 +1695,7 @@
       <div class="sh"><h2 id="h-lag" data-i18n>Lagen</h2><div class="meta">SPL 2026-27</div></div>
       <div class="teams" id="teams"></div>
     </section>
+    <a class="missing" href="#konto"><b data-i18n>Saknas du eller ditt barn?</b><span data-i18n>Juniorer under 18 syns först efter ett ja. Begär konto, så kopplas spelaren in när det är godkänt.</span><i aria-hidden="true">→</i></a>
   </main>
   <main class="view" id="tavlingar" tabindex="-1" aria-labelledby="h-tav" hidden></main>
   <main class="view" id="americano" tabindex="-1" aria-labelledby="h-amxv" hidden>
@@ -1687,6 +1709,9 @@
   <!-- ================= MENYRADEN ================= -->
   <nav class="dock" id="dock" aria-label="Meny">
     <a class="dlive" id="dockLive" href="#/" hidden><i class="dlive-dot" aria-hidden="true"></i><span class="dlive-t" id="dockLiveT"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+    <span class="dball-sh" id="dockBallSh" aria-hidden="true"></span>
+    <span class="dball-ring" id="dockRing" aria-hidden="true"></span>
+    <span class="dball" id="dockBall" aria-hidden="true"><i></i></span>
     <div class="dkbar" id="dockBar"><span class="dblob" id="dockBlob" aria-hidden="true"><i></i></span><a class="dtab" draggable="false" data-tab="idag" href="#/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="3" width="15" height="18" rx="3"/><path d="M4.5 12h15"/><path class="dk-accent" d="M9 7.5h6M9 16.5h6"/></svg><span data-i18n>Idag</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="spelare" href="#spelare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.3"/><path d="M3.5 19.5c.7-3.2 2.9-5 5.5-5s4.8 1.8 5.5 5"/><path class="dk-accent" d="M15.5 4.9a3.2 3.2 0 0 1 0 6.2M17.5 14.8c1.6.7 2.6 2.2 3 4.7"/></svg><span data-i18n>Spelare</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="tavlingar" href="#tavlingar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5h8v5.5a4 4 0 0 1-8 0z"/><path class="dk-accent" d="M8 5.5H5.2a3 3 0 0 0 2.9 4.2M16 5.5h2.8a3 3 0 0 1-2.9 4.2"/><path d="M12 13v3.5M8.5 20.5h7M10 16.5h4"/></svg><span data-i18n>Tävlingar</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="americano" href="#americano"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="10" cy="9.2" rx="5.6" ry="6.2" transform="rotate(-35 10 9.2)"/><path d="M13.3 13.8l5.2 5.2"/><circle class="dk-accent" cx="18.6" cy="5.6" r="2.1"/></svg><span data-i18n>Americano</span><i class="dbadge" aria-hidden="true"></i></a><button class="dtab" data-tab="mer" type="button" aria-haspopup="dialog" aria-controls="moreSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect class="dk-accent" x="13.5" y="13.5" width="6.5" height="6.5" rx="3.25"/></svg><span data-i18n>Mer</span><i class="dbadge" aria-hidden="true"></i></button></div>
   </nav>
   <div class="sheet" id="moreSheet" role="dialog" aria-modal="true" aria-labelledby="moreH" hidden>
@@ -1737,6 +1762,13 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Finns inte spelaren i listan?":"¿El jugador no está en la lista?",
+    "Skriv namnet som på RankedIn":"Escribe el nombre como en RankedIn",
+    "Juniorer under 18 syns inte i appen förrän någon sagt ja. Skriv juniorens namn här.":"Los juniors menores de 18 no aparecen hasta que alguien dice que sí. Escribe aquí el nombre del junior.",
+    "Välj spelaren i listan eller skriv namnet.":"Elige al jugador en la lista o escribe su nombre.",
+    "Spelaren själv, {n}, syns inte än":"El propio jugador, {n}, aún no aparece",
+    "Saknas du eller ditt barn?":"¿Faltas tú o tu hijo/a?",
+    "Juniorer under 18 syns först efter ett ja. Begär konto, så kopplas spelaren in när det är godkänt.":"Los juniors menores de 18 aparecen tras un sí. Pide una cuenta y el jugador se añade cuando se aprueba.",
     "Du följer":"Sigues",
     "{n} spelare i Nynäs Padel Club":"{n} jugadores en Nynäs Padel Club",
     "Medlemmar":"Socios",
@@ -7965,6 +7997,8 @@
     return '<div class="sh"><h2>' + _("Begär konto") + '</h2><div class="meta"></div></div><div class="card amxset">' +
       '<label class="amxf"><span>' + _("Vem gäller det?") + '</span><select id="rPid"><option value="">' + _("Ingen klubbspelare, till exempel tränare") + '</option>' +
       opts.map(function(p){ return '<option value="' + p.pid + '"' + (String(p.pid) === String(pre) ? " selected" : "") + '>' + esc(p.name) + '</option>'; }).join("") + '</select></label>' +
+      '<label class="amxf"><span>' + _("Finns inte spelaren i listan?") + '</span><input id="rPlayer" maxlength="60" autocomplete="off" placeholder="' + esc(_("Skriv namnet som på RankedIn")) + '">' +
+      '<small>' + _("Juniorer under 18 syns inte i appen förrän någon sagt ja. Skriv juniorens namn här.") + '</small></label>' +
       '<div class="amxf"><label class="kchk"><input type="checkbox" id="rPar"> ' + _("Jag är förälder till spelaren") + '</label></div>' +
       '<label class="amxf"><span>' + _("Ditt namn") + '</span><input id="rName" maxlength="60" autocomplete="name" placeholder="' + esc(_("Behövs för förälder eller om du inte är klubbspelare")) + '"></label>' +
       '<label class="amxf"><span>' + _("Meddelande (valfritt)") + '</span><input id="rMsg" maxlength="200" autocomplete="off" placeholder="' + esc(_("Till exempel vilket lag du spelar i")) + '"></label>' +
@@ -7974,7 +8008,8 @@
   function konReqsHtml(A){
     if (!A || !A.requests || !A.requests.length) return "";
     return '<div class="sh"><h2>' + _("Förfrågningar") + '</h2><div class="meta">' + A.requests.length + '</div></div>' + A.requests.map(function(r){
-      var P = r.pid && BYPID[r.pid], who = r.parent ? _("Förälder till {n}", {n:P ? P.name : "?"}) : P ? _("Klubbspelare") : _("Inte klubbspelare");
+      var P = r.pid && BYPID[r.pid], pn = P ? P.name : r.pname || "?";
+      var who = r.parent ? _("Förälder till {n}", {n:pn}) : P ? _("Klubbspelare") : r.pname ? _("Spelaren själv, {n}, syns inte än", {n:r.pname}) : _("Inte klubbspelare");
       return '<div class="card kreq"><p><b>' + esc(r.name) + '</b><br><small>' + esc(who + " · " + (r.label || _("okänd enhet")) + " · " + dayMonD(new Date(r.created)) + " " + hm(new Date(r.created))) + '</small></p>' +
         (r.msg ? '<p class="kmsgq">' + esc(r.msg) + '</p>' : "") +
         '<label class="amxf"><span>' + _("Kontrollkod från personen") + '</span><input data-rcode="' + esc(r.id) + '" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="9" placeholder="ABC 123"></label>' +
@@ -8071,11 +8106,12 @@
         function(er){ b.disabled = false; alert(_("Det gick inte: ") + er.message); });
     } else if (k === "request"){
       var rp = +document.getElementById("rPid").value || null, par = document.getElementById("rPar").checked, rn = document.getElementById("rName").value.trim(), er = document.getElementById("rErr");
-      if (par && !rp){ er.textContent = _("Välj vilken spelare du är förälder till."); return; }
-      if ((par || !rp) && !rn){ er.textContent = _("Skriv ditt namn."); return; }
+      var rpl = rp ? "" : document.getElementById("rPlayer").value.trim();
+      if (par && !rp && !rpl){ er.textContent = _("Välj spelaren i listan eller skriv namnet."); return; }
+      if ((par || (!rp && !rpl)) && !rn){ er.textContent = _("Skriv ditt namn."); return; }
       b.disabled = true;
-      authApi("/auth/request", {pid:rp, parent:par, name:rn, msg:document.getElementById("rMsg").value.trim(), label:devLabel()}).then(function(d){
-        areqSave({wait:d.wait, code:d.code, name:par || !rp ? rn : BYPID[rp].name, at:Date.now()}); KONTO.msg = ""; KONTO.pre = null; renderKonto();
+      authApi("/auth/request", {pid:rp, player:rpl, parent:par, name:rn, msg:document.getElementById("rMsg").value.trim(), label:devLabel()}).then(function(d){
+        areqSave({wait:d.wait, code:d.code, name:par || !rp ? rn || rpl : BYPID[rp].name, at:Date.now()}); KONTO.msg = ""; KONTO.pre = null; renderKonto();
       }, function(e){ b.disabled = false; er.textContent = e.message === "full" ? _("Just nu väntar många ansökningar. Försök igen senare.") : _("Det gick inte: ") + e.message; });
     } else if (k === "check"){
       areqPoll();
@@ -8263,16 +8299,82 @@
     }
     function geo(t){ return {x:t.offsetLeft + 2, w:t.offsetWidth - 4}; }
     function buzz(){ try { if (navigator.vibrate) navigator.vibrate(6); } catch (e){} }
+    // ---- the ball: a padel ball on the bar's edge. Flights are segments (an arc, a drop, a hop) played by one rAF
+    // loop; every landing squashes it against the glass and can ring; the shadow on the glass shrinks with height ----
+    var ball = document.getElementById("dockBall"), bsh = document.getElementById("dockBallSh"), ring = document.getElementById("dockRing"), bin = ball && ball.firstElementChild;
+    var B = {x:null, y:0, rot:0, seg:[], t0:0, raf:0, hover:null, imp:0, impAt:0, booted:false};
+    function cxOf(t){ return bar.offsetLeft + t.offsetLeft + t.offsetWidth / 2; }
+    function bpaint(){
+      if (!ball || B.x == null) return;
+      var since = performance.now() - B.impAt, sq = B.imp * Math.max(0, 1 - since / 170), wob = sq * Math.cos(since / 18);
+      ball.style.transform = "translate(" + B.x.toFixed(1) + "px," + B.y.toFixed(1) + "px) scale(" + (1 + .34 * wob).toFixed(3) + "," + (1 - .34 * wob).toFixed(3) + ")";
+      if (bin) bin.style.transform = "rotate(" + B.rot.toFixed(1) + "deg)";
+      var k = Math.min(1, Math.max(0, -B.y) / 70);
+      bsh.style.transform = "translateX(" + B.x.toFixed(1) + "px) scale(" + (1 - .6 * k).toFixed(3) + "," + (1 - .4 * k).toFixed(3) + ")";
+      bsh.style.opacity = (1 - .8 * k).toFixed(3);
+    }
+    function land(sg){
+      B.imp = Math.min(1, .3 + sg.h / 55); B.impAt = performance.now();
+      if (sg.ring && ring){ dock.style.setProperty("--bx", B.x.toFixed(1) + "px"); ring.classList.remove("go"); void ring.offsetWidth; ring.classList.add("go"); }
+      if (sg.onland) sg.onland();
+    }
+    function bstep(now){
+      B.raf = 0;
+      if (B.hover != null){   // sliding: it floats over the finger
+        B.x += (B.hover - B.x) * .32; B.rot += (B.hover - B.x) * 1.4; B.y += (-18 - B.y) * .25;
+        bpaint(); B.raf = requestAnimationFrame(bstep); return;
+      }
+      var sg = B.seg[0];
+      if (!sg){ bpaint(); if (performance.now() - B.impAt < 180) B.raf = requestAnimationFrame(bstep); return; }
+      var p = Math.min(1, (now - B.t0) / sg.d), e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+      B.x = sg.x0 + (sg.x1 - sg.x0) * e;
+      B.y = sg.drop ? -sg.drop * (1 - p * p) : -sg.h * 4 * p * (1 - p) + (sg.y0 || 0) * (1 - p);
+      B.rot = sg.r0 + (sg.r1 - sg.r0) * p;
+      if (p >= 1){ B.seg.shift(); B.t0 = now; B.y = 0; land(sg); }
+      bpaint(); B.raf = requestAnimationFrame(bstep);
+    }
+    function bplay(segs){ B.seg = segs; B.t0 = performance.now(); if (!B.raf) B.raf = requestAnimationFrame(bstep); }
+    // to a tab: an arc as high as the way is long, then two dying bounces
+    function ballTo(x1, onland){
+      if (!ball) { if (onland) onland(); return; }
+      if (B.x == null || RM){ B.x = x1; B.y = 0; bpaint(); if (onland) onland(); return; }
+      var x0 = B.x, dx = x1 - x0, ad = Math.abs(dx), r = B.rot;
+      if (ad < 3){ bplay([{x0:x1, x1:x1, h:16, d:300, r0:r, r1:r, y0:B.y, ring:true, onland:onland}, {x0:x1, x1:x1, h:4, d:150, r0:r, r1:r}]); return; }
+      var h = Math.min(66, 24 + ad * .17), d = Math.min(720, 360 + ad * 1.05), r1 = r + dx * 2.6;
+      bplay([{x0:x0, x1:x1, h:h, d:d, r0:r, r1:r1, y0:B.y, ring:true, onland:onland},
+        {x0:x1, x1:x1, h:h * .24, d:d * .42, r0:r1, r1:r1 + dx * .4}, {x0:x1, x1:x1, h:h * .07, d:d * .26, r0:r1 + dx * .4, r1:r1 + dx * .5}]);
+    }
+    // tapping the open tab again: a high bounce on the spot
+    function ballHop(onland){
+      if (!ball || RM || B.x == null) return;
+      var r = B.rot;
+      bplay([{x0:B.x, x1:B.x, h:52, d:560, r0:r, r1:r + 540, ring:true, onland:onland}, {x0:B.x, x1:B.x, h:13, d:270, r0:r + 540, r1:r + 600}, {x0:B.x, x1:B.x, h:3, d:140, r0:r + 600, r1:r + 610}]);
+    }
+    // the app opens: the dock rises, the ball drops in from above and bounces
+    function ballDrop(x){
+      B.x = x; B.y = -160; bpaint();
+      bplay([{x0:x, x1:x, drop:160, d:560, r0:-90, r1:0, ring:true}, {x0:x, x1:x, h:34, d:420, r0:0, r1:60}, {x0:x, x1:x, h:11, d:250, r0:60, r1:80}, {x0:x, x1:x, h:3, d:130, r0:80, r1:84}]);
+    }
+    if (!RM) dock.classList.add("boot");
     function set(k, instant){
       var t = tabEl(k);
       if (!t) return;
       var was = st.cur;
       st.cur = k;
       tabs.forEach(function(x){ var on = x === t; x.classList.toggle("on", on); if (x.tagName === "A"){ if (on) x.setAttribute("aria-current", "page"); else x.removeAttribute("aria-current"); } });
-      if (was && was !== k && !instant && !RM){ t.classList.remove("pop"); void t.offsetWidth; t.classList.add("pop"); }
+      var pop = function(){ if (RM) return; t.classList.remove("pop"); void t.offsetWidth; t.classList.add("pop"); buzz(); };
       var g = geo(t);
       go(g.x, g.w, instant);
       st.ready = true;
+      if (!B.booted){
+        B.booted = true;
+        if (RM || !ball){ B.x = cxOf(t); bpaint(); return; }
+        requestAnimationFrame(function(){ dock.classList.add("boot-in"); dock.classList.remove("boot"); });
+        setTimeout(function(){ ballDrop(cxOf(t)); }, 380);
+        setTimeout(function(){ dock.classList.remove("boot-in"); }, 1000);
+        return;
+      }
+      if (was !== k || B.hover != null || B.y < -1){ B.hover = null; ballTo(cxOf(t), was && was !== k ? pop : null); }
     }
     function tabAt(cx){
       var r = bar.getBoundingClientRect(), x = cx - r.left;
@@ -8283,7 +8385,10 @@
       var k = t.getAttribute("data-tab");
       if (k === "mer"){ moreOpen(); return; }
       var h = t.getAttribute("href");
-      if (location.hash === h || (h === "#/" && (!location.hash || location.hash === "#"))){ try { window.scrollTo({top:0, behavior:RM ? "auto" : "smooth"}); } catch (e){ window.scrollTo(0, 0); } }
+      if (location.hash === h || (h === "#/" && (!location.hash || location.hash === "#"))){
+        ballHop(function(){ t.classList.remove("pop"); void t.offsetWidth; t.classList.add("pop"); });
+        try { window.scrollTo({top:0, behavior:RM ? "auto" : "smooth"}); } catch (e){ window.scrollTo(0, 0); }
+      }
       else location.hash = h;
     }
     // slide along the bar: the blob follows the finger, the tab under it lifts; let go to open it
@@ -8301,6 +8406,7 @@
       if (!p.moved){ p.moved = true; bar.classList.add("drag"); try { bar.setPointerCapture(e.pointerId); } catch (er){} }
       var r = bar.getBoundingClientRect(), w = st.tw || 60, x = Math.max(4, Math.min(r.width - w - 4, e.clientX - r.left - w / 2));
       go(x, w);
+      B.hover = x + w / 2 + bar.offsetLeft; if (!B.raf) B.raf = requestAnimationFrame(bstep);
       var t = tabAt(e.clientX);
       if (t !== st.hov){ if (st.hov) st.hov.classList.remove("hov"); st.hov = t; t.classList.add("hov"); buzz(); }
     });
@@ -8313,7 +8419,7 @@
       if (p.moved){
         st.eat = true; setTimeout(function(){ st.eat = false; }, 50);
         var t = st.hov || tabAt(e.clientX); st.hov = null;
-        if (t.getAttribute("data-tab") === st.cur || t.getAttribute("data-tab") === "mer") set(st.cur);   // back to where it was
+        if (t.getAttribute("data-tab") === st.cur || t.getAttribute("data-tab") === "mer"){ B.hover = null; set(st.cur); }   // back to where it was
         open(t);
       }
     }
@@ -8339,7 +8445,7 @@
         ly = y;
       });
     }, {passive:true});
-    window.addEventListener("resize", function(){ if (st.cur){ var g = geo(tabEl(st.cur)); go(g.x, g.w, true); } });
+    window.addEventListener("resize", function(){ if (st.cur){ var g = geo(tabEl(st.cur)); go(g.x, g.w, true); if (!B.seg.length && B.hover == null){ B.x = cxOf(tabEl(st.cur)); B.y = 0; bpaint(); } } });
     // the live capsule: what is on right now, a new line every few seconds
     var cap = document.getElementById("dockLive"), capT = document.getElementById("dockLiveT"), items = [], idx = 0, timer = 0;
     function showItem(){

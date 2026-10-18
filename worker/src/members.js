@@ -113,3 +113,14 @@ export async function setVisibility(env, pid, vis) {
   return true;
 }
 export const isMember = pid => ADDED.has(Number(pid));
+// "Begär konto" for a player not shown: the member with that name (any order of case and accents), or null
+export function findMember(name) {
+  const want = slug(name), list = (MEM.rec && MEM.rec.list) || [];
+  const m = list.find(x => slug(x.name) === want);
+  return m ? { pid: m.pid, name: m.name } : null;
+}
+// The name of a member (for the admin's view of a request about someone not shown)
+export function memberName(pid) {
+  const m = ((MEM.rec && MEM.rec.list) || []).find(x => x.pid === Number(pid));
+  return m ? m.name + (typeof m.age === "number" ? ", " + m.age + " år" : "") : null;
+}

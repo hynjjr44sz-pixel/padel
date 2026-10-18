@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import worker, { _resetMemory } from "../src/index.js";
 import { membersRun, loadMembers, setVisibility, membersOut, _resetMembers, applyMembers } from "../src/members.js";
 import { PLAYERS, BY_PID } from "../src/discover.js";
+import { fakeD1 } from "./d1.mjs";
 function kv() { const m = new Map(); return { m, get: async k => m.has(k) ? m.get(k) : null, put: async (k, v) => { m.set(k, v); }, delete: async k => { m.delete(k); }, list: async () => ({ keys: [], list_complete: true }) }; }
 const ORIGIN = "https://padel.holmberg.st";
 const MEMBERS = [{ firstLetter: "A", participants: [
@@ -56,5 +57,29 @@ test("medlemmar: the club's list once a day; 18+ shown unless they said no, juni
   await setVisibility(env, 900003, null);
   assert.ok(!BY_PID.has(900003));
   applyMembers({ list: [] });   // leave PLAYERS as the other tests expect it
+  assert.equal(PLAYERS.length, n0);
+});
+
+test("begär konto för en dold junior: the parent types the name, matched against the members; approved -> shown", async () => {
+  _resetMemory(); _resetMembers();
+  const env = { PUSH: kv(), DB: fakeD1(), ORIGIN, NOW: "2026-10-19T10:00:00Z", ADMIN_KEY: "k".repeat(32) }, n0 = PLAYERS.length;
+  await membersRun(env, getter(net([])), new Date("2026-10-19T02:03:00Z"), { left: 45 });
+  assert.ok(!BY_PID.has(900003));   // Cia, 15: not shown
+  const call = (m, path, body, hd = {}) => worker.fetch(new Request("https://w" + path, { method: m, headers: { Origin: ORIGIN, "Content-Type": "application/json", ...hd }, body: body ? JSON.stringify(body) : undefined }), env);
+  const r = await (await call("POST", "/auth/request", { parent: true, name: "Mamma Ung", player: "cia UNG" })).json();
+  const ak = { "X-Admin-Key": env.ADMIN_KEY };
+  const adm = await (await call("GET", "/admin", null, ak)).json();
+  assert.deepEqual([adm.requests[0].pid, adm.requests[0].pname, adm.requests[0].msg], [900003, "Cia Ung, 15 år", "Gäller: Cia Ung"]);
+  // the page never got Cia: /events has only those shown
+  assert.ok(!(await (await call("GET", "/events")).json()).members.some(m => m.pid === 900003));
+  await call("POST", "/admin", { op: "approve", rid: adm.requests[0].id, code: r.code }, ak);
+  assert.ok(BY_PID.has(900003));   // the yes: shown now
+  const me = (await (await call("POST", "/auth/request/poll", { wait: r.wait })).json()).me;
+  assert.deepEqual([me.name, me.kids], ["Mamma Ung", [900003]]);
+  // a name that is no member: the request still goes to the admin, marked
+  await call("POST", "/auth/request", { parent: true, name: "Pappa X", player: "Nobody Here" });
+  const adm2 = await (await call("GET", "/admin", null, ak)).json();
+  assert.deepEqual([adm2.requests[0].pid, adm2.requests[0].msg], [null, "Gäller: Nobody Here (hittades inte bland klubbens medlemmar)"]);
+  applyMembers({ list: [] });
   assert.equal(PLAYERS.length, n0);
 });

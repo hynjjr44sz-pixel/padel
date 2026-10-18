@@ -6,7 +6,7 @@ import { buildIcs } from "./ics.js";
 import { weekDigest, weekNote } from "./week.js";
 import { remindNotes } from "./remind.js";
 import { soonNotes } from "./soon.js";
-import { loadMembers, membersDue, membersRun, membersOut, setVisibility, visible as memberVisible } from "./members.js";
+import { loadMembers, membersDue, membersRun, membersOut, setVisibility, findMember, memberName, visible as memberVisible } from "./members.js";
 import { photoIndex, photoSet, photoGet, photosPending, photosCheck, canPhoto } from "./photos.js";
 import { authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
 import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, amxAll, publicOf } from "./amx.js";
@@ -273,7 +273,7 @@ async function handle(req, env) {
   if (route === "POST /auth/request" || route === "POST /auth/request/poll" || route === "POST /auth/request/cancel") {
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
-    const t = +now(env), r = route === "POST /auth/request" ? await requestAccess(env, b, t, BY_PID) : route === "POST /auth/request/poll" ? await requestPoll(env, b, t) : await requestCancel(env, b);
+    const t = +now(env), r = route === "POST /auth/request" ? await requestAccess(env, b, t, BY_PID, findMember) : route === "POST /auth/request/poll" ? await requestPoll(env, b, t) : await requestCancel(env, b);
     return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
   if (route === "GET /admin" || route === "POST /admin") {
@@ -283,7 +283,9 @@ async function handle(req, env) {
     if (!key && !can(me, "admin")) return json({ error: "forbidden" }, 403, h);
     if (req.method === "GET") {
       const mrec = await loadMembers(env);
-      return json({ ...(await adminUsers(env, +now(env))), members: mrec.list.map(m => ({ pid: m.pid, name: m.name, age: m.age ?? null, gender: m.gender || null, vis: m.vis || null, shown: memberVisible(m) })) }, 200, { ...h, "Cache-Control": "no-store" });
+      const au = await adminUsers(env, +now(env));
+      au.requests = au.requests.map(r => r.pid && !BY_PID.has(r.pid) ? { ...r, pname: memberName(r.pid) } : r);   // someone not shown: name and age
+      return json({ ...au, members: mrec.list.map(m => ({ pid: m.pid, name: m.name, age: m.age ?? null, gender: m.gender || null, vis: m.vis || null, shown: memberVisible(m) })) }, 200, { ...h, "Cache-Control": "no-store" });
     }
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }

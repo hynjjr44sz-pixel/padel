@@ -209,6 +209,10 @@ try {
   await page.waitForSelector("#spelare:not([hidden]) #plist li", { timeout: 8000 }).catch(() => {});
   const dk1 = await page.evaluate(() => [location.hash, document.querySelector("#dock .dtab.on")?.getAttribute("data-tab"), document.getElementById("home").hidden, document.getElementById("dockBlob").style.width]);
   ok("Menyraden: Spelare opens the players' view, the blob moves there", dk1[0] === "#spelare" && dk1[1] === "spelare" && dk1[2] && parseFloat(dk1[3]) > 30, dk1);
+  await page.waitForTimeout(1600);   // the ball's arc and bounces
+  const bl = await page.evaluate(() => { const t = document.querySelector('#dock .dtab[data-tab="spelare"]'), bar = document.getElementById("dockBar"), m = /translate\(([-\d.]+)px, ?([-\d.]+)px\)/.exec(document.getElementById("dockBall").style.transform || "");
+    return [m && +m[1], m && +m[2], bar.offsetLeft + t.offsetLeft + t.offsetWidth / 2]; });
+  ok("Menyraden: the ball has flown to Spelare and rests on the bar above it", bl[0] != null && Math.abs(bl[0] - bl[2]) < 1.5 && Math.abs(bl[1]) < .5, bl);
   { const n = (await page.$$eval("#teams .tcard", c => c.map(x => x.querySelectorAll(".troster li").length))).sort().join();
     ok("home: three team cards with roster avatars", n === "4,6,7", n); }
   ok("home: player list with all 17", (await page.$$("#plist li")).length === 17);

@@ -71,18 +71,28 @@ async function newDevice(env, user, label, t, act) {
 
 // "Begär konto" in the app: POST /auth/request {pid, name, parent, msg, label} -> {wait, code}. The phone keeps wait and
 // shows code; the person sends the code to the admin (WhatsApp, SMS, in person), who types it in to approve.
-export async function requestAccess(env, b, t, byPid) {
+// A player not shown in the app (a junior before a yes) is given by name ("player"): matched against the club's members
+// here (findMember: name -> {pid, name} or null), so the page never needs the list of members who are not shown.
+export async function requestAccess(env, b, t, byPid, findMember) {
   if (!env.DB) return { err: "no database", status: 503 };
-  const pid = Number(b && b.pid) || null, P = pid && byPid.get(pid), parent = !!(b && b.parent);
+  let pid = Number(b && b.pid) || null, P = pid && byPid.get(pid);
+  const parent = !!(b && b.parent), typed = clean(b && b.player, 60);
   if (pid && !P) return { err: "unknown player", status: 400 };
+  let note = "";
+  if (!pid && typed) {
+    const m = findMember ? findMember(typed) : null;
+    if (m) { pid = m.pid; P = { me: m.name }; note = "Gäller: " + m.name; }
+    else note = "Gäller: " + typed + " (hittades inte bland klubbens medlemmar)";
+  }
   const name = parent || !P ? clean(b && b.name, 60) : P.me || P.name;
-  if (!name || (parent && !pid)) return { err: "name", status: 400 };
+  if (!name || (parent && !pid && !typed)) return { err: "name", status: 400 };
+  const msg = [note, clean(b && b.msg, 200)].filter(Boolean).join(" · ");
   await env.DB.prepare("DELETE FROM requests WHERE org = ? AND created < ?").bind(ORG, t - REQ_MS).run();
   if ((await env.DB.prepare("SELECT count(*) AS n FROM requests WHERE org = ? AND status = 'open'").bind(ORG).first()).n >= REQ_OPEN) return { err: "full", status: 429 };
   const id = rnd(10, CODE_ABC), wait = rnd(43, TOKEN_ABC), code = rnd(6, REQ_ABC);
   await env.DB.batch([
     env.DB.prepare("INSERT INTO requests (id, org, pid, name, parent, msg, label, code, wait, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-      .bind(id, ORG, pid, name, parent ? 1 : 0, clean(b && b.msg, 200) || null, clean(b && b.label, 60) || null, await sha(code), await sha(wait), t),
+      .bind(id, ORG, pid, name, parent ? 1 : 0, msg.slice(0, 300) || null, clean(b && b.label, 60) || null, await sha(code), await sha(wait), t),
     log(env, t, null, "request", { id, pid, name, parent }),
   ]);
   return { id, wait, code: code.slice(0, 3) + " " + code.slice(3) };
@@ -172,7 +182,7 @@ export async function adminOp(env, me, b, t, byPid) {
       id = rnd(10, CODE_ABC);
       q.push(env.DB.prepare("INSERT INTO users (id, org, name, pid, created) VALUES (?, ?, ?, ?, ?)").bind(id, ORG, r.name, r.parent ? null : r.pid, t));
     }
-    if (r.parent) q.push(env.DB.prepare("INSERT OR IGNORE INTO guardians (user, pid) VALUES (?, ?)").bind(id, r.pid));
+    if (r.parent && r.pid) q.push(env.DB.prepare("INSERT OR IGNORE INTO guardians (user, pid) VALUES (?, ?)").bind(id, r.pid));
     q.push(...roles.map(x => env.DB.prepare("INSERT OR IGNORE INTO roles (user, org, role) VALUES (?, ?, ?)").bind(id, ORG, x)),
       env.DB.prepare("UPDATE requests SET status = 'ok', user = ? WHERE id = ?").bind(id, r.id), log(env, t, who, "approve", { rid: r.id, id, name: r.name, roles }));
     await env.DB.batch(q);
