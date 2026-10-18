@@ -12,7 +12,7 @@ id = "eedc18b48ae24d419ec6826a87069430"
 [[d1_databases]]
 binding = "DB"
 database_name = "padel"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "0e77a990-9563-41b3-a4e2-4553e11f0fdd"
 
 [triggers]
 crons = ["* * * * *"]
