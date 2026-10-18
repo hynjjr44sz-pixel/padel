@@ -1,0 +1,42 @@
+# Svenska Padelförbundets regler for the app's "Regler" view, every Sunday: worker/rules-build.py -> rules.json on the
+# branch "tvdata" (only that file; the app's branches are untouched). The worker serves it as GET /rules.
+# "checked" changes every run (the app shows when the rules were last verified), so the file is committed every week.
+name: Regler
+on:
+  schedule:
+    - cron: "37 4 * * 0"   # Sundays 04:37 UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: tvdata
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pdfminer.six==20240706
+      - name: Build
+        run: |
+          git fetch --depth 1 origin tvdata && git show FETCH_HEAD:rules.json > "$RUNNER_TEMP/prev.json" 2>/dev/null || echo '{}' > "$RUNNER_TEMP/prev.json"
+          python worker/rules-build.py "$RUNNER_TEMP/rules.json" "$RUNNER_TEMP/prev.json"
+      - name: Commit to tvdata
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin tvdata >/dev/null; then
+            git fetch --depth 1 origin tvdata
+            git switch -C tvdata FETCH_HEAD
+          else
+            git switch --orphan tvdata
+            git rm -rfq --cached . >/dev/null 2>&1 || true
+            find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          fi
+          cp "$RUNNER_TEMP/rules.json" rules.json
+          git add rules.json
+          if git diff --cached --quiet; then echo "unchanged"; exit 0; fi
+          git commit -qm "Regler: kontrollerade $(date -u +%F)"
+          git push origin tvdata

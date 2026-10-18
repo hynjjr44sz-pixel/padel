@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mXEZ/eBxlsBTEYuT5MOuYER7pgHJS4aKLu25LRuHstY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-gRxw5bgSV/cY2TKnJxrCG0N8CO9wAmrPBFGpAQ+I3vU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -135,7 +135,37 @@
   .brand{ display:flex; align-items:center; gap:8px; }
   .brand img{ height:24px; width:auto; flex:none; }
   .brand span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  .rulesbtn{ display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 11px 0 9px; flex:none; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--dim);
+    font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; text-decoration:none; }
+  .rulesbtn svg{ width:15px; height:15px; flex:none; }
+  .rulesbtn:hover{ border-color:var(--ink); color:var(--ink); }
+  @media (max-width:439px){ .rulesbtn{ width:30px; padding:0; justify-content:center; } .rulesbtn span{ display:none; } }
   @media (max-width:379px){ .bell{ width:30px; padding:0; justify-content:center; } .bell span{ display:none; } }
+  /* ---------- #regler ---------- */
+  .rsearch{ position:sticky; top:var(--toph, 96px); z-index:5; display:flex; align-items:center; gap:8px; margin:14px 0 10px; padding:0 14px; height:46px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:var(--dim); box-shadow:0 6px 18px rgba(0,0,0,.06); }
+  .rsearch input{ flex:1; min-width:0; height:100%; border:0; background:none; color:var(--ink); font:500 16px/1 "Instrument Sans", sans-serif; outline:none; }
+  .rdocs{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin:0 -16px 6px; padding:2px 16px 8px; }
+  .rdocs::-webkit-scrollbar{ display:none; }
+  .rdocs[hidden]{ display:none; }
+  .rdocs button{ appearance:none; flex:none; height:34px; padding:0 14px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 13px/1 "Instrument Sans", sans-serif; cursor:pointer; white-space:nowrap; }
+  .rdocs button[aria-selected="true"]{ background:var(--solid); border-color:var(--solid); color:var(--solid-ink); }
+  .rinfo{ margin:4px 0 10px; font-size:13.5px; line-height:1.45; color:var(--dim); }
+  .rinfo p{ margin:0 0 4px; }
+  .rinfo.old p:first-child{ color:var(--loss); }
+  .rsrc{ font:500 11px/1.4 "Chivo Mono", monospace; }
+  .rsec{ border:1px solid var(--line); border-radius:14px; background:var(--surface); margin:0 0 8px; }
+  .rsec summary{ list-style:none; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:13px 14px; cursor:pointer; font:600 15px/1.3 "Instrument Sans", sans-serif; }
+  .rsec summary::-webkit-details-marker{ display:none; }
+  .rsec summary i{ flex:none; width:10px; height:10px; border-right:2px solid var(--dim); border-bottom:2px solid var(--dim); transform:rotate(45deg) translateY(-3px); transition:transform .2s; }
+  .rsec[open] summary i{ transform:rotate(-135deg) translateY(-2px); }
+  .rbody{ padding:0 14px 12px; font-size:15px; line-height:1.55; overflow-wrap:anywhere; }
+  .rbody p{ margin:0 0 10px; }
+  .rbody ul{ margin:0 0 10px; padding-left:20px; }
+  .rbody li{ margin:0 0 6px; }
+  .rbody mark, .rsec summary mark{ background:#FFD84A; color:#0A1733; border-radius:3px; padding:0 1px; }
+  .rdt{ font:800 20px/1.1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; margin:16px 0 8px; }
+  .rdt small{ font:600 11px/1 "Chivo Mono", monospace; color:var(--loss); text-transform:uppercase; vertical-align:3px; }
+  .rcount{ font:500 12px/1.4 "Chivo Mono", monospace; color:var(--dim); margin:4px 0 6px; }
   /* language: SV | ES, the chosen one filled */
   .lang{ display:inline-flex; align-items:center; height:28px; padding:2px; gap:2px; flex:none; border-radius:99px; border:1px solid var(--line); background:var(--surface); }
   .lang button{ appearance:none; border:0; background:none; height:22px; min-width:28px; padding:0 7px; border-radius:99px; cursor:pointer; color:var(--dim); font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.08em; }
@@ -1297,6 +1327,7 @@
         <div class="tools">
           <div class="today" id="today"></div>
           <div class="lang" id="lang" role="group" aria-label="Språk"><button type="button" data-lang="sv" aria-pressed="true" lang="sv" aria-label="Svenska">SV</button><button type="button" data-lang="es" aria-pressed="false" lang="es" aria-label="Español">ES</button></div>
+          <a class="rulesbtn" href="#regler" aria-label="Regler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 21.5A2.5 2.5 0 0 1 6.5 19H20"/><path d="M9 8h7M9 11.5h5"/></svg><span data-i18n>Regler</span></a>
           <button class="bell" id="bell" type="button" aria-pressed="false" aria-label="Notiser för spelarna du följer" title="Notis när spelarna du följer får ett resultat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8.5a6 6 0 0 1 12 0c0 6.5 2.5 8.5 2.5 8.5h-17S6 15 6 8.5"/><path d="M10.2 20.5a2 2 0 0 0 3.6 0"/><circle class="bd" cx="18.5" cy="4.5" r="2.6" fill="#FFD84A" stroke="none"/></svg>
             <span data-i18n>Notiser</span>
@@ -1385,6 +1416,7 @@
   <main class="view" id="team" tabindex="-1" aria-labelledby="th-h" hidden></main>
   <main class="view" id="match" tabindex="-1" hidden></main>
   <main class="view" id="tour" tabindex="-1" hidden></main>
+  <main class="view" id="rules" tabindex="-1" hidden></main>
 
   <footer>
     <b>Nynäs Padel Club</b>
@@ -1420,6 +1452,25 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Regler":"Reglas",
+    "Sök, t.ex. serve, glas, reservlista":"Busca, p. ej. saque, cristal, reserva",
+    "Sök i reglerna":"Buscar en las reglas",
+    "Dokument":"Documentos",
+    "Reglerna kunde inte hämtas just nu.":"No se pudieron cargar las reglas ahora.",
+    "Svenska Padelförbundet":"Federación Sueca de Pádel",
+    "kontrollerad ":"revisado el ",
+    "{n} träffar":"{n} resultados",
+    "Inga träffar. Prova ett annat ord.":"Sin resultados. Prueba otra palabra.",
+    "äldre":"antiguo",
+    "Originalet ↗︎":"Original ↗︎",
+    "gäller från ":"vigente desde ",
+    "ändrad senast ":"último cambio ",
+    "I korthet":"En resumen",
+    "Regelboken":"Reglamento",
+    "På svenska":"En sueco",
+    "Förtydliganden":"Aclaraciones",
+    "Barn och ungdom":"Infantil y juvenil",
+    "Varningar":"Advertencias",
     " från klubben":" del club",
     "Veckan i klubben":"La semana en el club",
     "Vann":"Ganaron",
@@ -6638,6 +6689,100 @@
       {t:_("Så funkar rankingen"), s:SRC.rank, b:rankBase + (P.o.junior ? rankJunior : "")}]);
   }
 
+  /* ================= #regler: Svenska Padelförbundets regler (worker GET /rules, checked every Sunday) ================= */
+  // Seven documents (the short guide, FIP's rulebook in force, the older Swedish translation, the federation's
+  // clarifications, the competition rules, the youth rules, warnings), each in sections. Search runs over all of them
+  // (diacritics ignored: "sakerhet" finds "Säkerhet"). Kept on the device; looked at again after 12 h.
+  var RULES_KEY = "padel.rules.v1", RULES = store.json(RULES_KEY), RULES_BUSY = false, RULES_Q = "", RULES_DOC = null;
+  function rulesLoad(){
+    if (RULES_BUSY || !PUSH_API || (RULES && RULES.t && Date.now() - RULES.t < 12 * HOUR)) return;
+    RULES_BUSY = true;
+    withTimeout(fetch(PUSH_API + "/rules", {credentials:"omit"}).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), 15000).then(function(d){
+      RULES_BUSY = false;
+      if (!d || !Array.isArray(d.docs)) return;
+      RULES = {t:Date.now(), d:d};
+      store.set(RULES_KEY, JSON.stringify(RULES));
+      if (VIEW.name === "rules") renderRules();
+    }, function(){ RULES_BUSY = false; if (VIEW.name === "rules" && !RULES) renderRules(true); });
+  }
+  function rnorm(s){ return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
+  // the text with each hit of the query marked (on the original text: positions match after removing diacritics)
+  function rmark(text, q){
+    if (!q) return esc(text);
+    var n = rnorm(text), out = "", i = 0, j;
+    while ((j = n.indexOf(q, i)) >= 0){ out += esc(text.slice(i, j)) + "<mark>" + esc(text.slice(j, j + q.length)) + "</mark>"; i = j + q.length; }
+    return out + esc(text.slice(i));
+  }
+  function rparas(p, q){
+    var h = "", list = [];
+    function flush(){ if (list.length){ h += "<ul>" + list.join("") + "</ul>"; list = []; } }
+    p.forEach(function(x){
+      if (/^• /.test(x)) list.push("<li>" + rmark(x.slice(2), q) + "</li>");
+      else { flush(); h += "<p>" + rmark(x, q) + "</p>"; }
+    });
+    flush();
+    return h;
+  }
+  function rsec(doc, s, q, open){
+    return '<details class="rsec" id="r-' + esc(s.id) + '"' + (open ? " open" : "") + '><summary><span>' + rmark(s.t, q) + '</span><i aria-hidden="true"></i></summary><div class="rbody"' + (doc.lang === "en" ? ' lang="en"' : "") + '>' + rparas(s.p, q) + '</div></details>';
+  }
+  function renderRules(failed){
+    var box = document.getElementById("rules");
+    if (!box) return;
+    rulesLoad();
+    var d = RULES && RULES.d;
+    if (!box.querySelector(".rhead")){
+      box.innerHTML = '<div class="phead rhead"><div class="pt"><h1>' + _("Regler") + '</h1><div class="pm" id="rMeta"></div></div></div>' +
+        '<div class="rsearch"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>' +
+        '<input id="rQ" type="search" autocomplete="off" enterkeyhint="search" placeholder="' + esc(_("Sök, t.ex. serve, glas, reservlista")) + '" aria-label="' + esc(_("Sök i reglerna")) + '"></div>' +
+        '<div class="rdocs" id="rDocs" role="tablist" aria-label="' + esc(_("Dokument")) + '"></div><div id="rBody"></div>';
+      var inp = box.querySelector("#rQ"), tmr = null;
+      inp.value = RULES_Q;
+      inp.addEventListener("input", function(){ clearTimeout(tmr); tmr = setTimeout(function(){ RULES_Q = inp.value; renderRules(); }, 120); });
+      box.querySelector("#rDocs").addEventListener("click", function(e){
+        var b = e.target.closest && e.target.closest("[data-doc]");
+        if (!b) return;
+        RULES_DOC = b.getAttribute("data-doc"); RULES_Q = ""; inp.value = "";
+        history.replaceState(null, "", "#regler/" + RULES_DOC);
+        renderRules(); window.scrollTo(0, 0);
+      });
+    }
+    var top = document.querySelector(".top");   // the search sticks right under the sticky top
+    if (top) document.documentElement.style.setProperty("--toph", top.offsetHeight + "px");
+    var meta = box.querySelector("#rMeta"), docsEl = box.querySelector("#rDocs"), body = box.querySelector("#rBody");
+    if (!d){ body.innerHTML = '<p class="empty">' + (failed ? _("Reglerna kunde inte hämtas just nu.") + ' <a href="https://svenskpadel.se/om-padel/regler/" target="_blank" rel="noopener">svenskpadel.se ↗︎</a>' : _("Hämtar …")) + '</p>'; return; }
+    meta.textContent = _("Svenska Padelförbundet") + " · " + _("kontrollerad ") + dayLabel(new Date(d.checked));
+    if (!RULES_DOC || !d.docs.some(function(x){ return x.id === RULES_DOC; })) RULES_DOC = d.docs[0].id;
+    var q = rnorm(RULES_Q.trim());
+    docsEl.hidden = q.length >= 2;
+    docsEl.innerHTML = d.docs.map(function(x){ return '<button type="button" role="tab" data-doc="' + esc(x.id) + '" aria-selected="' + (x.id === RULES_DOC ? "true" : "false") + '">' + esc(_(x.title)) + '</button>'; }).join("");
+    if (q.length >= 2){
+      var hits = [], n = 0;
+      d.docs.forEach(function(doc){ doc.sections.forEach(function(s){
+        var inT = rnorm(s.t).indexOf(q) >= 0, inP = s.p.some(function(x){ return rnorm(x).indexOf(q) >= 0; });
+        if (!inT && !inP) return;
+        n++;
+        hits.push({doc:doc, s:s, w:(inT ? 2 : 0) + (doc.old ? -1 : 0)});
+      }); });
+      hits.sort(function(a, b){ return b.w - a.w; });
+      var by = {};
+      hits.slice(0, 60).forEach(function(x){ (by[x.doc.id] = by[x.doc.id] || {doc:x.doc, l:[]}).l.push(x.s); });
+      body.innerHTML = '<p class="rcount" role="status">' + esc(n ? _("{n} träffar", {n:n}) : _("Inga träffar. Prova ett annat ord.")) + '</p>' +
+        d.docs.filter(function(doc){ return by[doc.id]; }).map(function(doc){
+          return '<section class="rdoc"><h2 class="rdt">' + esc(_(doc.title)) + (doc.old ? ' <small>' + _("äldre") + '</small>' : "") + '</h2>' + by[doc.id].l.map(function(s){ return rsec(doc, s, q, true); }).join("") + '</section>';
+        }).join("");
+      return;
+    }
+    var doc = d.docs.filter(function(x){ return x.id === RULES_DOC; })[0];
+    var ch = doc.changed ? new Date(doc.changed) : null;
+    body.innerHTML = '<section class="rdoc"><div class="rinfo' + (doc.old ? " old" : "") + '"><p>' + esc(_(doc.sub || "")) + '</p><p class="rsrc"><a href="' + esc(doc.src) + '" target="_blank" rel="noopener">' + _("Originalet ↗︎") + '</a>' +
+      (doc.ver ? " · " + _("gäller från ") + esc(dayMon(doc.ver)) + " " + doc.ver.slice(0, 4) : "") + (ch && !isNaN(ch) ? " · " + _("ändrad senast ") + esc(dayMonD(ch)) + " " + ch.getUTCFullYear() : "") + '</p></div>' +
+      doc.sections.map(function(s){ return rsec(doc, s, "", doc.sections.length === 1); }).join("") + '</section>';
+    // a link to one section: open it and scroll to it
+    var m = /^#regler\/[\w-]+\/([\w-]+)$/.exec(location.hash), el = m && document.getElementById("r-" + m[1]);
+    if (el){ el.open = true; setTimeout(function(){ try { el.scrollIntoView({block:"start"}); } catch (e){} }, 0); }
+  }
+
   /* ================= routing: #/ home, #<player>(/m<match>), #lag/<team> ================= */
   var VIEW = {name:null, who:null};
   function parseHash(h){
@@ -6647,6 +6792,7 @@
     if (sk) return {view:"stats", key:sk[1] || null};
     var sm = /^#serie\/(\d+)\/([a-z0-9]+)$/.exec(h);
     if (sm) return {view:"match", gid:sm[1], key:sm[2]};
+    if (/^#regler(\/|$)/.test(h)){ var rd = /^#regler\/([\w-]+)/.exec(h); return {view:"rules", doc:rd ? rd[1] : null}; }
     var tv = /^#tavling\/(\d+)$/.exec(h);
     if (tv) return {view:"tour", tid:tv[1]};
     var t = /^#lag\/(\d+)/.exec(h);
@@ -6655,7 +6801,7 @@
     return P ? {view:"player", who:P.key, P:P, mid:m[2] || null} : {view:"home"};
   }
   function showView(id){
-    ["home", "team", "stats", "match", "tour"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
+    ["home", "team", "stats", "match", "tour", "rules"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
       var el = document.getElementById(v);
       if (el) el.hidden = v !== id;
     });
@@ -6727,6 +6873,11 @@
       VIEW = {name:"tour", who:null, team:"t" + x.tid, tid:x.tid};
       var te = DISC && DISC.events.concat(DISC.past || []).filter(function(e){ return String(e.tournamentId) === String(x.tid); })[0];
       document.title = (te && te.name || _("Tävlingen")) + " · Nynäs Padel";
+    } else if (x.view === "rules"){
+      if (x.doc) RULES_DOC = x.doc;
+      renderRules(); showView("rules");
+      VIEW = {name:"rules", who:null, team:"regler"};
+      document.title = _("Regler") + " · Nynäs Padel";
     } else if (x.view === "match"){
       renderMatch(x.gid, x.key); showView("match");
       VIEW = {name:"match", who:null, team:x.gid + "/" + x.key, gid:x.gid, key:x.key};

@@ -143,6 +143,9 @@ async function newPage(opts = {}) {
       return r.fulfill({ status: opts.liveStatus || 200, contentType: "application/json", body: opts.liveStatus ? "{}" : opts.live, headers: h });
     }
     if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
+    if (u.pathname === "/rules") return r.fulfill({ contentType: "application/json", body: JSON.stringify({ v: 1, checked: "2026-09-27T04:40:00Z", docs: [
+      { id: "guide", title: "I korthet", sub: "Kort", src: "https://svenskpadel.se/om-padel/regler/", changed: "2026-09-27T04:40:00Z", sections: [{ id: "guide-1", t: "Serve", p: ["Serven ska studsa bakom servelinjen.", "• Diagonalt mot motståndarens ruta."] }] },
+      { id: "tavling", title: "Tävlingsbestämmelser", sub: "Handbok", src: "https://svenskpadel.se/x.pdf", sections: [{ id: "tavling-4-3", n: "4.3", t: "Reservlista", p: ["Vid fler anmälda än vad klassen tillåter skapas reservlista."] }] }] }), headers: h });
     if (u.pathname === "/vapid") return r.fulfill({ contentType: "application/json", body: JSON.stringify({ key: "BOr5MaD1vP9w2uH0Pqzv8pH5v2cXf8j8e7Rrx6Qv0yq2mS9d2w8g5k2WnYQx1S0x0gJ5v8wV0z9Q2v5cXf8j8e7R", classes: [164681] }), headers: h });
     if (u.pathname === "/subscribe" || u.pathname === "/unsubscribe") { api.posts.push({ path: u.pathname, body: JSON.parse(r.request().postData() || "{}") }); return r.fulfill({ contentType: "application/json", body: "{\"ok\":true}", headers: h }); }
     return r.fulfill({ status: 404, body: "{}", headers: h });
@@ -221,6 +224,16 @@ try {
   await page.waitForFunction(() => /p kvar till/.test(document.querySelector("#rk-thea")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
   { const t = await page.$eval("#rk-thea", e => e.innerText);
     ok("Klass och poäng: class, distance to the limits, what falls out", /B-SPELARE|B-spelare/i.test(t) && /p kvar till A-klass/.test(t) && /över gränsen till C/.test(t) && /Novembercupen/.test(t), t); }
+  { // Regler: in the top bar, a list of documents, search over all of them with the hits marked
+    await page.click(".rulesbtn");
+    await page.waitForSelector("#rules:not([hidden]) .rsec", { timeout: 8000 }).catch(() => {});
+    const docs = await page.$$eval("#rDocs button", b => b.map(x => x.textContent));
+    await page.fill("#rQ", "reservlist");
+    await page.waitForFunction(() => /1 träffar/.test(document.querySelector("#rBody")?.textContent || ""), null, { timeout: 4000 }).catch(() => {});
+    const hit = await page.evaluate(() => ({ t: document.querySelector("#rBody").textContent, mark: document.querySelectorAll("#rBody mark").length, open: !!document.querySelector("#rBody details[open]") }));
+    ok("Regler: documents, search finds Reservlista in the competition rules, hits marked and opened", docs.join() === "I korthet,Tävlingsbestämmelser" && /Reservlista/.test(hit.t) && hit.mark >= 2 && hit.open, { docs, hit });
+    await page.goBack();
+  }
   ok("Thea: hero photo (cut-out)", await page.$eval("#p-thea .hero .pmed img", i => i.getAttribute("src")) === "img/cut/thea-holmberg-loving.webp");
   ok("Thea: chips show followed first and Thea current", (await page.$$eval("#chips .pchip", a => a.map(x => x.getAttribute("href") + (x.getAttribute("aria-current") ? "*" : "")))).slice(0, 2).join() === "#thea*,#kian");
   ok("Thea: trend numbers", /#\d+/.test(await page.textContent("#tv-thea-rank")));

@@ -176,6 +176,15 @@ async function handle(req, env) {
       board: (rec && rec.board) || {} }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
   if (route === "GET /live") return liveRoute(req, env, url, h);
+  // Svenska Padelförbundets regler (rules.json, built every Sunday by .github/workflows/rules.yml): passed through,
+  // cached at the edge for an hour.
+  if (route === "GET /rules") {
+    try {
+      const r = await fetch(RULES_URL, { headers: { "User-Agent": "padel.holmberg.st" }, cf: { cacheTtl: 3600, cacheEverything: true }, signal: AbortSignal.timeout(12000) });
+      if (!r.ok) return json({ error: "rules " + r.status }, 502, h);
+      return new Response(await r.text(), { headers: { ...h, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
+    } catch (e) { return json({ error: "rules unavailable" }, 502, h); }
+  }
   // A calendar feed for the phone: /ics?p=<pid>,<pid> (roster players only), refreshed by the phone every couple of hours.
   if (route === "GET /ics") {
     const pids = String(url.searchParams.get("p") || "").split(",").map(Number).filter(x => BY_PID.has(x)).slice(0, 40);
@@ -243,6 +252,7 @@ export function localize(m, lang) {
   if (lang === "es" && es) { if (es.title) out.title = es.title; if (es.body != null) out.body = es.body; }
   return out;
 }
+const RULES_URL = "https://raw.githubusercontent.com/hynjjr44sz-pixel/padel/tvdata/rules.json";
 const now = env => env.NOW ? new Date(env.NOW) : new Date();   // NOW: local tests only
 const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8;
 
