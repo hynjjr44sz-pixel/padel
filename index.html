@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-OT5RT1jHVmC6jqbEOT3Qf3+LzZOaOfRPKs8f9tkXCj4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-tywUCoX16jLxo4YvsOkqCcFttzYYeoYAmvSnVcGzkwQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -7194,9 +7194,10 @@
       if (key && !t.done) h += '<div class="amxbar">' + (allIn ? '<button type="button" class="amxgo" data-op="round">' + _("Lotta runda ") + (R + 1) + '</button>' : "") +
         (R > 1 && !cur.some(function(x){ return x.s; }) ? '<button type="button" class="amxsec" data-op="drop">' + _("Ångra lottningen") + '</button>' : "") +
         '<button type="button" class="amxsec" data-op="end">' + _("Avsluta") + '</button><button type="button" class="amxsec del" data-op="delete">' + _("Ta bort") + '</button></div>';
-      else if (key && t.done) h += '<div class="amxbar"><button type="button" class="amxsec" data-op="reopen">' + _("Öppna igen") + '</button><button type="button" class="amxsec del" data-op="delete">' + _("Ta bort") + '</button></div>';
       if (R > 1) h += '<div class="sh"><h2>' + _("Tidigare rundor") + '</h2><div class="meta"></div></div>' + t.rounds.slice(0, -1).map(function(r, i){ return '<details class="rsec"><summary><span>' + _("Runda ") + (i + 1) + '</span><i aria-hidden="true"></i></summary><div class="rbody">' + r.map(function(x, m){ return match(x, i, m, false); }).join("") + '</div></details>'; }).reverse().join("");
     }
+    // Finished: reopen/delete on both tabs
+    if (key && t.done) h += '<div class="amxbar"><button type="button" class="amxsec" data-op="reopen">' + _("Öppna igen") + '</button><button type="button" class="amxsec del" data-op="delete">' + _("Ta bort") + '</button></div>';
     var base = location.href.split("#")[0] + "#amx/" + t.id;
     h += '<div class="amxshare"><button type="button" data-link="' + esc(base) + '">' + _("Dela länk till tabellen") + '</button>' + (key ? '<button type="button" data-link="' + esc(base + "/" + key) + '" data-org="1">' + _("Dela arrangörslänk") + '</button>' : "") + '</div>' +
       (key ? '<p class="amxnote">' + _("Arrangörslänken låter någon annan föra in resultat. Dela den bara med medarrangörer.") + '</p>' : '<p class="amxnote">' + _("Tabellen uppdateras av sig själv. Den som följer en klubbspelare får notis efter varje match.") + '</p>');
