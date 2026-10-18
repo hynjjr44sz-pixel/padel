@@ -177,12 +177,13 @@ async function handle(req, env) {
   }
   if (route === "GET /live") return liveRoute(req, env, url, h);
   // Svenska Padelförbundets regler (rules.json, built every Sunday by .github/workflows/rules.yml): passed through,
-  // cached at the edge for an hour.
+  // cached at the edge for 10 minutes.
   if (route === "GET /rules") {
     try {
-      const r = await fetch(RULES_URL, { headers: { "User-Agent": "padel.holmberg.st" }, cf: { cacheTtl: 3600, cacheEverything: true }, signal: AbortSignal.timeout(12000) });
+      // the edge keeps it 10 min (a new Sunday build shows soon), keyed by the 10-minute slot so a stale copy never outlives that
+      const r = await fetch(RULES_URL + "?h=" + Math.floor(Date.now() / 600e3), { headers: { "User-Agent": "padel.holmberg.st" }, cf: { cacheTtl: 600, cacheEverything: true }, signal: AbortSignal.timeout(12000) });
       if (!r.ok) return json({ error: "rules " + r.status }, 502, h);
-      return new Response(await r.text(), { headers: { ...h, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
+      return new Response(await r.text(), { headers: { ...h, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=300" } });
     } catch (e) { return json({ error: "rules unavailable" }, 502, h); }
   }
   // A calendar feed for the phone: /ics?p=<pid>,<pid> (roster players only), refreshed by the phone every couple of hours.

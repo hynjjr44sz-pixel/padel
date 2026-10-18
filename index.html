@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-RugBLZX2ywikFay9WDRR8NDW68YY25hb4RFL7NBn3uY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kJuDxzJ+IY/hmNCfix/mMFNer5Nt17Yxbu+0KD8lT7Y='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -6700,12 +6700,12 @@
   /* ================= #regler: Svenska Padelförbundets regler (worker GET /rules, checked every Sunday) ================= */
   // Seven documents (the short guide, FIP's rulebook in force, the older Swedish translation, the federation's
   // clarifications, the competition rules, the youth rules, warnings), each in sections. Search runs over all of them
-  // (diacritics ignored: "sakerhet" finds "Säkerhet"). Kept on the device; looked at again after 12 h.
-  var RULES_KEY = "padel.rules.v1", RULES = store.json(RULES_KEY), RULES_BUSY = false, RULES_Q = "", RULES_DOC = null;
+  // (diacritics ignored: "sakerhet" finds "Säkerhet"). Kept on the device; looked at again after 6 h.
+  var RULES_KEY = "padel.rules.v2", RULES = store.json(RULES_KEY), RULES_BUSY = false, RULES_Q = "", RULES_DOC = null;
   function rulesLoad(){
-    if (RULES_BUSY || !PUSH_API || (RULES && RULES.t && Date.now() - RULES.t < 12 * HOUR)) return;
+    if (RULES_BUSY || !PUSH_API || (RULES && RULES.t && Date.now() - RULES.t < 6 * HOUR)) return;
     RULES_BUSY = true;
-    withTimeout(fetch(PUSH_API + "/rules", {credentials:"omit"}).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), 15000).then(function(d){
+    withTimeout(fetch(PUSH_API + "/rules", {credentials:"omit", cache:"no-cache"}).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), 15000).then(function(d){
       RULES_BUSY = false;
       if (!d || !Array.isArray(d.docs)) return;
       RULES = {t:Date.now(), d:d};
