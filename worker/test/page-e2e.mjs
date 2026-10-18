@@ -144,8 +144,9 @@ async function newPage(opts = {}) {
     }
     if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
     if (u.pathname === "/rules") return r.fulfill({ contentType: "application/json", body: JSON.stringify({ v: 1, checked: "2026-09-27T04:40:00Z", docs: [
-      { id: "guide", title: "I korthet", sub: "Kort", src: "https://svenskpadel.se/om-padel/regler/", changed: "2026-09-27T04:40:00Z", sections: [{ id: "guide-1", t: "Serve", p: ["Serven ska studsa bakom servelinjen.", "• Diagonalt mot motståndarens ruta."] }] },
-      { id: "tavling", title: "Tävlingsbestämmelser", sub: "Handbok", src: "https://svenskpadel.se/x.pdf", sections: [{ id: "tavling-4-3", n: "4.3", t: "Reservlista", p: ["Vid fler anmälda än vad klassen tillåter skapas reservlista."] }] }] }), headers: h });
+      { id: "guide", title: "I korthet", sub: "Kort", src: "https://svenskpadel.se/om-padel/regler/", changed: "2026-09-27T04:40:00Z", sections: [{ id: "guide-1", t: "Serve", notes: ["serve"], p: ["Serven ska studsa bakom servelinjen.", "• Diagonalt mot motståndarens ruta."] }] },
+      { id: "tavling", title: "Tävlingsbestämmelser", sub: "Handbok", src: "https://svenskpadel.se/x.pdf", sections: [{ id: "tavling-4-3", n: "4.3", t: "Reservlista", p: ["Vid fler anmälda än vad klassen tillåter skapas reservlista."] }] }],
+      notes: [{ id: "serve", text: "Servaren behöver bara ha en fot bakom servelinjen.", ref: "fip-6", rt: "Rule 6. The serve" }] }), headers: h });
     if (u.pathname === "/vapid") return r.fulfill({ contentType: "application/json", body: JSON.stringify({ key: "BOr5MaD1vP9w2uH0Pqzv8pH5v2cXf8j8e7Rrx6Qv0yq2mS9d2w8g5k2WnYQx1S0x0gJ5v8wV0z9Q2v5cXf8j8e7R", classes: [164681] }), headers: h });
     if (u.pathname === "/subscribe" || u.pathname === "/unsubscribe") { api.posts.push({ path: u.pathname, body: JSON.parse(r.request().postData() || "{}") }); return r.fulfill({ contentType: "application/json", body: "{\"ok\":true}", headers: h }); }
     return r.fulfill({ status: 404, body: "{}", headers: h });
@@ -228,6 +229,8 @@ try {
     await page.click(".rulesbtn");
     await page.waitForSelector("#rules:not([hidden]) .rsec", { timeout: 8000 }).catch(() => {});
     const docs = await page.$$eval("#rDocs button", b => b.map(x => x.textContent));
+    const note = await page.evaluate(() => { const n = document.querySelector("#rules .rsec .rnote"); return n ? n.textContent + "|" + n.querySelector("a").getAttribute("href") : null; });
+    ok("Regler: where FIP says otherwise, an info box with a link to the rule (and the section flagged)", /en fot bakom/.test(note || "") && /#regler\/fip\/fip-6$/.test(note || "") && !!(await page.$("#rules .rsec .rflag")), note);
     await page.fill("#rQ", "reservlist");
     await page.waitForFunction(() => /1 träffar/.test(document.querySelector("#rBody")?.textContent || ""), null, { timeout: 4000 }).catch(() => {});
     const hit = await page.evaluate(() => ({ t: document.querySelector("#rBody").textContent, mark: document.querySelectorAll("#rBody mark").length, open: !!document.querySelector("#rBody details[open]") }));

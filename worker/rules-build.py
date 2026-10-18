@@ -161,6 +161,32 @@ def capitals(lines, sid):
     return [s for s in secs if s["p"]]
 
 
+def attach_notes(docs):
+    """Info boxes where FIP's rules (in force) differ from the Swedish texts (rules-notes.json). A note is kept only while
+    FIP's section still has its check phrase; a section gets "notes": [note ids]."""
+    import os
+    spec = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "rules-notes.json")))["notes"]
+    fip = next((d for d in docs if d["id"] == "fip"), None)
+    out = []
+    for n in spec:
+        ref = next((x for x in (fip or {}).get("sections", []) if re.search(n["fip"], x["t"])), None)
+        ok = bool(ref) and n["check"].lower() in re.sub(r"\s+", " ", " ".join(ref["p"])).lower()
+        if not ok:
+            print("note not confirmed by FIP's text, left out:", n["id"], file=sys.stderr)
+            continue
+        hit = 0
+        for doc, title, text in n["on"]:
+            for d in docs:
+                if d["id"] != doc:
+                    continue
+                for x in d["sections"]:
+                    if (title and re.search(title, x["t"])) or (text and any(re.search(text, p) for p in x["p"])):
+                        x.setdefault("notes", []).append(n["id"]); hit += 1
+                        break
+        out.append({"id": n["id"], "text": n["text"], "ref": ref["id"], "rt": ref["t"], "on": hit})
+    return out
+
+
 def pdf_links(slug):
     c = wp_page(slug)["content"]["rendered"]
     return [html.unescape(u) for u in re.findall(r'href="([^"]+\.pdf)"', c)]
@@ -206,6 +232,7 @@ def build(prev):
         d["sections"] = [x for x in d["sections"] if sum(len(p.split()) for p in x["p"]) >= 6]
         for x in d["sections"]:
             x["t"] = re.sub(r"[.:]+$", "", x["t"]).strip()
+    notes = attach_notes(docs)
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     old = {d["id"]: d for d in (prev or {}).get("docs", [])}
     for d in docs:
@@ -214,7 +241,7 @@ def build(prev):
         d["hash"] = hashlib.sha256(json.dumps(d["sections"], ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:16]
         o = old.get(d["id"])
         d["changed"] = o["changed"] if o and o.get("hash") == d["hash"] and o.get("changed") else now
-    return {"v": 1, "checked": now, "docs": docs}
+    return {"v": 1, "checked": now, "docs": docs, "notes": notes}
 
 
 if __name__ == "__main__":

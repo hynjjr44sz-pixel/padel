@@ -1,0 +1,23 @@
+{
+  "about": "Where FIP's Rules of Padel (in force) differ from the federation's Swedish texts. Checked every Sunday by rules-build.py: a note is shown only while FIP's text still has its 'check' phrase. 'on' = [document id, title regex or null, text regex or null].",
+  "notes": [
+    { "id": "serve", "fip": "^Rule 6\\.", "check": "one foot behind the service line",
+      "text": "Servaren behöver bara ha en fot bakom servelinjen, inte båda. Bollen får inte passera servelinjen eller mittlinjens förlängning innan den slås.",
+      "on": [["fort", "^Regel 6", null], ["spel", "^Regel 6", null], ["guide", "^Serve$", null]] },
+    { "id": "tider", "fip": "^Rule 2\\.", "check": "3 minutes courtesy rally",
+      "text": "Inbollningen är 3 minuter (här står 5). Efter ett avbrott på 5–20 minuter blir det 1 minuts uppvärmning, efter längre avbrott 3 minuter. I svenska sanktionerade tävlingar får arrangören ha 5 minuters inbollning (Tävlingsbestämmelser 4.13.3).",
+      "on": [["spel", "^Regel 2", null]] },
+    { "id": "utspring", "fip": "^Safety area", "check": "no less than 3 meters wide",
+      "text": "Säkerhetsområdet för spel utanför banan ska vara minst 3 meter brett (4 meter rekommenderas) och 4 meter långt på varje sida, inte 2 meter. I Sverige får arrangören tillåta utspring på en yta av 2 × 8 meter (Tävlingsbestämmelser 4.13.3).",
+      "on": [["fort", "^Säkerhetsområde", null], ["spel", "^Säkerhetsområde", null]] },
+    { "id": "poang", "fip": "^Score$|^Rule 1\\.", "check": "Star Point",
+      "text": "Ett game kan räknas på tre sätt: med fördel som i tennis, med golden point (en avgörande boll vid 40–40) eller med Star Point (fördel två gånger, sedan en avgörande boll vid tredje 40–40). Vid den avgörande bollen väljer mottagarna vilken sida de tar emot på. Arrangören bestämmer vilket som gäller.",
+      "on": [["guide", "^Poängräkning", null], ["spel", "^Regel 1\\.", null]] },
+    { "id": "interferens", "fip": "^Rule 11\\.", "check": "second unintentional interference",
+      "text": "Stör samma par ofrivilligt en andra gång förlorar de poängen. Bara första gången spelas bollen om.",
+      "on": [["spel", null, "ofrivillig störning"]] },
+    { "id": "racket", "fip": "^Rule 13\\.", "check": "safety cord or drops their racket",
+      "text": "Tappar en spelare racketen, eller går säkerhetsremmen sönder, förlorar paret poängen direkt.",
+      "on": [["spel", "^Regel 13", null], ["guide", "^Hur vinner man poäng", null]] }
+  ]
+}
