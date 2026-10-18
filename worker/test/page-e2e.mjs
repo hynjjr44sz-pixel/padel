@@ -352,6 +352,18 @@ try {
     const pend = JSON.parse(AMX_KV.get("amx:pend") || "[]");
     ok("Americano: set up, the other score filled in (16 - 10), round 2 drawn, table sorted, notiser for Thea's followers", other === "6" && tbl.length === 4 && /10$/.test(tbl[0]) && /6$/.test(tbl[3]) &&
       pend.length === 2 && pend.every(x => x.pids.includes(1675246)), { other, tbl, pend: pend.map(x => x.m.title) });
+    { // Storbild: the americano just made on a big screen: the table, the courts, no header or dock, a way back
+      const id = Object.keys(Object.fromEntries(AMX_KV)).map(k => /^amx:([a-z2-9]{8})$/.exec(k)).filter(Boolean).map(m => m[1])[0];
+      if (id){
+        await page.goto(url("#amx/" + id + "/tv"));
+        await page.waitForSelector("#amxtv .sbrow:not(.sbhd)", { timeout: 8000 }).catch(() => {});
+        const sb = await page.evaluate(() => [document.body.classList.contains("tvmode"), document.querySelectorAll("#amxtv .sbrow:not(.sbhd)").length, document.querySelectorAll("#amxtv .sbcourt").length, getComputedStyle(document.getElementById("dock")).display, getComputedStyle(document.querySelector(".top")).display]);
+        await page.click('#amxtv .sbtools a');
+        await page.waitForSelector("#amx:not([hidden])", { timeout: 8000 }).catch(() => {});
+        const back = await page.evaluate(() => [document.body.classList.contains("tvmode"), getComputedStyle(document.getElementById("dock")).display]);
+        ok("Storbild: table and courts full screen without the header and dock; × back to the americano", sb[0] && sb[1] >= 4 && sb[2] >= 1 && sb[3] === "none" && sb[4] === "none" && !back[0] && back[1] !== "none", { sb, back });
+      } else ok("Storbild: an americano to show", false, [...AMX_KV.keys()]);
+    }
     // ended: on Thea's page (Klubbserier), "Mina" on the home view; deleted: gone from both
     const amxId = await page.evaluate(() => location.hash.split("/")[1]);
     page.once("dialog", d => d.accept());
