@@ -214,7 +214,7 @@ async function handle(req, env) {
   }
   if (route === "POST /amx" || (am && req.method === "POST")) {
     let b;
-    try { b = await readBody(req, 16384); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    try { b = await readBody(req, 800000); } catch (e) { return json({ error: "bad json" }, 400, h); }   // guests' photos (about 10 kB each)
     const r = am ? await amxUpdate(env, am[1], b, +now(env)) : await amxCreate(env, b, BY_PID, +now(env));
     return r.err ? json({ error: r.err }, r.status || 400, h) : json(r, 200, h);
   }

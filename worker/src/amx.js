@@ -5,7 +5,25 @@
 // Notiser: to the followers of a club player when the americano starts and after each of their matches, queued in
 // KV "amx:pend" and sent by the next tick.
 const TTL = 4 * 86400, MAX_P = 32, MAX_R = 40, MAX_C = 8;
-const FMT = new Set(["americano", "mexicano"]), PTS = new Set([16, 21, 24, 32]);
+// fmt: americano (new partner each round), mexicano (pairs by the table), lag (fixed pairs). mode: "pts" (the match is
+// pts points, the two scores add up to it), "games" (first to pts games, one more on a tie-break), "free" (any score:
+// timed matches).
+const FMT = new Set(["americano", "mexicano", "lag"]), PTS = new Set([16, 21, 24, 32]), GAMES = new Set([3, 4, 5, 6, 7, 8, 9]);
+const IMG = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+// a player's picture: a small uploaded photo (data: URL, made on the phone) or a drawn figure (a seed)
+function look(p) {
+  const o = {};
+  if (typeof p.img === "string" && p.img.length <= 24000 && IMG.test(p.img)) o.img = p.img;
+  if (Number.isInteger(p.fig) && p.fig >= 0 && p.fig < 1e6) o.fig = p.fig;
+  return o;
+}
+export function validScore(t, s) {
+  if (!Array.isArray(s) || s.length !== 2 || !s.every(v => Number.isInteger(v) && v >= 0 && v <= 99)) return false;
+  const mode = t.mode || "pts", n = t.pts;
+  if (mode === "pts") return s[0] + s[1] === n;
+  if (mode === "games") { const hi = Math.max(s[0], s[1]), lo = Math.min(s[0], s[1]); return s[0] !== s[1] && (hi === n || (hi === n + 1 && lo >= n - 1)) && lo < hi; }
+  return true;
+}
 const rid = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); return [...a].map(x => "abcdefghijkmnpqrstuvwxyz23456789"[x % 32]).join(""); };
 async function hash(s) { const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(s))); return [...new Uint8Array(d)].map(x => x.toString(16).padStart(2, "0")).join(""); }
 const clean = s => String(s == null ? "" : s).replace(/[\u0000-\u001f<>]/g, "").replace(/\s+/g, " ").trim();
@@ -20,12 +38,13 @@ export function standings(t) {
       const o = st[i]; o.p += f; o.m++; o.pm += f - a; if (f > a) o.w++; else if (f < a) o.l++; else o.d++;
     }));
   }));
-  return st.sort((a, b) => b.p - a.p || b.pm - a.pm || b.w - a.w || a.n.localeCompare(b.n, "sv"));
+  // points first when the match is played to a sum of points; otherwise won matches first
+  return st.sort((a, b) => (t.mode && t.mode !== "pts" ? b.w - a.w || b.pm - a.pm || b.p - a.p : b.p - a.p || b.pm - a.pm || b.w - a.w) || a.n.localeCompare(b.n, "sv"));
 }
 function validRound(t, r) {
   if (!Array.isArray(r) || !r.length || r.length > Math.min(MAX_C, t.courts)) return false;
-  const used = new Set();
-  return r.every(x => x && Array.isArray(x.a) && Array.isArray(x.b) && x.a.length === 2 && x.b.length === 2 &&
+  const used = new Set(), team = side => !t.teams || t.teams.some(p => (p[0] === side[0] && p[1] === side[1]) || (p[0] === side[1] && p[1] === side[0]));
+  return r.every(x => x && Array.isArray(x.a) && Array.isArray(x.b) && x.a.length === 2 && x.b.length === 2 && team(x.a) && team(x.b) &&
     x.a.concat(x.b).every(i => Number.isInteger(i) && i >= 0 && i < t.players.length && !used.has(i) && used.add(i)));
 }
 const firsts = (t, side) => side.map(i => t.players[i].n.split(" ")[0]).join(" & ");
@@ -47,8 +66,9 @@ export function scoreNotes(t, r, m) {
 export function startNote(t) {
   const pids = t.players.map(p => p.pid).filter(Boolean);
   if (!pids.length) return [];
-  const kind = t.fmt === "mexicano" ? "Mexicano" : "Americano";
-  return [{ pids, m: { title: kind + ": " + t.name, body: t.players.length + " spelare, " + t.pts + " poäng per match. Följ tabellen i appen.", tag: "padel-amx-" + t.id, url: "./#amx/" + t.id,
+  const kind = t.fmt === "mexicano" ? "Mexicano" : t.fmt === "lag" ? "Lagamericano" : "Americano";
+  const how = t.mode === "games" ? "först till " + t.pts + " game" : t.mode === "free" ? "på tid" : t.pts + " poäng per match";
+  return [{ pids, m: { title: kind + ": " + t.name, body: t.players.length + " spelare, " + how + ". Följ tabellen i appen.", tag: "padel-amx-" + t.id, url: "./#amx/" + t.id,
     es: { title: kind + ": " + t.name, body: t.players.length + " jugadores, " + t.pts + " puntos por partido. Sigue la tabla en la app." } } }];
 }
 async function queue(env, notes) {
@@ -82,15 +102,21 @@ export async function amxGet(env, id) {
 }
 // POST /amx {name, fmt, pts, courts, players:[{n, pid}], round} -> {id, key}
 export async function amxCreate(env, b, byPid, now) {
-  const fmt = FMT.has(b && b.fmt) ? b.fmt : null, pts = Number(b && b.pts), courts = Math.max(1, Math.min(MAX_C, Number(b && b.courts) || 1));
+  const fmt = FMT.has(b && b.fmt) ? b.fmt : null, mode = ["pts", "games", "free"].includes(b && b.mode) ? b.mode : "pts", pts = Number(b && b.pts), courts = Math.max(1, Math.min(MAX_C, Number(b && b.courts) || 1));
   const players = (Array.isArray(b && b.players) ? b.players : []).map(p => {
     const pid = Number(p && p.pid), P = pid && byPid.get(pid);
-    return P ? { n: P.me, pid } : { n: clean(p && p.n).slice(0, 40) };
+    return P ? { n: P.me, pid } : { n: clean(p && p.n).slice(0, 40), ...look(p || {}) };
   }).filter(p => p.n);
-  if (!fmt || !PTS.has(pts) || players.length < 4 || players.length > MAX_P) return { err: "bad americano" };
+  if (!fmt || (mode === "pts" && !PTS.has(pts)) || (mode === "games" && !GAMES.has(pts)) || players.length < 4 || players.length > MAX_P) return { err: "bad americano" };
   if (new Set(players.map(p => p.pid || p.n.toLowerCase())).size !== players.length) return { err: "same player twice" };
-  const key = rid(16), t = { v: 1, id: rid(8), name: clean(b.name).slice(0, 60) || (fmt === "mexicano" ? "Mexicano" : "Americano"), fmt, pts, courts: Math.min(courts, Math.floor(players.length / 4)),
-    players, rounds: [], created: now, upd: now, kh: await hash(key) };
+  let teams = null;
+  if (fmt === "lag") {   // fixed pairs: every player in exactly one
+    teams = Array.isArray(b.teams) ? b.teams : [];
+    const seen = new Set();
+    if (players.length % 2 || teams.length !== players.length / 2 || !teams.every(p => Array.isArray(p) && p.length === 2 && p.every(i => Number.isInteger(i) && i >= 0 && i < players.length && !seen.has(i) && seen.add(i)))) return { err: "bad teams" };
+  }
+  const key = rid(16), t = { v: 1, id: rid(8), name: clean(b.name).slice(0, 60) || (fmt === "mexicano" ? "Mexicano" : fmt === "lag" ? "Lagamericano" : "Americano"), fmt, mode, pts: mode === "free" ? null : pts,
+    courts: Math.min(courts, Math.floor(players.length / 4)), players, ...(teams ? { teams } : {}), rounds: [], created: now, upd: now, kh: await hash(key) };
   if (!validRound(t, b.round)) return { err: "bad round" };
   t.rounds.push(b.round.map(x => ({ c: x.c || null, a: x.a, b: x.b, s: null })));
   await env.PUSH.put("amx:" + t.id, JSON.stringify(t), { expirationTtl: TTL });
@@ -109,7 +135,7 @@ export async function amxUpdate(env, id, b, now) {
     if (!x) return { err: "no such match" };
     if (s === null || b.s === null) { x.s = null; }
     else {
-      if (s.length !== 2 || !s.every(v => Number.isInteger(v) && v >= 0 && v <= t.pts) || s[0] + s[1] !== t.pts) return { err: "bad score" };
+      if (!validScore(t, s)) return { err: "bad score" };
       const first = !x.s || x.s[0] !== s[0] || x.s[1] !== s[1];
       x.s = s;
       if (first) notes = scoreNotes(t, r, m);
@@ -123,6 +149,12 @@ export async function amxUpdate(env, id, b, now) {
     if (t.rounds.length < 2 || last.some(x => x.s)) return { err: "cannot drop" };
     t.rounds.pop();
   } else if (b.op === "end" || b.op === "reopen") t.done = b.op === "end";
+  else if (b.op === "look") {   // a guest's picture: a new figure or an uploaded photo (null: back to the figure)
+    const p = t.players[Number(b.i)];
+    if (!p || p.pid) return { err: "no such guest" };
+    delete p.img; delete p.fig;
+    Object.assign(p, look(b));
+  }
   else return { err: "bad op" };
   t.upd = now;
   await env.PUSH.put("amx:" + t.id, JSON.stringify(t), { expirationTtl: TTL });
