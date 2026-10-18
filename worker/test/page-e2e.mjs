@@ -249,6 +249,23 @@ try {
     await page.goto(url("#amx/ny"));
     await page.waitForSelector("#amx .ktxt", { timeout: 8000 }).catch(() => {});
     const locked = await page.evaluate(() => [document.querySelector("#amx .ktxt")?.textContent || "", !!document.getElementById("amxGuest")]);
+    // Begär konto from Kian's page: the code on the phone, the admin types it in, "Kolla nu" logs the phone in
+    await page.goto(url("#kian"));
+    await page.waitForSelector("#p-kian .pclaim a", { timeout: 8000 }).catch(() => {});
+    await page.click("#p-kian .pclaim a");
+    await page.waitForSelector("#rPid", { timeout: 8000 }).catch(() => {});
+    const pre = await page.$eval("#rPid", e => e.value).catch(() => null);
+    await page.fill("#rMsg", "Kian i herrlaget");
+    await page.click('[data-k="request"]');
+    await page.waitForSelector("#konto .kcode", { timeout: 8000 }).catch(() => {});
+    const code = await page.$eval("#konto .kcode", e => e.textContent).catch(() => "");
+    const AK = { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", "X-Admin-Key": AMX_ENV.ADMIN_KEY };
+    const reqs = (await (await worker.fetch(new Request("https://w/admin", { headers: AK }), AMX_ENV)).json()).requests;
+    await worker.fetch(new Request("https://w/admin", { method: "POST", headers: AK, body: JSON.stringify({ op: "approve", rid: reqs[0].id, code }) }), AMX_ENV);
+    await page.click('[data-k="check"]');
+    await page.waitForFunction(() => /Välkommen, Kian/.test(document.querySelector("#konto .kmsg")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    const kq = await page.evaluate(() => [document.querySelector("#konto .kmsg")?.textContent, document.getElementById("acct").textContent]);
+    ok("Begär konto: from the player page (preselected), a code on the phone, the admin types it in, the phone logs itself in", pre === "1680004" && /^[A-Z2-9]{3} [A-Z2-9]{3}$/.test(code) && reqs.length === 1 && reqs[0].msg === "Kian i herrlaget" && /Välkommen, Kian/.test(kq[0] || "") && kq[1] === "Konto: Kian", { pre, code, reqs, kq });
     const boot = await (await worker.fetch(new Request("https://w/admin", { method: "POST", headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", "X-Admin-Key": AMX_ENV.ADMIN_KEY }, body: JSON.stringify({ op: "add", name: "Mikael Holmberg", roles: ["admin"] }) }), AMX_ENV)).json();
     await page.goto(url("#in/" + boot.code));
     await page.waitForSelector('#konto [data-k="redeem"]', { timeout: 8000 }).catch(() => {});

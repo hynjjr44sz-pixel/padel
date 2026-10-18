@@ -6,7 +6,7 @@ import { buildIcs } from "./ics.js";
 import { weekDigest, weekNote } from "./week.js";
 import { remindNotes } from "./remind.js";
 import { soonNotes } from "./soon.js";
-import { authUser, can, redeem, logout, adminUsers, adminOp } from "./auth.js";
+import { authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
 import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, amxAll, publicOf } from "./amx.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
@@ -148,7 +148,7 @@ async function handle(req, env) {
   // the per-IP rate limits and the cap on subscriptions are what keep KV (1000 writes, 100k reads a day) safe.
   if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
   // americano results come several a minute from one phone: the API limit, not the subscribe one
-  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
+  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" && url.pathname !== "/auth/request/poll" ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
   const route = req.method + " " + url.pathname;
   if (route === "GET /health") {
     const rec = await loadRecord(env);
@@ -237,6 +237,13 @@ async function handle(req, env) {
     return me ? json({ me }, 200, { ...h, "Cache-Control": "no-store" }) : json({ error: "login" }, 401, h);
   }
   if (route === "POST /auth/logout") return json(await logout(env, req), 200, h);
+  // "Begär konto": the request (shows a code), the waiting phone's poll (collects the login once approved), cancel
+  if (route === "POST /auth/request" || route === "POST /auth/request/poll" || route === "POST /auth/request/cancel") {
+    let b;
+    try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    const t = +now(env), r = route === "POST /auth/request" ? await requestAccess(env, b, t, BY_PID) : route === "POST /auth/request/poll" ? await requestPoll(env, b, t) : await requestCancel(env, b);
+    return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
+  }
   if (route === "GET /admin" || route === "POST /admin") {
     if (!env.DB) return json({ error: "no database" }, 503, h);
     // the admin role, or the ADMIN_KEY secret (from the command line: the first admin's invite)
@@ -246,7 +253,7 @@ async function handle(req, env) {
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
     const r = await adminOp(env, me, b, +now(env), BY_PID);
-    return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
+    return r.err ? json({ error: r.err, ...(r.left != null ? { left: r.left } : {}) }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
   if (route === "POST /subscribe") {
     let b;

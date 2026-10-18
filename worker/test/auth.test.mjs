@@ -88,3 +88,59 @@ test("konto: an invite runs out after 7 days, a new one replaces the old, at mos
   assert.deepEqual(ok, [401, 200, 200, 200, 200, 200]);   // the oldest phone dropped
   assert.equal((await call(env, "POST", "/auth/redeem", { code: "nope" })).status, 400);
 });
+
+test("begär konto: the phone shows a code, the admin types it in, the same phone is logged in; parents; wrong codes", async () => {
+  _resetMemory();
+  const env = mkEnv(), ak = { "X-Admin-Key": env.ADMIN_KEY };
+  let r = await call(env, "POST", "/auth/request", { pid: 1675246, name: "fake", msg: "Thea i Damlaget", label: "iPhone" });
+  assert.equal(r.status, 200);
+  const thea = await r.json();
+  assert.match(thea.code, /^[A-HJKMNP-Z2-9]{3} [A-HJKMNP-Z2-9]{3}$/);
+  assert.deepEqual(await (await call(env, "POST", "/auth/request/poll", { wait: thea.wait })).json(), { status: "open" });
+  let adm = await (await call(env, "GET", "/admin", null, ak)).json();
+  assert.deepEqual(adm.requests.map(x => [x.name, x.pid, x.parent, x.msg]), [["Thea Holmberg Löving", 1675246, false, "Thea i Damlaget"]]);
+  assert.ok(!JSON.stringify(adm).includes(thea.code.replace(" ", "")));   // the admin never sees the code
+  const rid = adm.requests[0].id;
+  r = await call(env, "POST", "/admin", { op: "approve", rid, code: "AAA AAA" }, ak);
+  assert.equal(r.status, 400);
+  assert.deepEqual(await r.json(), { error: "code", left: 4 });
+  // typed in lower case and without the space: fine
+  r = await call(env, "POST", "/admin", { op: "approve", rid, code: thea.code.toLowerCase().replace(" ", ""), roles: ["arr"] }, ak);
+  assert.equal(r.status, 200);
+  r = await (await call(env, "POST", "/auth/request/poll", { wait: thea.wait })).json();
+  assert.equal(r.status, "done");
+  assert.deepEqual([r.me.name, r.me.pid, r.me.roles], ["Thea Holmberg Löving", 1675246, ["arr"]]);
+  assert.equal((await call(env, "GET", "/auth/me", null, bearer(r.token))).status, 200);
+  assert.deepEqual(await (await call(env, "POST", "/auth/request/poll", { wait: thea.wait })).json(), { status: "gone" });   // once
+  // a second phone for Thea: joins the same account
+  const th2 = await (await call(env, "POST", "/auth/request", { pid: 1675246 })).json();
+  adm = await (await call(env, "GET", "/admin", null, ak)).json();
+  await call(env, "POST", "/admin", { op: "approve", rid: adm.requests[0].id, code: th2.code }, ak);
+  r = await (await call(env, "POST", "/auth/request/poll", { wait: th2.wait })).json();
+  assert.equal(r.me.id, (await (await call(env, "GET", "/admin", null, ak)).json()).users.find(u => u.pid === 1675246).id);
+  assert.equal(env.DB.db.prepare("SELECT count(*) n FROM users").get().n, 1);
+  // a parent for Kian: a new account of their own, looking after Kian
+  assert.equal((await call(env, "POST", "/auth/request", { pid: 1680004, parent: true })).status, 400);   // needs a name
+  const par = await (await call(env, "POST", "/auth/request", { pid: 1680004, parent: true, name: "Anna Borgström" })).json();
+  adm = await (await call(env, "GET", "/admin", null, ak)).json();
+  await call(env, "POST", "/admin", { op: "approve", rid: adm.requests[0].id, code: par.code }, ak);
+  r = await (await call(env, "POST", "/auth/request/poll", { wait: par.wait })).json();
+  assert.deepEqual([r.me.name, r.me.pid, r.me.kids], ["Anna Borgström", null, [1680004]]);
+  // five wrong codes close it; a rejected one says no
+  const x = await (await call(env, "POST", "/auth/request", { name: "Okänd" })).json();
+  let xid = (await (await call(env, "GET", "/admin", null, ak)).json()).requests[0].id, last;
+  for (let i = 0; i < 5; i++) last = await (await call(env, "POST", "/admin", { op: "approve", rid: xid, code: "ZZZZZZ" }, ak)).json();
+  assert.deepEqual(last, { error: "locked", left: 0 });
+  assert.deepEqual(await (await call(env, "POST", "/auth/request/poll", { wait: x.wait })).json(), { status: "no" });
+  const y = await (await call(env, "POST", "/auth/request", { name: "Spam" })).json();
+  await call(env, "POST", "/admin", { op: "reject", rid: (await (await call(env, "GET", "/admin", null, ak)).json()).requests[0].id }, ak);
+  assert.deepEqual(await (await call(env, "POST", "/auth/request/poll", { wait: y.wait })).json(), { status: "no" });
+  // cancelled by the phone; old ones run out after 14 days
+  const z = await (await call(env, "POST", "/auth/request", { name: "Ångrar" })).json();
+  await call(env, "POST", "/auth/request/cancel", { wait: z.wait });
+  assert.deepEqual(await (await call(env, "POST", "/auth/request/poll", { wait: z.wait })).json(), { status: "gone" });
+  const o = await (await call(env, "POST", "/auth/request", { name: "Gammal" })).json();
+  env.NOW = "2026-11-02T10:00:01Z";
+  assert.deepEqual(await (await call(env, "POST", "/auth/request/poll", { wait: o.wait })).json(), { status: "gone" });
+  assert.equal((await (await call(env, "GET", "/admin", null, ak)).json()).requests.length, 0);
+});

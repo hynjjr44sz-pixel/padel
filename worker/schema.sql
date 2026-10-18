@@ -42,3 +42,26 @@ CREATE TABLE IF NOT EXISTS log (
   act TEXT NOT NULL,
   detail TEXT
 );
+-- access requests from the app: the requesting phone shows a code; the admin types it in to approve (only hashes stored)
+CREATE TABLE IF NOT EXISTS requests (
+  id TEXT PRIMARY KEY,
+  org TEXT NOT NULL,
+  pid INTEGER,                                  -- the club player it is about (own profile, or the child's for a parent)
+  name TEXT NOT NULL,
+  parent INTEGER NOT NULL DEFAULT 0,            -- 1: a parent asking for a junior
+  msg TEXT,
+  label TEXT,
+  code TEXT NOT NULL,                           -- SHA-256 of the code the phone shows
+  wait TEXT NOT NULL,                           -- SHA-256 of the phone's secret (it collects the login with it)
+  created INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',          -- open, ok (approved, not yet collected), done, no
+  tries INTEGER NOT NULL DEFAULT 0,
+  user TEXT
+);
+CREATE INDEX IF NOT EXISTS requests_org ON requests(org, status);
+-- a parent's account and the junior(s) it looks after
+CREATE TABLE IF NOT EXISTS guardians (
+  user TEXT NOT NULL,
+  pid INTEGER NOT NULL,
+  PRIMARY KEY (user, pid)
+);
