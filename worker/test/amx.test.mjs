@@ -53,3 +53,26 @@ test("lagamericano: fixed pairs, games to 4, guests' pictures, won matches first
   assert.equal((await call(env, "POST", "/amx/" + id, { key, op: "look", i: 3, fig: 7 })).status, 200);
   assert.equal((await call(env, "POST", "/amx/" + id, { key, op: "look", i: 3, img })).status, 200);
 });
+test("arkiv: ended -> kept for good and on the club players' archive; reopened -> off it; deleted -> gone everywhere", async () => {
+  _resetMemory();
+  const env = { PUSH: kv(), NOW: "2026-10-18T10:00:00Z", ORIGIN };
+  const puts = []; const put = env.PUSH.put; env.PUSH.put = async (k, v, o) => { puts.push([k, o]); return put(k, v, o); };
+  const players = [{ pid: 1675246 }, { n: "B B" }, { n: "C C" }, { n: "D D" }];
+  let r = await call(env, "POST", "/amx", { name: "Arkiv", fmt: "americano", pts: 16, courts: 1, players, round: [{ a: [0, 1], b: [2, 3] }] });
+  const { id, key } = await r.json();
+  assert.equal(puts.find(x => x[0] === "amx:" + id)[1].expirationTtl, 30 * 86400);
+  await call(env, "POST", "/amx/" + id, { key, op: "score", r: 0, m: 0, s: [10, 6] });
+  await call(env, "POST", "/amx/" + id, { key, op: "end" });
+  assert.equal(puts.filter(x => x[0] === "amx:" + id).pop()[1], undefined);   // no expiry once ended
+  let a = await (await call(env, "GET", "/amx/pl/1675246")).json();
+  assert.deepEqual(a.list.map(x => [x.id, x.place, x.of, x.w, x.l, x.p]), [[id, 1, 4, 1, 0, 10]]);
+  await call(env, "POST", "/amx/" + id, { key, op: "reopen" });
+  assert.equal((await (await call(env, "GET", "/amx/pl/1675246")).json()).list.length, 0);
+  await call(env, "POST", "/amx/" + id, { key, op: "end" });
+  assert.equal((await call(env, "POST", "/amx/" + id, { key: "x", op: "delete" })).status, 403);
+  r = await call(env, "POST", "/amx/" + id, { key, op: "delete" });
+  assert.equal(r.status, 200);
+  assert.equal((await call(env, "GET", "/amx/" + id)).status, 404);
+  assert.equal((await (await call(env, "GET", "/amx/pl/1675246")).json()).list.length, 0);
+  assert.equal((await (await call(env, "GET", "/amx")).json()).list.length, 0);
+});

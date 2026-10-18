@@ -262,6 +262,28 @@ try {
     const pend = JSON.parse(AMX_KV.get("amx:pend") || "[]");
     ok("Americano: set up, the other score filled in (16 - 10), round 2 drawn, table sorted, notiser for Thea's followers", other === "6" && tbl.length === 4 && /10$/.test(tbl[0]) && /6$/.test(tbl[3]) &&
       pend.length === 2 && pend.every(x => x.pids.includes(1675246)), { other, tbl, pend: pend.map(x => x.m.title) });
+    // ended: on Thea's page (Klubbserier), "Mina" on the home view; deleted: gone from both
+    const amxId = await page.evaluate(() => location.hash.split("/")[1]);
+    page.once("dialog", d => d.accept());
+    await page.click('[data-tab="m"]');
+    await page.click('[data-op="end"]');
+    await page.waitForFunction(() => /klar/.test(document.querySelector("#amx .pm")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    await page.goto(url("#thea"));
+    await page.waitForSelector("#p-thea .pc", { timeout: 8000 }).catch(() => {});
+    await page.waitForFunction(() => !document.getElementById("ax-thea")?.hidden, null, { timeout: 8000 }).catch(() => {});
+    const arch = await page.evaluate(() => { const x = document.querySelector("#axList-thea .axrow"); return x ? x.getAttribute("href") + "|" + x.textContent.replace(/\s+/g, " ") : null; });
+    ok("Americano ended: on Thea's page under Klubbserier with her place and record", new RegExp("^#amx/" + amxId).test(arch || "") && /[1-4]\s*av 4/.test(arch || "") && !(await page.$eval("#p-thea .ptabs", b => b.hidden)), arch);
+    await page.goto(url(""));
+    await page.waitForSelector("#amxHome .amxrow", { timeout: 8000 }).catch(() => {});
+    const homeMine = await page.$$eval("#amxHome .amxh, #amxHome .amxrow", l => l.map(x => x.textContent.replace(/\s+/g, " ").trim()));
+    await page.goto(url("#amx/" + amxId));
+    await page.waitForSelector('[data-op="delete"]', { timeout: 8000 }).catch(() => {});
+    page.once("dialog", d => d.accept());
+    await page.click('[data-op="delete"]');
+    await page.waitForFunction(() => location.hash === "#/", null, { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(800);
+    const after = await page.$$eval("#amxHome .amxrow", l => l.length);
+    ok("Americano: under Mina on the home view; deleted by the organiser it is gone (home, archive)", homeMine[0] === "Mina" && /Klar/.test(homeMine[1] || "") && after === 0 && !AMX_KV.has("amx:" + amxId) && AMX_KV.get("amx:pl:1675246") === "[]", { homeMine, after });
     await page.goto(url("#thea"));
     await page.waitForSelector("#p-thea .pc", { timeout: 8000 }).catch(() => {});
   }

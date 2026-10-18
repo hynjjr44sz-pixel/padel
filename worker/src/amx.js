@@ -1,10 +1,11 @@
 // Americano and Mexicano in the app: the organiser's phone creates one (players from the roster and guests), enters the
-// results round by round; everyone with the link sees the table. KV "amx:<id>" (kept 4 days), "amx:index" (the ones
-// of the last 2 days, for the home view). Writes need the organiser's key (given once at creation; only its hash is
+// results round by round; everyone with the link sees the table. KV "amx:<id>" (30 days from the last change; for good
+// once it is ended), "amx:index" (the last week's, for the home view), "amx:pl:<pid>" (a club player's ended ones, with
+// place and record: the player page). Writes need the organiser's key (given once at creation; only its hash is
 // kept). New rounds are made on the organiser's phone (index.html) and stored as they are; the worker checks them.
 // Notiser: to the followers of a club player when the americano starts and after each of their matches, queued in
 // KV "amx:pend" and sent by the next tick.
-const TTL = 4 * 86400, MAX_P = 32, MAX_R = 40, MAX_C = 8;
+const TTL = 30 * 86400, MAX_P = 32, MAX_R = 40, MAX_C = 8, LIST_DAYS = 7;
 // fmt: americano (new partner each round), mexicano (pairs by the table), lag (fixed pairs). mode: "pts" (the match is
 // pts points, the two scores add up to it), "games" (first to pts games, one more on a tie-break), "free" (any score:
 // timed matches).
@@ -87,14 +88,38 @@ export async function amxPending(env) {
 async function index(env, t, now) {
   let l = [];
   try { l = JSON.parse((await env.PUSH.get("amx:index")) || "[]"); } catch (e) { l = []; }
-  l = l.filter(x => x.id !== t.id && now - x.at < 2 * 86400e3);
-  if (t) l.unshift({ id: t.id, name: t.name, fmt: t.fmt, n: t.players.length, at: t.created, pids: t.players.map(p => p.pid).filter(Boolean), done: !!t.done });
+  l = l.filter(x => x.id !== t.id && now - x.at < LIST_DAYS * 86400e3);
+  if (!t.gone) l.unshift({ id: t.id, name: t.name, fmt: t.fmt, n: t.players.length, at: t.created, pids: t.players.map(p => p.pid).filter(Boolean), done: !!t.done });
   await env.PUSH.put("amx:index", JSON.stringify(l.slice(0, 30)));
 }
 export async function amxList(env, now) {
   let l = [];
   try { l = JSON.parse((await env.PUSH.get("amx:index")) || "[]"); } catch (e) { l = []; }
-  return l.filter(x => now - x.at < 2 * 86400e3);
+  return l.filter(x => now - x.at < LIST_DAYS * 86400e3);
+}
+// The archive rows of an ended americano: per club player the place (shared on a tie; pairs in Lagamericano), of how
+// many, won–lost and points.
+export function archiveRows(t) {
+  const st = standings(t), byW = t.mode && t.mode !== "pts";
+  const better = (o, me) => byW ? o.w > me.w || (o.w === me.w && (o.pm > me.pm || (o.pm === me.pm && o.p > me.p))) : o.p > me.p || (o.p === me.p && (o.pm > me.pm || (o.pm === me.pm && o.w > me.w)));
+  const units = t.teams ? t.teams.map(p => st.find(o => o.i === p[0])) : st, of = units.length;
+  return st.filter(o => o.pid).map(o => {
+    const me = t.teams ? units.find(u => t.teams.some(p => p.includes(o.i) && p.includes(u.i))) : o;
+    return { pid: o.pid, row: { id: t.id, name: t.name, fmt: t.fmt, d: new Date(t.upd).toISOString().slice(0, 10), place: 1 + units.filter(u => better(u, me)).length, of, w: o.w, l: o.l, p: o.p } };
+  });
+}
+async function archive(env, t, remove) {
+  for (const r of archiveRows(t)) {
+    const k = "amx:pl:" + r.pid;
+    let l = [];
+    try { l = JSON.parse((await env.PUSH.get(k)) || "[]"); } catch (e) { l = []; }
+    l = l.filter(x => x.id !== t.id);
+    if (!remove) l.unshift(r.row);
+    await env.PUSH.put(k, JSON.stringify(l.slice(0, 50)));
+  }
+}
+export async function amxArchive(env, pid) {
+  try { return JSON.parse((await env.PUSH.get("amx:pl:" + Number(pid))) || "[]"); } catch (e) { return []; }
 }
 export async function amxGet(env, id) {
   if (!/^[a-z2-9]{8}$/.test(id)) return null;
@@ -149,6 +174,13 @@ export async function amxUpdate(env, id, b, now) {
     if (t.rounds.length < 2 || last.some(x => x.s)) return { err: "cannot drop" };
     t.rounds.pop();
   } else if (b.op === "end" || b.op === "reopen") t.done = b.op === "end";
+  else if (b.op === "delete") {   // gone: the record, the home list, the players' archives
+    await env.PUSH.delete("amx:" + t.id);
+    t.gone = true;
+    await index(env, t, now);
+    if (t.done) await archive(env, t, true);
+    return { deleted: true };
+  }
   else if (b.op === "look") {   // a guest's picture: a new figure or an uploaded photo (null: back to the figure)
     const p = t.players[Number(b.i)];
     if (!p || p.pid) return { err: "no such guest" };
@@ -157,8 +189,10 @@ export async function amxUpdate(env, id, b, now) {
   }
   else return { err: "bad op" };
   t.upd = now;
-  await env.PUSH.put("amx:" + t.id, JSON.stringify(t), { expirationTtl: TTL });
-  if (b.op === "end" || b.op === "reopen") await index(env, t, now);
+  // ended: kept for good (the players' archives link to it); otherwise 30 days from the last change
+  await env.PUSH.put("amx:" + t.id, JSON.stringify(t), t.done ? undefined : { expirationTtl: TTL });
+  if (b.op === "end" || b.op === "reopen") { await index(env, t, now); await archive(env, t, b.op === "reopen"); }
+  else if (t.done) await archive(env, t, false);   // a result changed after the end
   await queue(env, notes);
   return { t: publicOf(t) };
 }

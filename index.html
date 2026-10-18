@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-zf7xP2UciEqHc2H2aJt/UbSK8BKMxTSyZu6R3OZOPS4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-jWNdbKpSFoY/Zab+eDDHpJTGBSdPhIt6km1bVYOvsv8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -206,6 +206,17 @@
   .amxtbl tr.me td{ background:var(--accent-soft); }
   .amxshare{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
   .amxshare button{ appearance:none; height:40px; padding:0 14px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 13px/1 "Instrument Sans", sans-serif; cursor:pointer; }
+  .amxh{ margin:14px 0 2px; font:600 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
+  .amxsec.del{ color:var(--loss); border-color:color-mix(in srgb, var(--loss) 40%, var(--line)); }
+  .amxarch{ padding:2px 14px; }
+  .axrow{ display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); color:inherit; text-decoration:none; }
+  .axrow:last-child{ border-bottom:0; }
+  .axpl{ display:flex; flex-direction:column; align-items:center; justify-content:center; width:44px; height:44px; border-radius:12px; background:var(--surface-2); }
+  .axpl b{ font:800 20px/1 "Big Shoulders Display", sans-serif; } .axpl small{ font:500 9.5px/1 "Chivo Mono", monospace; color:var(--dim); margin-top:2px; }
+  .axpl.gold{ background:#FFD84A; color:#0A1733; } .axpl.gold small{ color:#0A1733; }
+  .axpl.top{ background:var(--accent-soft); }
+  .axn{ min-width:0; display:flex; flex-direction:column; gap:2px; } .axn b{ font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .axn small, .axr small{ font:500 11px/1.2 "Chivo Mono", monospace; color:var(--dim); }
+  .axr{ display:flex; flex-direction:column; align-items:flex-end; gap:2px; } .axr b{ font:600 15px/1 "Chivo Mono", monospace; }
   .amxnote{ font:500 11px/1.45 "Chivo Mono", monospace; color:var(--dim); margin:10px 0 0; }
   /* ---------- #regler ---------- */
   .rsearch{ position:sticky; top:var(--toph, 96px); z-index:5; display:flex; align-items:center; gap:8px; margin:14px 0 10px; padding:0 14px; height:46px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:var(--dim); box-shadow:0 6px 18px rgba(0,0,0,.06); }
@@ -1528,6 +1539,15 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "I appen":"En la app",
+    "av ":"de ",
+    " p":" p",
+    "Mina":"Míos",
+    "Senaste veckan":"Última semana",
+    "Ta bort":"Eliminar",
+    "Avsluta och låsa tabellen? Resultatet sparas på klubbspelarnas sidor.":"¿Terminar y cerrar la tabla? El resultado se guarda en las páginas de los jugadores del club.",
+    "Ta bort {name} för alla? Det går inte att ångra.":"¿Eliminar {name} para todos? No se puede deshacer.",
+    "Kunde inte ta bort. Försök igen.":"No se pudo eliminar. Inténtalo de nuevo.",
     "{k} banor behöver minst {p} spelare, så {u} används.":"{k} pistas necesitan al menos {p} jugadores, así que se usan {u}.",
     "Lagamericano":"Americano por parejas",
     "först till {n} game":"a {n} juegos",
@@ -6000,7 +6020,8 @@
         '<p class="sgnote" id="sgNote-' + k + '" hidden></p><div class="ups" id="sgList-' + k + '"><p class="empty">' + _("Hämtar förslag …") + '</p></div></section>' +
       '<section class="t-off" aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">' + _("Bra att veta") + '</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>' +
       '<section class="t-loc" aria-labelledby="h-bup-' + k + '" id="bup-' + k + '" hidden><div class="sh"><h2 id="h-bup-' + k + '">' + _("Kommande seriematcher") + '</h2><div class="meta">Backhandsmash</div></div><div class="ups" id="bhsUp-' + k + '"></div></section>' +
-      '<section class="t-loc" aria-labelledby="h-bhs-' + k + '" id="bhs-' + k + '" hidden><div class="sh"><h2 id="h-bhs-' + k + '">' + _("Serier") + '</h2><div class="meta">Backhandsmash</div></div><div id="bhsList-' + k + '"></div></section>';
+      '<section class="t-loc" aria-labelledby="h-bhs-' + k + '" id="bhs-' + k + '" hidden><div class="sh"><h2 id="h-bhs-' + k + '">' + _("Serier") + '</h2><div class="meta">Backhandsmash</div></div><div id="bhsList-' + k + '"></div></section>' +
+      '<section class="t-loc" aria-labelledby="h-ax-' + k + '" id="ax-' + k + '" hidden><div class="sh"><h2 id="h-ax-' + k + '">' + _("Americano") + '</h2><div class="meta">' + _("I appen") + '</div></div><div class="card amxarch" id="axList-' + k + '"></div></section>';
   }
   // Under the card: Tävlingar & SPL (official, RankedIn) | Klubbserier (Backhandsmash). Only for players in a club series;
   // the choice is kept on this device.
@@ -6012,7 +6033,7 @@
   function ptabSet(who, tab){
     var m = PANELS[who];
     if (!m) return;
-    var has = bhsGroups(BYKEY[who]).length > 0;
+    var has = bhsGroups(BYKEY[who]).length > 0 || amxArch(BYKEY[who]).length > 0;   // club series or the app's americanos
     tab = has && tab === "loc" ? "loc" : "off";
     m.setAttribute("data-tab", tab);
     [].forEach.call(m.querySelectorAll(".ptabs"), function(bar){
@@ -6215,6 +6236,7 @@
     panel(P);
     if (DISC) try { setMode(P.key, pickHero(P.key)); } catch (e){ warn("Visning", e); }
     loadTrend(P);
+    try { renderAmxArch(P.key); loadAmxArch(P); } catch (e){ warn("Americano", e); }
     try { renderRk(P.key); rkLoad(P); } catch (e){ warn("Klass och poäng", e); }
     loadHistory(P);
     loadCal();
@@ -6988,17 +7010,52 @@
   function amxKind(f){ return f === "mexicano" ? "Mexicano" : f === "lag" ? _("Lagamericano") : "Americano"; }
   function amxHow(t){ return t.mode === "games" ? _("först till {n} game", {n:t.pts}) : t.mode === "free" ? _("fri räkning") : t.pts + _(" poäng"); }
 
-  /* ---- home: the last two days' ones, and Start ---- */
+  /* ---- the americanos a club player has played (ended ones, worker /amx/pl/<pid>): the player page, Klubbserier ---- */
+  var AMX_ARCH = {}, AMX_ARCH_KEY = "padel.amx.arch.v1";
+  (function(){ var c = store.json(AMX_ARCH_KEY); if (c && typeof c === "object") AMX_ARCH = c; })();
+  function amxArch(P){ var x = P && AMX_ARCH[P.pid]; return (x && x.l) || []; }
+  function loadAmxArch(P){
+    var x = AMX_ARCH[P.pid];
+    if (!PUSH_API || (x && Date.now() - x.t < 10 * 60000)) { renderAmxArch(P.key); return; }
+    amxApi("/amx/pl/" + P.pid).then(function(d){
+      AMX_ARCH[P.pid] = {t:Date.now(), l:(d.list || []).slice(0, 20)};
+      store.set(AMX_ARCH_KEY, JSON.stringify(AMX_ARCH));
+      renderAmxArch(P.key);
+    }, function(){});
+  }
+  function renderAmxArch(who){
+    var P = BYKEY[who], sec = document.getElementById("ax-" + who), host = document.getElementById("axList-" + who);
+    if (!P || !sec || !host) return;
+    var l = amxArch(P);
+    sec.hidden = !l.length;
+    host.innerHTML = l.map(function(x){
+      var medal = x.place === 1 ? " gold" : x.place <= 3 ? " top" : "";
+      return '<a class="axrow" href="#amx/' + esc(x.id) + '"><span class="axpl' + medal + '"><b>' + x.place + '</b><small>' + _("av ") + x.of + '</small></span><span class="axn"><b>' + esc(x.name) + '</b><small>' + esc(amxKind(x.fmt) + " · " + dayMonD(riDate(x.d + "T12:00"))) + '</small></span><span class="axr"><b>' + x.w + "–" + x.l + '</b><small>' + x.p + _(" p") + '</small></span></a>';
+    }).join("");
+    try { ptabSet(who, PANELS[who] && PANELS[who].getAttribute("data-tab") || "off"); } catch (e){}
+  }
+  // the americanos started on this phone (or opened with an organiser's link): "Mina", kept until deleted
+  var AMX_MINE = "padel.amx.mine";
+  function amxMine(){ return store.json(AMX_MINE) || []; }
+  function amxRemember(t){ var l = amxMine().filter(function(x){ return x.id !== t.id; }); l.unshift({id:t.id, name:t.name, fmt:t.fmt, at:t.created || Date.now(), n:t.players.length, done:!!t.done}); store.set(AMX_MINE, JSON.stringify(l.slice(0, 30))); }
+  function amxForget(id){ store.set(AMX_MINE, JSON.stringify(amxMine().filter(function(x){ return x.id !== id; }))); var k = amxKeys(); delete k[id]; store.set(AMX_KEYS, JSON.stringify(k)); }
+
+  /* ---- home: Mina and the last week's, and Start ---- */
   function renderAmxHome(){
     var host = document.getElementById("amxHome");
     if (!host) return;
     if (!AMX.list && PUSH_API){ AMX.list = []; amxApi("/amx").then(function(d){ AMX.list = d.list || []; renderAmxHome(); }, function(){}); }
-    var f = follows(), l = (AMX.list || []).slice(0, 6);
+    var f = follows(), mine = amxMine(), ids = mine.map(function(x){ return x.id; });
+    var row = function(x, own){
+      var fol = (x.pids || []).some(function(p){ return f.indexOf(Number(p)) >= 0; });
+      return '<a class="amxrow' + (fol ? " mine" : "") + '" href="#amx/' + esc(x.id) + '"><span class="pb ' + (x.done ? "" : "live") + '">' + (x.done ? _("Klar") : _("Pågår")) + '</span><b>' + esc(x.name) + '</b><small>' + esc(amxKind(x.fmt) + " · " + x.n + _(" spelare") + " · " + dayMonD(new Date(x.at))) + '</small></a>';
+    };
+    // the list knows whether one is ended; "Mina" takes that from it when it is there
+    var pub = AMX.list || [], st = {}; pub.forEach(function(x){ st[x.id] = x; });
+    var others = pub.filter(function(x){ return ids.indexOf(x.id) < 0; }).slice(0, 6);
     host.innerHTML = '<a class="amxnew" href="#amx/ny"><b>' + _("Starta en americano") + '</b><span>' + _("Americano, Mexicano eller Lagamericano med klubbens spelare och gäster. Resultat och tabell i appen.") + '</span><i aria-hidden="true">→</i></a>' +
-      l.map(function(x){
-        var mine = (x.pids || []).some(function(p){ return f.indexOf(Number(p)) >= 0; });
-        return '<a class="amxrow' + (mine ? " mine" : "") + '" href="#amx/' + esc(x.id) + '"><span class="pb ' + (x.done ? "" : "live") + '">' + (x.done ? _("Klar") : _("Pågår")) + '</span><b>' + esc(x.name) + '</b><small>' + esc(amxKind(x.fmt) + " · " + x.n + _(" spelare")) + '</small></a>';
-      }).join("");
+      (mine.length ? '<div class="amxh">' + _("Mina") + '</div>' + mine.slice(0, 8).map(function(x){ return row(st[x.id] ? Object.assign({}, x, {done:st[x.id].done, pids:st[x.id].pids}) : x, true); }).join("") : "") +
+      (others.length ? '<div class="amxh">' + _("Senaste veckan") + '</div>' + others.map(function(x){ return row(x, false); }).join("") : "");
   }
 
   /* ---- #amx/ny: set up ---- */
@@ -7072,7 +7129,7 @@
         var t = {fmt:d.fmt, mode:d.mode, courts:Math.min(d.courts, Math.floor(d.players.length / 4)), players:d.players, teams:teams, rounds:[]};
         amxApi("/amx", {name:d.name, fmt:d.fmt, mode:d.mode, pts:d.pts, courts:t.courts, teams:teams, round:amxNext(t),
           players:d.players.map(function(p){ return p.pid ? {pid:p.pid} : {n:p.n, img:p.img, fig:p.fig}; })}).then(function(r){
-          AMX.busy = false; amxSetKey(r.id, r.key); AMX.draft = null; AMX.list = null; AMX.t = r.t; AMX.id = r.id; AMX.tab = "m";
+          AMX.busy = false; amxSetKey(r.id, r.key); amxRemember(r.t); AMX.draft = null; AMX.list = null; AMX.t = r.t; AMX.id = r.id; AMX.tab = "m";
           location.hash = "#amx/" + r.id;
         }, function(er){ AMX.busy = false; b.disabled = false; document.getElementById("amxErr").textContent = _("Kunde inte starta: ") + er.message; });
       }
@@ -7108,7 +7165,9 @@
   function renderAmx(){
     var box = document.getElementById("amx"), t = AMX.t;
     if (!box || !t) return;
-    var key = amxKey(t.id), f = follows(), st = amxStand(t), R = t.rounds.length, cur = t.rounds[R - 1], allIn = cur.every(function(x){ return !!x.s; }), team = t.fmt === "lag";
+    var key = amxKey(t.id), f = follows(), st = amxStand(t), R = t.rounds.length;
+    if (key) amxRemember(t);   // also one opened with an organiser's link
+    var cur = t.rounds[R - 1], allIn = cur.every(function(x){ return !!x.s; }), team = t.fmt === "lag";
     var h = '<div class="phead"><div class="pt"><h1>' + esc(t.name) + '</h1><div class="pm">' + esc(amxKind(t.fmt) + " · " + amxHow(t) + " · " + t.players.length + _(" spelare") + " · " + _("runda ") + R + (t.done ? " · " + _("klar") : "")) + '</div></div></div>' +
       '<div class="seg amxtabs" role="tablist"><button type="button" role="tab" data-tab="m" aria-selected="' + (AMX.tab === "m") + '">' + _("Matcher") + '</button><button type="button" role="tab" data-tab="t" aria-selected="' + (AMX.tab === "t") + '">' + _("Tabell") + '</button></div>';
     if (AMX.tab === "t"){
@@ -7134,8 +7193,8 @@
         cur.map(function(x, m){ return match(x, R - 1, m, !x.s); }).join("");
       if (key && !t.done) h += '<div class="amxbar">' + (allIn ? '<button type="button" class="amxgo" data-op="round">' + _("Lotta runda ") + (R + 1) + '</button>' : "") +
         (R > 1 && !cur.some(function(x){ return x.s; }) ? '<button type="button" class="amxsec" data-op="drop">' + _("Ångra lottningen") + '</button>' : "") +
-        '<button type="button" class="amxsec" data-op="end">' + _("Avsluta") + '</button></div>';
-      else if (key && t.done) h += '<div class="amxbar"><button type="button" class="amxsec" data-op="reopen">' + _("Öppna igen") + '</button></div>';
+        '<button type="button" class="amxsec" data-op="end">' + _("Avsluta") + '</button><button type="button" class="amxsec del" data-op="delete">' + _("Ta bort") + '</button></div>';
+      else if (key && t.done) h += '<div class="amxbar"><button type="button" class="amxsec" data-op="reopen">' + _("Öppna igen") + '</button><button type="button" class="amxsec del" data-op="delete">' + _("Ta bort") + '</button></div>';
       if (R > 1) h += '<div class="sh"><h2>' + _("Tidigare rundor") + '</h2><div class="meta"></div></div>' + t.rounds.slice(0, -1).map(function(r, i){ return '<details class="rsec"><summary><span>' + _("Runda ") + (i + 1) + '</span><i aria-hidden="true"></i></summary><div class="rbody">' + r.map(function(x, m){ return match(x, i, m, false); }).join("") + '</div></details>'; }).reverse().join("");
     }
     var base = location.href.split("#")[0] + "#amx/" + t.id;
@@ -7159,9 +7218,16 @@
         amxSave({op:"score", r:+rm[0], m:+rm[1], s:[a, c]}).then(function(){ delete AMX.edit[rm[0] + ":" + rm[1]]; renderAmx(); }, function(){ b.disabled = false; alert(_("Kunde inte spara. Försök igen.")); });
       } else if (b.hasAttribute("data-op")){
         var op = b.getAttribute("data-op");
-        if (op === "end" && !confirm(_("Avsluta och låsa tabellen?"))) return;
+        if (op === "end" && !confirm(_("Avsluta och låsa tabellen? Resultatet sparas på klubbspelarnas sidor."))) return;
+        if (op === "delete"){
+          if (!confirm(_("Ta bort {name} för alla? Det går inte att ångra.", {name:t.name}))) return;
+          b.disabled = true;
+          amxApi("/amx/" + t.id, {key:key, op:"delete"}).then(function(){ amxForget(t.id); AMX.t = null; AMX.list = null; AMX_ARCH = {}; store.set(AMX_ARCH_KEY, "{}"); location.hash = "#/"; },
+            function(){ b.disabled = false; alert(_("Kunde inte ta bort. Försök igen.")); });
+          return;
+        }
         b.disabled = true;
-        amxSave(op === "round" ? {op:"round", round:amxNext(t)} : {op:op}).catch(function(){ b.disabled = false; alert(_("Kunde inte spara. Försök igen.")); });
+        amxSave(op === "round" ? {op:"round", round:amxNext(t)} : {op:op}).then(function(){ if (op === "end" || op === "reopen"){ AMX_ARCH = {}; store.set(AMX_ARCH_KEY, "{}"); } }, function(){ throw 0; }).catch(function(){ b.disabled = false; alert(_("Kunde inte spara. Försök igen.")); });
       } else if (b.hasAttribute("data-link")){
         var u = b.getAttribute("data-link");
         if (navigator.share) navigator.share({title:t.name, url:u}).catch(function(){});
@@ -7374,6 +7440,7 @@
       var te = DISC && DISC.events.concat(DISC.past || []).filter(function(e){ return String(e.tournamentId) === String(x.tid); })[0];
       document.title = (te && te.name || _("Tävlingen")) + " · Nynäs Padel";
     } else if (x.view === "amx"){
+      AMX.list = null;
       showView("amx");
       if (x.id === "ny"){ clearInterval(AMX.poll); renderAmxNew(); } else openAmx(x.id, x.key);
       VIEW = {name:"amx", who:null, team:"amx" + x.id};
