@@ -19,6 +19,7 @@ const { chromium } = require("playwright");
 const BASE = process.env.PAGE_URL || "http://127.0.0.1:19021/";
 const T = "2026-09-27T13:52:00+02:00";   // Järfälla no 11, Damer C on (Thea and Cassandra), Kian's SPL next Saturday
 const PUSH_API = "https://padel-push.holmberg-padel.workers.dev";
+const AMX_KV = new Map(), AMX_ENV = { ORIGIN: "https://padel.holmberg.st", PUSH: { get: async k => AMX_KV.has(k) ? AMX_KV.get(k) : null, put: async (k, v) => { AMX_KV.set(k, v); }, delete: async k => { AMX_KV.delete(k); }, list: async () => ({ keys: [], list_complete: true }) } };
 const SHOTS = process.env.SHOTS || "";
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
@@ -143,6 +144,11 @@ async function newPage(opts = {}) {
       return r.fulfill({ status: opts.liveStatus || 200, contentType: "application/json", body: opts.liveStatus ? "{}" : opts.live, headers: h });
     }
     if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
+    if (u.pathname.startsWith("/amx")) {   // the real worker code, its own KV
+      const q = r.request();
+      return worker.fetch(new Request("https://w" + u.pathname, { method: q.method(), headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json" }, body: q.method() === "POST" ? q.postData() : undefined }), AMX_ENV)
+        .then(async x => r.fulfill({ status: x.status, contentType: "application/json", body: await x.text(), headers: h }));
+    }
     if (u.pathname === "/rules") return r.fulfill({ contentType: "application/json", body: JSON.stringify({ v: 1, checked: "2026-09-27T04:40:00Z", docs: [
       { id: "guide", title: "I korthet", sub: "Kort", src: "https://svenskpadel.se/om-padel/regler/", changed: "2026-09-27T04:40:00Z", sections: [{ id: "guide-1", t: "Serve", notes: ["serve"], p: ["Serven ska studsa bakom servelinjen.", "• Diagonalt mot motståndarens ruta."] }] },
       { id: "tavling", title: "Tävlingsbestämmelser", sub: "Handbok", src: "https://svenskpadel.se/x.pdf", sections: [{ id: "tavling-4-3", n: "4.3", t: "Reservlista", p: ["Vid fler anmälda än vad klassen tillåter skapas reservlista."] }] }],
@@ -236,6 +242,28 @@ try {
     const hit = await page.evaluate(() => ({ t: document.querySelector("#rBody").textContent, mark: document.querySelectorAll("#rBody mark").length, open: !!document.querySelector("#rBody details[open]") }));
     ok("Regler: documents, search finds Reservlista in the competition rules, hits marked and opened", docs.join() === "I korthet,Tävlingsbestämmelser" && /Reservlista/.test(hit.t) && hit.mark >= 2 && hit.open, { docs, hit });
     await page.goBack();
+  }
+  { // Americano: set up with a club player and guests, a result (the other side filled in), a new round, the table
+    await page.goto(url("#amx/ny"));
+    await page.waitForSelector("#amxGuest");
+    await page.click('#amxRoster [data-add="1675246"]');
+    for (const n of ["Gäst Ett", "Gäst Två", "Gäst Tre"]) { await page.fill("#amxGuest", n); await page.click("#amxAddG"); }
+    await page.click('[data-set="pts"][data-v="16"]');
+    await page.click("#amxStart");
+    await page.waitForSelector("#amx .amxm input", { timeout: 8000 }).catch(() => {});
+    await page.fill('[data-sc="0:0:0"]', "10");
+    const other = await page.inputValue('[data-sc="0:0:1"]');
+    await page.click('[data-ok="0:0"]');
+    await page.waitForSelector('[data-op="round"]', { timeout: 8000 }).catch(() => {});
+    await page.click('[data-op="round"]');
+    await page.waitForFunction(() => /Runda 2/i.test(document.querySelector("#amx")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    await page.click('[data-tab="t"]');
+    const tbl = await page.$$eval("#amx .amxtbl tbody tr", r => r.map(x => x.textContent.replace(/\s+/g, " ").trim()));
+    const pend = JSON.parse(AMX_KV.get("amx:pend") || "[]");
+    ok("Americano: set up, the other score filled in (16 - 10), round 2 drawn, table sorted, notiser for Thea's followers", other === "6" && tbl.length === 4 && /10$/.test(tbl[0]) && /6$/.test(tbl[3]) &&
+      pend.length === 2 && pend.every(x => x.pids.includes(1675246)), { other, tbl, pend: pend.map(x => x.m.title) });
+    await page.goto(url("#thea"));
+    await page.waitForSelector("#p-thea .pc", { timeout: 8000 }).catch(() => {});
   }
   ok("Thea: hero photo (cut-out)", await page.$eval("#p-thea .hero .pmed img", i => i.getAttribute("src")) === "img/cut/thea-holmberg-loving.webp");
   ok("Thea: chips show followed first and Thea current", (await page.$$eval("#chips .pchip", a => a.map(x => x.getAttribute("href") + (x.getAttribute("aria-current") ? "*" : "")))).slice(0, 2).join() === "#thea*,#kian");

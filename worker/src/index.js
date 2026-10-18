@@ -6,6 +6,7 @@ import { buildIcs } from "./ics.js";
 import { weekDigest, weekNote } from "./week.js";
 import { remindNotes } from "./remind.js";
 import { soonNotes } from "./soon.js";
+import { amxCreate, amxUpdate, amxGet, amxList, amxPending, publicOf } from "./amx.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
@@ -145,7 +146,8 @@ async function handle(req, env) {
   // Writes only from the site (or localhost). The Origin header is only CSRF protection (any script can send it):
   // the per-IP rate limits and the cap on subscriptions are what keep KV (1000 writes, 100k reads a day) safe.
   if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
-  if (await limited(req.method === "POST" ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
+  // americano results come several a minute from one phone: the API limit, not the subscribe one
+  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
   const route = req.method + " " + url.pathname;
   if (route === "GET /health") {
     const rec = await loadRecord(env);
@@ -202,6 +204,19 @@ async function handle(req, env) {
     const regs = registrations(rec, out.events.map(e => e.id));
     if (rec) out.events.forEach(e => { e.regs = regs.filter(r => r.tid === e.id).map(r => ({ pid: r.pid, classId: r.classId })); });
     return json(out, 200, { ...h, "Cache-Control": "public, max-age=3600" });
+  }
+  // Americano / Mexicano (amx.js): the list (home view), one americano, create, update (organiser's key in the body)
+  if (route === "GET /amx") return json({ list: await amxList(env, +now(env)) }, 200, { ...h, "Cache-Control": "no-store" });
+  const am = /^\/amx\/([a-z2-9]{8})$/.exec(url.pathname);
+  if (am && req.method === "GET") {
+    const t = await amxGet(env, am[1]);
+    return t ? json(publicOf(t), 200, { ...h, "Cache-Control": "no-store" }) : json({ error: "not found" }, 404, h);
+  }
+  if (route === "POST /amx" || (am && req.method === "POST")) {
+    let b;
+    try { b = await readBody(req, 16384); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    const r = am ? await amxUpdate(env, am[1], b, +now(env)) : await amxCreate(env, b, BY_PID, +now(env));
+    return r.err ? json({ error: r.err }, r.status || 400, h) : json(r, 200, h);
   }
   if (route === "POST /subscribe") {
     let b;
@@ -938,6 +953,8 @@ export async function tick(env, events) {
       }
     } catch (e) { console.warn("veckan", e.message); }
   }
+  // Americano / Mexicano: notiser queued by the organiser's phone (amx.js), sent with this tick's
+  if (!events && env.AMX_OFF !== "1") try { pubMsgs.push(...await amxPending(env)); } catch (e) { console.warn("americano", e.message); }   // AMX_OFF: local tests only
   // Snart match: every 5 min (minute 1, 6, ...) while something is on, a quarter of an hour before a club pair's match
   if (!events && env.SOON_OFF !== "1" && mm % 5 === 1 && activeEvents(t, list).length) {   // SOON_OFF: local tests only
     try {
