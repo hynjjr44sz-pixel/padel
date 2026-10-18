@@ -66,6 +66,7 @@ test("arkiv: ended -> kept for good and on the club players' archive; reopened -
   assert.equal(puts.filter(x => x[0] === "amx:" + id).pop()[1], undefined);   // no expiry once ended
   let a = await (await call(env, "GET", "/amx/pl/1675246")).json();
   assert.deepEqual(a.list.map(x => [x.id, x.place, x.of, x.w, x.l, x.p]), [[id, 1, 4, 1, 0, 10]]);
+  assert.deepEqual(a.list[0].pa, [{ n: "B B", c: 1 }]);   // partners for the profile summary
   await call(env, "POST", "/amx/" + id, { key, op: "reopen" });
   assert.equal((await (await call(env, "GET", "/amx/pl/1675246")).json()).list.length, 0);
   await call(env, "POST", "/amx/" + id, { key, op: "end" });

@@ -105,7 +105,15 @@ export function archiveRows(t) {
   const units = t.teams ? t.teams.map(p => st.find(o => o.i === p[0])) : st, of = units.length;
   return st.filter(o => o.pid).map(o => {
     const me = t.teams ? units.find(u => t.teams.some(p => p.includes(o.i) && p.includes(u.i))) : o;
-    return { pid: o.pid, row: { id: t.id, name: t.name, fmt: t.fmt, d: new Date(t.upd).toISOString().slice(0, 10), place: 1 + units.filter(u => better(u, me)).length, of, w: o.w, l: o.l, p: o.p } };
+    // partners in played matches, most first
+    const pc = new Map();
+    for (const r of t.rounds || []) for (const x of r) {
+      if (!x.s) continue;
+      const side = x.a.includes(o.i) ? x.a : x.b.includes(o.i) ? x.b : null;
+      if (side) for (const j of side) if (j !== o.i) pc.set(j, (pc.get(j) || 0) + 1);
+    }
+    const pa = [...pc].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([j, c]) => { const p = t.players[j] || {}; return p.pid ? { n: p.n, pid: p.pid, c } : { n: p.n, c }; });
+    return { pid: o.pid, row: { id: t.id, name: t.name, fmt: t.fmt, d: new Date(t.upd).toISOString().slice(0, 10), place: 1 + units.filter(u => better(u, me)).length, of, w: o.w, l: o.l, p: o.p, pa } };
   });
 }
 async function archive(env, t, remove) {

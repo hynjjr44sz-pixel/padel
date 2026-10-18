@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-tywUCoX16jLxo4YvsOkqCcFttzYYeoYAmvSnVcGzkwQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-MUM10zIhh2zUZx9fLlNbCy3QoJQT9fFk8mDrPcZURjo='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -209,6 +209,10 @@
   .amxh{ margin:14px 0 2px; font:600 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
   .amxsec.del{ color:var(--loss); border-color:color-mix(in srgb, var(--loss) 40%, var(--line)); }
   .amxarch{ padding:2px 14px; }
+  .axsum{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; padding:12px 0 8px; }
+  .axs{ display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px; border-radius:12px; background:var(--surface-2); text-align:center; }
+  .axs b{ font:800 22px/1 "Big Shoulders Display", sans-serif; } .axs small{ font:500 10px/1.2 "Chivo Mono", monospace; color:var(--dim); }
+  .axmate{ margin:0; padding:4px 0 10px; font-size:13.5px; color:var(--dim); border-bottom:1px solid var(--line); } .axmate a{ color:var(--ink); font-weight:600; }
   .axrow{ display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); color:inherit; text-decoration:none; }
   .axrow:last-child{ border-bottom:0; }
   .axpl{ display:flex; flex-direction:column; align-items:center; justify-content:center; width:44px; height:44px; border-radius:12px; background:var(--surface-2); }
@@ -1539,6 +1543,14 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Klubbspel":"Juego del club",
+    "Americanos":"Americanos",
+    "Segrar":"Victorias",
+    "Vunna matcher":"Partidos ganados",
+    "Oftast med":"Más a menudo con",
+    " gånger":" veces",
+    " gång":" vez",
+    "Snitt ":"Media ",
     "I appen":"En la app",
     "av ":"de ",
     " p":" p",
@@ -6028,7 +6040,7 @@
   var PTAB_KEY = "padel.ptab";
   function ptabsHtml(k){
     return '<div class="ptabs" role="tablist" aria-label="' + _("Visa") + '" data-pt="' + esc(k) + '" hidden><button type="button" role="tab" data-ptab="off" aria-selected="true">' + _("Tävlingar & SPL") + '</button>' +
-      '<button type="button" role="tab" data-ptab="loc" aria-selected="false">' + _("Klubbserier") + '</button></div>';
+      '<button type="button" role="tab" data-ptab="loc" aria-selected="false">' + _("Klubbspel") + '</button></div>';
   }
   function ptabSet(who, tab){
     var m = PANELS[who];
@@ -7018,17 +7030,31 @@
     var x = AMX_ARCH[P.pid];
     if (!PUSH_API || (x && Date.now() - x.t < 10 * 60000)) { renderAmxArch(P.key); return; }
     amxApi("/amx/pl/" + P.pid).then(function(d){
-      AMX_ARCH[P.pid] = {t:Date.now(), l:(d.list || []).slice(0, 20)};
+      AMX_ARCH[P.pid] = {t:Date.now(), l:(d.list || []).slice(0, 50)};
       store.set(AMX_ARCH_KEY, JSON.stringify(AMX_ARCH));
       renderAmxArch(P.key);
     }, function(){});
+  }
+  // summary over the archive: played, wins, average place, won matches, most frequent partner
+  function amxSum(l){
+    if (l.length < 1) return "";
+    var won = l.filter(function(x){ return x.place === 1; }).length, w = 0, ml = 0, pa = {};
+    l.forEach(function(x){ w += x.w || 0; ml += (x.w || 0) + (x.l || 0);
+      (x.pa || []).forEach(function(y){ var k = y.pid ? "p" + y.pid : "n" + y.n; (pa[k] = pa[k] || {n:y.n, pid:y.pid, c:0}).c += y.c; }); });
+    var avg = l.reduce(function(a, x){ return a + x.place; }, 0) / l.length;
+    var top = Object.keys(pa).map(function(k){ return pa[k]; }).sort(function(a, b){ return b.c - a.c; })[0];
+    var tp = top && top.pid && BYPID[top.pid], tn = top ? (tp ? '<a href="#' + esc(tp.key) + '">' + esc(tp.name) + '</a>' : esc(top.n)) : "";
+    var box = function(v, k){ return '<div class="axs"><b>' + v + '</b><small>' + k + '</small></div>'; };
+    return '<div class="axsum">' + box(l.length, _("Americanos")) + box(won, _("Segrar")) + box(avg.toFixed(1).replace(".", ","), _("Snittplacering")) +
+      box(ml ? Math.round(100 * w / ml) + " %" : "–", _("Vunna matcher")) + '</div>' +
+      (top ? '<p class="axmate">' + _("Oftast med") + ' ' + tn + ' · ' + top.c + (top.c === 1 ? _(" gång") : _(" gånger")) + '</p>' : "");
   }
   function renderAmxArch(who){
     var P = BYKEY[who], sec = document.getElementById("ax-" + who), host = document.getElementById("axList-" + who);
     if (!P || !sec || !host) return;
     var l = amxArch(P);
     sec.hidden = !l.length;
-    host.innerHTML = l.map(function(x){
+    host.innerHTML = amxSum(l) + l.map(function(x){
       var medal = x.place === 1 ? " gold" : x.place <= 3 ? " top" : "";
       return '<a class="axrow" href="#amx/' + esc(x.id) + '"><span class="axpl' + medal + '"><b>' + x.place + '</b><small>' + _("av ") + x.of + '</small></span><span class="axn"><b>' + esc(x.name) + '</b><small>' + esc(amxKind(x.fmt) + " · " + dayMonD(riDate(x.d + "T12:00"))) + '</small></span><span class="axr"><b>' + x.w + "–" + x.l + '</b><small>' + x.p + _(" p") + '</small></span></a>';
     }).join("");
