@@ -978,11 +978,13 @@ export async function tick(env, events) {
       const busy = rec && activeEvents(t, merge(rec.events)).length > 0;
       try { rec = await runDiscovery(env, t, budget, rec, log, busy ? 15 : rec ? 35 : 30); } catch (e) { console.warn("discovery", e.message); }
     }
-    // The club's members on RankedIn: the list once a day, a few looked up a run (minute 3, 13, ...; not while live)
-    if (env.MEMBERS_OFF !== "1" && t.getUTCMinutes() % 10 === 3 && !(rec && activeEvents(t, merge(rec.events)).length)) {   // MEMBERS_OFF: local tests only
+    // The club's members on RankedIn: the list once a day, a few looked up a run (minute 3, 13, ...; while something is
+    // live only a small share, so the live polling keeps its calls)
+    if (env.MEMBERS_OFF !== "1" && t.getUTCMinutes() % 10 === 3) {   // MEMBERS_OFF: local tests only
       try {
-        const mrec = await loadMembers(env, true);
-        if (membersDue(mrec, t)) { const mine = { left: Math.min(25, budget.left) }, st = mine.left; log.members = await membersRun(env, getter(env, mine), t, mine); budget.left -= st - mine.left; }
+        const mrec = await loadMembers(env, true), live = !!(rec && activeEvents(t, merge(rec.events)).length);
+        const share = Math.min(live ? 9 : 25, budget.left - (live ? 25 : 5));
+        if (share >= 5 && membersDue(mrec, t)) { const mine = { left: share }, st = mine.left; log.members = await membersRun(env, getter(env, mine), t, mine); budget.left -= st - mine.left; }
       } catch (e) { console.warn("members", e.message); }
     }
     list = merge(rec ? rec.events : []);
