@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-qMCiJBNPZYG349iMA9cHYhahXsU9mhVJ4glwvalRPN0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-TV1PSB/k7Vr4N+Vtv2bUo6uyCovcSQ9gfZj/+DjTPLM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -174,6 +174,17 @@
   [data-rcode]{ text-transform:uppercase; letter-spacing:.1em; }
   #rPid{ width:100%; height:44px; padding:0 10px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:500 16px/1 "Instrument Sans", sans-serif; }
   .klist{ padding:0 16px; }
+  .amxgo.pfile{ position:relative; display:inline-flex; align-items:center; justify-content:center; width:auto; padding:0 18px; overflow:hidden; }
+  .pphoto{ margin-top:28px; }
+  .cropin .amxbar{ flex-wrap:nowrap; } .cropin .amxbar > *{ flex:1; }
+  .pfile input{ position:absolute; inset:0; opacity:0; cursor:pointer; }
+  .crop{ position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(5,10,25,.72); }
+  .cropin{ width:100%; max-width:380px; max-height:100%; overflow:auto; padding:16px; border-radius:18px; background:var(--surface); color:var(--ink); }
+  .cropin h2{ margin:0 0 4px; font:800 24px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; } .cropin p{ margin:0 0 10px; font-size:13.5px; line-height:1.4; color:var(--dim); }
+  .cropf{ position:relative; width:100%; aspect-ratio:4 / 5; overflow:hidden; border-radius:12px; background:#111; touch-action:none; cursor:grab; }
+  .cropf img{ position:absolute; left:0; top:0; max-width:none; transform-origin:0 0; user-select:none; -webkit-user-select:none; pointer-events:none; }
+  .cropc{ position:absolute; left:50%; top:30%; width:57.5%; aspect-ratio:1; border-radius:50%; transform:translate(-50%,-50%); border:2px solid rgba(255,255,255,.9); box-shadow:0 0 0 999px rgba(0,0,0,.35); pointer-events:none; }
+  .cropz{ width:100%; margin:12px 0 4px; accent-color:var(--accent); }
   .pclaim{ margin:28px 0 0; text-align:center; font-size:13.5px; } .pclaim a{ color:var(--dim); }
   .krow{ border-bottom:1px solid var(--line); } .krow:last-child{ border-bottom:0; }
   .krow summary{ display:flex; align-items:center; gap:10px; padding:12px 0; cursor:pointer; list-style:none; } .krow summary::-webkit-details-marker{ display:none; }
@@ -1580,6 +1591,20 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Bilden kommer från klubben eller RankedIn. Laddar du upp en egen visas den i stället, för alla i appen.":"La foto viene del club o de RankedIn. Si subes una propia, se mostrará en su lugar para todos en la app.",
+    "Din egen bild visas, med bakgrunden borttagen.":"Se muestra tu propia foto, sin fondo.",
+    "Din bild visas. Bakgrunden tas bort automatiskt inom ungefär en kvart.":"Se muestra tu foto. El fondo se quita automáticamente en unos 15 minutos.",
+    "Profilbild":"Foto de perfil",
+    "Syns för alla":"Visible para todos",
+    "Byt profilbild":"Cambiar foto",
+    "Ta bort min bild":"Quitar mi foto",
+    "Ta bort din uppladdade bild? Klubbens eller RankedIns bild visas igen.":"¿Quitar tu foto subida? Volverá la foto del club o de RankedIn.",
+    "Beskär bilden":"Recorta la foto",
+    "Dra och zooma så att ansiktet hamnar i cirkeln. Bäst blir det om bara du syns på bilden.":"Arrastra y haz zoom para que la cara quede en el círculo. Queda mejor si solo sales tú.",
+    "Zoom":"Zoom",
+    "Avbryt":"Cancelar",
+    "Du behöver vara inloggad.":"Tienes que haber entrado.",
+    "Kunde inte spara: ":"No se pudo guardar: ",
     "Välj vilken spelare du är förälder till.":"Elige de qué jugador eres padre o madre.",
     "Skriv ditt namn.":"Escribe tu nombre.",
     "Just nu väntar många ansökningar. Försök igen senare.":"Ahora hay muchas solicitudes pendientes. Inténtalo más tarde.",
@@ -5428,6 +5453,7 @@
     d.events = dropReserved(d.events);
     DISC = d;
     try { renderDataAt(); } catch (e){}
+    try { applyUp(d.up || {}); } catch (e){ warn("Egna bilder", e); }
     try { rinHeroes(); } catch (e){ warn("Profilbilder", e); }
     if (d.src === "worker"){
       var l = store.json(PUSH_CLS_KEY);
@@ -6181,6 +6207,7 @@
       '<section class="t-loc" aria-labelledby="h-bup-' + k + '" id="bup-' + k + '" hidden><div class="sh"><h2 id="h-bup-' + k + '">' + _("Kommande seriematcher") + '</h2><div class="meta">Backhandsmash</div></div><div class="ups" id="bhsUp-' + k + '"></div></section>' +
       '<section class="t-loc" aria-labelledby="h-bhs-' + k + '" id="bhs-' + k + '" hidden><div class="sh"><h2 id="h-bhs-' + k + '">' + _("Serier") + '</h2><div class="meta">Backhandsmash</div></div><div id="bhsList-' + k + '"></div></section>' +
       '<section class="t-loc" aria-labelledby="h-ax-' + k + '" id="ax-' + k + '" hidden><div class="sh"><h2 id="h-ax-' + k + '">' + _("Americano") + '</h2><div class="meta">' + _("I appen") + '</div></div><div class="card amxarch" id="axList-' + k + '"></div></section>' +
+      '<div class="pphoto" data-photo="' + P.pid + '" hidden></div>' +
       '<p class="pclaim" data-claim="' + P.pid + '"><a href="#konto/begar/' + P.pid + '">' + _("Är det du eller ditt barn? Begär konto") + '</a></p>';
   }
   // Under the card: Tävlingar & SPL (official, RankedIn) | Klubbserier (Backhandsmash). Only for players in a club series;
@@ -6336,6 +6363,30 @@
   }
   try { document.fonts.ready.then(function(){ fitNames(); }); document.fonts.addEventListener("loadingdone", function(){ fitNames(); }); } catch (e){}
   window.addEventListener("resize", function(){ clearTimeout(fitNames.t); fitNames.t = setTimeout(function(){ fitNames(); }, 150); });
+  // Own profile pictures (worker "up" {pid: {v, cut}}): the uploaded photo at once, the cut-out when the GitHub Action has
+  // made it; removed -> the club's or RankedIn's photo again. Heroes already built are redrawn.
+  var UP = {};
+  function upUrl(pid, kind, v){ return PUSH_API + "/photo/" + pid + kind + "?v=" + encodeURIComponent(v); }
+  function applyUp(up){
+    if (!PUSH_API) return;
+    UP = up || {};
+    ROSTER.forEach(function(P){
+      if (!P._orig) P._orig = {img:P.img, cut:P.cut, avatar:P.avatar, imgW:P.imgW, imgH:P.imgH};
+      var x = UP[P.pid], was = P.img + "|" + P.cut;
+      if (x && /^[a-z0-9]{4,12}$/.test(x.v)){
+        P.img = upUrl(P.pid, ".jpg", x.v); P.imgW = 800; P.imgH = 1000;
+        P.cut = x.cut ? upUrl(P.pid, "-cut.webp", x.v) : null;
+        P.avatar = x.cut ? upUrl(P.pid, "-cutav.webp", x.v) : upUrl(P.pid, "-av.jpg", x.v);
+      } else Object.keys(P._orig).forEach(function(k){ P[k] = P._orig[k]; });
+      if (was !== P.img + "|" + P.cut && PANELS[P.key]) [].forEach.call(PANELS[P.key].querySelectorAll(".hero"), function(h){
+        var box = h.querySelector(".pmed");
+        if (!box) return;
+        box.innerHTML = heroMedia(P);
+        h.classList.toggle("cut", !!P.cut); h.classList.toggle("rin", !P.cut && !P.img && !!rinPhoto(P)); h.classList.toggle("noimg", !P.cut && !P.img && !rinPhoto(P));
+      });
+    });
+    try { photoCtl(); } catch (e){}
+  }
   // New or changed RankedIn photos (applyDisc): the heroes already built get the new image (or initials); the
   // avatars follow with the next render of their list.
   function rinHeroes(){
@@ -7617,6 +7668,7 @@
   }
   function renderAcct(){
     claimSet();
+    try { photoCtl(); } catch (e){}
     var a = document.getElementById("acct");
     if (a) a.textContent = AUTH && AUTH.me ? _("Konto") + ": " + AUTH.me.name.split(" ")[0] + (AUTH.me.reqs ? " (" + AUTH.me.reqs + ")" : "") : _("Konto");
   }
@@ -7796,6 +7848,103 @@
       KONTO.inv = null; renderKonto();
     }
   }
+  /* ---- Own profile picture: on one's own player page (a parent's junior's; the admin's on anyone's). Cropped here to the
+     card's 4:5 with the face in the circle (the avatar), uploaded as JPEG; the background is removed later on GitHub. ---- */
+  function photoCan(pid){ var me = AUTH && AUTH.me; return !!me && (me.roles.indexOf("admin") >= 0 || me.pid === pid || (me.kids || []).indexOf(pid) >= 0); }
+  function photoCtl(){
+    [].forEach.call(document.querySelectorAll(".pphoto"), function(el){
+      var pid = +el.getAttribute("data-photo"), x = UP[pid], can = photoCan(pid);
+      el.hidden = !can;
+      if (!can) return;
+      var st = !x ? _("Bilden kommer från klubben eller RankedIn. Laddar du upp en egen visas den i stället, för alla i appen.")
+        : x.cut ? _("Din egen bild visas, med bakgrunden borttagen.") : _("Din bild visas. Bakgrunden tas bort automatiskt inom ungefär en kvart.");
+      el.innerHTML = '<div class="sh"><h2>' + _("Profilbild") + '</h2><div class="meta">' + _("Syns för alla") + '</div></div><div class="card ktxt"><p>' + esc(st) + '</p>' +
+        '<div class="amxbar"><label class="amxgo pfile">' + _("Byt profilbild") + '<input type="file" accept="image/*" data-photofile="' + pid + '"></label>' +
+        (x ? '<button type="button" class="amxsec del" data-photodel="' + pid + '">' + _("Ta bort min bild") + '</button>' : "") + '</div></div>';
+    });
+  }
+  document.addEventListener("change", function(e){
+    var inp = e.target && e.target.closest && e.target.closest("[data-photofile]");
+    if (!inp || !inp.files || !inp.files[0]) return;
+    var pid = +inp.getAttribute("data-photofile"), f = inp.files[0], rd = new FileReader();
+    inp.value = "";
+    rd.onload = function(){ cropOpen(pid, rd.result); };
+    rd.readAsDataURL(f);
+  });
+  document.addEventListener("click", function(e){
+    var b = e.target && e.target.closest && e.target.closest("[data-photodel]");
+    if (!b) return;
+    var pid = +b.getAttribute("data-photodel");
+    if (!confirm(_("Ta bort din uppladdade bild? Klubbens eller RankedIns bild visas igen."))) return;
+    b.disabled = true;
+    authApi("/me/photo", {pid:pid, remove:true}).then(function(r){ upSaved(r.up); }, function(er){ b.disabled = false; alert(_("Det gick inte: ") + er.message); });
+  });
+  function upSaved(up){
+    if (DISC) DISC.up = up;
+    try { var c = store.json(EV_KEY); if (c){ c.up = up; store.set(EV_KEY, JSON.stringify(c)); } } catch (e){}
+    applyUp(up);
+  }
+  function cropOpen(pid, src){
+    var box = document.createElement("div");
+    box.className = "crop"; box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true"); box.setAttribute("aria-label", _("Beskär bilden"));
+    box.innerHTML = '<div class="cropin"><h2>' + _("Beskär bilden") + '</h2><p>' + _("Dra och zooma så att ansiktet hamnar i cirkeln. Bäst blir det om bara du syns på bilden.") + '</p>' +
+      '<div class="cropf"><img alt="" draggable="false"><i class="cropc" aria-hidden="true"></i></div>' +
+      '<input type="range" class="cropz" min="1" max="4" step="0.01" value="1" aria-label="' + esc(_("Zoom")) + '">' +
+      '<p class="amxerr"></p><div class="amxbar"><button type="button" class="amxsec" data-c="no">' + _("Avbryt") + '</button><button type="button" class="amxgo" data-c="ok">' + _("Spara") + '</button></div></div>';
+    document.body.appendChild(box);
+    var fr = box.querySelector(".cropf"), im = box.querySelector("img"), zr = box.querySelector(".cropz"), err = box.querySelector(".amxerr");
+    var S = {z:1, tx:0, ty:0, s0:1, iw:0, ih:0}, pts = {}, last = null;
+    function FW(){ return fr.clientWidth; } function FH(){ return fr.clientWidth * 1.25; }
+    function clamp(){
+      var dw = S.iw * S.s0 * S.z, dh = S.ih * S.s0 * S.z;
+      S.tx = Math.min(0, Math.max(FW() - dw, S.tx)); S.ty = Math.min(0, Math.max(FH() - dh, S.ty));
+      im.style.width = dw + "px"; im.style.height = dh + "px"; im.style.transform = "translate(" + S.tx + "px," + S.ty + "px)";
+    }
+    function zoomAt(z, cx, cy){
+      z = Math.max(1, Math.min(4, z));
+      var k = z / S.z; S.tx = cx - (cx - S.tx) * k; S.ty = cy - (cy - S.ty) * k; S.z = z; zr.value = z; clamp();
+    }
+    im.onload = function(){
+      S.iw = im.naturalWidth; S.ih = im.naturalHeight; S.s0 = Math.max(FW() / S.iw, FH() / S.ih);
+      S.tx = (FW() - S.iw * S.s0) / 2; S.ty = (FH() - S.ih * S.s0) / 2.6; clamp();
+    };
+    im.src = src;
+    zr.addEventListener("input", function(){ zoomAt(+zr.value, FW() / 2, FH() * .3); });
+    fr.addEventListener("pointerdown", function(e){ fr.setPointerCapture(e.pointerId); pts[e.pointerId] = {x:e.clientX, y:e.clientY}; last = null; });
+    fr.addEventListener("pointermove", function(e){
+      var p = pts[e.pointerId];
+      if (!p) return;
+      var ids = Object.keys(pts);
+      if (ids.length === 1){ S.tx += e.clientX - p.x; S.ty += e.clientY - p.y; clamp(); }
+      pts[e.pointerId] = {x:e.clientX, y:e.clientY};
+      if (ids.length === 2){
+        var a = pts[ids[0]], b = pts[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y), r = fr.getBoundingClientRect();
+        if (last) zoomAt(S.z * d / last, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top);
+        last = d;
+      }
+    });
+    var up = function(e){ delete pts[e.pointerId]; last = null; };
+    fr.addEventListener("pointerup", up); fr.addEventListener("pointercancel", up);
+    box.addEventListener("click", function(e){
+      var b = e.target.closest("[data-c]");
+      if (!b) return;
+      if (b.getAttribute("data-c") === "no"){ box.remove(); return; }
+      var c = document.createElement("canvas"), k = 800 / FW();
+      c.width = 800; c.height = 1000;
+      var cx = c.getContext("2d");
+      cx.fillStyle = "#fff"; cx.fillRect(0, 0, 800, 1000);
+      cx.drawImage(im, S.tx * k, S.ty * k, S.iw * S.s0 * S.z * k, S.ih * S.s0 * S.z * k);
+      var jpg = c.toDataURL("image/jpeg", .86);
+      if (jpg.length > 500000) jpg = c.toDataURL("image/jpeg", .74);
+      var a = document.createElement("canvas");
+      a.width = a.height = 150;
+      a.getContext("2d").drawImage(c, 170, 70, 460, 460, 0, 0, 150, 150);   // the circle
+      b.disabled = true; err.textContent = "";
+      authApi("/me/photo", {pid:pid, jpg:jpg.split(",")[1], av:a.toDataURL("image/jpeg", .85).split(",")[1]}).then(function(r){
+        box.remove(); upSaved(r.up);
+      }, function(er){ b.disabled = false; err.textContent = er.status === 401 ? _("Du behöver vara inloggad.") : _("Kunde inte spara: ") + er.message; });
+    });
+  }
   function parseHash(h){
     h = String(h || "");
     if (!h || h === "#" || h === "#/") return {view:"home"};
@@ -7876,7 +8025,7 @@
     clearTimeout(focusTimer);
     if (x.view === "player"){
       openPlayer(x.P);
-      claimSet();
+      claimSet(); photoCtl();
       showView("p-" + x.who);
       setTimeout(function(){ try { fillSummaries(x.who); } catch (e){} }, 0);
       VIEW = {name:"player", who:x.who};

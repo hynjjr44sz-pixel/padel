@@ -1,0 +1,70 @@
+# Uploaded profile pictures -> cut-outs without background, every 10 minutes: the worker's GET /photos/pending,
+# worker/photo-cut.py (rembg), committed to the branch "photos" as <pid>-<v>.webp and <pid>-<v>-av.webp (only those
+# files; the app's branches are untouched). The worker's cron sees them there and the app switches to the cut-out.
+# Nothing pending: the run stops after one request.
+name: Profilbilder
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: photos
+jobs:
+  cut:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Anything to do?
+        id: q
+        run: |
+          curl -fsS https://padel-push.holmberg-padel.workers.dev/photos/pending > "$RUNNER_TEMP/pending.json"
+          echo "n=$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["pending"]))' "$RUNNER_TEMP/pending.json")" >> "$GITHUB_OUTPUT"
+      - if: steps.q.outputs.n != '0'
+        uses: actions/checkout@v4
+      - if: steps.q.outputs.n != '0'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: worker/photo-requirements.txt
+      - if: steps.q.outputs.n != '0'
+        uses: actions/cache@v4
+        with:
+          path: ~/.u2net
+          key: rembg-isnet-general-use
+      - if: steps.q.outputs.n != '0'
+        run: pip install -r worker/photo-requirements.txt
+      - if: steps.q.outputs.n != '0'
+        name: Cut out
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          python worker/photo-cut.py "$RUNNER_TEMP/pending.json" "$RUNNER_TEMP/out"
+      - if: steps.q.outputs.n != '0'
+        name: Commit to photos
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin photos >/dev/null; then
+            git fetch --depth 1 origin photos
+            git switch -C photos FETCH_HEAD
+          else
+            git switch --orphan photos
+            git rm -rfq --cached . >/dev/null 2>&1 || true
+          fi
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} + 2>/dev/null || true
+          git checkout HEAD -- . 2>/dev/null || true
+          cp "$RUNNER_TEMP"/out/*.webp . 2>/dev/null || true
+          # only the current version of each player's picture stays
+          python3 - "$RUNNER_TEMP/pending.json" <<'PY'
+          import json, os, re, sys
+          cur = json.load(open(sys.argv[1]))["current"]
+          for f in os.listdir("."):
+              m = re.match(r"^(\d+)-([a-z0-9]+)(-av)?\.webp$", f)
+              if m and cur.get(m.group(1)) != m.group(2):
+                  os.remove(f)
+          PY
+          git add -A .
+          if git diff --cached --quiet; then echo "unchanged"; exit 0; fi
+          git commit -qm "Profilbilder: $(ls "$RUNNER_TEMP"/out | tr '\n' ' ')"
+          git push origin photos

@@ -145,7 +145,7 @@ async function newPage(opts = {}) {
       return r.fulfill({ status: opts.liveStatus || 200, contentType: "application/json", body: opts.liveStatus ? "{}" : opts.live, headers: h });
     }
     if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
-    if (/^\/(amx|auth|admin)/.test(u.pathname)) {   // the real worker code, its own KV and database
+    if (/^\/(amx|auth|admin|me\/|photo\/)/.test(u.pathname)) {   // the real worker code, its own KV and database
       const q = r.request(), au = q.headers()["authorization"];
       return worker.fetch(new Request("https://w" + u.pathname, { method: q.method(), headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", ...(au ? { Authorization: au } : {}) }, body: q.method() === "POST" ? q.postData() : undefined }), AMX_ENV)
         .then(async x => r.fulfill({ status: x.status, contentType: "application/json", body: await x.text(), headers: h }));
@@ -284,6 +284,23 @@ try {
     const k2 = await page.evaluate(() => [document.getElementById("kLink")?.value, document.querySelector("#konto .klist")?.textContent.replace(/\s+/g, " ")]);
     const used = await (await worker.fetch(new Request("https://w/auth/redeem", { method: "POST", headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json" }, body: JSON.stringify({ code: boot.code }) }), AMX_ENV)).status;
     ok("Konto: the admin invites Thea as arrangör (a one-time link), the admin's own link is used up", /#in\/[a-z2-9]{20}$/.test(k2[0] || "") && /Thea Holmberg LövingArrangör · Inbjudan gäller till/.test(k2[1] || "") && used === 410, { k2, used });
+  }
+  { // Profilbild: the admin (logged in above) on Thea's page: upload, crop, shown on the card at once; removed again
+    await page.goto(url("#thea"));
+    await page.waitForSelector('#p-thea .pphoto:not([hidden]) [data-photofile]', { timeout: 8000 }).catch(() => {});
+    await page.setInputFiles('#p-thea [data-photofile]', "img/thea.jpg");
+    await page.waitForSelector(".crop .cropf img", { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(300);
+    await page.click('.crop [data-c="ok"]');
+    await page.waitForFunction(() => /\/photo\/1675246\.jpg\?v=/.test(document.querySelector("#p-thea .hero .pmed img")?.getAttribute("src") || ""), null, { timeout: 8000 }).catch(() => {});
+    const ph = await page.evaluate(() => [document.querySelector("#p-thea .hero .pmed img")?.getAttribute("src"), !!document.querySelector(".crop"), document.querySelector("#p-thea .pphoto p")?.textContent, document.querySelector("#p-thea .hero").classList.contains("cut")]);
+    const stored = JSON.parse(AMX_KV.get("photo:1675246") || "null");
+    ok("Profilbild: cropped on the phone, uploaded (800x1000 + avatar), on the card at once, the cut-out pending", /\/photo\/1675246\.jpg\?v=/.test(ph[0] || "") && !ph[1] && /Bakgrunden tas bort/.test(ph[2] || "") && !ph[3] && stored && stored.jpg.startsWith("/9j/") && stored.av.startsWith("/9j/"), { ph, stored: !!stored });
+    page.once("dialog", d => d.accept());
+    await page.click('#p-thea [data-photodel]');
+    await page.waitForFunction(() => !/\/photo\//.test(document.querySelector("#p-thea .hero .pmed img")?.getAttribute("src") || ""), null, { timeout: 8000 }).catch(() => {});
+    const back = await page.evaluate(() => document.querySelector("#p-thea .hero .pmed img")?.getAttribute("src"));
+    ok("Profilbild: removed -> the club's photo again", /img\/cut\/thea/.test(back || ""), back);
   }
   { // Americano: set up with a club player and guests, a result (the other side filled in), a new round, the table
     await page.goto(url("#amx/ny"));

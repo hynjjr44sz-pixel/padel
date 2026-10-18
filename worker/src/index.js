@@ -6,6 +6,7 @@ import { buildIcs } from "./ics.js";
 import { weekDigest, weekNote } from "./week.js";
 import { remindNotes } from "./remind.js";
 import { soonNotes } from "./soon.js";
+import { photoIndex, photoSet, photoGet, photosPending, photosCheck } from "./photos.js";
 import { authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
 import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, amxAll, publicOf } from "./amx.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
@@ -176,7 +177,7 @@ async function handle(req, env) {
     const withTv = e => { const c = eventClub(e); return c ? { ...e, tv: c.id } : e; };
     const week = weekDigest({ wins: await loadWins(env), board: (rec && rec.board) || {}, bhs, events, players: WEEK_PLAYERS }, t, offsetAt(+t));
     return json({ at: rec ? rec.at : null, checked: checkedAt(rec, t), src: "worker", week, events: events.map(withTv), past: past.map(withTv), tv: tv ? tv.clubs : {}, tvs: tvs || {}, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {}, bhs: bhs ? { at: bhs.at, groups: bhs.groups, hist: bhs.hist ? { at: bhs.hist.at, members: bhs.hist.members, rank: bhs.hist.rank, sw: bhs.hist.sw || [] } : null } : null,
-      board: (rec && rec.board) || {} }, 200, { ...h, "Cache-Control": "public, max-age=120" });
+      board: (rec && rec.board) || {}, up: await photoIndex(env) }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
   if (route === "GET /live") return liveRoute(req, env, url, h);
   // Svenska Padelförbundets regler (rules.json, built every Sunday by .github/workflows/rules.yml): passed through,
@@ -237,6 +238,25 @@ async function handle(req, env) {
     return me ? json({ me }, 200, { ...h, "Cache-Control": "no-store" }) : json({ error: "login" }, 401, h);
   }
   if (route === "POST /auth/logout") return json(await logout(env, req), 200, h);
+  // Own profile pictures (photos.js): upload or remove (logged in: own, a parent's junior, admin), the images, the Action's list
+  if (route === "POST /me/photo") {
+    const me = await authUser(env, req, +now(env));
+    if (!me) return json({ error: "login" }, 401, h);
+    let b;
+    try { b = await readBody(req, 600000); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    const r = await photoSet(env, me, b, BY_PID, +now(env));
+    return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
+  }
+  const ph = /^\/photo\/(\d{1,10})(-av|-cut|-cutav)?\.(jpg|webp)$/.exec(url.pathname);
+  if (ph && req.method === "GET") {
+    const kind = (ph[2] || "").slice(1) || "jpg";
+    if ((ph[3] === "webp") !== kind.startsWith("cut")) return json({ error: "not found" }, 404, h);
+    const r = await photoGet(env, ph[1], kind, url.searchParams.get("v"));
+    if (!r) return json({ error: "not found" }, 404, h);
+    for (const [k, v] of Object.entries(h)) r.headers.set(k, v);
+    return r;
+  }
+  if (route === "GET /photos/pending") return json(await photosPending(env), 200, { ...h, "Cache-Control": "no-store" });
   // "Begär konto": the request (shows a code), the waiting phone's poll (collects the login once approved), cancel
   if (route === "POST /auth/request" || route === "POST /auth/request/poll" || route === "POST /auth/request/cancel") {
     let b;
@@ -990,6 +1010,8 @@ export async function tick(env, events) {
       }
     } catch (e) { console.warn("veckan", e.message); }
   }
+  // Own profile pictures: a cut-out the GitHub Action has committed (every 5 min, minute 4, 9, ...)
+  if (!events && env.PHOTO_OFF !== "1" && mm % 5 === 4) try { await photosCheck(env, budget); } catch (e) { console.warn("photos", e.message); }   // PHOTO_OFF: local tests only
   // Americano / Mexicano: notiser queued by the organiser's phone (amx.js), sent with this tick's
   if (!events && env.AMX_OFF !== "1") try { pubMsgs.push(...await amxPending(env)); } catch (e) { console.warn("americano", e.message); }   // AMX_OFF: local tests only
   // Snart match: every 5 min (minute 1, 6, ...) while something is on, a quarter of an hour before a club pair's match
