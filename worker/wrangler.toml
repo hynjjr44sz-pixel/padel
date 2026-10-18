@@ -8,6 +8,12 @@ workers_dev = true
 binding = "PUSH"
 id = "eedc18b48ae24d419ec6826a87069430"
 
+# Club accounts (src/auth.js, schema.sql); deploy.sh creates the database and fills in the id
+[[d1_databases]]
+binding = "DB"
+database_name = "padel"
+database_id = "00000000-0000-0000-0000-000000000000"
+
 [triggers]
 crons = ["* * * * *"]
 

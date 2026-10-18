@@ -4,10 +4,12 @@ import worker, { _resetMemory } from "../src/index.js";
 import { standings } from "../src/amx.js";
 function kv() { const m = new Map(); return { m, get: async k => m.has(k) ? m.get(k) : null, put: async (k, v) => { m.set(k, v); }, delete: async k => { m.delete(k); }, list: async () => ({ keys: [], list_complete: true }) }; }
 const ORIGIN = "https://padel.holmberg.st";
-const call = (env, method, path, body) => worker.fetch(new Request("https://w" + path, { method, headers: { Origin: ORIGIN, "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined }), env);
+import { fakeD1, arrHeader } from "./d1.mjs";
+// starting an americano takes a logged-in arrangör
+const call = async (env, method, path, body) => worker.fetch(new Request("https://w" + path, { method, headers: { Origin: ORIGIN, "Content-Type": "application/json", ...(method === "POST" && path === "/amx" ? await arrHeader(env.DB) : {}) }, body: body ? JSON.stringify(body) : undefined }), env);
 test("americano: create with club players and guests, score with the key, standings, notiser queued", async () => {
   _resetMemory();
-  const env = { PUSH: kv(), NOW: "2026-10-18T10:00:00Z", ORIGIN };
+  const env = { PUSH: kv(), DB: fakeD1(), NOW: "2026-10-18T10:00:00Z", ORIGIN };
   const round = [{ a: [0, 1], b: [2, 3] }, { a: [4, 5], b: [6, 7] }];
   const players = [{ pid: 1675246 }, { pid: 1680004 }, { n: "Gäst Ett" }, { n: "Gäst Två" }, { n: "A B" }, { n: "C D" }, { n: "E F" }, { n: "G H" }];
   let r = await call(env, "POST", "/amx", { name: "Söndagsamericano", fmt: "americano", pts: 24, courts: 2, players, round });
@@ -35,7 +37,7 @@ test("americano: create with club players and guests, score with the key, standi
 });
 test("lagamericano: fixed pairs, games to 4, guests' pictures, won matches first", async () => {
   _resetMemory();
-  const env = { PUSH: kv(), NOW: "2026-10-18T10:00:00Z", ORIGIN };
+  const env = { PUSH: kv(), DB: fakeD1(), NOW: "2026-10-18T10:00:00Z", ORIGIN };
   const img = "data:image/jpeg;base64,/9j/4AAQSkZJRg==";
   const players = [{ n: "A A", img }, { n: "B B", fig: 42 }, { n: "C C", img: "javascript:alert(1)" }, { n: "D D" }, { n: "E E" }, { n: "F F" }];
   const teams = [[0, 1], [2, 3], [4, 5]];
@@ -55,7 +57,7 @@ test("lagamericano: fixed pairs, games to 4, guests' pictures, won matches first
 });
 test("arkiv: ended -> kept for good and on the club players' archive; reopened -> off it; deleted -> gone everywhere", async () => {
   _resetMemory();
-  const env = { PUSH: kv(), NOW: "2026-10-18T10:00:00Z", ORIGIN };
+  const env = { PUSH: kv(), DB: fakeD1(), NOW: "2026-10-18T10:00:00Z", ORIGIN };
   const puts = []; const put = env.PUSH.put; env.PUSH.put = async (k, v, o) => { puts.push([k, o]); return put(k, v, o); };
   const players = [{ pid: 1675246 }, { n: "B B" }, { n: "C C" }, { n: "D D" }];
   let r = await call(env, "POST", "/amx", { name: "Arkiv", fmt: "americano", pts: 16, courts: 1, players, round: [{ a: [0, 1], b: [2, 3] }] });

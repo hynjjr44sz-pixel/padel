@@ -6,6 +6,7 @@ import { buildIcs } from "./ics.js";
 import { weekDigest, weekNote } from "./week.js";
 import { remindNotes } from "./remind.js";
 import { soonNotes } from "./soon.js";
+import { authUser, can, redeem, logout, adminUsers, adminOp } from "./auth.js";
 import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, publicOf } from "./amx.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
@@ -25,7 +26,7 @@ function cors(req, env) {
   const o = req.headers.get("Origin") || "";
   const ok = o === env.ORIGIN || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o);
   return ok ? { "Access-Control-Allow-Origin": o, "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-Stats-Key", "Access-Control-Max-Age": "86400", "Vary": "Origin" } : { "Vary": "Origin" };
+    "Access-Control-Allow-Headers": "Content-Type, X-Stats-Key, Authorization", "Access-Control-Max-Age": "86400", "Vary": "Origin" } : { "Vary": "Origin" };
 }
 const json = (data, status, h) => new Response(JSON.stringify(data), { status: status || 200, headers: { "Content-Type": "application/json", ...h } });
 async function subKey(endpoint) {
@@ -147,7 +148,7 @@ async function handle(req, env) {
   // the per-IP rate limits and the cap on subscriptions are what keep KV (1000 writes, 100k reads a day) safe.
   if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
   // americano results come several a minute from one phone: the API limit, not the subscribe one
-  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
+  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
   const route = req.method + " " + url.pathname;
   if (route === "GET /health") {
     const rec = await loadRecord(env);
@@ -215,10 +216,36 @@ async function handle(req, env) {
     return t ? json(publicOf(t), 200, { ...h, "Cache-Control": "no-store" }) : json({ error: "not found" }, 404, h);
   }
   if (route === "POST /amx" || (am && req.method === "POST")) {
+    // starting one takes a login with the role arrangör (or admin); running it takes the americano's own key
+    const me = am ? null : await authUser(env, req, +now(env));
+    if (!am && !can(me, "arr")) return json({ error: me ? "role" : "login" }, me ? 403 : 401, h);
     let b;
     try { b = await readBody(req, 800000); } catch (e) { return json({ error: "bad json" }, 400, h); }   // guests' photos (about 10 kB each)
-    const r = am ? await amxUpdate(env, am[1], b, +now(env)) : await amxCreate(env, b, BY_PID, +now(env));
+    const r = am ? await amxUpdate(env, am[1], b, +now(env)) : await amxCreate(env, b, BY_PID, +now(env), me);
     return r.err ? json({ error: r.err }, r.status || 400, h) : json(r, 200, h);
+  }
+  // Club accounts (auth.js): the invite link, who am I, log out; the admin's list and changes
+  if (route === "POST /auth/redeem") {
+    let b;
+    try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    const r = await redeem(env, b, +now(env));
+    return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
+  }
+  if (route === "GET /auth/me") {
+    const me = await authUser(env, req, +now(env));
+    return me ? json({ me }, 200, { ...h, "Cache-Control": "no-store" }) : json({ error: "login" }, 401, h);
+  }
+  if (route === "POST /auth/logout") return json(await logout(env, req), 200, h);
+  if (route === "GET /admin" || route === "POST /admin") {
+    if (!env.DB) return json({ error: "no database" }, 503, h);
+    // the admin role, or the ADMIN_KEY secret (from the command line: the first admin's invite)
+    const key = !!env.ADMIN_KEY && sameSecret(req.headers.get("X-Admin-Key"), env.ADMIN_KEY), me = key ? null : await authUser(env, req, +now(env));
+    if (!key && !can(me, "admin")) return json({ error: "forbidden" }, 403, h);
+    if (req.method === "GET") return json(await adminUsers(env, +now(env)), 200, { ...h, "Cache-Control": "no-store" });
+    let b;
+    try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    const r = await adminOp(env, me, b, +now(env), BY_PID);
+    return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
   if (route === "POST /subscribe") {
     let b;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-rZOOEjw+dBIS5T/mfbOhWOo2xKT2lAXNpZoNQGEEHyA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-KNJLe98M5lREBxiWXwne1LLd4PGkyC1wYNJtNdUXaow='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -147,6 +147,25 @@
   .amxnew span{ grid-column:1; font-size:13px; line-height:1.4; opacity:.85; }
   .amxnew i{ grid-row:1 / 3; grid-column:2; font-style:normal; font-size:24px; }
   .amxrow{ display:grid; grid-template-columns:auto 1fr; gap:2px 10px; align-items:center; margin-top:8px; padding:11px 14px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:inherit; text-decoration:none; }
+  .amxlock{ display:block; padding:14px 16px; border-radius:16px; border:1px dashed var(--line); color:inherit; text-decoration:none; }
+  .amxlock b{ display:block; font-size:15px; } .amxlock span{ display:block; margin-top:3px; font-size:13px; line-height:1.4; color:var(--dim); }
+  /* ---------- Konto ---------- */
+  .kmsg{ margin:12px 0 0; padding:12px 14px; border-radius:14px; background:var(--accent-soft); font-size:14.5px; line-height:1.4; }
+  .ktxt{ margin-top:12px; } .ktxt p{ margin:0 0 10px; font-size:14.5px; line-height:1.5; } .ktxt a{ color:var(--accent); }
+  .ktxt .amxsec{ display:inline-flex; align-items:center; text-decoration:none; }
+  .kchk{ display:flex; align-items:center; gap:10px; min-height:40px; font-size:14.5px; } .kchk input, .amxf .kchk input{ flex:none; width:20px; height:20px; margin:0; padding:0; accent-color:var(--accent); }
+  #konto .sh{ margin-top:28px; }
+  #kPid{ width:100%; height:44px; padding:0 10px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:500 16px/1 "Instrument Sans", sans-serif; }
+  .kinv{ margin-top:12px; border-color:var(--accent); } .kinv p{ margin:0 0 8px; font-size:14.5px; }
+  .kinv input{ width:100%; height:42px; padding:0 10px; border-radius:10px; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); font:500 13px/1 "Chivo Mono", monospace; }
+  .kdim{ margin-top:8px !important; font-size:12.5px !important; color:var(--dim); line-height:1.4; }
+  .klist{ padding:0 16px; }
+  .krow{ border-bottom:1px solid var(--line); } .krow:last-child{ border-bottom:0; }
+  .krow summary{ display:flex; align-items:center; gap:10px; padding:12px 0; cursor:pointer; list-style:none; } .krow summary::-webkit-details-marker{ display:none; }
+  .kn{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; } .kn b{ font-size:15px; } .kn small{ font:500 11px/1.3 "Chivo Mono", monospace; color:var(--dim); }
+  .krow summary i{ width:8px; height:8px; border-right:2px solid var(--dim); border-bottom:2px solid var(--dim); transform:rotate(45deg); transition:transform .2s; }
+  .krow[open] summary i{ transform:rotate(-135deg); }
+  .kact{ padding:0 0 12px; } .kact .amxbar{ margin-top:8px; }
   .amxrow.mine{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }
   .amxrow .pb{ grid-row:span 2; }
   .amxrow b{ font-size:15px; } .amxrow small{ font:500 11px/1.3 "Chivo Mono", monospace; color:var(--dim); }
@@ -1510,10 +1529,11 @@
   <main class="view" id="tour" tabindex="-1" hidden></main>
   <main class="view" id="rules" tabindex="-1" hidden></main>
   <main class="view" id="amx" tabindex="-1" hidden></main>
+  <main class="view" id="konto" tabindex="-1" hidden></main>
 
   <footer>
     <b>Nynäs Padel Club</b>
-    <span>Data: RankedIn / Svenska Padelförbundet · <a href="integritet.html" id="privacy" style="color:inherit" data-i18n>Integritet &amp; kontakt</a><span id="dataAt"></span></span>
+    <span>Data: RankedIn / Svenska Padelförbundet · <a href="integritet.html" id="privacy" style="color:inherit" data-i18n>Integritet &amp; kontakt</a> · <a href="#konto" id="acct" style="color:inherit">Konto</a><span id="dataAt"></span></span>
   </footer>
 </div>
 
@@ -1545,6 +1565,60 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    " enheter":" dispositivos",
+    "Admin":"Admin",
+    "Admin, får hantera konton":"Admin, gestiona cuentas",
+    "Aktivera":"Activar",
+    "Americano, Mexicano och Lagamericano":"Americano, Mexicano y Americano por parejas",
+    "Americanos startas av klubbens arrangörer.":"Los americanos los inician los organizadores del club.",
+    "Appen går att använda utan konto. Ett konto behövs bara för att starta americanos och för det som kommer, som egna inställningar.":"La app se usa sin cuenta. Solo hace falta una cuenta para iniciar americanos y para lo que vendrá, como ajustes propios.",
+    "Arrangör":"Organizador",
+    "Arrangör, får starta americanos":"Organizador, puede iniciar americanos",
+    "Avstängd":"Desactivada",
+    "Dator":"Ordenador",
+    "Den spelaren har redan ett konto.":"Ese jugador ya tiene una cuenta.",
+    "Det gick inte: ":"No se pudo: ",
+    "Din inloggning till Nynäs Padel. Öppna länken på din telefon.":"Tu acceso a Nynäs Padel. Abre el enlace en tu móvil.",
+    "Din spelarsida":"Tu página de jugador",
+    "Ditt konto har inte rollen arrangör. Be klubben om behörighet.":"Tu cuenta no tiene el rol de organizador. Pide permiso al club.",
+    "Du behöver vara inloggad som arrangör. Se Konto.":"Necesitas entrar como organizador. Ver Cuenta.",
+    "Du kan inte låsa ute dig själv.":"No puedes dejarte fuera a ti mismo.",
+    "Eller namn":"O nombre",
+    "Hämtar…":"Cargando…",
+    "Inbjudan gäller till ":"Invitación válida hasta ",
+    "Inbjudan till {n}":"Invitación para {n}",
+    "Ingen, skriv namn nedan":"Ninguno, escribe el nombre abajo",
+    "Inloggad":"Conectado",
+    "Inte inloggad":"Sin conectar",
+    "Klubbspelare":"Jugador del club",
+    "Konto":"Cuenta",
+    "Konton":"Cuentas",
+    "Konton delas ut av klubben. Du får en personlig länk. Öppna den på din telefon så är den inloggad, inget lösenord behövs.":"Las cuentas las da el club. Recibes un enlace personal. Ábrelo en tu móvil y quedará conectado, sin contraseña.",
+    "Kopiera":"Copiar",
+    "Kopierad":"Copiado",
+    "Kunde inte hämta kontona: ":"No se pudieron cargar las cuentas: ",
+    "Kunde inte logga in. Försök igen.":"No se pudo entrar. Inténtalo de nuevo.",
+    "Logga in med din personliga länk från klubben. Har du ingen, be klubben om en.":"Entra con tu enlace personal del club. Si no tienes uno, pídelo al club.",
+    "Logga ut den här telefonen":"Cerrar sesión en este móvil",
+    "Logga ut den här telefonen?":"¿Cerrar sesión en este móvil?",
+    "Logga ut {n} på alla telefoner?":"¿Cerrar la sesión de {n} en todos los móviles?",
+    "Logga ut överallt":"Cerrar sesión en todos",
+    "Loggar in…":"Entrando…",
+    "Länken är redan använd eller för gammal. Be om en ny.":"El enlace ya se usó o caducó. Pide uno nuevo.",
+    "Ny inloggningslänk":"Nuevo enlace de acceso",
+    "Roll":"Rol",
+    "Roll: ":"Rol: ",
+    "Skapa inbjudan":"Crear invitación",
+    "Skicka länken bara till personen själv. Den fungerar en gång och gäller i 7 dagar. Sedan syns den inte igen.":"Envía el enlace solo a esa persona. Funciona una vez y vale 7 días. Después no se vuelve a mostrar.",
+    "Startas av klubbens arrangörer. Vill du arrangera? Be klubben om behörighet.":"Los inician los organizadores del club. ¿Quieres organizar? Pide permiso al club.",
+    "Stäng av":"Desactivar",
+    "Ta bort kontot för {n}?":"¿Eliminar la cuenta de {n}?",
+    "Till exempel en förälder eller tränare":"Por ejemplo un padre o un entrenador",
+    "Välj en spelare eller skriv ett namn.":"Elige un jugador o escribe un nombre.",
+    "Välkommen, {n}! Den här telefonen är nu inloggad.":"¡Bienvenido, {n}! Este móvil ya está conectado.",
+    "du kan starta americanos":"puedes iniciar americanos",
+    "senast ":"último ",
+    "{n} är redan inloggad. Skapa en ny länk ändå, till exempel för en ny telefon?":"{n} ya está conectado. ¿Crear un enlace nuevo, por ejemplo para un móvil nuevo?",
     "sedan ":"desde ",
     "topp 3: ":"top 3: ",
     "av {n} i snitt":"de {n} de media",
@@ -6899,7 +6973,7 @@
   function amxKey(id){ return amxKeys()[id] || null; }
   function amxSetKey(id, key){ var k = amxKeys(); k[id] = key; Object.keys(k).slice(0, -20).forEach(function(x){ delete k[x]; }); store.set(AMX_KEYS, JSON.stringify(k)); }
   function amxApi(path, body){
-    return withTimeout(fetch(PUSH_API + path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), credentials:"omit"} : {credentials:"omit", cache:"no-store"})
+    return withTimeout(fetch(PUSH_API + path, body ? {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, path === "/amx" ? authHdr() : {}), body:JSON.stringify(body), credentials:"omit"} : {credentials:"omit", cache:"no-store"})
       .then(function(r){ return r.json().then(function(d){ if (!r.ok) throw new Error(d && d.error || "HTTP " + r.status); return d; }); }), 15000);
   }
   function shuffle(a){ a = a.slice(); for (var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
@@ -7089,7 +7163,9 @@
     // the list knows whether one is ended; "Mina" takes that from it when it is there
     var pub = AMX.list || [], st = {}; pub.forEach(function(x){ st[x.id] = x; });
     var others = pub.filter(function(x){ return ids.indexOf(x.id) < 0; }).slice(0, 6);
-    host.innerHTML = '<a class="amxnew" href="#amx/ny"><b>' + _("Starta en americano") + '</b><span>' + _("Americano, Mexicano eller Lagamericano med klubbens spelare och gäster. Resultat och tabell i appen.") + '</span><i aria-hidden="true">→</i></a>' +
+    // starting one takes the role arrangör (given by the admin under Konto)
+    host.innerHTML = (authCan("arr") ? '<a class="amxnew" href="#amx/ny"><b>' + _("Starta en americano") + '</b><span>' + _("Americano, Mexicano eller Lagamericano med klubbens spelare och gäster. Resultat och tabell i appen.") + '</span><i aria-hidden="true">→</i></a>'
+      : '<a class="amxlock" href="#konto"><b>' + _("Americano, Mexicano och Lagamericano") + '</b><span>' + _("Startas av klubbens arrangörer. Vill du arrangera? Be klubben om behörighet.") + '</span></a>') +
       (mine.length ? '<div class="amxh">' + _("Mina") + '</div>' + mine.slice(0, 8).map(function(x){ return row(st[x.id] ? Object.assign({}, x, {done:st[x.id].done, pids:st[x.id].pids}) : x, true); }).join("") : "") +
       (others.length ? '<div class="amxh">' + _("Senaste veckan") + '</div>' + others.map(function(x){ return row(x, false); }).join("") : "");
   }
@@ -7098,6 +7174,11 @@
   function renderAmxNew(){
     var box = document.getElementById("amx");
     if (!box) return;
+    if (!authCan("arr")){
+      box.innerHTML = '<div class="phead"><div class="pt"><h1>' + _("Ny americano") + '</h1></div></div><div class="card ktxt"><p>' + _("Americanos startas av klubbens arrangörer.") + '</p><p>' +
+        (AUTH ? _("Ditt konto har inte rollen arrangör. Be klubben om behörighet.") : _("Logga in med din personliga länk från klubben. Har du ingen, be klubben om en.")) + '</p><a class="amxsec" href="#konto">' + _("Konto") + '</a></div>';
+      return;
+    }
     var d = AMX.draft = AMX.draft || {name:"", fmt:"americano", mode:"pts", pts:24, courts:2, players:[]};
     var team = d.fmt === "lag", maxC = Math.max(1, Math.floor(d.players.length / 4)), useC = Math.min(d.courts, maxC);   // the choice stays as more players come
     var chip = function(k, v, lab, on){ return '<button type="button" data-set="' + k + '" data-v="' + esc(v) + '" aria-pressed="' + (on ? "true" : "false") + '">' + esc(lab) + '</button>'; };
@@ -7167,7 +7248,7 @@
           players:d.players.map(function(p){ return p.pid ? {pid:p.pid} : {n:p.n, img:p.img, fig:p.fig}; })}).then(function(r){
           AMX.busy = false; amxSetKey(r.id, r.key); amxRemember(r.t); AMX.draft = null; AMX.list = null; AMX.t = r.t; AMX.id = r.id; AMX.tab = "m";
           location.hash = "#amx/" + r.id;
-        }, function(er){ AMX.busy = false; b.disabled = false; document.getElementById("amxErr").textContent = _("Kunde inte starta: ") + er.message; });
+        }, function(er){ AMX.busy = false; b.disabled = false; document.getElementById("amxErr").textContent = er.message === "login" || er.message === "role" ? _("Du behöver vara inloggad som arrangör. Se Konto.") : _("Kunde inte starta: ") + er.message; });
       }
     };
   }
@@ -7386,6 +7467,148 @@
 
   /* ================= routing: #/ home, #<player>(/m<match>), #lag/<team> ================= */
   var VIEW = {name:null, who:null};
+  /* ---- Konto: no passwords. The admin makes a person and gets a personal one-time link (#in/<code>, 7 days); opened on
+     the phone it logs that phone in (a token here, only its hash at the worker). Roles: admin, arr (arrangör: starts
+     americanos). Without a login everything is read-only as before. ---- */
+  var AUTH_KEY = "padel.auth.v1", AUTH = store.json(AUTH_KEY), KONTO = {msg:"", adm:null, inv:null};
+  function authSave(a){ AUTH = a; store.set(AUTH_KEY, a ? JSON.stringify(a) : "null"); renderAcct(); }
+  function authCan(role){ var r = (AUTH && AUTH.me && AUTH.me.roles) || []; return r.indexOf("admin") >= 0 || r.indexOf(role) >= 0; }
+  function authHdr(){ return AUTH && AUTH.token ? {Authorization:"Bearer " + AUTH.token} : {}; }
+  function authApi(path, body){
+    var hd = authHdr();
+    if (body) hd["Content-Type"] = "application/json";
+    return withTimeout(fetch(PUSH_API + path, body ? {method:"POST", headers:hd, body:JSON.stringify(body), credentials:"omit"} : {headers:hd, credentials:"omit", cache:"no-store"})
+      .then(function(r){ return r.json().then(function(d){
+        if (r.status === 401 && AUTH && path !== "/auth/redeem") authSave(null);   // logged out by the admin
+        if (!r.ok){ var e = new Error(d && d.error || "HTTP " + r.status); e.status = r.status; throw e; }
+        return d; }); }), 15000);
+  }
+  // who am I (roles may have changed): at most every 6 hours
+  function authCheck(force){
+    if (!AUTH || !PUSH_API || (!force && Date.now() - (AUTH.at || 0) < 6 * 3600e3)) return;
+    authApi("/auth/me").then(function(d){ AUTH.me = d.me; AUTH.at = Date.now(); authSave(AUTH); try { renderAmxHome(); } catch (e){} }, function(){});
+  }
+  function devLabel(){ var u = navigator.userAgent || ""; return /iPhone/.test(u) ? "iPhone" : /iPad/.test(u) ? "iPad" : /Android/.test(u) ? "Android" : /Mac/.test(u) ? "Mac" : /Windows/.test(u) ? "Windows" : _("Dator"); }
+  function authRedeem(code){
+    KONTO.msg = _("Loggar in…"); renderKonto();
+    authApi("/auth/redeem", {code:code, label:devLabel()}).then(function(d){
+      authSave({token:d.token, me:d.me, at:Date.now()});
+      KONTO.msg = _("Välkommen, {n}! Den här telefonen är nu inloggad.", {n:d.me.name.split(" ")[0]});
+      AMX.list = null; renderKonto();
+    }, function(e){
+      KONTO.msg = e.status === 410 ? _("Länken är redan använd eller för gammal. Be om en ny.") : _("Kunde inte logga in. Försök igen.");
+      renderKonto();
+    });
+  }
+  function renderAcct(){
+    var a = document.getElementById("acct");
+    if (a) a.textContent = AUTH && AUTH.me ? _("Konto") + ": " + AUTH.me.name.split(" ")[0] : _("Konto");
+  }
+  var ROLE_TXT = {admin:"Admin", arr:"Arrangör"};
+  function roleText(r){ return r.length ? r.map(function(x){ return _(ROLE_TXT[x] || x); }).join(", ") : _("Spelare"); }
+  function renderKonto(){
+    var box = document.getElementById("konto");
+    if (!box) return;
+    var me = AUTH && AUTH.me, h = '<div class="phead"><div class="pt"><h1>' + _("Konto") + '</h1><div class="pm">' + esc(me ? me.name : _("Inte inloggad")) + '</div></div></div>';
+    if (KONTO.msg) h += '<p class="kmsg" role="status">' + esc(KONTO.msg) + '</p>';
+    if (!me){
+      h += '<div class="card ktxt"><p>' + _("Appen går att använda utan konto. Ett konto behövs bara för att starta americanos och för det som kommer, som egna inställningar.") + '</p><p>' +
+        _("Konton delas ut av klubben. Du får en personlig länk. Öppna den på din telefon så är den inloggad, inget lösenord behövs.") + '</p></div>';
+    } else {
+      var P = me.pid && BYPID[me.pid];
+      h += '<div class="card ktxt"><p><b>' + esc(me.name) + '</b>' + (P ? ' · <a href="#' + esc(P.key) + '">' + _("Din spelarsida") + '</a>' : "") + '</p>' +
+        '<p>' + _("Roll: ") + esc(roleText(me.roles)) + (authCan("arr") ? " · " + _("du kan starta americanos") : "") + '</p>' +
+        '<button type="button" class="amxsec" data-k="logout">' + _("Logga ut den här telefonen") + '</button></div>';
+      if (me.roles.indexOf("admin") >= 0) h += konAdminHtml();
+    }
+    box.innerHTML = h;
+    box.onclick = konClick;
+    box.onchange = function(ev){ var c = ev.target; if (c.hasAttribute("data-role")) konRole(c); };
+  }
+  function konAdminHtml(){
+    var A = KONTO.adm, h = '<div class="sh"><h2>' + _("Lägg till") + '</h2><div class="meta">' + _("Admin") + '</div></div>';
+    var used = A ? A.users.map(function(u){ return u.pid; }) : [];
+    var opts = ROSTER.filter(function(p){ return used.indexOf(p.pid) < 0; }).slice().sort(function(a, b){ return a.name.localeCompare(b.name, "sv"); });
+    h += '<div class="card amxset"><label class="amxf"><span>' + _("Klubbspelare") + '</span><select id="kPid"><option value="">' + _("Ingen, skriv namn nedan") + '</option>' +
+      opts.map(function(p){ return '<option value="' + p.pid + '">' + esc(p.name) + '</option>'; }).join("") + '</select></label>' +
+      '<label class="amxf"><span>' + _("Eller namn") + '</span><input id="kName" maxlength="60" autocomplete="off" placeholder="' + esc(_("Till exempel en förälder eller tränare")) + '"></label>' +
+      '<div class="amxf"><span>' + _("Roll") + '</span><label class="kchk"><input type="checkbox" id="kArr"> ' + _("Arrangör, får starta americanos") + '</label><label class="kchk"><input type="checkbox" id="kAdm"> ' + _("Admin, får hantera konton") + '</label></div>' +
+      '<div class="amxf"><button type="button" class="amxgo" data-k="add">' + _("Skapa inbjudan") + '</button><p class="amxerr" id="kErr"></p></div></div>';
+    if (KONTO.inv) h += konInvHtml();
+    h += '<div class="sh"><h2>' + _("Konton") + '</h2><div class="meta">' + (A ? A.users.length : "") + '</div></div>';
+    if (!A){ h += '<div class="card ktxt"><p>' + _("Hämtar…") + '</p></div>'; konLoad(); return h; }
+    h += '<div class="card klist">' + A.users.map(function(u){
+      var st = u.disabled ? _("Avstängd") : u.devices.length ? _("Inloggad") + " · " + _("senast ") + dayMonD(new Date(u.devices[0].seen)) + (u.devices.length > 1 ? " · " + u.devices.length + _(" enheter") : "")
+        : u.invite ? _("Inbjudan gäller till ") + dayMonD(new Date(u.invite)) : _("Inte inloggad");
+      var self = AUTH.me.id === u.id;
+      return '<details class="krow"><summary><span class="kn"><b>' + esc(u.name) + '</b><small>' + esc(roleText(u.roles) + " · " + st) + '</small></span><i aria-hidden="true"></i></summary><div class="kact">' +
+        '<label class="kchk"><input type="checkbox" data-role="arr" data-id="' + esc(u.id) + '"' + (u.roles.indexOf("arr") >= 0 ? " checked" : "") + '> ' + _("Arrangör") + '</label>' +
+        '<label class="kchk"><input type="checkbox" data-role="admin" data-id="' + esc(u.id) + '"' + (u.roles.indexOf("admin") >= 0 ? " checked" : "") + (self ? " disabled" : "") + '> ' + _("Admin") + '</label>' +
+        '<div class="amxbar"><button type="button" class="amxsec" data-k="invite" data-id="' + esc(u.id) + '">' + _("Ny inloggningslänk") + '</button>' +
+        (u.devices.length ? '<button type="button" class="amxsec" data-k="revoke" data-id="' + esc(u.id) + '">' + _("Logga ut överallt") + '</button>' : "") +
+        (self ? "" : '<button type="button" class="amxsec" data-k="disable" data-on="' + (u.disabled ? "" : "1") + '" data-id="' + esc(u.id) + '">' + (u.disabled ? _("Aktivera") : _("Stäng av")) + '</button>' +
+          '<button type="button" class="amxsec del" data-k="remove" data-id="' + esc(u.id) + '">' + _("Ta bort") + '</button>') + '</div></div></details>';
+    }).join("") + '</div>';
+    return h;
+  }
+  function konLink(code){ return location.href.split("#")[0] + "#in/" + code; }
+  function konInvHtml(){
+    var v = KONTO.inv;
+    return '<div class="card kinv" role="status"><p><b>' + _("Inbjudan till {n}", {n:esc(v.name)}) + '</b></p><input readonly id="kLink" value="' + esc(konLink(v.code)) + '">' +
+      '<p class="kdim">' + _("Skicka länken bara till personen själv. Den fungerar en gång och gäller i 7 dagar. Sedan syns den inte igen.") + '</p>' +
+      '<div class="amxbar">' + (navigator.share ? '<button type="button" class="amxgo" data-k="share">' + _("Dela") + '</button>' : "") + '<button type="button" class="amxsec" data-k="copy">' + _("Kopiera") + '</button><button type="button" class="amxsec" data-k="done">' + _("Klar") + '</button></div></div>';
+  }
+  function konLoad(){
+    if (KONTO.loading) return;
+    KONTO.loading = true;
+    authApi("/admin").then(function(d){ KONTO.loading = false; KONTO.adm = d; renderKonto(); }, function(e){ KONTO.loading = false; KONTO.msg = _("Kunde inte hämta kontona: ") + e.message; renderKonto(); });
+  }
+  function konOp(body, then){
+    return authApi("/admin", body).then(function(r){ KONTO.adm = null; if (then) then(r); renderKonto(); }, function(e){
+      alert(e.message === "exists" ? _("Den spelaren har redan ett konto.") : e.message === "self" ? _("Du kan inte låsa ute dig själv.") : _("Det gick inte: ") + e.message);
+      KONTO.adm = null; renderKonto();
+    });
+  }
+  function konRole(c){
+    var u = KONTO.adm && KONTO.adm.users.filter(function(x){ return x.id === c.getAttribute("data-id"); })[0];
+    if (!u) return;
+    var r = u.roles.filter(function(x){ return x !== c.getAttribute("data-role"); });
+    if (c.checked) r.push(c.getAttribute("data-role"));
+    konOp({op:"roles", id:u.id, roles:r});
+  }
+  function konClick(ev){
+    var b = ev.target.closest("button[data-k]");
+    if (!b) return;
+    var k = b.getAttribute("data-k"), id = b.getAttribute("data-id"), u = id && KONTO.adm && KONTO.adm.users.filter(function(x){ return x.id === id; })[0];
+    if (k === "logout"){
+      if (!confirm(_("Logga ut den här telefonen?"))) return;
+      authApi("/auth/logout", {}).then(function(){}, function(){});
+      authSave(null); KONTO.adm = null; KONTO.inv = null; KONTO.msg = ""; AMX.list = null; renderKonto();
+    } else if (k === "add"){
+      var pid = +document.getElementById("kPid").value || null, name = document.getElementById("kName").value.trim();
+      var roles = [].concat(document.getElementById("kArr").checked ? ["arr"] : [], document.getElementById("kAdm").checked ? ["admin"] : []);
+      if (!pid && !name){ document.getElementById("kErr").textContent = _("Välj en spelare eller skriv ett namn."); return; }
+      var nm = pid && BYPID[pid] ? BYPID[pid].name : name;
+      b.disabled = true;
+      konOp({op:"add", pid:pid, name:name, roles:roles}, function(r){ KONTO.inv = {name:nm, code:r.code}; });
+    } else if (k === "invite" && u){
+      if (u.devices.length && !confirm(_("{n} är redan inloggad. Skapa en ny länk ändå, till exempel för en ny telefon?", {n:u.name}))) return;
+      konOp({op:"invite", id:u.id}, function(r){ KONTO.inv = {name:u.name, code:r.code}; window.scrollTo(0, 0); });
+    } else if (k === "revoke" && u){
+      if (confirm(_("Logga ut {n} på alla telefoner?", {n:u.name}))) konOp({op:"revoke", id:u.id});
+    } else if (k === "disable" && u){
+      konOp({op:"disable", id:u.id, on:!!b.getAttribute("data-on")});
+    } else if (k === "remove" && u){
+      if (confirm(_("Ta bort kontot för {n}?", {n:u.name}))) konOp({op:"remove", id:u.id});
+    } else if (k === "share"){
+      navigator.share({title:"Nynäs Padel", text:_("Din inloggning till Nynäs Padel. Öppna länken på din telefon."), url:konLink(KONTO.inv.code)}).catch(function(){});
+    } else if (k === "copy"){
+      var inp = document.getElementById("kLink");
+      (navigator.clipboard ? navigator.clipboard.writeText(inp.value) : Promise.reject()).then(function(){ b.textContent = _("Kopierad"); }, function(){ inp.select(); });
+    } else if (k === "done"){
+      KONTO.inv = null; renderKonto();
+    }
+  }
   function parseHash(h){
     h = String(h || "");
     if (!h || h === "#" || h === "#/") return {view:"home"};
@@ -7393,6 +7616,8 @@
     if (sk) return {view:"stats", key:sk[1] || null};
     var sm = /^#serie\/(\d+)\/([a-z0-9]+)$/.exec(h);
     if (sm) return {view:"match", gid:sm[1], key:sm[2]};
+    var ki = /^#in\/([a-z2-9]{20})$/.exec(h);
+    if (ki || h === "#konto") return {view:"konto", code:ki ? ki[1] : null};
     var ax = /^#amx\/(ny|[a-z2-9]{8})(?:\/([a-z2-9]{16}))?$/.exec(h);
     if (ax) return {view:"amx", id:ax[1], key:ax[2] || null};
     if (/^#regler(\/|$)/.test(h)){ var rd = /^#regler\/([\w-]+)/.exec(h); return {view:"rules", doc:rd ? rd[1] : null}; }
@@ -7404,7 +7629,7 @@
     return P ? {view:"player", who:P.key, P:P, mid:m[2] || null} : {view:"home"};
   }
   function showView(id){
-    ["home", "team", "stats", "match", "tour", "rules", "amx"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
+    ["home", "team", "stats", "match", "tour", "rules", "amx", "konto"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
       var el = document.getElementById(v);
       if (el) el.hidden = v !== id;
     });
@@ -7482,6 +7707,12 @@
       if (x.id === "ny"){ clearInterval(AMX.poll); renderAmxNew(); } else openAmx(x.id, x.key);
       VIEW = {name:"amx", who:null, team:"amx" + x.id};
       document.title = (x.id === "ny" ? _("Ny americano") : (AMX.t && AMX.t.name) || "Americano") + " · Nynäs Padel";
+    } else if (x.view === "konto"){
+      if (x.code){ history.replaceState(null, "", "#konto"); authRedeem(x.code); }   // the code leaves the address bar
+      else { KONTO.adm = null; KONTO.msg = ""; renderKonto(); authCheck(true); }
+      showView("konto");
+      VIEW = {name:"konto", who:null, team:"konto"};
+      document.title = _("Konto") + " · Nynäs Padel";
     } else if (x.view === "rules"){
       if (x.doc) RULES_DOC = x.doc;
       renderRules(); showView("rules");
@@ -7740,7 +7971,9 @@
     var q = document.getElementById("q");
     if (q) q.addEventListener("input", renderPlayerList);
     try { var cachedDisc = store.json(EV_KEY); if (cachedDisc) applyDisc(cachedDisc); } catch (e){}
+    renderAcct();
     handleHash();
+    authCheck();
     try { loadEvents(); } catch (e){}
     setInterval(function(){ if (document.visibilityState !== "hidden") try { loadEvents(); } catch (e){} }, 30 * 60000);
     document.addEventListener("visibilitychange", function(){

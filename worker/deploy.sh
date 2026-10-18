@@ -36,6 +36,16 @@ if [ -z "$KV_ID" ]; then
 fi
 sed -i.bak -E "s/^id = \"[^\"]*\"/id = \"$KV_ID\"/" wrangler.toml && rm -f wrangler.toml.bak
 
+echo "2b/6 D1 database 'padel' (club accounts; schema.sql is idempotent)"
+DB_ID="$(cf "$API/d1/database?name=padel" | js 'const n=(r.result||[]).find(x=>x.name==="padel");process.stdout.write(n?n.uuid:"")')" || {
+  echo "Cannot reach D1: the API token needs the permission Account > D1 > Edit." >&2; exit 1; }
+if [ -z "$DB_ID" ]; then
+  DB_ID="$(cf -X POST "$API/d1/database" -d '{"name":"padel"}' | js 'process.stdout.write(r.result.uuid)')"
+  echo "    created $DB_ID"
+fi
+sed -i.bak -E "s/^database_id = \"[^\"]*\"/database_id = \"$DB_ID\"/" wrangler.toml && rm -f wrangler.toml.bak
+"${WR[@]}" d1 execute padel --remote --file schema.sql >/dev/null
+
 echo "3/6 deploy (roster: players.json -> src/players.js)"
 node sync-players.mjs
 "${WR[@]}" deploy

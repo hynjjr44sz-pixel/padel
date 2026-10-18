@@ -13,13 +13,14 @@ import { makeVapid } from "./helpers.mjs";
 import { readFileSync } from "node:fs";
 import { matchKey } from "../src/bhs.js";
 import { parseMedia } from "../src/tv.js";
+import { fakeD1 } from "./d1.mjs";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
 const BASE = process.env.PAGE_URL || "http://127.0.0.1:19021/";
 const T = "2026-09-27T13:52:00+02:00";   // Järfälla no 11, Damer C on (Thea and Cassandra), Kian's SPL next Saturday
 const PUSH_API = "https://padel-push.holmberg-padel.workers.dev";
-const AMX_KV = new Map(), AMX_ENV = { ORIGIN: "https://padel.holmberg.st", PUSH: { get: async k => AMX_KV.has(k) ? AMX_KV.get(k) : null, put: async (k, v) => { AMX_KV.set(k, v); }, delete: async k => { AMX_KV.delete(k); }, list: async () => ({ keys: [], list_complete: true }) } };
+const AMX_KV = new Map(), AMX_ENV = { ORIGIN: "https://padel.holmberg.st", PUSH: { get: async k => AMX_KV.has(k) ? AMX_KV.get(k) : null, put: async (k, v) => { AMX_KV.set(k, v); }, delete: async k => { AMX_KV.delete(k); }, list: async () => ({ keys: [], list_complete: true }) }, DB: fakeD1(), ADMIN_KEY: "a".repeat(32) };
 const SHOTS = process.env.SHOTS || "";
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
@@ -144,9 +145,9 @@ async function newPage(opts = {}) {
       return r.fulfill({ status: opts.liveStatus || 200, contentType: "application/json", body: opts.liveStatus ? "{}" : opts.live, headers: h });
     }
     if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
-    if (u.pathname.startsWith("/amx")) {   // the real worker code, its own KV
-      const q = r.request();
-      return worker.fetch(new Request("https://w" + u.pathname, { method: q.method(), headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json" }, body: q.method() === "POST" ? q.postData() : undefined }), AMX_ENV)
+    if (/^\/(amx|auth|admin)/.test(u.pathname)) {   // the real worker code, its own KV and database
+      const q = r.request(), au = q.headers()["authorization"];
+      return worker.fetch(new Request("https://w" + u.pathname, { method: q.method(), headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", ...(au ? { Authorization: au } : {}) }, body: q.method() === "POST" ? q.postData() : undefined }), AMX_ENV)
         .then(async x => r.fulfill({ status: x.status, contentType: "application/json", body: await x.text(), headers: h }));
     }
     if (u.pathname === "/rules") return r.fulfill({ contentType: "application/json", body: JSON.stringify({ v: 1, checked: "2026-09-27T04:40:00Z", docs: [
@@ -242,6 +243,26 @@ try {
     const hit = await page.evaluate(() => ({ t: document.querySelector("#rBody").textContent, mark: document.querySelectorAll("#rBody mark").length, open: !!document.querySelector("#rBody details[open]") }));
     ok("Regler: documents, search finds Reservlista in the competition rules, hits marked and opened", docs.join() === "I korthet,Tävlingsbestämmelser" && /Reservlista/.test(hit.t) && hit.mark >= 2 && hit.open, { docs, hit });
     await page.goBack();
+  }
+  { // Konto: without a login americano is locked; the first admin's link (made with the admin key) logs the phone in;
+    // the admin invites Thea as arrangör
+    await page.goto(url("#amx/ny"));
+    await page.waitForSelector("#amx .ktxt", { timeout: 8000 }).catch(() => {});
+    const locked = await page.evaluate(() => [document.querySelector("#amx .ktxt")?.textContent || "", !!document.getElementById("amxGuest")]);
+    const boot = await (await worker.fetch(new Request("https://w/admin", { method: "POST", headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", "X-Admin-Key": AMX_ENV.ADMIN_KEY }, body: JSON.stringify({ op: "add", name: "Mikael Holmberg", roles: ["admin"] }) }), AMX_ENV)).json();
+    await page.goto(url("#in/" + boot.code));
+    await page.waitForFunction(() => /Välkommen, Mikael/.test(document.querySelector("#konto .kmsg")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    await page.waitForSelector("#konto .klist", { timeout: 8000 }).catch(() => {});
+    const k1 = await page.evaluate(() => [location.hash, document.querySelector("#konto .kmsg")?.textContent, document.getElementById("acct").textContent, document.querySelector("#konto .klist")?.textContent.replace(/\s+/g, " ")]);
+    ok("Konto: americano locked without a login; the invite link logs the phone in, leaves the address bar, admin sees the list", /arrangörer/.test(locked[0]) && !locked[1] && k1[0] === "#konto" && /Välkommen, Mikael/.test(k1[1] || "") && k1[2] === "Konto: Mikael" && /Mikael HolmbergAdmin · Inloggad/.test(k1[3] || ""), { locked, k1 });
+    await page.selectOption("#kPid", "1675246");
+    await page.check("#kArr");
+    await page.click('[data-k="add"]');
+    await page.waitForSelector("#konto .kinv", { timeout: 8000 }).catch(() => {});
+    await page.waitForFunction(() => /Thea/.test(document.querySelector("#konto .klist")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    const k2 = await page.evaluate(() => [document.getElementById("kLink")?.value, document.querySelector("#konto .klist")?.textContent.replace(/\s+/g, " ")]);
+    const used = await (await worker.fetch(new Request("https://w/auth/redeem", { method: "POST", headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json" }, body: JSON.stringify({ code: boot.code }) }), AMX_ENV)).status;
+    ok("Konto: the admin invites Thea as arrangör (a one-time link), the admin's own link is used up", /#in\/[a-z2-9]{20}$/.test(k2[0] || "") && /Thea Holmberg LövingArrangör · Inbjudan gäller till/.test(k2[1] || "") && used === 410, { k2, used });
   }
   { // Americano: set up with a club player and guests, a result (the other side filled in), a new round, the table
     await page.goto(url("#amx/ny"));
