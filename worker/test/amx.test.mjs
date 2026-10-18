@@ -69,13 +69,17 @@ test("arkiv: ended -> kept for good and on the club players' archive; reopened -
   let a = await (await call(env, "GET", "/amx/pl/1675246")).json();
   assert.deepEqual(a.list.map(x => [x.id, x.place, x.of, x.w, x.l, x.p]), [[id, 1, 4, 1, 0, 10]]);
   assert.deepEqual(a.list[0].pa, [{ n: "B B", c: 1 }]);   // partners for the profile summary
+  let all = (await (await call(env, "GET", "/amx/all")).json()).list;   // "Alla americanos": the winners (Thea & B B won 10-6)
+  assert.deepEqual(all.map(x => [x.id, x.name, x.n, x.win, x.by]), [[id, "Arkiv", 4, [["B B"], ["Thea Holmberg Löving"]], "Arr Test"]]);
   await call(env, "POST", "/amx/" + id, { key, op: "reopen" });
+  assert.equal((await (await call(env, "GET", "/amx/all")).json()).list.length, 0);
   assert.equal((await (await call(env, "GET", "/amx/pl/1675246")).json()).list.length, 0);
   await call(env, "POST", "/amx/" + id, { key, op: "end" });
   assert.equal((await call(env, "POST", "/amx/" + id, { key: "x", op: "delete" })).status, 403);
   r = await call(env, "POST", "/amx/" + id, { key, op: "delete" });
   assert.equal(r.status, 200);
   assert.equal((await call(env, "GET", "/amx/" + id)).status, 404);
+  assert.equal((await (await call(env, "GET", "/amx/all")).json()).list.length, 0);
   assert.equal((await (await call(env, "GET", "/amx/pl/1675246")).json()).list.length, 0);
   assert.equal((await (await call(env, "GET", "/amx")).json()).list.length, 0);
 });

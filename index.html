@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Vx2/nxjiXAWk4NCUcJbrAG1rscwwvjOxkYWbpRq9g+Q='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-rFEJYtwEtHLgnANW2QdeMZbdPX39WHk7sBdTXQofo3s='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -147,6 +147,15 @@
   .amxnew span{ grid-column:1; font-size:13px; line-height:1.4; opacity:.85; }
   .amxnew i{ grid-row:1 / 3; grid-column:2; font-style:normal; font-size:24px; }
   .amxrow{ display:grid; grid-template-columns:auto 1fr; gap:2px 10px; align-items:center; margin-top:8px; padding:11px 14px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:inherit; text-decoration:none; }
+  .amxallk{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding:12px 14px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-weight:600; font-size:14.5px; text-decoration:none; }
+  .amxallk i{ font-style:normal; color:var(--dim); }
+  .axall{ padding:0 16px; }
+  .axarow{ display:grid; grid-template-columns:44px minmax(0,1fr); gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid var(--line); color:inherit; text-decoration:none; }
+  .axarow:last-child{ border-bottom:0; }
+  .axarow.mine .axday{ background:var(--accent-soft); }
+  .axday{ display:flex; flex-direction:column; align-items:center; justify-content:center; width:44px; height:44px; border-radius:12px; background:var(--surface-2); }
+  .axday b{ font:800 20px/1 "Big Shoulders Display", sans-serif; } .axday small{ font:500 9.5px/1 "Chivo Mono", monospace; color:var(--dim); margin-top:2px; }
+  .axwin{ font-size:13px; color:var(--ink); } .axwin::before{ content:""; display:inline-block; width:8px; height:8px; margin-right:6px; border-radius:50%; background:#FFD84A; vertical-align:1px; }
   .amxlock{ display:block; padding:14px 16px; border-radius:16px; border:1px dashed var(--line); color:inherit; text-decoration:none; }
   .amxlock b{ display:block; font-size:15px; } .amxlock span{ display:block; margin-top:3px; font-size:13px; line-height:1.4; color:var(--dim); }
   /* ---------- Konto ---------- */
@@ -1565,6 +1574,11 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Alla americanos":"Todos los americanos",
+    "avslutade":"terminados",
+    "Avslutade i klubben":"Terminados en el club",
+    "Inga avslutade americanos än. När en arrangör trycker på Avsluta hamnar den här.":"Aún no hay americanos terminados. Cuando un organizador pulsa Terminar, aparece aquí.",
+    "Vinnare: ":"Ganadores: ",
     "Din inloggningslänk":"Tu enlace de acceso",
     "Länken fungerar en gång. Logga in i den app eller webbläsare där du vill använda Nynäs Padel.":"El enlace funciona una vez. Entra en la app o el navegador donde quieras usar Nynäs Padel.",
     "Logga in här":"Entrar aquí",
@@ -7177,7 +7191,33 @@
     host.innerHTML = (authCan("arr") ? '<a class="amxnew" href="#amx/ny"><b>' + _("Starta en americano") + '</b><span>' + _("Americano, Mexicano eller Lagamericano med klubbens spelare och gäster. Resultat och tabell i appen.") + '</span><i aria-hidden="true">→</i></a>'
       : '<a class="amxlock" href="#konto"><b>' + _("Americano, Mexicano och Lagamericano") + '</b><span>' + _("Startas av klubbens arrangörer. Vill du arrangera? Be klubben om behörighet.") + '</span></a>') +
       (mine.length ? '<div class="amxh">' + _("Mina") + '</div>' + mine.slice(0, 8).map(function(x){ return row(st[x.id] ? Object.assign({}, x, {done:st[x.id].done, pids:st[x.id].pids}) : x, true); }).join("") : "") +
-      (others.length ? '<div class="amxh">' + _("Senaste veckan") + '</div>' + others.map(function(x){ return row(x, false); }).join("") : "");
+      (others.length ? '<div class="amxh">' + _("Senaste veckan") + '</div>' + others.map(function(x){ return row(x, false); }).join("") : "") +
+      '<a class="amxallk" href="#amx/alla">' + _("Alla americanos") + ' <i aria-hidden="true">→</i></a>';
+  }
+
+
+  /* ---- #amx/alla: every ended americano (worker /amx/all), by month, with the winners ---- */
+  var MONL = LANG === "es" ? ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"] : ["januari","februari","mars","april","maj","juni","juli","augusti","september","oktober","november","december"];
+  function renderAmxAll(){
+    var box = document.getElementById("amx");
+    if (!box) return;
+    var A = AMX.all, head = '<div class="phead"><div class="pt"><h1>' + _("Alla americanos") + '</h1><div class="pm">' + (A && A.l.length ? A.l.length + " " + _("avslutade") : _("Avslutade i klubben")) + '</div></div></div>';
+    if (!A || Date.now() - A.t > 5 * 60000){
+      if (!AMX.allBusy && PUSH_API){ AMX.allBusy = true; amxApi("/amx/all").then(function(d){ AMX.allBusy = false; AMX.all = {t:Date.now(), l:d.list || []}; if (VIEW.team === "amxalla") renderAmxAll(); }, function(){ AMX.allBusy = false; }); }
+      if (!A){ box.innerHTML = head + '<div class="card ktxt"><p>' + _("Hämtar…") + '</p></div>'; return; }
+    }
+    if (!A.l.length){ box.innerHTML = head + '<div class="card ktxt"><p>' + _("Inga avslutade americanos än. När en arrangör trycker på Avsluta hamnar den här.") + '</p></div>'; return; }
+    var f = follows(), mo = null, h = head;
+    A.l.forEach(function(x){
+      var d = new Date(x.at), m = d.getFullYear() + "-" + d.getMonth();
+      if (m !== mo){ if (mo) h += '</div>'; mo = m; h += '<div class="sh"><h2>' + esc(cap(MONL[d.getMonth()]) + " " + d.getFullYear()) + '</h2><div class="meta"></div></div><div class="card axall">'; }
+      var fol = (x.pids || []).some(function(p){ return f.indexOf(Number(p)) >= 0; });
+      var win = (x.win || []).map(function(u){ return u.map(function(n){ return n.split(" ")[0]; }).join(" & "); }).join(" / ");
+      h += '<a class="axarow' + (fol ? " mine" : "") + '" href="#amx/' + esc(x.id) + '"><span class="axday"><b>' + d.getDate() + '</b><small>' + esc(MON[d.getMonth()]) + '</small></span>' +
+        '<span class="axn"><b>' + esc(x.name) + '</b><small>' + esc(amxKind(x.fmt) + " · " + x.n + _(" spelare") + (x.by ? " · " + x.by.split(" ")[0] : "")) + '</small>' +
+        (win ? '<span class="axwin">' + _("Vinnare: ") + esc(win) + '</span>' : "") + '</span></a>';
+    });
+    box.innerHTML = h + '</div>';
   }
 
   /* ---- #amx/ny: set up ---- */
@@ -7642,7 +7682,7 @@
     if (sm) return {view:"match", gid:sm[1], key:sm[2]};
     var ki = /^#in\/([a-z2-9]{20})$/.exec(h);
     if (ki || h === "#konto") return {view:"konto", code:ki ? ki[1] : null};
-    var ax = /^#amx\/(ny|[a-z2-9]{8})(?:\/([a-z2-9]{16}))?$/.exec(h);
+    var ax = /^#amx\/(ny|alla|[a-z2-9]{8})(?:\/([a-z2-9]{16}))?$/.exec(h);
     if (ax) return {view:"amx", id:ax[1], key:ax[2] || null};
     if (/^#regler(\/|$)/.test(h)){ var rd = /^#regler\/([\w-]+)/.exec(h); return {view:"rules", doc:rd ? rd[1] : null}; }
     var tv = /^#tavling\/(\d+)$/.exec(h);
@@ -7728,9 +7768,9 @@
     } else if (x.view === "amx"){
       AMX.list = null;
       showView("amx");
-      if (x.id === "ny"){ clearInterval(AMX.poll); renderAmxNew(); } else openAmx(x.id, x.key);
       VIEW = {name:"amx", who:null, team:"amx" + x.id};
-      document.title = (x.id === "ny" ? _("Ny americano") : (AMX.t && AMX.t.name) || "Americano") + " · Nynäs Padel";
+      if (x.id === "ny"){ clearInterval(AMX.poll); renderAmxNew(); } else if (x.id === "alla"){ clearInterval(AMX.poll); renderAmxAll(); } else openAmx(x.id, x.key);
+      document.title = (x.id === "ny" ? _("Ny americano") : x.id === "alla" ? _("Alla americanos") : (AMX.t && AMX.t.name) || "Americano") + " · Nynäs Padel";
     } else if (x.view === "konto"){
       // the code leaves the address bar; logging in waits for a tap (the link may have opened in the wrong browser)
       if (x.code){ history.replaceState(null, "", "#konto"); KONTO.code = x.code; KONTO.msg = ""; renderKonto(); }

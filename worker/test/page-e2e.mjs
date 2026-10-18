@@ -300,6 +300,10 @@ try {
     ok("Americano ended: on Thea's page under Klubbspel with her place and record", new RegExp("^#amx/" + amxId).test(arch || "") && /[1-4]\s*av 4/.test(arch || "") && !(await page.$eval("#p-thea .ptabs", b => b.hidden)), arch);
     const sum = await page.evaluate(() => [[...document.querySelectorAll("#axList-thea .axsum .bchips, #axList-thea .axlh")].map(e => e.textContent).join(""), document.querySelector("#axList-thea .axmate")?.textContent, [...document.querySelectorAll("#p-thea [data-ptab]")].map(b => b.textContent).join("|")]);
     ok("Americano: summary on the profile (played, wins, average place, won matches, most frequent partner); tab Klubbspel", /^Americanos1sedan .+Segrar\dtopp 3: \dSnittplacering[1-4],0av 4 i snittMatcher(100|0) %[01]–[01] vunnaSpelade$/.test(sum[0] || "") && /^Oftast med.+ 1 gång$/.test(sum[1] || "") && /Klubbspel/.test(sum[2]), sum);
+    await page.goto(url("#amx/alla"));
+    await page.waitForSelector("#amx .axarow", { timeout: 8000 }).catch(() => {});
+    const all = await page.evaluate(() => [document.querySelector("#amx h1")?.textContent, document.querySelector("#amx .axarow")?.getAttribute("href"), document.querySelector("#amx .axwin")?.textContent, document.querySelector("#amx .sh h2")?.textContent]);
+    ok("Alla americanos: the ended one by month, with its winners", all[0] === "Alla americanos" && all[1] === "#amx/" + amxId && /^Vinnare: .+/.test(all[2] || "") && /^\S+ \d{4}$/.test(all[3] || ""), all);
     await page.goto(url(""));
     await page.waitForSelector("#amxHome .amxrow", { timeout: 8000 }).catch(() => {});
     const homeMine = await page.$$eval("#amxHome .amxh, #amxHome .amxrow", l => l.map(x => x.textContent.replace(/\s+/g, " ").trim()));

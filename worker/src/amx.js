@@ -116,7 +116,28 @@ export function archiveRows(t) {
     return { pid: o.pid, row: { id: t.id, name: t.name, fmt: t.fmt, d: new Date(t.upd).toISOString().slice(0, 10), place: 1 + units.filter(u => better(u, me)).length, of, w: o.w, l: o.l, p: o.p, pa } };
   });
 }
+// The winners of an ended americano: the first names (pairs in Lagamericano) sharing place 1
+export function winners(t) {
+  const st = standings(t), byW = t.mode && t.mode !== "pts";
+  const better = (o, me) => byW ? o.w > me.w || (o.w === me.w && (o.pm > me.pm || (o.pm === me.pm && o.p > me.p))) : o.p > me.p || (o.p === me.p && (o.pm > me.pm || (o.pm === me.pm && o.w > me.w)));
+  const units = t.teams ? t.teams.map(p => st.find(o => o.i === p[0])) : st;
+  return units.filter(u => !units.some(o => better(o, u))).map(u => (t.teams ? t.teams.find(p => p.includes(u.i)) : [u.i]).map(i => t.players[i].n));
+}
+// Every ended americano, newest first (GET /amx/all: the page "Alla americanos")
+const ALL_MAX = 500;
+async function allIndex(env, t, remove) {
+  let l = [];
+  try { l = JSON.parse((await env.PUSH.get("amx:all")) || "[]"); } catch (e) { l = []; }
+  l = l.filter(x => x.id !== t.id);
+  if (!remove) l.unshift({ id: t.id, name: t.name, fmt: t.fmt, n: t.players.length, at: t.created, d: new Date(t.upd).toISOString().slice(0, 10), win: winners(t), pids: t.players.map(p => p.pid).filter(Boolean), ...(t.by ? { by: t.by.n } : {}) });
+  l.sort((a, b) => b.at - a.at);
+  await env.PUSH.put("amx:all", JSON.stringify(l.slice(0, ALL_MAX)));
+}
+export async function amxAll(env) {
+  try { return JSON.parse((await env.PUSH.get("amx:all")) || "[]"); } catch (e) { return []; }
+}
 async function archive(env, t, remove) {
+  await allIndex(env, t, remove);
   for (const r of archiveRows(t)) {
     const k = "amx:pl:" + r.pid;
     let l = [];

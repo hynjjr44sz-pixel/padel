@@ -7,7 +7,7 @@ import { weekDigest, weekNote } from "./week.js";
 import { remindNotes } from "./remind.js";
 import { soonNotes } from "./soon.js";
 import { authUser, can, redeem, logout, adminUsers, adminOp } from "./auth.js";
-import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, publicOf } from "./amx.js";
+import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, amxAll, publicOf } from "./amx.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
@@ -208,6 +208,7 @@ async function handle(req, env) {
   }
   // Americano / Mexicano (amx.js): the list (home view), one americano, create, update (organiser's key in the body)
   if (route === "GET /amx") return json({ list: await amxList(env, +now(env)) }, 200, { ...h, "Cache-Control": "no-store" });
+  if (route === "GET /amx/all") return json({ list: await amxAll(env) }, 200, { ...h, "Cache-Control": "no-store" });
   const ap = /^\/amx\/pl\/(\d{1,10})$/.exec(url.pathname);
   if (ap && req.method === "GET") return json({ list: await amxArchive(env, ap[1]) }, 200, { ...h, "Cache-Control": "no-store" });
   const am = /^\/amx\/([a-z2-9]{8})$/.exec(url.pathname);
