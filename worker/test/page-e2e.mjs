@@ -990,6 +990,17 @@ try {
     ok("series: an unknown match says so", /finns inte längre/.test(await page.textContent("#match").catch(() => "")));
     await ctx.close();
   }
+  // Dator: two columns on the home view; other views replace it (a hidden view stays hidden whatever its layout)
+  { ({ page, ctx, errors, api } = await newPage({ width: 1280 }));
+    await page.goto(url("#/"));
+    await page.waitForSelector("#home .club", { timeout: 8000 }).catch(() => {});
+    const cols = await page.evaluate(() => getComputedStyle(document.getElementById("home")).gridTemplateColumns.split(" ").length);
+    await page.goto(url("#thea"));
+    await page.waitForSelector("#p-thea .pc", { timeout: 8000 }).catch(() => {});
+    const vis = await page.evaluate(() => [getComputedStyle(document.getElementById("home")).display, document.getElementById("p-thea").getBoundingClientRect().width]);
+    ok("Dator: the home view in two columns; on a player's page the home view is gone and the page keeps a reading width", cols === 2 && vis[0] === "none" && vis[1] > 600 && vis[1] <= 761, { cols, vis });
+    await ctx.close();
+  }
   // The club's members (worker "members"): in the players' list under letters, a member's page, not in the chips row
   { const names = ["Adam Ek", "Bea Lund", "Carl Berg", "Dina Ås", "Erik Holm", "Fia Nord", "Gus Sand", "Hanna Lid", "Ivar Ström", "Jon Vik", "Kim Dal", "Lea Bro",
       "Max Fors", "Nora Krok", "Olle Tall", "Pia Gran", "Rut Sjö", "Sam Ek", "Tea Ros", "Uno Bäck", "Vera Hed", "Will Ask", "Yra Sund", "Zoe Mo", "Åke Ljung", "Ärla Ny", "Öje Sten", "Ali Ruud", "Bo Ek", "Cia Lind"];

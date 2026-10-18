@@ -345,6 +345,22 @@
   .dtab.pop svg *{ stroke-dasharray:none; animation-name:none; }
   .dtab.pop svg{ animation:dk-pop .6s cubic-bezier(.25,1.6,.4,1); }
   @media (prefers-reduced-motion: reduce){ .dkmark, .dtab.pop .dk-rays, .dtab.pop .dk-swing, .dtab.pop .dk-draw, .dtab.pop .dk-spin, .dtab.pop .dk-wave{ animation:none !important; } }
+  /* a hidden view stays hidden whatever display a view is given elsewhere */
+  main.view[hidden]{ display:none !important; }
+  /* ---------- Dator och stor skärm: wider page, the home view in two columns, lists in more columns; reading views
+     (a player, a match, Regler, Konto) keep a comfortable width ---------- */
+  @media (min-width:1100px){
+    .page, .top-in{ max-width:1180px; }
+    main.view{ max-width:760px; margin-left:auto; margin-right:auto; }
+    #home, #spelare, #tavlingar, #americano{ max-width:none; }
+    #home:not([hidden]){ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); column-gap:48px; align-items:start; }
+    #home > .club, #home > #secRes, #home > #secWeek{ grid-column:1 / -1; }
+    #home > section{ min-width:0; }
+    #spelare .plist{ grid-template-columns:repeat(3, minmax(0,1fr)); }
+    #spelare .teams{ grid-template-columns:repeat(3, minmax(0,1fr)); }
+    #tavlingar .tavlist{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+    #americano{ max-width:900px; }
+  }
   /* ---------- Tävlingar ---------- */
   .tavf{ display:flex; flex-direction:column; gap:8px; margin-top:14px; }
   .tavf .seg{ display:flex; flex-wrap:wrap; gap:6px; padding:0; margin:0; background:none; }
