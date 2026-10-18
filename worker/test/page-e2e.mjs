@@ -202,12 +202,37 @@ try {
   const agenda = await page.$$eval("#agenda .arow", a => a.map(x => x.textContent.replace(/\s+/g, " ")));
   const spl = agenda.filter(x => /SPL Damer/.test(x));
   ok("home: Kommande has SPL per team (no duplicates per player) and Vista", spl.length >= 1 && new Set(spl).size === spl.length && agenda.some(x => /Vista/.test(x)) && agenda.some(x => /SPL Herrar/.test(x)), agenda);
+  // Menyraden: Idag active on the home view; Spelare (teams, players, search) from the dock
+  const dk0 = await page.evaluate(() => [[...document.querySelectorAll("#dock .dtab")].map(t => t.getAttribute("data-tab")).join(), document.querySelector("#dock .dtab.on")?.getAttribute("data-tab")]);
+  ok("Menyraden: five tabs, Idag active on the home view", dk0[0] === "idag,spelare,tavlingar,americano,mer" && dk0[1] === "idag", dk0);
+  await page.click('#dock .dtab[data-tab="spelare"]');
+  await page.waitForSelector("#spelare:not([hidden]) #plist li", { timeout: 8000 }).catch(() => {});
+  const dk1 = await page.evaluate(() => [location.hash, document.querySelector("#dock .dtab.on")?.getAttribute("data-tab"), document.getElementById("home").hidden, document.getElementById("dockBlob").style.width]);
+  ok("Menyraden: Spelare opens the players' view, the blob moves there", dk1[0] === "#spelare" && dk1[1] === "spelare" && dk1[2] && parseFloat(dk1[3]) > 30, dk1);
   { const n = (await page.$$eval("#teams .tcard", c => c.map(x => x.querySelectorAll(".troster li").length))).sort().join();
     ok("home: three team cards with roster avatars", n === "4,6,7", n); }
   ok("home: player list with all 17", (await page.$$("#plist li")).length === 17);
   await page.fill("#q", "sved");
   ok("home: search filters (sved -> Anton Svedman, Svante Svedberg)", (await page.$$eval("#plist b", b => b.map(x => x.textContent))).sort().join() === "Anton Svedman,Svante Svedberg");
   await page.fill("#q", "");
+  await page.click('#plFilter [data-plf="F"]');
+  const fem = await page.$$eval("#plist b", b => b.map(x => x.textContent));
+  ok("Spelare: the Damer filter", fem.length > 0 && fem.includes("Thea Holmberg Löving") && !fem.includes("Kian Borgström"), fem);
+  await page.click('#plFilter [data-plf="all"]');
+  // Tävlingar: the calendar by week with the club's entries; Mer: the sheet with Regler, Konto, language
+  await page.click('#dock .dtab[data-tab="tavlingar"]');
+  await page.waitForSelector("#tavlingar:not([hidden]) .tavc", { timeout: 8000 }).catch(() => {});
+  const tav = await page.evaluate(() => [document.querySelector("#tavlingar h1")?.textContent, document.querySelectorAll("#tavlingar .tavc").length, [...document.querySelectorAll("#tavlingar .sh h2")].map(h => h.textContent).slice(0, 3)]);
+  ok("Tävlingar: every tournament within 20 mil by week", tav[0] === "Tävlingar" && tav[1] > 3 && tav[2].some(h => /^Vecka \d+$/.test(h)), tav);
+  await page.click('#dock .dtab[data-tab="mer"]');
+  await page.waitForSelector("#moreSheet.open", { timeout: 4000 }).catch(() => {});
+  const more = await page.evaluate(() => [!document.getElementById("moreSheet").hidden, [...document.querySelectorAll("#moreSheet .mtile b")].map(b => b.textContent).join(), !!document.querySelector("#moreSheet #lang")]);
+  await page.click('#moreSheet .mtile[href="#regler"]');
+  await page.waitForSelector("#rules:not([hidden])", { timeout: 8000 }).catch(() => {});
+  const more2 = await page.evaluate(() => [document.getElementById("moreSheet").classList.contains("open"), document.querySelector("#dock .dtab.on")?.getAttribute("data-tab")]);
+  ok("Mer: a sheet with Regler, Konto, Alla americanos, Integritet and the language; Regler opens and the sheet closes", more[0] && more[1] === "Regler,Konto,Alla americanos,Integritet" && more[2] && !more2[0] && more2[1] === "mer", { more, more2 });
+  await page.click('#dock .dtab[data-tab="idag"]');
+  await page.waitForSelector("#home:not([hidden])", { timeout: 8000 }).catch(() => {});
   ok("home: no horizontal scroll at 390", await noHScroll(page));
   ok("home: at most a handful of RankedIn calls on load", api.ri <= 2, api.ri);
   ok("home: no Veckans vinnare on the day (worker has no wins yet)", await page.$eval("#secWin", s => s.hidden));
@@ -233,7 +258,9 @@ try {
   { const t = await page.$eval("#rk-thea", e => e.innerText);
     ok("Klass och poäng: class, distance to the limits, what falls out", /B-SPELARE|B-spelare/i.test(t) && /p kvar till A-klass/.test(t) && /över gränsen till C/.test(t) && /Novembercupen/.test(t), t); }
   { // Regler: in the top bar, a list of documents, search over all of them with the hits marked
-    await page.click(".rulesbtn");
+    await page.click('#dock .dtab[data-tab="mer"]');   // Regler: under Mer in the dock
+    await page.waitForSelector("#moreSheet.open", { timeout: 4000 }).catch(() => {});
+    await page.click('#moreSheet .mtile[href="#regler"]');
     await page.waitForSelector("#rules:not([hidden]) .rsec", { timeout: 8000 }).catch(() => {});
     const docs = await page.$$eval("#rDocs button", b => b.map(x => x.textContent));
     const note = await page.evaluate(() => { const n = document.querySelector("#rules .rsec .rnote"); return n ? n.textContent + "|" + n.querySelector("a").getAttribute("href") : null; });
@@ -338,7 +365,7 @@ try {
     await page.waitForSelector("#amx .axarow", { timeout: 8000 }).catch(() => {});
     const all = await page.evaluate(() => [document.querySelector("#amx h1")?.textContent, document.querySelector("#amx .axarow")?.getAttribute("href"), document.querySelector("#amx .axwin")?.textContent, document.querySelector("#amx .sh h2")?.textContent]);
     ok("Alla americanos: the ended one by month, with its winners", all[0] === "Alla americanos" && all[1] === "#amx/" + amxId && /^Vinnare: .+/.test(all[2] || "") && /^\S+ \d{4}$/.test(all[3] || ""), all);
-    await page.goto(url(""));
+    await page.goto(url("#americano"));
     await page.waitForSelector("#amxHome .amxrow", { timeout: 8000 }).catch(() => {});
     const homeMine = await page.$$eval("#amxHome .amxh, #amxHome .amxrow", l => l.map(x => x.textContent.replace(/\s+/g, " ").trim()));
     await page.goto(url("#amx/" + amxId));
@@ -390,7 +417,7 @@ try {
   await shot(page, "lisa");
 
   // ---- RankedIn profile photos (worker "photos"), only for players without a photo in players.json ----
-  await page.goto(url(""));
+  await page.goto(url("#spelare"));
   await page.waitForSelector('#plist a[href="#sanna"] .av img');
   for (const k of ["sanna", "oliver"]) await page.$eval('#plist a[href="#' + k + '"]', e => e.scrollIntoView({ block: "center" }));   // lazy images
   await page.waitForFunction(() => [...document.querySelectorAll('#plist a[href="#sanna"] img, #plist a[href="#oliver"] img')].every(i => i.complete && i.naturalWidth), null, { timeout: 8000 }).catch(() => {});
@@ -950,7 +977,8 @@ try {
   // Spanish: chosen with the SV | ES switch, kept on the device; everything the page writes follows it
   ({ page, ctx, errors, api } = await newPage());
   await page.goto(url("#/"));
-  await page.waitForSelector("#lang [data-lang=es]");
+  await page.click('#dock .dtab[data-tab="mer"]');   // the language: under Mer in the dock
+  await page.waitForSelector("#moreSheet.open #lang [data-lang=es]");
   await page.click("#lang [data-lang=es]");
   await page.waitForFunction(() => document.documentElement.lang === "es", null, { timeout: 8000 });
   ok("es: the switch reloads in Spanish and is remembered", (await page.textContent("#h-home")) === "Nynäs hoy" &&
@@ -963,6 +991,8 @@ try {
   const esBody = await page.evaluate(() => document.getElementById("p-thea").textContent);
   ok("es: player page sections in Spanish", /Últimos torneos/i.test(esBody) && /Evolución/i.test(esBody) && !/Senaste tävlingar|Utveckling/.test(esBody), (esBody.match(/[^.]{0,40}(Senaste tävlingar|Utveckling)[^.]{0,40}/) || [esBody.slice(0, 300)])[0]);
   ok("es: no page errors", errors.length === 0, errors);
+  await page.click('#dock .dtab[data-tab="mer"]');
+  await page.waitForSelector("#moreSheet.open #lang [data-lang=sv]");
   await page.click("#lang [data-lang=sv]");
   await page.waitForFunction(() => document.documentElement.lang === "sv" && document.querySelector("#p-thea .pc .follow"), null, { timeout: 8000 }).catch(() => {});
   ok("es: back to Swedish", /Följer/.test(await page.textContent("#p-thea .pc")) && await page.evaluate(() => localStorage.getItem("padel.lang") === "sv"));

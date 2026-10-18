@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-lGVIfFT99p92zYiz1cvIWZlXS433HCxoib/iEe3PfNY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-xn4MNGOflOeazOmHkaBu17eA+DGQopL60avsjgYEDtM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -135,12 +135,123 @@
   .brand{ display:flex; align-items:center; gap:8px; }
   .brand img{ height:24px; width:auto; flex:none; }
   .brand span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
-  .rulesbtn{ display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 11px 0 9px; flex:none; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--dim);
     font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; text-decoration:none; }
-  .rulesbtn svg{ width:15px; height:15px; flex:none; }
-  .rulesbtn:hover{ border-color:var(--ink); color:var(--ink); }
-  @media (max-width:439px){ .rulesbtn{ width:30px; padding:0; justify-content:center; } .rulesbtn span{ display:none; } }
   @media (max-width:379px){ .bell{ width:30px; padding:0; justify-content:center; } .bell span{ display:none; } }
+  /* ---------- Menyraden: a floating glass dock. A liquid blob springs to the tab (stretching as it travels, following the
+     finger when you slide along the bar), the active icon draws itself and gets its ball-yellow detail, the dock shrinks
+     while you scroll down, and a live capsule rises out of it when something is on. Still under prefers-reduced-motion. ---------- */
+  .page{ padding-bottom:calc(112px + env(safe-area-inset-bottom)); }
+  .dock{ position:fixed; left:50%; bottom:calc(12px + env(safe-area-inset-bottom)); z-index:120; width:min(460px, calc(100% - 20px)); transform:translateX(-50%);
+    transition:transform .55s cubic-bezier(.2,1.25,.3,1); pointer-events:none; }
+  .dock > *{ pointer-events:auto; }
+  .dkbar{ position:relative; display:flex; box-sizing:border-box; width:100%; margin:0; height:68px; padding:6px; border-radius:28px; overflow:hidden; isolation:isolate; touch-action:pan-y;
+    background:color-mix(in srgb, var(--surface) 70%, transparent); -webkit-backdrop-filter:saturate(1.9) blur(24px); backdrop-filter:saturate(1.9) blur(24px);
+    border:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    box-shadow:0 22px 44px -16px rgba(6,13,34,.45), 0 3px 10px -2px rgba(6,13,34,.12), inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 0 rgba(6,13,34,.05);
+    transition:height .45s cubic-bezier(.2,1.2,.3,1), border-radius .45s; }
+  /* a soft light that follows the finger across the glass */
+  .dkbar::before{ content:""; position:absolute; inset:0; z-index:-1; opacity:0; transition:opacity .4s;
+    background:radial-gradient(120px 80px at var(--mx, 50%) 0%, rgba(255,255,255,.55), transparent 70%); }
+  .dkbar.touch::before{ opacity:1; }
+  .dblob{ position:absolute; top:6px; bottom:6px; left:0; width:64px; z-index:0; border-radius:22px; transform-origin:center; will-change:transform, width;
+    background:linear-gradient(155deg, color-mix(in srgb, var(--solid) 82%, #3b6cff) 0%, var(--solid) 55%, color-mix(in srgb, var(--solid) 85%, #000) 100%);
+    box-shadow:0 10px 22px -8px color-mix(in srgb, var(--solid) 80%, transparent), inset 0 1px 0 rgba(255,255,255,.28), inset 0 -2px 6px rgba(0,0,0,.18); }
+  .dblob i{ position:absolute; left:18%; right:18%; top:3px; height:38%; border-radius:99px; background:linear-gradient(180deg, rgba(255,255,255,.32), transparent); }
+  .dtab{ appearance:none; position:relative; z-index:1; flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    border:0; background:none; padding:0; color:var(--dim); text-decoration:none; font:650 10.5px/1 "Instrument Sans", sans-serif; letter-spacing:.01em;
+    -webkit-tap-highlight-color:transparent; cursor:pointer; transition:color .35s; -webkit-user-drag:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+  .dtab svg{ width:25px; height:25px; flex:none; transition:transform .6s cubic-bezier(.25,1.7,.4,1); }
+  .dtab span{ transition:opacity .3s, transform .45s cubic-bezier(.2,1.3,.3,1); white-space:nowrap; }
+  .dtab .dk-accent{ transition:stroke .35s; }
+  .dtab.on{ color:var(--solid-ink); }
+  .dtab.on svg{ transform:translateY(-1px) scale(1.1); }
+  .dtab.on .dk-accent{ stroke:var(--ball); }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .dtab.on .dk-accent{ stroke:#1F4FCF; } }
+  :root[data-theme="dark"] .dtab.on .dk-accent{ stroke:#1F4FCF; }
+  .dtab.hov:not(.on){ color:var(--ink); }
+  .dtab.hov:not(.on) svg{ transform:scale(1.18) translateY(-2px); }
+  /* while sliding: the colours follow the blob, not the page */
+  .dkbar.drag .dtab.on:not(.hov){ color:var(--dim); } .dkbar.drag .dtab.on:not(.hov) .dk-accent{ stroke:currentColor; } .dkbar.drag .dtab.on:not(.hov) svg{ transform:none; }
+  .dkbar.drag .dtab.hov{ color:var(--solid-ink); } .dkbar.drag .dtab.hov .dk-accent{ stroke:var(--ball); }
+  .dtab.pop svg{ animation:dk-pop .7s cubic-bezier(.25,1.6,.4,1); }
+  .dtab.pop svg *{ stroke-dasharray:80; animation:dk-draw .6s ease-out; }
+  @keyframes dk-pop{ 0%{ transform:scale(.7) rotate(-12deg); } 55%{ transform:scale(1.22) rotate(4deg); } 100%{ transform:translateY(-1px) scale(1.1); } }
+  @keyframes dk-draw{ from{ stroke-dashoffset:80; } to{ stroke-dashoffset:0; } }
+  .dbadge{ position:absolute; top:7px; left:calc(50% + 8px); width:9px; height:9px; border-radius:50%; background:#E5484D; box-shadow:0 0 0 2px var(--surface);
+    transform:scale(0); transition:transform .5s cubic-bezier(.2,1.8,.4,1); }
+  .dtab.badge .dbadge{ transform:scale(1); }
+  .dtab.live .dbadge{ animation:dk-pulse 1.6s ease-out infinite; }
+  @keyframes dk-pulse{ 0%{ box-shadow:0 0 0 2px var(--surface), 0 0 0 2px rgba(229,72,77,.6); } 100%{ box-shadow:0 0 0 2px var(--surface), 0 0 0 12px rgba(229,72,77,0); } }
+  /* scrolling down: the dock pulls in to an icon pill; up again: back */
+  .dock.min .dkbar{ height:54px; border-radius:22px; }
+  .dock.min .dtab span{ opacity:0; transform:translateY(8px); position:absolute; }
+  .dock.min .dblob{ border-radius:17px; }
+  .dock.min{ transform:translateX(-50%) scale(.94); }
+  /* the live capsule: rises out of the dock when a followed player plays, an americano is on, ... */
+  .dlive{ position:absolute; left:50%; bottom:calc(100% + 10px); display:flex; align-items:center; gap:9px; max-width:calc(100% - 24px); height:40px; padding:0 14px 0 12px;
+    border-radius:99px; background:var(--board); color:#fff; text-decoration:none; font:650 13.5px/1 "Instrument Sans", sans-serif;
+    box-shadow:0 14px 30px -10px rgba(6,13,34,.6), inset 0 1px 0 rgba(255,255,255,.12);
+    transform:translate(-50%, 40px) scale(.4); opacity:0; transition:transform .7s cubic-bezier(.2,1.5,.3,1), opacity .35s; }
+  .dlive.show{ transform:translate(-50%, 0) scale(1); opacity:1; }
+  .dlive svg{ width:15px; height:15px; flex:none; opacity:.7; }
+  .dlive-t{ overflow:hidden; white-space:nowrap; text-overflow:ellipsis; display:block; }
+  .dlive-t.swap{ animation:dk-swap .5s cubic-bezier(.2,1.2,.3,1); }
+  @keyframes dk-swap{ from{ transform:translateY(16px); opacity:0; } to{ transform:none; opacity:1; } }
+  .dlive-dot{ width:9px; height:9px; flex:none; border-radius:50%; background:#E5484D; animation:dk-pulse2 1.4s ease-out infinite; }
+  .dlive.amx .dlive-dot{ background:var(--ball); animation-name:dk-pulse3; }
+  @keyframes dk-pulse2{ 0%{ box-shadow:0 0 0 0 rgba(229,72,77,.7); } 100%{ box-shadow:0 0 0 10px rgba(229,72,77,0); } }
+  @keyframes dk-pulse3{ 0%{ box-shadow:0 0 0 0 rgba(255,216,74,.7); } 100%{ box-shadow:0 0 0 10px rgba(255,216,74,0); } }
+  .dock.min .dlive{ transform:translate(-50%, 6px) scale(.9); }
+  /* Mer: a sheet that springs up out of the dock; drag it down to close */
+  .sheet{ position:fixed; inset:0; z-index:150; }
+  .sheet-bg{ position:absolute; inset:0; background:rgba(4,10,27,.45); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); opacity:0; transition:opacity .35s; }
+  .sheet-in{ position:absolute; left:50%; bottom:calc(10px + env(safe-area-inset-bottom)); width:min(460px, calc(100% - 20px)); padding:10px 16px 18px; border-radius:30px;
+    background:var(--surface); box-shadow:0 30px 60px -20px rgba(6,13,34,.6); transform:translate(-50%, 110%) scale(.9); transform-origin:50% 100%;
+    transition:transform .6s cubic-bezier(.2,1.25,.3,1); touch-action:none; }
+  .sheet.open .sheet-bg{ opacity:1; }
+  .sheet.open .sheet-in{ transform:translate(-50%, 0) scale(1); }
+  .sheet-grab{ display:block; width:40px; height:5px; margin:0 auto 10px; border-radius:99px; background:var(--line); }
+  .sheet-in h2{ margin:0 4px 12px; font:800 26px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; }
+  .mtiles{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .mtile{ display:flex; flex-direction:column; gap:4px; padding:14px; border-radius:20px; background:var(--surface-2); color:var(--ink); text-decoration:none;
+    opacity:0; transform:translateY(18px) scale(.96); transition:transform .55s cubic-bezier(.2,1.4,.3,1), opacity .35s, background .2s; }
+  .sheet.open .mtile{ opacity:1; transform:none; }
+  .sheet.open .mtile:nth-child(2){ transition-delay:.04s; } .sheet.open .mtile:nth-child(3){ transition-delay:.08s; } .sheet.open .mtile:nth-child(4){ transition-delay:.12s; }
+  .mtile:active{ transform:scale(.96) !important; }
+  .mtile svg{ width:26px; height:26px; color:var(--accent); margin-bottom:6px; }
+  .mtile b{ font-size:15.5px; } .mtile span{ font-size:12px; line-height:1.35; color:var(--dim); }
+  .mrow{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; padding:10px 6px 0; border-top:1px solid var(--line); font-weight:600; font-size:14.5px; }
+  .mrow .lang{ display:flex; padding:3px; border-radius:99px; background:var(--surface-2); }
+  .mrow .lang button{ appearance:none; height:34px; padding:0 14px; border:0; border-radius:99px; background:none; color:var(--dim); font:600 13.5px/1 "Instrument Sans", sans-serif; cursor:pointer; }
+  .mrow .lang button[aria-pressed="true"]{ background:var(--solid); color:var(--solid-ink); }
+  /* views slide in from the side of the tab they come from */
+  .view.vin-r{ animation:v-in-r .45s cubic-bezier(.2,1,.3,1); } .view.vin-l{ animation:v-in-l .45s cubic-bezier(.2,1,.3,1); }
+  @keyframes v-in-r{ from{ opacity:0; transform:translateX(28px); } to{ opacity:1; transform:none; } }
+  @keyframes v-in-l{ from{ opacity:0; transform:translateX(-28px); } to{ opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce){
+    .dock, .dkbar, .dtab svg, .dtab span, .dlive, .sheet-in, .mtile, .dbadge{ transition:none !important; }
+    .dtab.pop svg, .dtab.pop svg *, .view.vin-r, .view.vin-l, .dlive-dot, .dtab.live .dbadge, .dlive-t.swap{ animation:none !important; }
+  }
+  /* ---------- Tävlingar ---------- */
+  .tavf{ display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+  .tavf .seg{ display:flex; flex-wrap:wrap; gap:6px; padding:0; margin:0; background:none; }
+  .tavf .seg button, .plf button{ appearance:none; height:36px; min-width:44px; padding:0 14px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 13.5px/1 "Instrument Sans", sans-serif; cursor:pointer; transition:background .2s, color .2s, transform .3s cubic-bezier(.2,1.6,.4,1); }
+  .tavf .seg button[aria-pressed="true"], .plf button[aria-pressed="true"]{ background:var(--solid); color:var(--solid-ink); border-color:var(--solid); }
+  .tavf .seg button:active, .plf button:active{ transform:scale(.94); }
+  .plf{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 12px; padding:0; background:none; }
+  .tavlist{ display:grid; gap:10px; }
+  .tavc{ display:grid; grid-template-columns:48px minmax(0,1fr); gap:12px; padding:13px 14px; border-radius:16px; border:1px solid var(--line); background:var(--surface); color:inherit; text-decoration:none; transition:transform .3s cubic-bezier(.2,1.5,.4,1); }
+  .tavc:active{ transform:scale(.98); }
+  .tavc.tavmine{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }
+  .tavd{ display:flex; flex-direction:column; align-items:center; justify-content:center; width:48px; height:52px; border-radius:12px; background:var(--surface-2); }
+  .tavd b{ font:800 22px/1 "Big Shoulders Display", sans-serif; } .tavd small{ font:500 10px/1 "Chivo Mono", monospace; color:var(--dim); margin-top:3px; text-transform:uppercase; }
+  .tavb{ min-width:0; display:flex; flex-direction:column; gap:4px; }
+  .tavb > b{ font-size:15px; line-height:1.3; } .tavb > small{ font:500 11.5px/1.3 "Chivo Mono", monospace; color:var(--dim); }
+  .tavcls{ display:flex; flex-wrap:wrap; gap:4px; margin-top:2px; }
+  .tavcls i{ font-style:normal; font:600 11px/1 "Instrument Sans", sans-serif; padding:5px 8px; border-radius:99px; background:var(--surface-2); }
+  .tavcls i.full{ text-decoration:line-through; opacity:.6; }
+  .tavreg{ font-size:13px; font-weight:600; color:var(--accent); }
+  .tavcl{ font-size:12.5px; color:var(--dim); }
   /* ---------- Americano / Mexicano ---------- */
   .amxnew{ display:grid; grid-template-columns:1fr auto; gap:2px 12px; align-items:center; padding:14px 16px; border-radius:16px; background:var(--solid); color:var(--solid-ink); text-decoration:none; }
   .amxnew b{ font:800 22px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; }
@@ -303,10 +414,6 @@
   .rflag{ font:600 9.5px/1 "Chivo Mono", monospace; font-style:normal; letter-spacing:.06em; padding:3px 5px; border-radius:5px; background:var(--accent-soft); color:var(--accent); vertical-align:2px; margin-left:4px; }
   .rcount{ font:500 12px/1.4 "Chivo Mono", monospace; color:var(--dim); margin:4px 0 6px; }
   /* language: SV | ES, the chosen one filled */
-  .lang{ display:inline-flex; align-items:center; height:28px; padding:2px; gap:2px; flex:none; border-radius:99px; border:1px solid var(--line); background:var(--surface); }
-  .lang button{ appearance:none; border:0; background:none; height:22px; min-width:28px; padding:0 7px; border-radius:99px; cursor:pointer; color:var(--dim); font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.08em; }
-  .lang button:hover{ color:var(--ink); }
-  .lang button[aria-pressed="true"]{ background:var(--solid); color:var(--solid-ink); cursor:default; }
   @media (max-width:469px){ .today{ display:none; } }
   .nhint{
     margin:8px 0 0; padding:9px 12px; border-radius:12px; background:var(--surface); border:1px solid var(--line);
@@ -1462,8 +1569,6 @@
         <a class="brand" href="#/" aria-label="Nynäs idag, startsidan"><img src="img/nynas-logo.png" width="78" height="100" alt=""><span>Nynäs Padel</span></a>
         <div class="tools">
           <div class="today" id="today"></div>
-          <div class="lang" id="lang" role="group" aria-label="Språk"><button type="button" data-lang="sv" aria-pressed="true" lang="sv" aria-label="Svenska">SV</button><button type="button" data-lang="es" aria-pressed="false" lang="es" aria-label="Español">ES</button></div>
-          <a class="rulesbtn" href="#regler" aria-label="Regler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 21.5A2.5 2.5 0 0 1 6.5 19H20"/><path d="M9 8h7M9 11.5h5"/></svg><span data-i18n>Regler</span></a>
           <button class="bell" id="bell" type="button" aria-pressed="false" aria-label="Notiser för spelarna du följer" title="Notis när spelarna du följer får ett resultat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8.5a6 6 0 0 1 12 0c0 6.5 2.5 8.5 2.5 8.5h-17S6 15 6 8.5"/><path d="M10.2 20.5a2 2 0 0 0 3.6 0"/><circle class="bd" cx="18.5" cy="4.5" r="2.6" fill="#FFD84A" stroke="none"/></svg>
             <span data-i18n>Notiser</span>
@@ -1518,10 +1623,6 @@
       <p class="calrow" id="calHome" hidden></p>
     </section>
 
-    <section aria-labelledby="h-amx" id="secAmx">
-      <div class="sh"><h2 id="h-amx" data-i18n>Americano</h2><div class="meta" data-i18n>Spela med klubben</div></div>
-      <div id="amxHome"></div>
-    </section>
     <section aria-labelledby="h-top" id="secTop">
       <div class="sh"><h2 id="h-top" data-i18n>Topplistan</h2><div class="meta" id="topMeta"></div></div>
       <div class="topctl">
@@ -1536,17 +1637,7 @@
       <div class="topfoot"><span id="topNote"></span><button class="morebtn" type="button" id="topMore" hidden></button></div>
     </section>
 
-    <section aria-labelledby="h-lag">
-      <div class="sh"><h2 id="h-lag" data-i18n>Lagen</h2><div class="meta">SPL 2026-27</div></div>
-      <div class="teams" id="teams"></div>
-    </section>
 
-    <section aria-labelledby="h-sp">
-      <div class="sh"><h2 id="h-sp" data-i18n>Spelare</h2><div class="meta" id="plMeta"></div></div>
-      <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input type="search" id="q" placeholder="Sök spelare" aria-label="Sök spelare" autocomplete="off" enterkeyhint="search"></label>
-      <ul class="plist" id="plist"></ul>
-      <p class="empty" id="plEmpty" hidden data-i18n>Ingen spelare matchar.</p>
-    </section>
   </main>
 
   <!-- ================= SPELARE (one panel per player, made when first opened) ================= -->
@@ -1560,6 +1651,49 @@
   <main class="view" id="amx" tabindex="-1" hidden></main>
   <main class="view" id="konto" tabindex="-1" hidden></main>
 
+  <!-- ================= MENYRADENS VYER ================= -->
+  <main class="view" id="spelare" tabindex="-1" aria-labelledby="h-spv" hidden>
+    <div class="phead"><div class="pt"><h1 id="h-spv" data-i18n>Spelare</h1><div class="pm" id="spvMeta">Nynäs Padel Club</div></div></div>
+    <section aria-labelledby="h-sp">
+      <div class="sh"><h2 id="h-sp" data-i18n>Alla spelare</h2><div class="meta" id="plMeta"></div></div>
+      <div class="seg plf" role="group" aria-label="Visa" id="plFilter"><button type="button" data-plf="all" aria-pressed="true" data-i18n>Alla</button><button type="button" data-plf="F" aria-pressed="false" data-i18n>Damer</button><button type="button" data-plf="M" aria-pressed="false" data-i18n>Herrar</button><button type="button" data-plf="fol" aria-pressed="false" data-i18n>Följer</button></div>
+      <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input type="search" id="q" placeholder="Sök spelare" aria-label="Sök spelare" autocomplete="off" enterkeyhint="search"></label>
+      <ul class="plist" id="plist"></ul>
+      <p class="empty" id="plEmpty" hidden data-i18n>Ingen spelare matchar.</p>
+    </section>
+    <section aria-labelledby="h-lag">
+      <div class="sh"><h2 id="h-lag" data-i18n>Lagen</h2><div class="meta">SPL 2026-27</div></div>
+      <div class="teams" id="teams"></div>
+    </section>
+  </main>
+  <main class="view" id="tavlingar" tabindex="-1" aria-labelledby="h-tav" hidden></main>
+  <main class="view" id="americano" tabindex="-1" aria-labelledby="h-amxv" hidden>
+    <div class="phead"><div class="pt"><h1 id="h-amxv">Americano</h1><div class="pm" data-i18n>Spela med klubben</div></div></div>
+    <section aria-labelledby="h-amx" id="secAmx">
+            <div id="amxHome"></div>
+    </section>
+  </main>
+
+
+  <!-- ================= MENYRADEN ================= -->
+  <nav class="dock" id="dock" aria-label="Meny">
+    <a class="dlive" id="dockLive" href="#/" hidden><i class="dlive-dot" aria-hidden="true"></i><span class="dlive-t" id="dockLiveT"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+    <div class="dkbar" id="dockBar"><span class="dblob" id="dockBlob" aria-hidden="true"><i></i></span><a class="dtab" draggable="false" data-tab="idag" href="#/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="3" width="15" height="18" rx="3"/><path d="M4.5 12h15"/><path class="dk-accent" d="M9 7.5h6M9 16.5h6"/></svg><span data-i18n>Idag</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="spelare" href="#spelare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.3"/><path d="M3.5 19.5c.7-3.2 2.9-5 5.5-5s4.8 1.8 5.5 5"/><path class="dk-accent" d="M15.5 4.9a3.2 3.2 0 0 1 0 6.2M17.5 14.8c1.6.7 2.6 2.2 3 4.7"/></svg><span data-i18n>Spelare</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="tavlingar" href="#tavlingar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5h8v5.5a4 4 0 0 1-8 0z"/><path class="dk-accent" d="M8 5.5H5.2a3 3 0 0 0 2.9 4.2M16 5.5h2.8a3 3 0 0 1-2.9 4.2"/><path d="M12 13v3.5M8.5 20.5h7M10 16.5h4"/></svg><span data-i18n>Tävlingar</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="americano" href="#americano"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="10" cy="9.2" rx="5.6" ry="6.2" transform="rotate(-35 10 9.2)"/><path d="M13.3 13.8l5.2 5.2"/><circle class="dk-accent" cx="18.6" cy="5.6" r="2.1"/></svg><span data-i18n>Americano</span><i class="dbadge" aria-hidden="true"></i></a><button class="dtab" data-tab="mer" type="button" aria-haspopup="dialog" aria-controls="moreSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect class="dk-accent" x="13.5" y="13.5" width="6.5" height="6.5" rx="3.25"/></svg><span data-i18n>Mer</span><i class="dbadge" aria-hidden="true"></i></button></div>
+  </nav>
+  <div class="sheet" id="moreSheet" role="dialog" aria-modal="true" aria-labelledby="moreH" hidden>
+    <div class="sheet-bg" data-close></div>
+    <div class="sheet-in" id="moreIn">
+      <i class="sheet-grab" aria-hidden="true"></i>
+      <h2 id="moreH" data-i18n>Mer</h2>
+      <div class="mtiles">
+        <a class="mtile" href="#regler" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5a2 2 0 0 1 2-2h12v15H7a2 2 0 0 0-2 2z"/><path d="M5 20a2 2 0 0 0 2 2h12M9 7.5h6M9 11h4"/></svg><b data-i18n>Regler</b><span data-i18n>Officiella regler, sökbara</span></a>
+        <a class="mtile" href="#konto" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20.5c.9-3.8 3.6-5.8 7-5.8s6.1 2 7 5.8"/></svg><b data-i18n>Konto</b><span id="moreAcct" data-i18n>Logga in, begär konto</span></a>
+        <a class="mtile" href="#amx/alla" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M7 20v-6M12 20V9M17 20v-9"/></svg><b data-i18n>Alla americanos</b><span data-i18n>Vinnare och tabeller</span></a>
+        <a class="mtile" id="morePriv" href="integritet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.4-3 7.9-7 9.5-4-1.6-7-5.1-7-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg><b data-i18n>Integritet</b><span data-i18n>Vad som sparas</span></a>
+      </div>
+      <div class="mrow"><span data-i18n>Språk</span><div class="lang" id="lang" role="group" aria-label="Språk"><button type="button" data-lang="sv" aria-pressed="true" lang="sv" aria-label="Svenska">Svenska</button><button type="button" data-lang="es" aria-pressed="false" lang="es" aria-label="Español">Español</button></div></div>
+    </div>
+  </div>
   <footer>
     <b>Nynäs Padel Club</b>
     <span>Data: RankedIn / Svenska Padelförbundet · <a href="integritet.html" id="privacy" style="color:inherit" data-i18n>Integritet &amp; kontakt</a> · <a href="#konto" id="acct" style="color:inherit">Konto</a><span id="dataAt"></span></span>
@@ -1594,6 +1728,28 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Mer":"Más",
+    "Officiella regler, sökbara":"Reglas oficiales, con buscador",
+    "Logga in, begär konto":"Entrar, pedir cuenta",
+    "Vinnare och tabeller":"Ganadores y clasificaciones",
+    "Integritet":"Privacidad",
+    "Vad som sparas":"Qué se guarda",
+    "Alla spelare":"Todos los jugadores",
+    " spelar nu":" juega ahora",
+    "{n} spelar nu":"{n} juega ahora",
+    "{n} från klubben spelar nu":"{n} del club juegan ahora",
+    "Americano pågår":"Americano en juego",
+    "Inloggad som {n}":"Conectado como {n}",
+    " väntar":" pendientes",
+    "Inom 20 mil, kommande 8 veckor":"A menos de 200 km, próximas 8 semanas",
+    " tävlingar inom 20 mil, kommande 8 veckor":" torneos a menos de 200 km, próximas 8 semanas",
+    "Alla klasser":"Todas las categorías",
+    "Junior":"Junior",
+    "Nynäs är anmälda":"Nynäs está inscrito",
+    "Vecka ":"Semana ",
+    "Inga tävlingar med de valen.":"No hay torneos con esa selección.",
+    "Anmälda från Nynäs: ":"Inscritos de Nynäs: ",
+    "Anmälan stängd":"Inscripción cerrada",
     "Visa alla {n} tävlingar":"Ver los {n} torneos",
     "Bilden kommer från klubben eller RankedIn. Laddar du upp en egen visas den i stället, för alla i appen.":"La foto viene del club o de RankedIn. Si subes una propia, se mostrará en su lugar para todos en la app.",
     "Din egen bild visas, med bakgrunden borttagen.":"Se muestra tu propia foto, sin fondo.",
@@ -5244,6 +5400,7 @@
     }).then(function(){
       calBusy = false;
       Object.keys(PANELS).forEach(function(w){ try { renderSugg(w); } catch (e){ warn("Förslag", e); } });
+      if (VIEW.name === "tavlingar") try { renderTav(); } catch (e){ warn("Tävlingar", e); }
     });
   }
   var SG_ORDER = ["D", "C", "B", "A"], SG_POS = {M:{A:60, B:200, C:1200}, F:{A:50, B:160, C:700}};
@@ -5637,6 +5794,7 @@
       }
     });
     rows.sort(function(a, b){ return (b.fol ? 1 : 0) - (a.fol ? 1 : 0) || (b.s.pcls === "live" ? 1 : 0) - (a.s.pcls === "live" ? 1 : 0); });
+    DOCK_NOW = rows; try { dockLive(); } catch (e){}
     var np = rows.reduce(function(a, r){ return a + (r.team ? r.players.length : 1); }, 0);
     if (meta) meta.textContent = np ? np + (np === 1 ? _(" spelare") : _(" spelare ")) : "";
     if (!rows.length){
@@ -5980,12 +6138,21 @@
     }).join("");
   }
   function norm(s){ return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
+  var PLF = "all";
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("#plFilter button[data-plf]");
+    if (!b) return;
+    PLF = b.getAttribute("data-plf");
+    [].forEach.call(b.parentNode.children, function(x){ x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+    renderPlayerList();
+  });
   function renderPlayerList(){
     var host = document.getElementById("plist"), q = document.getElementById("q"), empty = document.getElementById("plEmpty"), meta = document.getElementById("plMeta");
     if (!host) return;
     var f = follows(), qn = norm(q && q.value).trim();
-    var list = ROSTER.filter(function(p){ return !qn || norm(p.name + " " + p.team).indexOf(qn) >= 0; })
-      .sort(function(a, b){ return (f.indexOf(b.pid) >= 0 ? 1 : 0) - (f.indexOf(a.pid) >= 0 ? 1 : 0); });
+    var pf = PLF;
+    var list = ROSTER.filter(function(p){ return (!qn || norm(p.name + " " + (p.team || "")).indexOf(qn) >= 0) && (pf === "all" || (pf === "fol" ? f.indexOf(p.pid) >= 0 : p.gender === pf)); })
+      .sort(function(a, b){ return (f.indexOf(b.pid) >= 0 ? 1 : 0) - (f.indexOf(a.pid) >= 0 ? 1 : 0) || a.name.localeCompare(b.name, "sv"); });
     if (meta) meta.textContent = ROSTER.length + _(" spelare ") + "· " + f.length + _(" följs");
     host.innerHTML = list.map(function(p){
       var T = trendOf(p), fol = f.indexOf(p.pid) >= 0, sk = T.skill[0], rk = T.rank[0];
@@ -7277,7 +7444,7 @@
   function renderAmxHome(){
     var host = document.getElementById("amxHome");
     if (!host) return;
-    if (!AMX.list && PUSH_API){ AMX.list = []; amxApi("/amx").then(function(d){ AMX.list = d.list || []; renderAmxHome(); }, function(){}); }
+    if (!AMX.list && PUSH_API){ AMX.list = []; amxApi("/amx").then(function(d){ AMX.list = d.list || []; renderAmxHome(); try { dockLive(); } catch (e){} }, function(){}); }
     var f = follows(), mine = amxMine(), ids = mine.map(function(x){ return x.id; });
     var row = function(x, own){
       var fol = (x.pids || []).some(function(p){ return f.indexOf(Number(p)) >= 0; });
@@ -7673,6 +7840,7 @@
   }
   function renderAcct(){
     claimSet();
+    try { DOCK.badge("mer", AUTH && AUTH.me && AUTH.me.reqs); } catch (e){}
     try { photoCtl(); } catch (e){}
     var a = document.getElementById("acct");
     if (a) a.textContent = AUTH && AUTH.me ? _("Konto") + ": " + AUTH.me.name.split(" ")[0] + (AUTH.me.reqs ? " (" + AUTH.me.reqs + ")" : "") : _("Konto");
@@ -7950,6 +8118,249 @@
       }, function(er){ b.disabled = false; err.textContent = er.status === 401 ? _("Du behöver vara inloggad.") : _("Kunde inte spara: ") + er.message; });
     });
   }
+  /* ---- Menyraden: Idag · Spelare · Tävlingar · Americano · Mer. A spring-driven blob (it stretches as it travels and follows
+     the finger when you slide along the bar: let go on a tab to open it), the active icon pops and draws itself, the dock
+     pulls in while you scroll down, and a live capsule rises out of it for what is on right now. ---- */
+  var DOCK_TABS = ["idag", "spelare", "tavlingar", "americano", "mer"];
+  function dockTabOf(v){
+    return v === "home" ? "idag" : v === "player" || v === "team" || v === "spelare" ? "spelare" : v === "tour" || v === "tavlingar" || v === "match" ? "tavlingar"
+      : v === "amx" || v === "americano" ? "americano" : "mer";
+  }
+  var DOCK = (function(){
+    var dock = document.getElementById("dock"), bar = document.getElementById("dockBar"), blob = document.getElementById("dockBlob");
+    if (!dock || !bar || !blob) return {set:function(){}, live:function(){}};
+    var tabs = [].slice.call(bar.querySelectorAll(".dtab"));
+    var RM = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+    var st = {x:0, w:0, vx:0, vw:0, tx:0, tw:0, raf:0, cur:null, ready:false, p:null, hov:null, eat:false, last:0};
+    function tabEl(k){ return tabs.filter(function(t){ return t.getAttribute("data-tab") === k; })[0]; }
+    function paint(){
+      var sp = Math.abs(st.vx), stretch = Math.min(44, sp * .032), sq = 1 - Math.min(.14, sp * .0002);
+      blob.style.width = Math.max(0, st.w + stretch) + "px";
+      blob.style.transform = "translateX(" + (st.x - stretch / 2).toFixed(2) + "px) scaleY(" + sq.toFixed(3) + ")";
+    }
+    function step(ts){
+      var dt = Math.min(.034, st.last ? (ts - st.last) / 1000 : 1 / 60); st.last = ts;
+      var k = 560, c = 36;
+      st.vx += (k * (st.tx - st.x) - c * st.vx) * dt; st.x += st.vx * dt;
+      st.vw += (k * (st.tw - st.w) - c * st.vw) * dt; st.w += st.vw * dt;
+      paint();
+      if (Math.abs(st.tx - st.x) < .2 && Math.abs(st.vx) < 2 && Math.abs(st.tw - st.w) < .2 && Math.abs(st.vw) < 2){ st.x = st.tx; st.w = st.tw; st.vx = st.vw = 0; st.raf = 0; st.last = 0; paint(); return; }
+      st.raf = requestAnimationFrame(step);
+    }
+    function go(x, w, now){
+      st.tx = x; st.tw = w;
+      if (now || RM || !st.ready){ st.x = x; st.w = w; st.vx = st.vw = 0; paint(); return; }
+      if (!st.raf) st.raf = requestAnimationFrame(step);
+    }
+    function geo(t){ return {x:t.offsetLeft + 2, w:t.offsetWidth - 4}; }
+    function buzz(){ try { if (navigator.vibrate) navigator.vibrate(6); } catch (e){} }
+    function set(k, instant){
+      var t = tabEl(k);
+      if (!t) return;
+      var was = st.cur;
+      st.cur = k;
+      tabs.forEach(function(x){ var on = x === t; x.classList.toggle("on", on); if (x.tagName === "A"){ if (on) x.setAttribute("aria-current", "page"); else x.removeAttribute("aria-current"); } });
+      if (was && was !== k && !instant && !RM){ t.classList.remove("pop"); void t.offsetWidth; t.classList.add("pop"); }
+      var g = geo(t);
+      go(g.x, g.w, instant);
+      st.ready = true;
+    }
+    function tabAt(cx){
+      var r = bar.getBoundingClientRect(), x = cx - r.left;
+      for (var i = 0; i < tabs.length; i++) if (x >= tabs[i].offsetLeft && x < tabs[i].offsetLeft + tabs[i].offsetWidth) return tabs[i];
+      return x < 0 ? tabs[0] : tabs[tabs.length - 1];
+    }
+    function open(t){
+      var k = t.getAttribute("data-tab");
+      if (k === "mer"){ moreOpen(); return; }
+      var h = t.getAttribute("href");
+      if (location.hash === h || (h === "#/" && (!location.hash || location.hash === "#"))){ try { window.scrollTo({top:0, behavior:RM ? "auto" : "smooth"}); } catch (e){ window.scrollTo(0, 0); } }
+      else location.hash = h;
+    }
+    // slide along the bar: the blob follows the finger, the tab under it lifts; let go to open it
+    bar.addEventListener("pointerdown", function(e){
+      if (e.button) return;
+      st.p = {id:e.pointerId, x0:e.clientX, moved:false};
+      bar.classList.add("touch");
+      bar.style.setProperty("--mx", (e.clientX - bar.getBoundingClientRect().left) + "px");
+    });
+    bar.addEventListener("pointermove", function(e){
+      var p = st.p;
+      bar.style.setProperty("--mx", (e.clientX - bar.getBoundingClientRect().left) + "px");
+      if (!p || p.id !== e.pointerId) return;
+      if (!p.moved && Math.abs(e.clientX - p.x0) < 10) return;
+      if (!p.moved){ p.moved = true; bar.classList.add("drag"); try { bar.setPointerCapture(e.pointerId); } catch (er){} }
+      var r = bar.getBoundingClientRect(), w = st.tw || 60, x = Math.max(4, Math.min(r.width - w - 4, e.clientX - r.left - w / 2));
+      go(x, w);
+      var t = tabAt(e.clientX);
+      if (t !== st.hov){ if (st.hov) st.hov.classList.remove("hov"); st.hov = t; t.classList.add("hov"); buzz(); }
+    });
+    function end(e){
+      var p = st.p;
+      bar.classList.remove("touch", "drag");
+      if (!p || p.id !== e.pointerId) return;
+      st.p = null;
+      if (st.hov){ st.hov.classList.remove("hov"); }
+      if (p.moved){
+        st.eat = true; setTimeout(function(){ st.eat = false; }, 50);
+        var t = st.hov || tabAt(e.clientX); st.hov = null;
+        if (t.getAttribute("data-tab") === st.cur || t.getAttribute("data-tab") === "mer") set(st.cur);   // back to where it was
+        open(t);
+      }
+    }
+    bar.addEventListener("pointerup", end); bar.addEventListener("pointercancel", end);
+    bar.addEventListener("dragstart", function(e){ e.preventDefault(); });
+    bar.addEventListener("click", function(e){
+      var t = e.target.closest(".dtab");
+      if (!t) return;
+      e.preventDefault();
+      if (st.eat) return;
+      open(t);
+    });
+    // scrolling down pulls the dock in; up (or near the top) brings it back
+    var ly = window.pageYOffset || 0, ticking = false;
+    window.addEventListener("scroll", function(){
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function(){
+        ticking = false;
+        var y = window.pageYOffset || 0;
+        if (y > ly + 8 && y > 160) dock.classList.add("min");
+        else if (y < ly - 8 || y < 80) dock.classList.remove("min");
+        ly = y;
+      });
+    }, {passive:true});
+    window.addEventListener("resize", function(){ if (st.cur){ var g = geo(tabEl(st.cur)); go(g.x, g.w, true); } });
+    // the live capsule: what is on right now, a new line every few seconds
+    var cap = document.getElementById("dockLive"), capT = document.getElementById("dockLiveT"), items = [], idx = 0, timer = 0;
+    function showItem(){
+      var x = items[idx % items.length];
+      if (!x) return;
+      cap.setAttribute("href", x.href); cap.classList.toggle("amx", x.kind === "amx");
+      if (capT.textContent !== x.t){ capT.textContent = x.t; capT.classList.remove("swap"); void capT.offsetWidth; capT.classList.add("swap"); }
+    }
+    function live(list){
+      items = list || [];
+      tabEl("idag").classList.toggle("badge", items.some(function(x){ return x.kind === "now"; }));
+      tabEl("idag").classList.toggle("live", items.some(function(x){ return x.kind === "now"; }));
+      tabEl("americano").classList.toggle("badge", items.some(function(x){ return x.kind === "amx"; }));
+      clearInterval(timer);
+      if (!items.length){ cap.classList.remove("show"); setTimeout(function(){ if (!items.length) cap.hidden = true; }, 400); return; }
+      cap.hidden = false; idx = 0; showItem();
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ cap.classList.add("show"); }); });
+      if (items.length > 1) timer = setInterval(function(){ if (document.visibilityState !== "hidden"){ idx++; showItem(); } }, 4200);
+    }
+    return {set:set, live:live, badge:function(k, on){ var t = tabEl(k); if (t) t.classList.toggle("badge", !!on); }};
+  })();
+  // What the capsule says: followed players on court now (else anyone from the club), americanos on now
+  var DOCK_NOW = [], DOCK_PREV = null;
+  function dockLive(){
+    var out = [], f = follows();
+    var now = DOCK_NOW.filter(function(r){ return r.s && r.s.pcls === "live"; });
+    var mine = now.filter(function(r){ return r.fol; });
+    (mine.length ? mine : now).slice(0, 3).forEach(function(r){
+      var who = r.team ? r.e.team || _("Laget") : r.P.short;
+      out.push({kind:"now", t:(r.team ? who + _(" spelar nu") : _("{n} spelar nu", {n:who})) + (r.s.line ? " · " + r.s.line : ""), href:r.team ? "#/" : r.href || "#" + r.P.key});
+    });
+    if (now.length > 3 && !mine.length) out.push({kind:"now", t:_("{n} från klubben spelar nu", {n:now.length}), href:"#/"});
+    (AMX.list || []).filter(function(x){ return !x.done && Date.now() - x.at < 12 * 3600e3; }).slice(0, 2).forEach(function(x){
+      var fol = (x.pids || []).some(function(p){ return f.indexOf(Number(p)) >= 0; });
+      out.push({kind:"amx", t:(fol ? _("Americano pågår") : _("Americano")) + " · " + x.name, href:"#amx/" + x.id});
+    });
+    DOCK.live(out);
+  }
+
+  /* ---- Mer: a sheet out of the dock (Regler, Konto, Alla americanos, Integritet, Språk); drag it down to close ---- */
+  function moreOpen(){
+    var sh = document.getElementById("moreSheet");
+    if (!sh || !sh.hidden) return;
+    var pv2 = document.getElementById("morePriv"); if (pv2 && LANG === "es") pv2.setAttribute("href", "privacidad.html");
+    var a = document.getElementById("moreAcct");
+    if (a) a.textContent = AUTH && AUTH.me ? _("Inloggad som {n}", {n:AUTH.me.name.split(" ")[0]}) + (AUTH.me.reqs ? " · " + AUTH.me.reqs + _(" väntar") : "") : _("Logga in, begär konto");
+    sh.hidden = false;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ sh.classList.add("open"); }); });
+  }
+  function moreClose(){
+    var sh = document.getElementById("moreSheet"), inn = document.getElementById("moreIn");
+    if (!sh || sh.hidden) return;
+    sh.classList.remove("open");
+    if (inn) inn.style.transform = "";
+    setTimeout(function(){ if (!sh.classList.contains("open")) sh.hidden = true; }, 420);
+  }
+  (function(){
+    var sh = document.getElementById("moreSheet"), inn = document.getElementById("moreIn");
+    if (!sh || !inn) return;
+    sh.addEventListener("click", function(e){ if (e.target.closest("[data-close]")) moreClose(); });
+    document.addEventListener("keydown", function(e){ if (e.key === "Escape") moreClose(); });
+    var d = null;
+    inn.addEventListener("pointerdown", function(e){ if (!e.target.closest("a, button")) d = {y:e.clientY, id:e.pointerId}; });
+    inn.addEventListener("pointermove", function(e){
+      if (!d || d.id !== e.pointerId) return;
+      var dy = Math.max(0, e.clientY - d.y);
+      inn.style.transition = "none"; inn.style.transform = "translate(-50%, " + dy + "px)";
+    });
+    function up(e){
+      if (!d || d.id !== e.pointerId) return;
+      var dy = e.clientY - d.y; d = null;
+      inn.style.transition = ""; inn.style.transform = "";
+      if (dy > 80) moreClose();
+    }
+    inn.addEventListener("pointerup", up); inn.addEventListener("pointercancel", up);
+  })();
+
+  /* ---- #tavlingar: every sanctioned tournament within 20 mil the next 8 weeks (worker /cal), by week, with the club's
+     entries marked; filter Dam/Herr and level ---- */
+  var TAV = {g:store.get("padel.tav.g") || "all", lv:store.get("padel.tav.lv") || "all"};
+  function isoWeek(d){ var x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())), n = x.getUTCDay() || 7; x.setUTCDate(x.getUTCDate() + 4 - n); var y0 = new Date(Date.UTC(x.getUTCFullYear(), 0, 1)); return Math.ceil(((x - y0) / 864e5 + 1) / 7); }
+  function tavLevel(c){ return c.level !== "other" ? c.level : /^[FP]\s?\d\d|junior|ungdom|step/i.test(c.name || "") ? "J" : "other"; }
+  function renderTav(){
+    var box = document.getElementById("tavlingar");
+    if (!box) return;
+    if (!CAL){ box.innerHTML = '<div class="phead"><div class="pt"><h1 id="h-tav">' + _("Tävlingar") + '</h1><div class="pm">' + _("Inom 20 mil, kommande 8 veckor") + '</div></div></div><p class="empty">' + _("Hämtar …") + '</p>'; loadCal(); return; }
+    var t = now(), seg = function(id, cur, opts){ return '<div class="seg" role="group" id="' + id + '">' + opts.map(function(o){ return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (cur === o[0]) + '">' + esc(o[1]) + '</button>'; }).join("") + '</div>'; };
+    var list = (CAL.events || []).filter(function(e){ return (riDate(e.end) || riDate(e.start) || t) >= t; }).slice().sort(function(a, b){ return String(a.start).localeCompare(String(b.start)); }).map(function(e){
+      var cls = (e.classes || []).filter(function(c){ var lv = tavLevel(c); return (TAV.g === "all" || c.gender === TAV.g || (c.gender === "mixed" && TAV.lv === "all")) && (TAV.lv === "all" || lv === TAV.lv); });
+      return {e:e, cls:cls};
+    }).filter(function(x){ return x.cls.length; });
+    var club = list.filter(function(x){ return (x.e.regs || []).length; });
+    var h = '<div class="phead"><div class="pt"><h1 id="h-tav">' + _("Tävlingar") + '</h1><div class="pm">' + esc(list.length + _(" tävlingar inom 20 mil, kommande 8 veckor")) + '</div></div></div>' +
+      '<div class="tavf">' + seg("tavG", TAV.g, [["all", _("Alla")], ["F", _("Dam")], ["M", _("Herr")]]) + seg("tavL", TAV.lv, [["all", _("Alla klasser")], ["A", "A"], ["B", "B"], ["C", "C"], ["D", "D"], ["J", _("Junior")]]) + '</div>';
+    if (club.length) h += '<div class="sh"><h2>' + _("Nynäs är anmälda") + '</h2><div class="meta">' + club.length + '</div></div><div class="tavlist">' + club.map(function(x){ return tavCard(x, true); }).join("") + '</div>';
+    var wk = null;
+    list.forEach(function(x){
+      var d = riDate(x.e.start) || t, w = isoWeek(d) + ":" + d.getFullYear();
+      if (w !== wk){
+        if (wk) h += '</div>';
+        wk = w;
+        var mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay() + 6) % 7)); var sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+        h += '<div class="sh"><h2>' + _("Vecka ") + isoWeek(d) + '</h2><div class="meta">' + esc(dayMonD(mon) + "–" + dayMonD(sun)) + '</div></div><div class="tavlist">';
+      }
+      h += tavCard(x, false);
+    });
+    if (wk) h += '</div>';
+    if (!list.length) h += '<p class="empty">' + _("Inga tävlingar med de valen.") + '</p>';
+    box.innerHTML = h;
+    box.onclick = function(ev){
+      var b = ev.target.closest(".tavf button[data-v]");
+      if (!b) return;
+      var g = b.parentNode.id === "tavG";
+      TAV[g ? "g" : "lv"] = b.getAttribute("data-v");
+      store.set(g ? "padel.tav.g" : "padel.tav.lv", TAV[g ? "g" : "lv"]);
+      renderTav();
+    };
+  }
+  function tavCard(x, mine){
+    var e = x.e, s = riDate(e.start) || now(), sd = loc(s), cl = riDate(e.closes), open = !cl || cl > now();
+    var where = [e.club, milOf(e)].filter(Boolean).join(" · ");
+    var names = (e.regs || []).map(function(r){ var Q = BYPID[r.pid]; return Q ? Q.short : ""; }).filter(function(v, i, a){ return v && a.indexOf(v) === i; });
+    var inApp = DISC && (DISC.events || []).some(function(v){ return String(v.tournamentId) === String(e.id); });
+    return '<a class="tavc' + (names.length ? " tavmine" : "") + '" href="' + (inApp ? "#tavling/" + e.id : esc(e.url)) + '"' + (inApp ? "" : ' target="_blank" rel="noopener"') + '>' +
+      '<span class="tavd"><b>' + sd.getUTCDate() + '</b><small>' + esc(MON[sd.getUTCMonth()]) + '</small></span>' +
+      '<span class="tavb"><b>' + esc(e.name) + '</b><small>' + esc(where) + '</small>' +
+      '<span class="tavcls">' + x.cls.slice(0, 8).map(function(c){ var full = c.limit > 0 && c.players >= c.limit; return '<i class="' + (full ? "full" : "") + '">' + esc(c.name) + '</i>'; }).join("") + '</span>' +
+      (names.length ? '<span class="tavreg">' + esc(_("Anmälda från Nynäs: ") + names.join(", ")) + '</span>' : "") +
+      '<span class="tavcl">' + esc(open ? (cl ? _("Sista anmälan ") + dayLabel(cl) : _("Anmälan öppen")) : _("Anmälan stängd")) + '</span></span></a>';
+  }
   function parseHash(h){
     h = String(h || "");
     if (!h || h === "#" || h === "#/") return {view:"home"};
@@ -7957,6 +8368,7 @@
     if (sk) return {view:"stats", key:sk[1] || null};
     var sm = /^#serie\/(\d+)\/([a-z0-9]+)$/.exec(h);
     if (sm) return {view:"match", gid:sm[1], key:sm[2]};
+    if (h === "#spelare" || h === "#tavlingar" || h === "#americano") return {view:h.slice(1)};
     var ki = /^#in\/([a-z2-9]{20})$/.exec(h);
     if (ki || h === "#konto") return {view:"konto", code:ki ? ki[1] : null};
     var kb = /^#konto\/begar\/(\d+)$/.exec(h);
@@ -7972,7 +8384,7 @@
     return P ? {view:"player", who:P.key, P:P, mid:m[2] || null} : {view:"home"};
   }
   function showView(id){
-    ["home", "team", "stats", "match", "tour", "rules", "amx", "konto"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
+    ["home", "team", "stats", "match", "tour", "rules", "amx", "konto", "spelare", "tavlingar", "americano"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
       var el = document.getElementById(v);
       if (el) el.hidden = v !== id;
     });
@@ -8051,6 +8463,13 @@
       VIEW = {name:"amx", who:null, team:"amx" + x.id};
       if (x.id === "ny"){ clearInterval(AMX.poll); renderAmxNew(); } else if (x.id === "alla"){ clearInterval(AMX.poll); renderAmxAll(); } else openAmx(x.id, x.key);
       document.title = (x.id === "ny" ? _("Ny americano") : x.id === "alla" ? _("Alla americanos") : (AMX.t && AMX.t.name) || "Americano") + " · Nynäs Padel";
+    } else if (x.view === "spelare" || x.view === "tavlingar" || x.view === "americano"){
+      if (x.view === "spelare"){ try { renderTeams(); } catch (e){} renderPlayerList(); }
+      else if (x.view === "tavlingar") renderTav();
+      else renderAmxHome();
+      showView(x.view);
+      VIEW = {name:x.view, who:null, team:x.view};
+      document.title = _(x.view === "spelare" ? "Spelare" : x.view === "tavlingar" ? "Tävlingar" : "Americano") + " · Nynäs Padel";
     } else if (x.view === "konto"){
       // the code leaves the address bar; logging in waits for a tap (the link may have opened in the wrong browser)
       if (x.code){ history.replaceState(null, "", "#konto"); KONTO.code = x.code; KONTO.msg = ""; renderKonto(); }
@@ -8078,7 +8497,16 @@
       VIEW = {name:"home", who:null};
       document.title = "Nynäs Padel";
     }
-    if (nav) nav.hidden = VIEW.name === "home";
+    if (nav) nav.hidden = ["home", "spelare", "tavlingar", "americano", "konto", "rules", "amx", "stats"].indexOf(VIEW.name) >= 0;
+    // the dock follows; a view opened from another tab slides in from that side
+    var tabNow = dockTabOf(VIEW.name), tabWas = DOCK_PREV;
+    DOCK.set(tabNow, !tabWas);
+    if (tabWas && tabWas !== tabNow){
+      var vEl = document.getElementById(VIEW.name === "player" ? "p-" + VIEW.who : VIEW.name === "home" ? "home" : VIEW.name);
+      if (vEl){ vEl.classList.remove("vin-r", "vin-l"); void vEl.offsetWidth; vEl.classList.add(DOCK_TABS.indexOf(tabNow) > DOCK_TABS.indexOf(tabWas) ? "vin-r" : "vin-l"); }
+    }
+    DOCK_PREV = tabNow;
+    moreClose();
     renderChips(VIEW.who);
     // Live views of players no longer shown stop, unless they are needed for notiser
     Object.keys(DYN).forEach(function(k){ if (DYN[k] && k !== VIEW.who && !watchWanted(BYKEY[k])) stopDyn(k); });
