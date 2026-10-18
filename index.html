@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-jWNdbKpSFoY/Zab+eDDHpJTGBSdPhIt6km1bVYOvsv8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-OT5RT1jHVmC6jqbEOT3Qf3+LzZOaOfRPKs8f9tkXCj4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -159,10 +159,10 @@
   .amxf .seg{ display:flex; flex-wrap:wrap; gap:6px; }
   .amxf .seg button, .amxtabs button{ appearance:none; height:36px; min-width:44px; padding:0 14px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 13px/1 "Instrument Sans", sans-serif; cursor:pointer; }
   .amxf .seg button[aria-pressed="true"], .amxtabs button[aria-selected="true"]{ background:var(--solid); border-color:var(--solid); color:var(--solid-ink); }
-  .amxguest{ display:flex; gap:8px; } .amxguest button{ flex:none; height:44px; padding:0 14px; border-radius:12px; border:0; background:var(--solid); color:var(--solid-ink); font:600 14px/1 "Instrument Sans", sans-serif; }
+  .amxguest{ display:flex !important; gap:8px; margin:0 !important; } .amxguest input{ flex:1; min-width:0; width:auto; } .amxguest button{ flex:none; height:44px; padding:0 14px; border-radius:12px; border:0; background:var(--solid); color:var(--solid-ink); font:600 14px/1 "Instrument Sans", sans-serif; }
   .amxpick{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 4px; }
   .amxp{ display:inline-flex; align-items:center; gap:4px; height:34px; padding:0 4px 0 12px; border-radius:99px; background:var(--surface-2); font-size:13.5px; }
-  .amxp.club{ background:var(--accent-soft); }
+  .amxp.amxclub{ background:var(--accent-soft); }
   .amxp button{ appearance:none; width:26px; height:26px; border:0; border-radius:50%; background:none; color:var(--dim); font-size:18px; cursor:pointer; }
   .amxroster{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
   .amxroster button{ display:inline-flex; align-items:center; gap:6px; height:38px; padding:0 12px 0 4px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:500 13.5px/1 "Instrument Sans", sans-serif; cursor:pointer; }
@@ -7071,7 +7071,7 @@
       team ? _("Lagamericano: fasta par som möter nya par varje runda, de par man mött minst först.") : _("Americano: ny partner varje runda. Lottningen undviker samma medspelare och motståndare, och aldrig samma som förra rundan om det går.");
     var pl = d.players.map(function(p, i){
       var open = AMX.look === i && !p.pid;
-      return '<span class="amxp' + (p.pid ? " club" : "") + '"><button type="button" class="amxav" data-look="' + i + '" aria-label="' + esc(p.pid ? p.n : _("Bild för ") + p.n) + '"' + (p.pid ? " disabled" : "") + '>' + amxAv(p) + '</button>' + esc(p.pid ? (BYPID[p.pid] || {}).short || p.n : p.n) +
+      return '<span class="amxp' + (p.pid ? " amxclub" : "") + '"><button type="button" class="amxav" data-look="' + i + '" aria-label="' + esc(p.pid ? p.n : _("Bild för ") + p.n) + '"' + (p.pid ? " disabled" : "") + '>' + amxAv(p) + '</button>' + esc(p.pid ? (BYPID[p.pid] || {}).short || p.n : p.n) +
         '<button type="button" data-rm="' + i + '" aria-label="' + esc(_("Ta bort ") + p.n) + '">×</button>' +
         (open ? '<span class="amxlook"><button type="button" data-fig="' + i + '">' + _("Ny figur") + '</button><label>' + _("Egen bild") + '<input type="file" accept="image/*" data-img="' + i + '" hidden></label>' + (p.img ? '<button type="button" data-noimg="' + i + '">' + _("Ta bort bild") + '</button>' : "") + '</span>' : "") + '</span>';
     });
