@@ -11,7 +11,7 @@ import { photoIndex, photoSet, photoGet, photosPending, photosCheck, canPhoto } 
 import { authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
 import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, amxAll, publicOf } from "./amx.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
-import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults } from "./bhs.js";
+import { fetchBhs, fetchBhsHistory, seriesWinners, bhsLogin, newResults, resultsDue, fetchGroupResults, fetchGroupTable } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
 import { parse, snapshot, unpack, notes, drawNote, summary, classResult, flip } from "./rankedin.js";
 import { discover, drawPath, rubbersPath, namesPath, drawsOf, ratingPath, skillOf, API, PLAYERS, BY_PID, LEGACY } from "./discover.js";
@@ -439,7 +439,11 @@ export async function runBhsResults(env, t, budget, log = {}) {
   for (const g of due) {
     try {
       const res = await fetchGroupResults(budget, g);
-      if (res.length) groups[groups.indexOf(g)] = { ...g, res };
+      if (!res.length) continue;
+      let ng = { ...g, res };
+      // a result not seen before: the table too, so "Omgången hittills" and the standings count it now
+      if (JSON.stringify(res) !== JSON.stringify(g.res || [])) try { const rows = await fetchGroupTable(budget, g); if (rows.length) ng = { ...ng, rows }; } catch (e) { console.warn("backhandsmash table", g.id, e.message); }
+      groups[groups.indexOf(g)] = ng;
     } catch (e) { console.warn("backhandsmash results", g.id, e.message); }
   }
   const v = { ...was, groups }, send = bhsSendable(v, newResults(was.groups, groups, t), t);

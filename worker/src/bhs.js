@@ -285,6 +285,14 @@ export function resultsDue(groups, t) {
   }));
 }
 // One group's results again (1 subrequest)
+// A group's table again (after a new result: the standings follow at once instead of the next night)
+export async function fetchGroupTable(budget, g, players = PLAYERS) {
+  if (budget.left < 1) throw new Error("subrequest budget");
+  budget.left--;
+  const who = matcher(players), rows = parseTable(await page(BHS + "/public/tables/group/" + g.id + "?groupId=" + g.id + "&mobile=false&lang=sv&isList=true"));
+  rows.forEach(r => { r.pids = who(r.n); });
+  return rows;
+}
 export async function fetchGroupResults(budget, g, players = PLAYERS) {
   if (budget.left < 1) throw new Error("subrequest budget");
   budget.left--;

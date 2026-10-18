@@ -108,18 +108,20 @@ test("after a scheduled match: its group's results are looked at again and the n
     next: [{ d: "2026-09-25 19:00", min: 90, c: "2", a: "Kian Borgström / Thea Löving", b: "Andreas Lindgren / Rebecca Levander", pids: [1680004, 1675246] }] };
   m.set("bhs", JSON.stringify({ at: "2026-09-25T01:33:00Z", groups: [g] }));
   const orig = globalThis.fetch, seen = [];
-  globalThis.fetch = async url => { seen.push(String(url)); return new Response(fx("bhs-results.html")); };
+  globalThis.fetch = async url => { seen.push(String(url)); return new Response(fx(/\/public\/tables\//.test(String(url)) ? "bhs-table-pair.html" : "bhs-results.html")); };
   try {
     const env = { PUSH }, budget = { left: 10 };
     assert.deepEqual(await runBhsResults(env, new Date("2026-09-25T18:03:00+02:00"), budget), [], "not yet over");
     assert.equal(seen.length, 0);
     const out = await runBhsResults(env, new Date("2026-09-25T20:33:00+02:00"), budget);
-    assert.equal(seen.length, 1);
+    assert.equal(seen.length, 2);
     assert.match(seen[0], /results\/bygroup\?id=92917/);
+    assert.match(seen[1], /public\/tables\/group\/92917/, "a new result: the table again");
+    assert.ok(JSON.parse(m.get("bhs")).groups[0].rows.length > 0, "the standings follow the result");
     assert.deepEqual(out.map(n => n.m.title), ["Rebecca vann mot Kian och Thea i mixedserien"], "only the fresh one");
     assert.equal(out[0].m.body, "Andreas Lindgren / Rebecca Levander – Kian Borgström / Thea Löving  6-3 4-6 6-2 · Mix 1");
     assert.ok(JSON.parse(m.get("bhs")).groups[0].res.length > 0);
     assert.deepEqual(await runBhsResults(env, new Date("2026-09-25T20:43:00+02:00"), budget), [], "result in: no more looks, no repeat");
-    assert.equal(seen.length, 1);
+    assert.equal(seen.length, 2);
   } finally { globalThis.fetch = orig; _resetMemory(); }
 });
