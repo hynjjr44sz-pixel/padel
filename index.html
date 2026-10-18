@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kJuDxzJ+IY/hmNCfix/mMFNer5Nt17Yxbu+0KD8lT7Y='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-QMnfd05QhEeAAZe/PL9vyQAeM73B/kHfDSBHdIpWh9g='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1537,7 +1537,7 @@
     "Paren":"Las parejas",
     "Spelarna":"Jugadores",
     "RankedIn":"RankedIn",
-    "Favorit på pappret räknas på parens snitt i skill. Ranking och statistik från RankedIn, ranking för veckan.":"El favorito sobre el papel se calcula con el skill medio de cada pareja. Ranking y estadísticas de RankedIn, ranking de la semana.",
+    "Favorit på pappret räknas på parens rankingpoäng (70 %) och snitt i skill (30 %). Ranking och statistik från RankedIn, ranking för veckan.":"El favorito sobre el papel se calcula con los puntos de ranking de cada pareja (70 %) y su skill medio (30 %). Ranking y estadísticas de RankedIn, ranking de la semana.",
     "Matchen ":"El partido ",
     " % vinster":" % victorias",
     " (följer)":" (sigues)",
@@ -4708,7 +4708,15 @@
       '<div class="vmid" role="button" tabindex="0" aria-label="' + _("Krocka igen") + '">' + burst + '<b>VS</b></div>';
     var when = mt.at ? cap(dayLabel(mt.at)) + " " + hm(mt.at) : mt.t || "";
     if (mt.c) when += (when ? " · " : "") + mt.c;
-    var fav = "", ch = mt.w ? null : rubberChance(mt, "a");
+    // Favourite on paper: the pairs' SPF ranking points (70 %) and average skill (30 %); skill alone until every player's
+    // ranking is looked up (or no one in either pair is ranked). Points on a log scale: 170 against 76 is about 70 %.
+    var fav = "", sk = mt.w ? null : rubberChance(mt, "a"), ch = sk;
+    var rpOf = function(p){ var t = 0; for (var i = 0; i < p.n.length; i++){ var o = inf(p, i); if (!o) return null; t += o.rank ? o.rank.pts || 0 : 0; } return t; };
+    var ra = mt.w ? null : rpOf(A), rb = mt.w ? null : rpOf(B);
+    if (ra != null && rb != null && ra + rb > 0){
+      var pr = 1 / (1 + Math.exp(-1.3 * Math.log((ra + 4) / (rb + 4))));
+      ch = {p:sk ? .7 * pr + .3 * sk.p : pr};
+    }
     if (ch){
       var pc = Math.max(5, Math.min(95, Math.round(100 * ch.p))), close = Math.abs(pc - 50) < 8, who = pc >= 50 ? A : B;
       fav = '<div class="vfav"><div class="vfl"><span>' + _("Favorit på pappret") + '</span><b>' + esc(close ? _("Jämnt") : who.n.map(function(n){ return n.split(" ")[0]; }).join(" & ")) + '</b></div>' +
@@ -4771,7 +4779,7 @@
       '<div class="vgrid">' + side(A, "a" + (mt.w === "a" ? " won" : mt.w === "b" ? " lost" : "")) + mid + side(B, "b" + (mt.w === "b" ? " won" : mt.w === "a" ? " lost" : "")) + '</div>' + fav + '</div>' +
       '<section aria-labelledby="h-dc"><div class="sh"><h2 id="h-dc">' + _("Paren") + '</h2><div class="meta">' + esc(short(A) + " – " + short(B)) + '</div></div><div class="card vcmp">' + rows.join("") + '</div></section>' +
       '<section aria-labelledby="h-dp"><div class="sh"><h2 id="h-dp">' + _("Spelarna") + '</h2><div class="meta">' + _("RankedIn") + '</div></div><div class="card dpls">' + plist(A, "a") + '<div class="dsep"></div>' + plist(B, "b") + '</div></section>' +
-      '<p class="vnote">' + _("Favorit på pappret räknas på parens snitt i skill. Ranking och statistik från RankedIn, ranking för veckan.") + '</p>';
+      '<p class="vnote">' + _("Favorit på pappret räknas på parens rankingpoäng (70 %) och snitt i skill (30 %). Ranking och statistik från RankedIn, ranking för veckan.") + '</p>';
   }
   function duelPaint(){
     if (!DUEL) return;
