@@ -6,7 +6,8 @@ import { buildIcs } from "./ics.js";
 import { weekDigest, weekNote } from "./week.js";
 import { remindNotes } from "./remind.js";
 import { soonNotes } from "./soon.js";
-import { photoIndex, photoSet, photoGet, photosPending, photosCheck } from "./photos.js";
+import { loadMembers, membersDue, membersRun, membersOut, setVisibility, visible as memberVisible } from "./members.js";
+import { photoIndex, photoSet, photoGet, photosPending, photosCheck, canPhoto } from "./photos.js";
 import { authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
 import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, amxAll, publicOf } from "./amx.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
@@ -90,6 +91,7 @@ function sameSecret(a, b) {
 
 async function handle(req, env) {
   const url = new URL(req.url), h = cors(req, env);
+  if (url.pathname !== "/live") try { await loadMembers(env); } catch (e) {}   // the club's members shown (not needed by the live relay)
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: h });
   // Admin test push: POST /test with X-Admin-Key = secret ADMIN_KEY (set with wrangler secret put). Off without the secret.
   if (req.method === "POST" && url.pathname === "/test") {
@@ -175,9 +177,9 @@ async function handle(req, env) {
     const bhs = await loadBhs(env), tv = await loadTv(env), tvs = await loadTvStarts(env);
     // tv: the MATCHi TV hall of an event (e.tv = its club id) and the halls' streams around the play days
     const withTv = e => { const c = eventClub(e); return c ? { ...e, tv: c.id } : e; };
-    const week = weekDigest({ wins: await loadWins(env), board: (rec && rec.board) || {}, bhs, events, players: WEEK_PLAYERS }, t, offsetAt(+t));
+    const week = weekDigest({ wins: await loadWins(env), board: (rec && rec.board) || {}, bhs, events, players: weekPlayers() }, t, offsetAt(+t));
     return json({ at: rec ? rec.at : null, checked: checkedAt(rec, t), src: "worker", week, events: events.map(withTv), past: past.map(withTv), tv: tv ? tv.clubs : {}, tvs: tvs || {}, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {}, bhs: bhs ? { at: bhs.at, groups: bhs.groups, hist: bhs.hist ? { at: bhs.hist.at, members: bhs.hist.members, rank: bhs.hist.rank, sw: bhs.hist.sw || [] } : null } : null,
-      board: (rec && rec.board) || {}, up: await photoIndex(env) }, 200, { ...h, "Cache-Control": "public, max-age=120" });
+      board: (rec && rec.board) || {}, up: await photoIndex(env), members: membersOut() }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
   if (route === "GET /live") return liveRoute(req, env, url, h);
   // Svenska Padelförbundets regler (rules.json, built every Sunday by .github/workflows/rules.yml): passed through,
@@ -256,6 +258,16 @@ async function handle(req, env) {
     for (const [k, v] of Object.entries(h)) r.headers.set(k, v);
     return r;
   }
+  // One's own choice (or a parent's for their junior): shown in the app or not
+  if (route === "POST /me/visibility") {
+    const me = await authUser(env, req, +now(env));
+    if (!me) return json({ error: "login" }, 401, h);
+    let b;
+    try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    const pid = Number(b && b.pid);
+    if (!canPhoto(me, pid)) return json({ error: "forbidden" }, 403, h);
+    return (await setVisibility(env, pid, b.vis === "out" ? "out" : "in")) ? json({ ok: true }, 200, h) : json({ error: "not a member" }, 404, h);
+  }
   if (route === "GET /photos/pending") return json(await photosPending(env), 200, { ...h, "Cache-Control": "no-store" });
   // "Begär konto": the request (shows a code), the waiting phone's poll (collects the login once approved), cancel
   if (route === "POST /auth/request" || route === "POST /auth/request/poll" || route === "POST /auth/request/cancel") {
@@ -269,10 +281,16 @@ async function handle(req, env) {
     // the admin role, or the ADMIN_KEY secret (from the command line: the first admin's invite)
     const key = !!env.ADMIN_KEY && sameSecret(req.headers.get("X-Admin-Key"), env.ADMIN_KEY), me = key ? null : await authUser(env, req, +now(env));
     if (!key && !can(me, "admin")) return json({ error: "forbidden" }, 403, h);
-    if (req.method === "GET") return json(await adminUsers(env, +now(env)), 200, { ...h, "Cache-Control": "no-store" });
+    if (req.method === "GET") {
+      const mrec = await loadMembers(env);
+      return json({ ...(await adminUsers(env, +now(env))), members: mrec.list.map(m => ({ pid: m.pid, name: m.name, age: m.age ?? null, gender: m.gender || null, vis: m.vis || null, shown: memberVisible(m) })) }, 200, { ...h, "Cache-Control": "no-store" });
+    }
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    // a member shown or not: "in" (yes), "out" (no), null (by age: 18 and over)
+    if (b && b.op === "member") return (await setVisibility(env, b.pid, b.vis)) ? json({ ok: true }, 200, h) : json({ error: "not found" }, 404, h);
     const r = await adminOp(env, me, b, +now(env), BY_PID);
+    if (r.ok && b.op === "approve" && r.pid) try { await setVisibility(env, r.pid, "in"); } catch (e) {}   // an approved request: a yes to being shown
     return r.err ? json({ error: r.err, ...(r.left != null ? { left: r.left } : {}) }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
   if (route === "POST /subscribe") {
@@ -629,9 +647,10 @@ const PUB_MINUTE = 35;   // not exported: workerd only accepts functions and han
 // The leaderboard ("board" in "disc") gets each changed standing (rk, rp, rd, up = places gained: RankedIn's StandingDiff)
 // and the SPF skill (sk) of up to 20 players an hour, in turn (GetPlayerRatingAsync: the whole roster every hour); "disc" is written only when the board changed.
 const RANK_MINUTE = 52, SKILLS_PER_HOUR = 20;   // the whole roster every hour (skill changes after each match)
-const RANKED = PLAYERS.map(p => ({ who: p.who, pid: p.pid, name: p.name, q: p.me, rt: p.rt, ag: p.ag, rid: p.rid, list: p.gender === "F" ? "Dam huvudlista" : "Herrar huvudlista" }));
+// Built from PLAYERS each time: the club's members shown join it at run time (members.js)
+const ranked = () => PLAYERS.filter(p => p.rt).map(p => ({ who: p.who, pid: p.pid, name: p.name, q: p.me, rt: p.rt, ag: p.ag, rid: p.rid, list: p.gender === "F" ? "Dam huvudlista" : "Herrar huvudlista" }));
 // Up to 20 players per hour (rotating when the roster is larger), one RankedIn call each while a list is new.
-export async function rankingChecks(env, t, budget, log, players = RANKED, cap = 20) {
+export async function rankingChecks(env, t, budget, log, players = ranked(), cap = 20) {
   const get = getter(env, budget), msgs = [], patch = {}, n = Math.min(cap, players.length), start = (Math.floor(+t / H) * n) % Math.max(1, players.length);
   const lists = new Map();
   for (let i = 0; i < n; i++) {
@@ -771,7 +790,8 @@ function pidsOfEv(ev) {
   if (ev.partnerId && BY_PID.has(Number(ev.partnerId))) out.push(Number(ev.partnerId));
   return out;
 }
-const ROSTER_BY_NAME = new Map(PLAYERS.map(p => [slugName(p.me), { pid: p.pid, who: p.who }]));
+let RBN = { n: -1, m: null };
+const rosterByName = () => RBN.n === PLAYERS.length ? RBN.m : (RBN = { n: PLAYERS.length, m: new Map(PLAYERS.map(p => [slugName(p.me), { pid: p.pid, who: p.who }])) }).m;
 function slugName(n) { return String(n).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
 // Team play day -> [{who, pid}] of its roster players (old records: the one player they were found for).
 function teamRoster(ev) {
@@ -848,11 +868,11 @@ export async function runCalendar(env, t, budget, rec, log = {}) {
 //  in the pair), pair (full names), opp (the other pair, short), s (score from the pair's side; group: wins–losses), rr?}
 const WINS_MINUTE = 44, WIN_KEEP = 30 * DAY;
 const winAge = (x, t) => +t - Date.parse(x.date + "T12:00:00Z");
-const WEEK_PLAYERS = PLAYERS.map(p => ({ pid: p.pid, name: p.me, short: p.name }));
+const weekPlayers = () => PLAYERS.map(p => ({ pid: p.pid, name: p.me, short: p.name }));
 // The week digest from what is kept anyway (one KV read each, cached in the isolate)
 async function weekOf(env, t, rec) {
   rec = rec || await loadRecord(env);
-  return weekDigest({ wins: await loadWins(env), board: (rec && rec.board) || {}, bhs: await loadBhs(env), events: merge(rec ? rec.events : []), players: WEEK_PLAYERS }, t, offsetAt(+t));
+  return weekDigest({ wins: await loadWins(env), board: (rec && rec.board) || {}, bhs: await loadBhs(env), events: merge(rec ? rec.events : []), players: weekPlayers() }, t, offsetAt(+t));
 }
 export function recentWins(list, t) { return (list || []).filter(x => x && x.date && winAge(x, t) < WIN_KEEP && winAge(x, t) > -DAY); }
 export function winEntries(ev, fin, t) {
@@ -947,6 +967,7 @@ async function liveView(env, t, events) {
 // One cron tick. events: explicit list (tests); otherwise discovered + static. Returns what happened.
 export async function tick(env, events) {
   const t = now(env), budget = { left: SUBREQUESTS }, log = { writes: 0, sent: 0, removed: 0 };
+  if (!events) try { await loadMembers(env); } catch (e) {}
   let list, rec = null;
   if (events) list = events.map(normalize);
   else {
@@ -956,6 +977,13 @@ export async function tick(env, events) {
       // room for the draw checks too.
       const busy = rec && activeEvents(t, merge(rec.events)).length > 0;
       try { rec = await runDiscovery(env, t, budget, rec, log, busy ? 15 : rec ? 35 : 30); } catch (e) { console.warn("discovery", e.message); }
+    }
+    // The club's members on RankedIn: the list once a day, a few looked up a run (minute 3, 13, ...; not while live)
+    if (env.MEMBERS_OFF !== "1" && t.getUTCMinutes() % 10 === 3 && !(rec && activeEvents(t, merge(rec.events)).length)) {   // MEMBERS_OFF: local tests only
+      try {
+        const mrec = await loadMembers(env, true);
+        if (membersDue(mrec, t)) { const mine = { left: Math.min(25, budget.left) }, st = mine.left; log.members = await membersRun(env, getter(env, mine), t, mine); budget.left -= st - mine.left; }
+      } catch (e) { console.warn("members", e.message); }
     }
     list = merge(rec ? rec.events : []);
   }
@@ -1116,9 +1144,9 @@ export async function tick(env, events) {
         if (matches.every(m => m.w) && (fmt === "groups" || matches.some(m => m.kind === "ko" && m.di === 0 && m.r === m.R - 1))) after._done = 1;
         // First look at an event is the baseline: results already there never notify (same as the page).
         if (prev) u.evs.forEach(ev => notes(ev, matches, prev).forEach(m => msgs.push({ pids: pidsOfEv(ev), m })));
-        after._sum = summary(matches, ROSTER_BY_NAME);
+        after._sum = summary(matches, rosterByName());
         // Class decided with a club player in the final: kept in the class record and added to "wins".
-        const fin = classResult(matches, ROSTER_BY_NAME, fmt);
+        const fin = classResult(matches, rosterByName(), fmt);
         if (fin && (fin.w.length || fin.l.length)) { after._sum.fin = fin; wins.push(...winEntries(u.evs[0], fin, t)); }
       } else {
         const raw = await get(rubbersPath(u.tie.id));

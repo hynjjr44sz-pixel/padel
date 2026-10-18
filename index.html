@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-xn4MNGOflOeazOmHkaBu17eA+DGQopL60avsjgYEDtM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Q9cngxAepK635ki1tbJhzwPBbHLvH0QNWillO7Tk+CE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -285,6 +285,15 @@
   [data-rcode]{ text-transform:uppercase; letter-spacing:.1em; }
   #rPid{ width:100%; height:44px; padding:0 10px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:500 16px/1 "Instrument Sans", sans-serif; }
   .klist{ padding:0 16px; }
+  .plet{ list-style:none; margin:14px 2px 4px; font:800 15px/1 "Big Shoulders Display", sans-serif; letter-spacing:.06em; color:var(--dim); }
+  .kmemnote{ margin:0 0 8px !important; }
+  .kmemq{ display:block; margin:0 0 10px; } .kmemq input{ width:100%; height:42px; padding:0 12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:500 16px/1 "Instrument Sans", sans-serif; }
+  .kmem{ display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); } .kmem:last-child{ border-bottom:0; }
+  .kmseg{ display:flex; flex:none; padding:2px; border-radius:99px; background:var(--surface-2); }
+  .kmseg button{ appearance:none; height:30px; padding:0 9px; border:0; border-radius:99px; background:none; color:var(--dim); font:600 12px/1 "Instrument Sans", sans-serif; cursor:pointer; }
+  .kmseg button[aria-pressed="true"]{ background:var(--solid); color:var(--solid-ink); }
+  .kvis{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:6px 0 12px; padding:10px 12px; border-radius:12px; background:var(--surface-2); } .kvis p{ margin:0 !important; font-size:14px !important; } .kvis small{ color:var(--dim); }
+
   .amxgo.pfile{ position:relative; display:inline-flex; align-items:center; justify-content:center; width:auto; padding:0 18px; overflow:hidden; }
   .pphoto{ margin-top:28px; }
   .cropin .amxbar{ flex-wrap:nowrap; } .cropin .amxbar > *{ flex:1; }
@@ -1728,6 +1737,29 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Du följer":"Sigues",
+    "{n} spelare i Nynäs Padel Club":"{n} jugadores en Nynäs Padel Club",
+    "Medlemmar":"Socios",
+    "Medlemslistan hämtas från RankedIn under natten.":"La lista de socios se descarga de RankedIn por la noche.",
+    "{a} av {b} visas":"{a} de {b} visibles",
+    "18 år och äldre visas om de inte sagt nej. Under 18 visas först efter ja, från en förälder eller ett godkänt konto.":"Los mayores de 18 se muestran salvo que digan que no. Los menores de 18 solo tras un sí, de un padre o una cuenta aprobada.",
+    "Sök medlem":"Buscar socio",
+    "Visas":"Visible",
+    "Dold, sagt nej":"Oculto, dijo que no",
+    "Dold, junior":"Oculto, junior",
+    "Dold, ålder okänd":"Oculto, edad desconocida",
+    "Dold":"Oculto",
+    "Ja":"Sí",
+    "Ålder":"Edad",
+    "Nej":"No",
+    "Du syns inte längre i appen. Det kan ta en stund innan det slår igenom överallt.":"Ya no apareces en la app. Puede tardar un poco en verse en todas partes.",
+    "Du syns i appen igen.":"Vuelves a aparecer en la app.",
+    "Du":"Tú",
+    "Ditt barn":"Tu hijo/a",
+    "Synas i appen":"Aparecer en la app",
+    "{n} syns för alla i appen.":"{n} aparece para todos en la app.",
+    "{n} syns inte i appen.":"{n} no aparece en la app.",
+    "Dölj":"Ocultar",
     "Mer":"Más",
     "Officiella regler, sökbara":"Reglas oficiales, con buscador",
     "Logga in, begär konto":"Entrar, pedir cuenta",
@@ -5610,8 +5642,31 @@
       return !res.some(function(r){ return String(r.tournamentId) === String(e.tournamentId) && who(r) === who(e) && slug(r.cls.replace(/^reserv\S*\s*(lista|list)?\s*/i, "")) === slug(e.cls); });
     });
   }
+  // The club's members shown (worker "members": 18+ unless they said no, juniors after a yes) join the roster
+  function applyMembers(list){
+    var want = {}, changed = false;
+    (Array.isArray(list) ? list : []).forEach(function(m){
+      if (!m || !m.pid || !m.key || !m.name) return;
+      want[m.pid] = 1;
+      if (BYPID[m.pid]) return;
+      if (BYKEY[m.key]) return;   // a key the roster already uses
+      var p = {key:m.key, pid:m.pid, name:m.name, short:m.short || m.name.split(" ")[0], gender:m.gender || null, rankedinId:m.rankedinId || null, member:1, slug:slug(m.name)};
+      p.o = OVERRIDES[p.key] || {};
+      ROSTER.push(p); BYKEY[p.key] = p; BYSLUG[p.slug] = p; BYPID[p.pid] = p; BYNAME[slug(p.name)] = p;
+      WHO[p.key] = {P:p, pid:p.pid, me:p.name, name:p.short, key:p.key};
+      changed = true;
+    });
+    ROSTER.slice().forEach(function(p){
+      if (!p.member || want[p.pid]) return;
+      ROSTER.splice(ROSTER.indexOf(p), 1); delete BYKEY[p.key]; delete BYSLUG[p.slug]; delete BYPID[p.pid]; delete BYNAME[slug(p.name)]; delete WHO[p.key];
+      changed = true;
+    });
+    if (changed){ var cm = document.getElementById("clubMeta"); if (cm) cm.textContent = ROSTER.length + _(" spelare ") + "· " + TEAMS.length + _(" lag i SPL"); }
+    return changed;
+  }
   function applyDisc(d){
     if (!d || !Array.isArray(d.events)) return;
+    try { if (applyMembers(d.members) && VIEW.name === "spelare") renderPlayerList(); } catch (e){ warn("Medlemmar", e); }
     d.events = dropReserved(d.events);
     DISC = d;
     try { renderDataAt(); } catch (e){}
@@ -6153,10 +6208,15 @@
     var pf = PLF;
     var list = ROSTER.filter(function(p){ return (!qn || norm(p.name + " " + (p.team || "")).indexOf(qn) >= 0) && (pf === "all" || (pf === "fol" ? f.indexOf(p.pid) >= 0 : p.gender === pf)); })
       .sort(function(a, b){ return (f.indexOf(b.pid) >= 0 ? 1 : 0) - (f.indexOf(a.pid) >= 0 ? 1 : 0) || a.name.localeCompare(b.name, "sv"); });
+    // a long list (the club's members): the followed first, then A-Ö under letter headers
+    var grouped = list.length > 24 && !qn && pf !== "fol", lastL = null;
     if (meta) meta.textContent = ROSTER.length + _(" spelare ") + "· " + f.length + _(" följs");
+    var sm = document.getElementById("spvMeta");
+    if (sm) sm.textContent = ROSTER.filter(function(p){ return p.member; }).length ? _("{n} spelare i Nynäs Padel Club", {n:ROSTER.length}) : "Nynäs Padel Club";
     host.innerHTML = list.map(function(p){
-      var T = trendOf(p), fol = f.indexOf(p.pid) >= 0, sk = T.skill[0], rk = T.rank[0];
-      return '<li><a class="prow' + (fol ? " fol" : "") + '" href="#' + esc(p.key) + '"><span class="avs">' + avatar(p.name) + '</span><span><b>' + esc(p.name) + '</b>' +
+      var T = trendOf(p), fol = f.indexOf(p.pid) >= 0, sk = T.skill[0], rk = T.rank[0], L = fol ? "★" : p.name.charAt(0).toUpperCase(), head = "";
+      if (grouped && L !== lastL){ lastL = L; head = '<li class="plet" aria-hidden="true">' + esc(fol ? _("Du följer") : L) + '</li>'; }
+      return head + '<li><a class="prow' + (fol ? " fol" : "") + '" href="#' + esc(p.key) + '"><span class="avs">' + avatar(p.name) + '</span><span><b>' + esc(p.name) + '</b>' +
         '<span class="pmeta">' + esc([sk != null ? "skill " + sk.toFixed(2) : "", rk != null ? "#" + rk : _("ej rankad")].filter(Boolean).join(" · ")) + '</span></span>' +
         (fol ? STAR + '<span class="sr">' + _("följer") + '</span>' : "<span></span>") + '</a></li>';
     }).join("");
@@ -7874,12 +7934,31 @@
       var P = me.pid && BYPID[me.pid];
       h += '<div class="card ktxt"><p><b>' + esc(me.name) + '</b>' + (P ? ' · <a href="#' + esc(P.key) + '">' + _("Din spelarsida") + '</a>' : "") + '</p>' +
         '<p>' + _("Roll: ") + esc(roleText(me.roles)) + (authCan("arr") ? " · " + _("du kan starta americanos") : "") + '</p>' +
+        konVisHtml(me) +
         '<button type="button" class="amxsec" data-k="logout">' + _("Logga ut den här telefonen") + '</button></div>';
       if (me.roles.indexOf("admin") >= 0) h += konAdminHtml();
     }
     box.innerHTML = h;
     box.onclick = konClick;
     box.onchange = function(ev){ var c = ev.target; if (c.hasAttribute("data-role")) konRole(c); };
+    box.oninput = function(ev){
+      if (ev.target.id !== "kMemQ") return;
+      KONTO.mq = ev.target.value;
+      var pos = ev.target.selectionStart;
+      renderKonto();
+      var q = document.getElementById("kMemQ"); if (q){ q.focus(); try { q.setSelectionRange(pos, pos); } catch (e){} }
+    };
+  }
+  // "Synas i appen": one's own choice (a club member's), a parent's for their junior
+  function konVisHtml(me){
+    var pids = [me.pid].concat(me.kids || []).filter(Boolean), memb = (DISC && DISC.members) || [];
+    return pids.map(function(pid){
+      var P = BYPID[pid], isMem = memb.some(function(m){ return m.pid === pid; }), roster = P && !P.member;
+      if (roster) return "";   // the roster's own players: as agreed with the club
+      var who = pid === me.pid ? _("Du") : (P ? P.short : _("Ditt barn"));
+      return '<div class="kvis"><p><b>' + _("Synas i appen") + '</b><br><small>' + esc(isMem ? _("{n} syns för alla i appen.", {n:who}) : _("{n} syns inte i appen.", {n:who})) + '</small></p>' +
+        '<button type="button" class="amxsec" data-k="myvis" data-pid="' + pid + '" data-v="' + (isMem ? "out" : "in") + '">' + (isMem ? _("Dölj") : _("Visa")) + '</button></div>';
+    }).join("");
   }
   function konReqHtml(){
     var opts = ROSTER.slice().sort(function(a, b){ return a.name.localeCompare(b.name, "sv"); }), pre = KONTO.pre || "";
@@ -7916,6 +7995,7 @@
     if (KONTO.inv) h += konInvHtml();
     h += '<div class="sh"><h2>' + _("Konton") + '</h2><div class="meta">' + (A ? A.users.length : "") + '</div></div>';
     if (!A){ h += '<div class="card ktxt"><p>' + _("Hämtar…") + '</p></div>'; konLoad(); return h; }
+    var mem = konMembersHtml(A);
     h += '<div class="card klist">' + A.users.map(function(u){
       var st = u.disabled ? _("Avstängd") : u.devices.length ? _("Inloggad") + " · " + _("senast ") + dayMonD(new Date(u.devices[0].seen)) + (u.devices.length > 1 ? " · " + u.devices.length + _(" enheter") : "")
         : u.invite ? _("Inbjudan gäller till ") + dayMonD(new Date(u.invite)) : _("Inte inloggad");
@@ -7928,8 +8008,24 @@
         (u.devices.length ? '<button type="button" class="amxsec" data-k="revoke" data-id="' + esc(u.id) + '">' + _("Logga ut överallt") + '</button>' : "") +
         (self ? "" : '<button type="button" class="amxsec" data-k="disable" data-on="' + (u.disabled ? "" : "1") + '" data-id="' + esc(u.id) + '">' + (u.disabled ? _("Aktivera") : _("Stäng av")) + '</button>' +
           '<button type="button" class="amxsec del" data-k="remove" data-id="' + esc(u.id) + '">' + _("Ta bort") + '</button>') + '</div></div></details>';
-    }).join("") + '</div>';
+    }).join("") + '</div>' + mem;
     return h;
+  }
+  // The club's members on RankedIn: who is shown (18+ unless they said no; under 18 after a yes) and the admin's choice
+  function konMembersHtml(A){
+    var M = (A && A.members) || [];
+    if (!M.length) return '<div class="sh"><h2>' + _("Medlemmar") + '</h2><div class="meta"></div></div><div class="card ktxt"><p>' + _("Medlemslistan hämtas från RankedIn under natten.") + '</p></div>';
+    var q = norm(KONTO.mq || "").trim(), shown = M.filter(function(m){ return m.shown; }).length;
+    var rows = M.filter(function(m){ return !q || norm(m.name).indexOf(q) >= 0; }).sort(function(a, b){ return a.name.localeCompare(b.name, "sv"); });
+    return '<div class="sh"><h2>' + _("Medlemmar") + '</h2><div class="meta">' + esc(_("{a} av {b} visas", {a:shown, b:M.length})) + '</div></div>' +
+      '<p class="kdim kmemnote">' + _("18 år och äldre visas om de inte sagt nej. Under 18 visas först efter ja, från en förälder eller ett godkänt konto.") + '</p>' +
+      '<label class="search kmemq"><input id="kMemQ" type="search" autocomplete="off" placeholder="' + esc(_("Sök medlem")) + '" value="' + esc(KONTO.mq || "") + '"></label>' +
+      '<div class="card klist">' + rows.map(function(m){
+        var st = m.shown ? _("Visas") : m.vis === "out" ? _("Dold, sagt nej") : typeof m.age === "number" && m.age < 18 ? _("Dold, junior") : m.age == null ? _("Dold, ålder okänd") : _("Dold");
+        var cur = m.vis || "auto";
+        return '<div class="kmem"><span class="kn"><b>' + esc(m.name) + '</b><small>' + esc([m.age != null ? m.age + _(" år") : "", m.gender === "F" ? _("Dam") : m.gender === "M" ? _("Herr") : "", st].filter(Boolean).join(" · ")) + '</small></span>' +
+          '<span class="kmseg" role="group" aria-label="' + esc(m.name) + '">' + [["in", _("Ja")], ["auto", _("Ålder")], ["out", _("Nej")]].map(function(o){ return '<button type="button" data-mvis="' + o[0] + '" data-pid="' + m.pid + '" aria-pressed="' + (cur === o[0]) + '">' + o[1] + '</button>'; }).join("") + '</span></div>';
+      }).join("") + '</div>';
   }
   function konLink(code){ return location.href.split("#")[0] + "#in/" + code; }
   function konInvHtml(){
@@ -7957,10 +8053,23 @@
     konOp({op:"roles", id:u.id, roles:r});
   }
   function konClick(ev){
+    var mv = ev.target.closest("button[data-mvis]");
+    if (mv){
+      var v = mv.getAttribute("data-mvis");
+      [].forEach.call(mv.parentNode.children, function(x){ x.setAttribute("aria-pressed", x === mv ? "true" : "false"); });
+      authApi("/admin", {op:"member", pid:+mv.getAttribute("data-pid"), vis:v === "auto" ? null : v}).then(function(){ KONTO.adm = null; renderKonto(); try { loadEvents(); } catch (e){} },
+        function(er){ alert(_("Det gick inte: ") + er.message); KONTO.adm = null; renderKonto(); });
+      return;
+    }
     var b = ev.target.closest("button[data-k]");
     if (!b) return;
     var k = b.getAttribute("data-k"), id = b.getAttribute("data-id"), u = id && KONTO.adm && KONTO.adm.users.filter(function(x){ return x.id === id; })[0];
-    if (k === "request"){
+    if (k === "myvis"){
+      var vp = +b.getAttribute("data-pid"), vv = b.getAttribute("data-v");
+      b.disabled = true;
+      authApi("/me/visibility", {pid:vp, vis:vv}).then(function(){ KONTO.msg = vv === "out" ? _("Du syns inte längre i appen. Det kan ta en stund innan det slår igenom överallt.") : _("Du syns i appen igen."); try { loadEvents(); } catch (e){} renderKonto(); },
+        function(er){ b.disabled = false; alert(_("Det gick inte: ") + er.message); });
+    } else if (k === "request"){
       var rp = +document.getElementById("rPid").value || null, par = document.getElementById("rPar").checked, rn = document.getElementById("rName").value.trim(), er = document.getElementById("rErr");
       if (par && !rp){ er.textContent = _("Välj vilken spelare du är förälder till."); return; }
       if ((par || !rp) && !rn){ er.textContent = _("Skriv ditt namn."); return; }
@@ -8394,7 +8503,8 @@
   function renderChips(cur){
     var host = document.getElementById("chips");
     if (!host) return;
-    var f = follows(), fl = ROSTER.filter(function(p){ return f.indexOf(p.pid) >= 0; }), rest = ROSTER.filter(function(p){ return f.indexOf(p.pid) < 0; });
+    // the followed players, then the rest of the roster (the club's members only the one open: the full list is under Spelare)
+    var f = follows(), fl = ROSTER.filter(function(p){ return f.indexOf(p.pid) >= 0; }), rest = ROSTER.filter(function(p){ return f.indexOf(p.pid) < 0 && (!p.member || p.key === cur); });
     function chip(p, fol){
       return '<a class="pchip" href="#' + esc(p.key) + '"' + (p.key === cur ? ' aria-current="page"' : "") + '>' + avatar(p.name) + '<span>' + esc(p.short) + '</span>' +
         (fol ? STAR + '<span class="sr">' + _("följer") + '</span>' : "") + '</a>';
@@ -8526,7 +8636,7 @@
   function swipeOrder(key){
     var f = followedPlayers().map(function(p){ return p.key; }), P = BYKEY[key];
     if (f.length > 1 && f.indexOf(key) >= 0) return f;
-    return P ? ROSTER.filter(function(p){ return p.teamId === P.teamId; }).map(function(p){ return p.key; }) : [];
+    return P && P.teamId ? ROSTER.filter(function(p){ return p.teamId === P.teamId; }).map(function(p){ return p.key; }) : [];
   }
 
   /* ================= swipe the photo to switch player ================= */

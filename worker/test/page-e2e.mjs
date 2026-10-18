@@ -974,6 +974,22 @@ try {
     ok("series: an unknown match says so", /finns inte längre/.test(await page.textContent("#match").catch(() => "")));
     await ctx.close();
   }
+  // The club's members (worker "members"): in the players' list under letters, a member's page, not in the chips row
+  { const names = ["Adam Ek", "Bea Lund", "Carl Berg", "Dina Ås", "Erik Holm", "Fia Nord", "Gus Sand", "Hanna Lid", "Ivar Ström", "Jon Vik", "Kim Dal", "Lea Bro",
+      "Max Fors", "Nora Krok", "Olle Tall", "Pia Gran", "Rut Sjö", "Sam Ek", "Tea Ros", "Uno Bäck", "Vera Hed", "Will Ask", "Yra Sund", "Zoe Mo", "Åke Ljung", "Ärla Ny", "Öje Sten", "Ali Ruud", "Bo Ek", "Cia Lind"];
+    const members = names.map((n, i) => ({ key: n.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-"), pid: 990000 + i, name: n, short: n.split(" ")[0], gender: i % 2 ? "F" : "M", rankedinId: null, member: 1, age: 30 }));
+    ({ page, ctx, errors, api } = await newPage({ events: { ...EVENTS, members } }));
+    await page.goto(url("#spelare"));
+    await page.waitForFunction(() => document.querySelectorAll("#plist li:not(.plet)").length > 40, null, { timeout: 8000 }).catch(() => {});
+    const sp = await page.evaluate(() => [document.querySelectorAll("#plist li:not(.plet)").length, [...document.querySelectorAll("#plist .plet")].map(x => x.textContent).slice(0, 4), document.getElementById("spvMeta").textContent]);
+    ok("Medlemmar: in the players' list (47) under letter headers, the count at the top", sp[0] === 47 && sp[1].length >= 3 && /47 spelare i Nynäs Padel Club/.test(sp[2]), sp);
+    await page.goto(url("#erik-holm"));
+    await page.waitForSelector("#p-erik-holm .pc", { timeout: 8000 }).catch(() => {});
+    const mp = await page.evaluate(() => [document.querySelector("#p-erik-holm h1, #p-erik-holm .pc h2, #p-erik-holm .pname")?.textContent || document.title, document.querySelectorAll("#chips .pchip").length]);
+    ok("Medlemmar: a member's page opens; the chips row keeps to the roster (17) and the one open", /Erik Holm/.test(mp[0]) && mp[1] === 18, mp);
+    ok("Medlemmar: no page errors", errors.length === 0, errors);
+    await ctx.close();
+  }
   // Spanish: chosen with the SV | ES switch, kept on the device; everything the page writes follows it
   ({ page, ctx, errors, api } = await newPage());
   await page.goto(url("#/"));

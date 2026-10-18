@@ -62,7 +62,7 @@ test("due only 03:23-03:38 local, never on a discovery minute", () => {
 test("nightly build: 22 events within 200 km, over two ticks of at most 45 calls; KV written only on change", async () => {
   const state = install({}), PUSH = kv();
   PUSH.m.set("disc", JSON.stringify(DISC));
-  const env = { PUSH, ORIGIN: "x", RANK_OFF: "1" };
+  const env = { PUSH, ORIGIN: "x", RANK_OFF: "1", MEMBERS_OFF: "1" };
   const perTick = [];
   let r;
   for (let i = 0; i < 6; i++) {

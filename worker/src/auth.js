@@ -176,7 +176,7 @@ export async function adminOp(env, me, b, t, byPid) {
     q.push(...roles.map(x => env.DB.prepare("INSERT OR IGNORE INTO roles (user, org, role) VALUES (?, ?, ?)").bind(id, ORG, x)),
       env.DB.prepare("UPDATE requests SET status = 'ok', user = ? WHERE id = ?").bind(id, r.id), log(env, t, who, "approve", { rid: r.id, id, name: r.name, roles }));
     await env.DB.batch(q);
-    return { ok: true, id };
+    return { ok: true, id, pid: r.pid || null };
   }
   const u = b && typeof b.id === "string" && await env.DB.prepare("SELECT id, name FROM users WHERE id = ? AND org = ?").bind(b.id, ORG).first();
   if (!u) return { err: "not found", status: 404 };
