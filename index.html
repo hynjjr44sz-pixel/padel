@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-MUM10zIhh2zUZx9fLlNbCy3QoJQT9fFk8mDrPcZURjo='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-rZOOEjw+dBIS5T/mfbOhWOo2xKT2lAXNpZoNQGEEHyA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -208,17 +208,19 @@
   .amxshare button{ appearance:none; height:40px; padding:0 14px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 13px/1 "Instrument Sans", sans-serif; cursor:pointer; }
   .amxh{ margin:14px 0 2px; font:600 10.5px/1.2 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
   .amxsec.del{ color:var(--loss); border-color:color-mix(in srgb, var(--loss) 40%, var(--line)); }
-  .amxarch{ padding:2px 14px; }
-  .axsum{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; padding:12px 0 8px; }
-  .axs{ display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px; border-radius:12px; background:var(--surface-2); text-align:center; }
-  .axs b{ font:800 22px/1 "Big Shoulders Display", sans-serif; } .axs small{ font:500 10px/1.2 "Chivo Mono", monospace; color:var(--dim); }
-  .axmate{ margin:0; padding:4px 0 10px; font-size:13.5px; color:var(--dim); border-bottom:1px solid var(--line); } .axmate a{ color:var(--ink); font-weight:600; }
+  .amxarch{ padding:2px 16px; }
+  .axsum{ padding:12px 0 0; }
+  .axsum .bchips{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+  .axmate{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin:12px 0 0; font-size:14px; }
+  .axmate span{ font:600 9.5px/1.2 "Chivo Mono", monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .axmate a{ color:var(--ink); font-weight:600; } .axmate small{ font:500 11px/1.2 "Chivo Mono", monospace; color:var(--dim); }
+  .axlh{ margin:16px 0 0; padding-bottom:6px; border-bottom:1px solid var(--line); }
   .axrow{ display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); color:inherit; text-decoration:none; }
   .axrow:last-child{ border-bottom:0; }
   .axpl{ display:flex; flex-direction:column; align-items:center; justify-content:center; width:44px; height:44px; border-radius:12px; background:var(--surface-2); }
   .axpl b{ font:800 20px/1 "Big Shoulders Display", sans-serif; } .axpl small{ font:500 9.5px/1 "Chivo Mono", monospace; color:var(--dim); margin-top:2px; }
-  .axpl.gold{ background:#FFD84A; color:#0A1733; } .axpl.gold small{ color:#0A1733; }
-  .axpl.top{ background:var(--accent-soft); }
+  .axpl.axgold{ background:#FFD84A; color:#0A1733; } .axpl.axgold small{ color:#0A1733; }
+  .axpl.axtop{ background:var(--accent-soft); }
   .axn{ min-width:0; display:flex; flex-direction:column; gap:2px; } .axn b{ font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .axn small, .axr small{ font:500 11px/1.2 "Chivo Mono", monospace; color:var(--dim); }
   .axr{ display:flex; flex-direction:column; align-items:flex-end; gap:2px; } .axr b{ font:600 15px/1 "Chivo Mono", monospace; }
   .amxnote{ font:500 11px/1.45 "Chivo Mono", monospace; color:var(--dim); margin:10px 0 0; }
@@ -1543,6 +1545,11 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "sedan ":"desde ",
+    "topp 3: ":"top 3: ",
+    "av {n} i snitt":"de {n} de media",
+    " vunna":" ganados",
+    "Spelade":"Jugados",
     "Klubbspel":"Juego del club",
     "Americanos":"Americanos",
     "Segrar":"Victorias",
@@ -7035,19 +7042,22 @@
       renderAmxArch(P.key);
     }, function(){});
   }
-  // summary over the archive: played, wins, average place, won matches, most frequent partner
+  // summary over the archive, same chips as the series development: played, wins, average place, won matches; then most frequent partner
   function amxSum(l){
-    if (l.length < 1) return "";
-    var won = l.filter(function(x){ return x.place === 1; }).length, w = 0, ml = 0, pa = {};
-    l.forEach(function(x){ w += x.w || 0; ml += (x.w || 0) + (x.l || 0);
+    if (!l.length) return "";
+    var won = l.filter(function(x){ return x.place === 1; }).length, top3 = l.filter(function(x){ return x.place <= 3; }).length, w = 0, lo = 0, of = 0, pa = {};
+    l.forEach(function(x){ w += x.w || 0; lo += x.l || 0; of += x.of;
       (x.pa || []).forEach(function(y){ var k = y.pid ? "p" + y.pid : "n" + y.n; (pa[k] = pa[k] || {n:y.n, pid:y.pid, c:0}).c += y.c; }); });
-    var avg = l.reduce(function(a, x){ return a + x.place; }, 0) / l.length;
+    var avg = l.reduce(function(a, x){ return a + x.place; }, 0) / l.length, first = l[l.length - 1].d;
     var top = Object.keys(pa).map(function(k){ return pa[k]; }).sort(function(a, b){ return b.c - a.c; })[0];
     var tp = top && top.pid && BYPID[top.pid], tn = top ? (tp ? '<a href="#' + esc(tp.key) + '">' + esc(tp.name) + '</a>' : esc(top.n)) : "";
-    var box = function(v, k){ return '<div class="axs"><b>' + v + '</b><small>' + k + '</small></div>'; };
-    return '<div class="axsum">' + box(l.length, _("Americanos")) + box(won, _("Segrar")) + box(avg.toFixed(1).replace(".", ","), _("Snittplacering")) +
-      box(ml ? Math.round(100 * w / ml) + " %" : "–", _("Vunna matcher")) + '</div>' +
-      (top ? '<p class="axmate">' + _("Oftast med") + ' ' + tn + ' · ' + top.c + (top.c === 1 ? _(" gång") : _(" gånger")) + '</p>' : "");
+    var chips = [[_("Americanos"), String(l.length), _("sedan ") + dayMonD(riDate(first + "T12:00"))],
+      [_("Segrar"), String(won), _("topp 3: ") + top3],
+      [_("Snittplacering"), avg.toFixed(1).replace(".", ","), _("av {n} i snitt", {n:Math.round(of / l.length)})],
+      [_("Matcher"), w + lo ? Math.round(100 * w / (w + lo)) + " %" : "–", w + "–" + lo + _(" vunna")]];
+    return '<div class="axsum"><div class="bchips">' + chips.map(function(c){ return '<div><span>' + esc(c[0]) + '</span><b>' + esc(c[1]) + '</b><small>' + esc(c[2]) + '</small></div>'; }).join("") + '</div>' +
+      (top ? '<p class="axmate"><span>' + _("Oftast med") + '</span>' + tn + ' <small>' + top.c + (top.c === 1 ? _(" gång") : _(" gånger")) + '</small></p>' : "") +
+      '<div class="bk2 axlh">' + _("Spelade") + '</div></div>';
   }
   function renderAmxArch(who){
     var P = BYKEY[who], sec = document.getElementById("ax-" + who), host = document.getElementById("axList-" + who);
@@ -7055,7 +7065,7 @@
     var l = amxArch(P);
     sec.hidden = !l.length;
     host.innerHTML = amxSum(l) + l.map(function(x){
-      var medal = x.place === 1 ? " gold" : x.place <= 3 ? " top" : "";
+      var medal = x.place === 1 ? " axgold" : x.place <= 3 ? " axtop" : "";
       return '<a class="axrow" href="#amx/' + esc(x.id) + '"><span class="axpl' + medal + '"><b>' + x.place + '</b><small>' + _("av ") + x.of + '</small></span><span class="axn"><b>' + esc(x.name) + '</b><small>' + esc(amxKind(x.fmt) + " · " + dayMonD(riDate(x.d + "T12:00"))) + '</small></span><span class="axr"><b>' + x.w + "–" + x.l + '</b><small>' + x.p + _(" p") + '</small></span></a>';
     }).join("");
     try { ptabSet(who, PANELS[who] && PANELS[who].getAttribute("data-tab") || "off"); } catch (e){}

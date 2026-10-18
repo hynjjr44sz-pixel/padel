@@ -273,8 +273,8 @@ try {
     await page.waitForFunction(() => !document.getElementById("ax-thea")?.hidden, null, { timeout: 8000 }).catch(() => {});
     const arch = await page.evaluate(() => { const x = document.querySelector("#axList-thea .axrow"); return x ? x.getAttribute("href") + "|" + x.textContent.replace(/\s+/g, " ") : null; });
     ok("Americano ended: on Thea's page under Klubbspel with her place and record", new RegExp("^#amx/" + amxId).test(arch || "") && /[1-4]\s*av 4/.test(arch || "") && !(await page.$eval("#p-thea .ptabs", b => b.hidden)), arch);
-    const sum = await page.evaluate(() => [document.querySelector("#axList-thea .axsum")?.textContent.replace(/\s+/g, " ").trim(), document.querySelector("#axList-thea .axmate")?.textContent, [...document.querySelectorAll("#p-thea [data-ptab]")].map(b => b.textContent).join("|")]);
-    ok("Americano: summary on the profile (played, wins, average place, won matches, most frequent partner); tab Klubbspel", /^1Americanos\dSegrar[1-4],0Snittplacering(100|0) %Vunna matcher$/.test(sum[0] || "") && /^Oftast med .+ · 1 gång$/.test(sum[1] || "") && /Klubbspel/.test(sum[2]), sum);
+    const sum = await page.evaluate(() => [[...document.querySelectorAll("#axList-thea .axsum .bchips, #axList-thea .axlh")].map(e => e.textContent).join(""), document.querySelector("#axList-thea .axmate")?.textContent, [...document.querySelectorAll("#p-thea [data-ptab]")].map(b => b.textContent).join("|")]);
+    ok("Americano: summary on the profile (played, wins, average place, won matches, most frequent partner); tab Klubbspel", /^Americanos1sedan .+Segrar\dtopp 3: \dSnittplacering[1-4],0av 4 i snittMatcher(100|0) %[01]–[01] vunnaSpelade$/.test(sum[0] || "") && /^Oftast med.+ 1 gång$/.test(sum[1] || "") && /Klubbspel/.test(sum[2]), sum);
     await page.goto(url(""));
     await page.waitForSelector("#amxHome .amxrow", { timeout: 8000 }).catch(() => {});
     const homeMine = await page.$$eval("#amxHome .amxh, #amxHome .amxrow", l => l.map(x => x.textContent.replace(/\s+/g, " ").trim()));
