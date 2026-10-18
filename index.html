@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-KNJLe98M5lREBxiWXwne1LLd4PGkyC1wYNJtNdUXaow='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Vx2/nxjiXAWk4NCUcJbrAG1rscwwvjOxkYWbpRq9g+Q='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1565,6 +1565,16 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Din inloggningslänk":"Tu enlace de acceso",
+    "Länken fungerar en gång. Logga in i den app eller webbläsare där du vill använda Nynäs Padel.":"El enlace funciona una vez. Entra en la app o el navegador donde quieras usar Nynäs Padel.",
+    "Logga in här":"Entrar aquí",
+    "Använder du Nynäs Padel från hemskärmen? Den har en egen inloggning. Kopiera koden, öppna appen, gå till Konto och klistra in den där.":"¿Usas Nynäs Padel desde la pantalla de inicio? Tiene su propio acceso. Copia el código, abre la app, ve a Cuenta y pégalo allí.",
+    "Kopiera koden":"Copiar el código",
+    "Har du en länk eller kod?":"¿Tienes un enlace o código?",
+    "Klistra in den här":"Pégalo aquí",
+    "Logga in":"Entrar",
+    "Det ser inte ut som en inloggningslänk. Kopiera hela länken.":"No parece un enlace de acceso. Copia el enlace entero.",
+    "Länken är redan använd, kanske i en annan app eller webbläsare, eller för gammal. Be om en ny.":"El enlace ya se usó, quizá en otra app o navegador, o caducó. Pide uno nuevo.",
     " enheter":" dispositivos",
     "Admin":"Admin",
     "Admin, får hantera konton":"Admin, gestiona cuentas",
@@ -7490,13 +7500,13 @@
   }
   function devLabel(){ var u = navigator.userAgent || ""; return /iPhone/.test(u) ? "iPhone" : /iPad/.test(u) ? "iPad" : /Android/.test(u) ? "Android" : /Mac/.test(u) ? "Mac" : /Windows/.test(u) ? "Windows" : _("Dator"); }
   function authRedeem(code){
-    KONTO.msg = _("Loggar in…"); renderKonto();
+    KONTO.code = null; KONTO.msg = _("Loggar in…"); renderKonto();
     authApi("/auth/redeem", {code:code, label:devLabel()}).then(function(d){
       authSave({token:d.token, me:d.me, at:Date.now()});
       KONTO.msg = _("Välkommen, {n}! Den här telefonen är nu inloggad.", {n:d.me.name.split(" ")[0]});
       AMX.list = null; renderKonto();
     }, function(e){
-      KONTO.msg = e.status === 410 ? _("Länken är redan använd eller för gammal. Be om en ny.") : _("Kunde inte logga in. Försök igen.");
+      KONTO.msg = e.status === 410 ? _("Länken är redan använd, kanske i en annan app eller webbläsare, eller för gammal. Be om en ny.") : _("Kunde inte logga in. Försök igen.");
       renderKonto();
     });
   }
@@ -7511,9 +7521,17 @@
     if (!box) return;
     var me = AUTH && AUTH.me, h = '<div class="phead"><div class="pt"><h1>' + _("Konto") + '</h1><div class="pm">' + esc(me ? me.name : _("Inte inloggad")) + '</div></div></div>';
     if (KONTO.msg) h += '<p class="kmsg" role="status">' + esc(KONTO.msg) + '</p>';
-    if (!me){
+    if (KONTO.code){
+      // iPhone: Safari and the app on the home screen keep separate logins
+      var ios = /iPhone|iPad/.test(navigator.userAgent || "") && !(navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches));
+      h += '<div class="card ktxt kinv"><p><b>' + _("Din inloggningslänk") + '</b></p><p>' + _("Länken fungerar en gång. Logga in i den app eller webbläsare där du vill använda Nynäs Padel.") + '</p>' +
+        '<button type="button" class="amxgo" data-k="redeem">' + _("Logga in här") + '</button>' +
+        (ios ? '<p class="kdim">' + _("Använder du Nynäs Padel från hemskärmen? Den har en egen inloggning. Kopiera koden, öppna appen, gå till Konto och klistra in den där.") + '</p><input readonly id="kLink" value="' + esc(KONTO.code) + '"><div class="amxbar"><button type="button" class="amxsec" data-k="copy">' + _("Kopiera koden") + '</button></div>' : "") + '</div>';
+    } else if (!me){
       h += '<div class="card ktxt"><p>' + _("Appen går att använda utan konto. Ett konto behövs bara för att starta americanos och för det som kommer, som egna inställningar.") + '</p><p>' +
-        _("Konton delas ut av klubben. Du får en personlig länk. Öppna den på din telefon så är den inloggad, inget lösenord behövs.") + '</p></div>';
+        _("Konton delas ut av klubben. Du får en personlig länk. Öppna den på din telefon så är den inloggad, inget lösenord behövs.") + '</p></div>' +
+        '<div class="card amxset"><label class="amxf"><span>' + _("Har du en länk eller kod?") + '</span><input id="kCode" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="' + esc(_("Klistra in den här")) + '"></label>' +
+        '<div class="amxf"><button type="button" class="amxgo" data-k="paste">' + _("Logga in") + '</button><p class="amxerr" id="kErr"></p></div></div>';
     } else {
       var P = me.pid && BYPID[me.pid];
       h += '<div class="card ktxt"><p><b>' + esc(me.name) + '</b>' + (P ? ' · <a href="#' + esc(P.key) + '">' + _("Din spelarsida") + '</a>' : "") + '</p>' +
@@ -7580,7 +7598,13 @@
     var b = ev.target.closest("button[data-k]");
     if (!b) return;
     var k = b.getAttribute("data-k"), id = b.getAttribute("data-id"), u = id && KONTO.adm && KONTO.adm.users.filter(function(x){ return x.id === id; })[0];
-    if (k === "logout"){
+    if (k === "redeem"){
+      authRedeem(KONTO.code);
+    } else if (k === "paste"){
+      var m = /(?:#in\/)?([a-z2-9]{20})\b/.exec(document.getElementById("kCode").value.trim().toLowerCase());
+      if (!m){ document.getElementById("kErr").textContent = _("Det ser inte ut som en inloggningslänk. Kopiera hela länken."); return; }
+      authRedeem(m[1]);
+    } else if (k === "logout"){
       if (!confirm(_("Logga ut den här telefonen?"))) return;
       authApi("/auth/logout", {}).then(function(){}, function(){});
       authSave(null); KONTO.adm = null; KONTO.inv = null; KONTO.msg = ""; AMX.list = null; renderKonto();
@@ -7708,7 +7732,8 @@
       VIEW = {name:"amx", who:null, team:"amx" + x.id};
       document.title = (x.id === "ny" ? _("Ny americano") : (AMX.t && AMX.t.name) || "Americano") + " · Nynäs Padel";
     } else if (x.view === "konto"){
-      if (x.code){ history.replaceState(null, "", "#konto"); authRedeem(x.code); }   // the code leaves the address bar
+      // the code leaves the address bar; logging in waits for a tap (the link may have opened in the wrong browser)
+      if (x.code){ history.replaceState(null, "", "#konto"); KONTO.code = x.code; KONTO.msg = ""; renderKonto(); }
       else { KONTO.adm = null; KONTO.msg = ""; renderKonto(); authCheck(true); }
       showView("konto");
       VIEW = {name:"konto", who:null, team:"konto"};

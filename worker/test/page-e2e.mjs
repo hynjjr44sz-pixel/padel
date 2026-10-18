@@ -251,6 +251,10 @@ try {
     const locked = await page.evaluate(() => [document.querySelector("#amx .ktxt")?.textContent || "", !!document.getElementById("amxGuest")]);
     const boot = await (await worker.fetch(new Request("https://w/admin", { method: "POST", headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", "X-Admin-Key": AMX_ENV.ADMIN_KEY }, body: JSON.stringify({ op: "add", name: "Mikael Holmberg", roles: ["admin"] }) }), AMX_ENV)).json();
     await page.goto(url("#in/" + boot.code));
+    await page.waitForSelector('#konto [data-k="redeem"]', { timeout: 8000 }).catch(() => {});
+    const unused = AMX_ENV.DB.db.prepare("SELECT count(*) n FROM invites WHERE used IS NULL").get().n;   // nothing happens before the tap
+    ok("Konto: the invite link waits for Logga in här (it may have opened in the wrong browser)", unused === 1 && !!(await page.$('#konto [data-k="redeem"]')), unused);
+    await page.click('#konto [data-k="redeem"]');
     await page.waitForFunction(() => /Välkommen, Mikael/.test(document.querySelector("#konto .kmsg")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
     await page.waitForSelector("#konto .klist", { timeout: 8000 }).catch(() => {});
     const k1 = await page.evaluate(() => [location.hash, document.querySelector("#konto .kmsg")?.textContent, document.getElementById("acct").textContent, document.querySelector("#konto .klist")?.textContent.replace(/\s+/g, " ")]);
