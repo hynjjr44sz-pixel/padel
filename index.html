@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-TV1PSB/k7Vr4N+Vtv2bUo6uyCovcSQ9gfZj/+DjTPLM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-lGVIfFT99p92zYiz1cvIWZlXS433HCxoib/iEe3PfNY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -185,6 +185,9 @@
   .cropf img{ position:absolute; left:0; top:0; max-width:none; transform-origin:0 0; user-select:none; -webkit-user-select:none; pointer-events:none; }
   .cropc{ position:absolute; left:50%; top:30%; width:57.5%; aspect-ratio:1; border-radius:50%; transform:translate(-50%,-50%); border:2px solid rgba(255,255,255,.9); box-shadow:0 0 0 999px rgba(0,0,0,.35); pointer-events:none; }
   .cropz{ width:100%; margin:12px 0 4px; accent-color:var(--accent); }
+  .sgmore > summary{ display:flex; justify-content:center; align-items:center; margin-top:10px; height:44px; border-radius:12px; border:1px solid var(--line); background:var(--surface); font-weight:600; font-size:14.5px; cursor:pointer; list-style:none; }
+  .sgmore > summary::-webkit-details-marker{ display:none; }
+  .sgmore[open] > summary{ display:none; } .sgmore[open]{ display:grid; gap:10px; }
   .pclaim{ margin:28px 0 0; text-align:center; font-size:13.5px; } .pclaim a{ color:var(--dim); }
   .krow{ border-bottom:1px solid var(--line); } .krow:last-child{ border-bottom:0; }
   .krow summary{ display:flex; align-items:center; gap:10px; padding:12px 0; cursor:pointer; list-style:none; } .krow summary::-webkit-details-marker{ display:none; }
@@ -1591,6 +1594,7 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Visa alla {n} tävlingar":"Ver los {n} torneos",
     "Bilden kommer från klubben eller RankedIn. Laddar du upp en egen visas den i stället, för alla i appen.":"La foto viene del club o de RankedIn. Si subes una propia, se mostrará en su lugar para todos en la app.",
     "Din egen bild visas, med bakgrunden borttagen.":"Se muestra tu propia foto, sin fondo.",
     "Din bild visas. Bakgrunden tas bort automatiskt inom ungefär en kvart.":"Se muestra tu foto. El fondo se quita automáticamente en unos 15 minutos.",
@@ -5314,13 +5318,14 @@
     var P = BYKEY[who], host = document.getElementById("sgList-" + who), note = document.getElementById("sgNote-" + who);
     if (!P || !host) return;
     if (!CAL){ loadCal(); return; }
-    var r = suggestions(P, 6), el = r.el;
+    var r = suggestions(P, 99), el = r.el;   // every one within 20 mil the next 8 weeks: six at first, the rest under "Visa alla"
     if (note){
       note.hidden = !el;
       if (el) note.innerHTML = _("Du får spela ") + "<b>" + el.base + "</b>" + (el.base === "A" ? "." : _(" och uppåt") + (el.cap ? _(" (paret högst ") + esc(fmtP(el.cap)) + " p)" : "") + ".") +
         (el.lower ? " " + el.lower.level + _(" går med en partner på högst ") + esc(fmtP(el.lower.partnerMax)) + " p." : "");
     }
-    var html = r.list.map(function(x){ return sgCard(x, P, el); }).join("");
+    var html = r.list.slice(0, 6).map(function(x){ return sgCard(x, P, el); }).join("") +
+      (r.list.length > 6 ? '<details class="sgmore"><summary>' + _("Visa alla {n} tävlingar", {n:r.list.length}) + '</summary>' + r.list.slice(6).map(function(x){ return sgCard(x, P, el); }).join("") + '</details>' : "");
     if (host._h === html && html) return;
     host._h = html;
     host.innerHTML = html || '<p class="empty">' + _("Inga förslag just nu.") + '</p>';

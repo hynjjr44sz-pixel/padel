@@ -448,9 +448,10 @@ try {
       await page.waitForFunction(k => /#\d+/.test(document.getElementById("tv-" + k + "-rank")?.textContent || ""), k, { timeout: 8000 }).catch(() => {});
       await page.waitForTimeout(300);
       const list = await sugg(k), R = ROSTER.find(x => x.key === k);
-      const want = suggestFor(CAL, { pid, gender: g, pts: R.points, rank: R.rank }, new Date(T), taken(pid)).map(x => x.id);
-      ok(k + ": Förslag på tävlingar lists the worker's suggestions (same rules as calendar.js), at most 6, by date", list.length > 0 && list.length <= 6 &&
-        JSON.stringify(list.map(x => x.id)) === JSON.stringify(want), { page: list.map(x => x.id), want });
+      const want = suggestFor(CAL, { pid, gender: g, pts: R.points, rank: R.rank }, new Date(T), taken(pid), 99).map(x => x.id);
+      const shown = await page.$$eval("#sgList-" + k + " > .sg", c => c.length), more = await page.$eval("#sgList-" + k + " .sgmore summary", e => e.textContent).catch(() => null);
+      ok(k + ": Förslag på tävlingar lists every suggestion within 20 mil (same rules as calendar.js), by date; six first, the rest under Visa alla", list.length > 0 &&
+        JSON.stringify(list.map(x => x.id)) === JSON.stringify(want) && shown === Math.min(6, want.length) && (want.length > 6 ? more === "Visa alla " + want.length + " tävlingar" : more === null), { page: list.map(x => x.id), want, shown, more });
       ok(k + ": every card: date, name, club/town, distance in mil, class chips, Sista anmälan, RankedIn button (new tab, noopener)", list.every(x => x.h && / mil$/.test(x.what) && x.chips.length &&
         /^Sista anmälan (mån|tis|ons|tor|fre|lör|sön) \d+ \w+/.test(x.facts) && x.btn && x.btn.t.startsWith("Anmäl på RankedIn") && /^https:\/\/www\.rankedin\.com\/sv\/tournament\/\d+/.test(x.btn.href) &&
         x.btn.rel === "noopener" && x.btn.target === "_blank"), list);
