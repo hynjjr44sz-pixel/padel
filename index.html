@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-22H9syb8ZzqxOQgxGI/cXYNz8krJwugvxtVJYS35w0I='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-GZiGd3UEF0WPUoIqCCy114dKnsAaZwB30nwmeEXfyC4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -303,6 +303,48 @@
   .sbtick span{ font:inherit; color:inherit; text-transform:none; letter-spacing:0; } .sbtick b{ font:700 1em/1.2 "Instrument Sans", sans-serif; color:#fff; text-transform:none; letter-spacing:0; }
   .sburl{ flex:none; font:500 .75em/1 "Chivo Mono", monospace; color:#A6B2D2; text-transform:none; letter-spacing:0; } .sburl b{ font:600 1em/1 "Chivo Mono", monospace; color:#FFD84A; text-transform:none; letter-spacing:0; }
   @media (max-aspect-ratio: 1/1){ .sbgrid{ grid-template-columns:1fr; grid-template-rows:minmax(0,1.3fr) minmax(0,1fr); } #amxtv{ font-size:clamp(14px, 2.4vw, 30px); } }
+  /* ---------- Menyraden som padelbana: the bar is a court seen from above (lines, glass at the ends, the net in the
+     middle with Idag on it); the active zone is lit by a court lamp; the ball crosses the net higher and leaves a
+     mark where it lands; each icon has its own move ---------- */
+  .dkbar{ background:linear-gradient(180deg, #2C66DC 0%, #2156CB 55%, #1C4BB8 100%); border:1px solid rgba(255,255,255,.28);
+    box-shadow:0 22px 44px -14px rgba(18,52,140,.65), 0 4px 12px -2px rgba(6,13,34,.25), inset 7px 0 0 rgba(200,225,255,.22), inset -7px 0 0 rgba(200,225,255,.22), inset 0 1px 0 rgba(255,255,255,.35);
+    -webkit-backdrop-filter:none; backdrop-filter:none; }
+  .dkcourt{ position:absolute; inset:0; width:100%; height:100%; z-index:0; opacity:.38; pointer-events:none; }
+  .dkcourt .dknet{ opacity:.9; }
+  .dkbar::before{ z-index:0; background:radial-gradient(120px 70px at var(--mx, 50%) 50%, rgba(255,255,255,.28), transparent 70%); }
+  .dblob{ background:radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,.42), rgba(255,255,255,.14) 55%, rgba(255,255,255,.06) 100%);
+    border:1px solid rgba(255,255,255,.5); box-shadow:0 0 18px rgba(255,236,150,.35), inset 0 0 0 1px rgba(255,255,255,.12); }
+  .dblob i{ background:linear-gradient(180deg, rgba(255,255,255,.4), transparent); }
+  .dtab{ color:rgba(255,255,255,.82); font:600 9.5px/1 "Chivo Mono", monospace; letter-spacing:.08em; text-transform:uppercase; }
+  .dtab span{ text-shadow:0 1px 2px rgba(6,13,34,.35); }
+  .dtab svg{ width:26px; height:26px; filter:drop-shadow(0 1px 1px rgba(6,13,34,.25)); }
+  .dtab.on, .dkbar.drag .dtab.hov{ color:#fff; }
+  .dtab.on .dk-accent, .dkbar.drag .dtab.hov .dk-accent{ stroke:#FFE14D; }
+  .dkbar.drag .dtab.on:not(.hov){ color:rgba(255,255,255,.78); }
+  .dtab.hov:not(.on){ color:#fff; }
+  .dbadge{ box-shadow:0 0 0 2px #2156CB; }
+  @keyframes dk-pulse{ 0%{ box-shadow:0 0 0 2px #2156CB, 0 0 0 2px rgba(229,72,77,.6); } 100%{ box-shadow:0 0 0 2px #2156CB, 0 0 0 12px rgba(229,72,77,0); } }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .dkbar{ background:linear-gradient(180deg, #1D46A8 0%, #173B91 55%, #12307A 100%); } :root:not([data-theme="light"]) .dtab.on .dk-accent{ stroke:#FFE14D; } }
+  :root[data-theme="dark"] .dkbar{ background:linear-gradient(180deg, #1D46A8 0%, #173B91 55%, #12307A 100%); } :root[data-theme="dark"] .dtab.on .dk-accent{ stroke:#FFE14D; }
+  /* where the ball lands: a mark on the court that fades */
+  .dkmarks{ position:absolute; inset:0; z-index:0; pointer-events:none; }
+  .dkmark{ position:absolute; top:7px; width:16px; height:6px; margin-left:-8px; border-radius:50%; background:radial-gradient(closest-side, rgba(255,240,170,.75), rgba(255,240,170,0)); animation:dk-mark 1.6s ease-out forwards; }
+  @keyframes dk-mark{ 0%{ opacity:1; transform:scale(.4); } 20%{ opacity:.9; transform:scale(1.15); } 100%{ opacity:0; transform:scale(1.3); } }
+  /* each icon's own move when its tab opens */
+  .dtab svg g{ transform-box:fill-box; transform-origin:center; }
+  .dtab.pop .dk-rays{ animation:dk-rays .9s cubic-bezier(.2,1,.3,1); }
+  @keyframes dk-rays{ from{ transform:rotate(-90deg) scale(.6); opacity:.2; } to{ transform:none; opacity:1; } }
+  .dtab .dk-swing{ transform-origin:12.7px 10.8px; transform-box:view-box; }
+  .dtab.pop .dk-swing{ animation:dk-swing .8s cubic-bezier(.3,1.6,.4,1); }
+  @keyframes dk-swing{ 0%{ transform:rotate(-70deg); } 55%{ transform:rotate(22deg); } 100%{ transform:none; } }
+  .dtab.pop .dk-draw{ stroke-dasharray:60; animation:dk-draw .7s ease-out; }
+  .dtab.pop .dk-spin{ animation:dk-spin .9s cubic-bezier(.3,1.3,.4,1); }
+  @keyframes dk-spin{ from{ transform:rotate(-180deg); } to{ transform:none; } }
+  .dtab.pop .dk-wave{ animation:dk-wave .8s ease-in-out; }
+  @keyframes dk-wave{ 0%,100%{ transform:none; } 25%{ transform:skewX(-10deg) translateY(1px); } 60%{ transform:skewX(8deg); } }
+  .dtab.pop svg *{ stroke-dasharray:none; animation-name:none; }
+  .dtab.pop svg{ animation:dk-pop .6s cubic-bezier(.25,1.6,.4,1); }
+  @media (prefers-reduced-motion: reduce){ .dkmark, .dtab.pop .dk-rays, .dtab.pop .dk-swing, .dtab.pop .dk-draw, .dtab.pop .dk-spin, .dtab.pop .dk-wave{ animation:none !important; } }
   /* ---------- Tävlingar ---------- */
   .tavf{ display:flex; flex-direction:column; gap:8px; margin-top:14px; }
   .tavf .seg{ display:flex; flex-wrap:wrap; gap:6px; padding:0; margin:0; background:none; }
@@ -1768,7 +1810,7 @@
     <span class="dball-sh" id="dockBallSh" aria-hidden="true"></span>
     <span class="dball-ring" id="dockRing" aria-hidden="true"></span>
     <span class="dball" id="dockBall" aria-hidden="true"><i></i></span>
-    <div class="dkbar" id="dockBar"><span class="dblob" id="dockBlob" aria-hidden="true"><i></i></span><a class="dtab" draggable="false" data-tab="idag" href="#/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="3" width="15" height="18" rx="3"/><path d="M4.5 12h15"/><path class="dk-accent" d="M9 7.5h6M9 16.5h6"/></svg><span data-i18n>Idag</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="spelare" href="#spelare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.3"/><path d="M3.5 19.5c.7-3.2 2.9-5 5.5-5s4.8 1.8 5.5 5"/><path class="dk-accent" d="M15.5 4.9a3.2 3.2 0 0 1 0 6.2M17.5 14.8c1.6.7 2.6 2.2 3 4.7"/></svg><span data-i18n>Spelare</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="tavlingar" href="#tavlingar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5h8v5.5a4 4 0 0 1-8 0z"/><path class="dk-accent" d="M8 5.5H5.2a3 3 0 0 0 2.9 4.2M16 5.5h2.8a3 3 0 0 1-2.9 4.2"/><path d="M12 13v3.5M8.5 20.5h7M10 16.5h4"/></svg><span data-i18n>Tävlingar</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="americano" href="#americano"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="10" cy="9.2" rx="5.6" ry="6.2" transform="rotate(-35 10 9.2)"/><path d="M13.3 13.8l5.2 5.2"/><circle class="dk-accent" cx="18.6" cy="5.6" r="2.1"/></svg><span data-i18n>Americano</span><i class="dbadge" aria-hidden="true"></i></a><button class="dtab" data-tab="mer" type="button" aria-haspopup="dialog" aria-controls="moreSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect class="dk-accent" x="13.5" y="13.5" width="6.5" height="6.5" rx="3.25"/></svg><span data-i18n>Mer</span><i class="dbadge" aria-hidden="true"></i></button></div>
+    <div class="dkbar" id="dockBar"><svg class="dkcourt" viewBox="0 0 400 68" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1.3" vector-effect="non-scaling-stroke"><rect x="5" y="5" width="390" height="58" rx="3"/><path d="M80 5v58M320 5v58"/><path d="M80 34h240" stroke-opacity=".45"/></g><path class="dknet" d="M200 2v64" stroke="#fff" stroke-width="2.2" vector-effect="non-scaling-stroke"/><path d="M196 2v64M204 2v64" stroke="#fff" stroke-opacity=".35" stroke-width="1" stroke-dasharray="1.5 2.5" vector-effect="non-scaling-stroke"/></svg><span class="dkmarks" id="dockMarks" aria-hidden="true"></span><span class="dblob" id="dockBlob" aria-hidden="true"><i></i></span><a class="dtab" draggable="false" data-tab="spelare" href="#spelare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="4.6" r="2.1"/><path d="M8.6 7.4l-1.2 5.4 2.8 2.2-1.1 5.6M7.4 12.8l-2.6 5.8M8.9 9.2l3.8 1.6"/><g class="dk-swing"><path d="M12.7 10.8l1.6-1.4"/><ellipse class="dk-accent" cx="17.2" cy="7" rx="2.7" ry="3.4" transform="rotate(42 17.2 7)"/></g></svg><span data-i18n>Spelare</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="tavlingar" href="#tavlingar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="dk-draw" d="M3 4.5h4.5v4H3M3 15.5h4.5v4H3M7.5 6.5h3v11h-3M10.5 12h3"/><circle class="dk-accent" cx="17.6" cy="12" r="3.4"/><path d="M15.2 10.6c1.4.4 2.4 1.6 2.6 3.1"/></svg><span data-i18n>Tävlingar</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="idag" href="#/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle class="dk-accent" cx="12" cy="11.5" r="3.6"/><g class="dk-rays"><path d="M12 3.6v1.6M12 17.8v1.6M4.1 11.5h1.6M18.3 11.5h1.6M6.4 5.9l1.1 1.1M16.5 16l1.1 1.1M6.4 17.1l1.1-1.1M16.5 7l1.1-1.1"/></g><path d="M3 21h18"/></svg><span data-i18n>Idag</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="americano" href="#americano"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="dk-spin"><circle cx="7" cy="7" r="2.2"/><circle class="dk-accent" cx="17" cy="7" r="2.2"/><circle class="dk-accent" cx="7" cy="17" r="2.2"/><circle cx="17" cy="17" r="2.2"/><path d="M10.4 4.9a7.5 7.5 0 0 1 3.2 0M19.1 10.4a7.5 7.5 0 0 1 0 3.2M13.6 19.1a7.5 7.5 0 0 1-3.2 0M4.9 13.6a7.5 7.5 0 0 1 0-3.2"/></g></svg><span data-i18n>Americano</span><i class="dbadge" aria-hidden="true"></i></a><button class="dtab" data-tab="mer" type="button" aria-haspopup="dialog" aria-controls="moreSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5v14M21 5.5v14"/><g class="dk-wave"><path d="M3 7h18M3 11.3h18M3 15.6h18M7.5 7v8.6M12 7v8.6M16.5 7v8.6"/></g><path class="dk-accent" d="M3 5.5h18"/></svg><span data-i18n>Mer</span><i class="dbadge" aria-hidden="true"></i></button></div>
   </nav>
   <div class="sheet" id="moreSheet" role="dialog" aria-modal="true" aria-labelledby="moreH" hidden>
     <div class="sheet-bg" data-close></div>
@@ -8341,7 +8383,7 @@
   /* ---- Menyraden: Idag · Spelare · Tävlingar · Americano · Mer. A spring-driven blob (it stretches as it travels and follows
      the finger when you slide along the bar: let go on a tab to open it), the active icon pops and draws itself, the dock
      pulls in while you scroll down, and a live capsule rises out of it for what is on right now. ---- */
-  var DOCK_TABS = ["idag", "spelare", "tavlingar", "americano", "mer"];
+  var DOCK_TABS = ["spelare", "tavlingar", "idag", "americano", "mer"];
   function dockTabOf(v){
     return v === "home" ? "idag" : v === "player" || v === "team" || v === "spelare" ? "spelare" : v === "tour" || v === "tavlingar" || v === "match" ? "tavlingar"
       : v === "amx" || v === "americano" ? "americano" : "mer";
@@ -8391,6 +8433,9 @@
     function land(sg){
       B.imp = Math.min(1, .3 + sg.h / 55); B.impAt = performance.now();
       if (sg.ring && ring){ dock.style.setProperty("--bx", B.x.toFixed(1) + "px"); ring.classList.remove("go"); void ring.offsetWidth; ring.classList.add("go"); }
+      // a mark on the court where it landed, fading
+      var mk = document.getElementById("dockMarks");
+      if (sg.ring && mk && !RM){ var m = document.createElement("i"); m.className = "dkmark"; m.style.left = (B.x - bar.offsetLeft).toFixed(1) + "px"; mk.appendChild(m); setTimeout(function(){ m.remove(); }, 1700); }
       if (sg.onland) sg.onland();
     }
     function bstep(now){
@@ -8415,7 +8460,9 @@
       if (B.x == null || RM){ B.x = x1; B.y = 0; bpaint(); if (onland) onland(); return; }
       var x0 = B.x, dx = x1 - x0, ad = Math.abs(dx), r = B.rot;
       if (ad < 3){ bplay([{x0:x1, x1:x1, h:16, d:300, r0:r, r1:r, y0:B.y, ring:true, onland:onland}, {x0:x1, x1:x1, h:4, d:150, r0:r, r1:r}]); return; }
-      var h = Math.min(66, 24 + ad * .17), d = Math.min(720, 360 + ad * 1.05), r1 = r + dx * 2.6;
+      // over the net (the middle of the court) it has to go higher
+      var net = bar.offsetLeft + bar.offsetWidth / 2, over = (x0 - net) * (x1 - net) < 0;
+      var h = Math.min(78, 24 + ad * .17 + (over ? 18 : 0)), d = Math.min(760, 360 + ad * 1.05 + (over ? 60 : 0)), r1 = r + dx * 2.6;
       bplay([{x0:x0, x1:x1, h:h, d:d, r0:r, r1:r1, y0:B.y, ring:true, onland:onland},
         {x0:x1, x1:x1, h:h * .24, d:d * .42, r0:r1, r1:r1 + dx * .4}, {x0:x1, x1:x1, h:h * .07, d:d * .26, r0:r1 + dx * .4, r1:r1 + dx * .5}]);
     }

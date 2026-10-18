@@ -204,7 +204,7 @@ try {
   ok("home: Kommande has SPL per team (no duplicates per player) and Vista", spl.length >= 1 && new Set(spl).size === spl.length && agenda.some(x => /Vista/.test(x)) && agenda.some(x => /SPL Herrar/.test(x)), agenda);
   // Menyraden: Idag active on the home view; Spelare (teams, players, search) from the dock
   const dk0 = await page.evaluate(() => [[...document.querySelectorAll("#dock .dtab")].map(t => t.getAttribute("data-tab")).join(), document.querySelector("#dock .dtab.on")?.getAttribute("data-tab")]);
-  ok("Menyraden: five tabs, Idag active on the home view", dk0[0] === "idag,spelare,tavlingar,americano,mer" && dk0[1] === "idag", dk0);
+  ok("Menyraden: five tabs, Idag active on the home view", dk0[0] === "spelare,tavlingar,idag,americano,mer" && dk0[1] === "idag", dk0);
   await page.click('#dock .dtab[data-tab="spelare"]');
   await page.waitForSelector("#spelare:not([hidden]) #plist li", { timeout: 8000 }).catch(() => {});
   const dk1 = await page.evaluate(() => [location.hash, document.querySelector("#dock .dtab.on")?.getAttribute("data-tab"), document.getElementById("home").hidden, document.getElementById("dockBlob").style.width]);
