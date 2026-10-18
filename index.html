@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-3/HA/D8T4TbzgmT3ELizsMzuw1WEdxoKH3yFiU19EkA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-zzBAxE+TiEiLl/WVME7d1KAdc9VtbjmEyNg/lTJh6Hg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -259,6 +259,8 @@
   .tavf .seg button:active, .plf button:active{ transform:scale(.94); }
   .plf{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 12px; padding:0; background:none; }
   .tavlist{ display:grid; gap:10px; }
+  .gt tr.vta td{ background:color-mix(in srgb, #3b6cff 14%, transparent); } .gt tr.vtb td{ background:color-mix(in srgb, #E5484D 13%, transparent); }
+  .gt tr.vta td:first-child{ box-shadow:inset 3px 0 0 #3b6cff; } .gt tr.vtb td:first-child{ box-shadow:inset 3px 0 0 #E5484D; }
   #tavlingar .sh{ margin-top:34px; }
   .tavc{ display:grid; grid-template-columns:48px minmax(0,1fr); gap:12px; padding:13px 14px; border-radius:16px; border:1px solid var(--line); background:var(--surface); color:inherit; text-decoration:none; transition:transform .3s cubic-bezier(.2,1.5,.4,1); }
   .tavc:active{ transform:scale(.98); }
@@ -1763,6 +1765,7 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Tabellen":"La clasificación",
     "Finns inte spelaren i listan?":"¿El jugador no está en la lista?",
     "Skriv namnet som på RankedIn":"Escribe el nombre como en RankedIn",
     "Juniorer under 18 syns inte i appen förrän någon sagt ja. Skriv juniorens namn här.":"Los juniors menores de 18 no aparecen hasta que alguien dice que sí. Escribe aquí el nombre del junior.",
@@ -5180,6 +5183,13 @@
     box.innerHTML = '<div class="vsb' + (fresh ? " anim" : "") + '"><div class="vhd"><b>' + esc(_(g.series)) + '</b><span>' + esc(g.name) + '</span></div>' + (when ? '<div class="vwhen">' + esc(when) + '</div>' : "") +
       '<div class="vgrid">' + bhsSideHtml(g, a, A, pl, "a" + (sd > 0 ? " won" : sd < 0 ? " lost" : "")) + mid + bhsSideHtml(g, b, B, pl, "b" + (sd < 0 ? " won" : sd > 0 ? " lost" : "")) + '</div>' + favHtml + '</div>' +
       (cmp.length ? '<section aria-labelledby="h-vc"><div class="sh"><h2 id="h-vc">' + _("Omgången hittills") + '</h2><div class="meta"></div></div><div class="card vcmp">' + cmp.join("") + '</div></section>' : "") +
+      // the whole group's table, the two sides marked (refetched by the worker when a result comes in)
+      ((g.rows || []).length ? '<section aria-labelledby="h-vt"><div class="sh"><h2 id="h-vt">' + _("Tabellen") + '</h2><div class="meta">' + esc(g.name) + '</div></div><div class="card tbl bhs">' +
+        '<table class="gt"><thead><tr><th>' + _(g.single ? "Spelare" : "Par") + '</th><th title="' + _("Spelade") + '">' + _("S") + '</th><th title="' + _("Vunna") + '">' + _("V") + '</th><th title="' + _("Förlorade") + '">' + _("F") + '</th><th title="' + _("Matchskillnad") + '">+/-</th><th title="' + _("Poäng") + '">' + _("P") + '</th></tr></thead><tbody>' +
+        g.rows.map(function(rw){
+          var side = A.rows.indexOf(rw) >= 0 ? " vta" : B.rows.indexOf(rw) >= 0 ? " vtb" : "";
+          return '<tr class="' + side.trim() + '"><td><span class="tpos">' + rw.pos + '</span>' + esc(rw.n) + '</td><td>' + rw.m + '</td><td>' + rw.w + '</td><td>' + rw.l + '</td><td>' + (rw.d > 0 ? "+" : "") + rw.d + '</td><td><b>' + rw.p + '</b></td></tr>';
+        }).join("") + '</tbody></table></div></section>' : "") +
       '<section aria-labelledby="h-vm"><div class="sh"><h2 id="h-vm">' + _("Tidigare möten") + '</h2><div class="meta"></div></div>' +
       (meets.length ? '<div class="card bres vmeet"><p class="vmh"><b>' + esc(first(a)) + '</b><span>' + mw + "–" + ml + '</span><b>' + esc(first(b)) + '</b></p>' + meets.map(function(x){
         var q = x.r;
