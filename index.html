@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-H9qNZsUmAZMKcn2XAYynNfHbuQO8AyPz2YgXxO2yu+c='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-uhobDxlTc1kp7nLcJaYwOKcffbHBiAOfUoEQ4+8SC0c='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -435,6 +435,7 @@
   .kmseg button{ appearance:none; height:30px; padding:0 9px; border:0; border-radius:99px; background:none; color:var(--dim); font:600 12px/1 "Instrument Sans", sans-serif; cursor:pointer; }
   .kmseg button[aria-pressed="true"]{ background:var(--solid); color:var(--solid-ink); }
   .kleft{ margin:6px 0 12px !important; padding:10px 12px; border-radius:12px; border:1px dashed var(--line); font-size:14px !important; color:var(--dim); }
+  .kbtns{ display:flex; flex-direction:column; gap:6px; flex-shrink:0; } .kbtns button{ width:100%; margin:0 !important; }
   .kvis{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:6px 0 12px; padding:10px 12px; border-radius:12px; background:var(--surface-2); } .kvis p{ margin:0 !important; font-size:14px !important; } .kvis small{ color:var(--dim); }
 
   .amxgo.pfile{ position:relative; display:inline-flex; align-items:center; justify-content:center; width:auto; padding:0 18px; overflow:hidden; }
@@ -8218,7 +8219,7 @@
   function konPkHtml(me){
     if (!pkOk()) return "";
     return '<div class="kvis"><p><b>' + esc(pkName().charAt(0).toUpperCase() + pkName().slice(1)) + '</b><br><small>' + esc(me.pk ? _("Du kan logga in med {m} utan länk.", {m:pkName()}) : _("Logga in med {m} i stället för en länk nästa gång.", {m:pkName()})) + '</small></p>' +
-      '<span><button type="button" class="amxsec" data-k="pkadd">' + _("Lägg till") + '</button>' + (me.pk ? ' <button type="button" class="amxsec del" data-k="pkclear">' + _("Ta bort") + '</button>' : "") + '</span></div>';
+      '<span class="kbtns"><button type="button" class="amxsec" data-k="pkadd">' + _("Lägg till") + '</button>' + (me.pk ? '<button type="button" class="amxsec del" data-k="pkclear">' + _("Ta bort") + '</button>' : "") + '</span></div>';
   }
   function authMe(){ authApi("/auth/me").then(function(d){ AUTH.me = d.me; AUTH.at = Date.now(); authSave(AUTH); renderKonto(); }, function(){ renderKonto(); }); }
   function pkAdd(b){
