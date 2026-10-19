@@ -49,3 +49,34 @@ test("akademin: the coach's page and shown groups (no names), interest from anyo
   await call(env, "POST", "/academy", { op: "group", gid: g1.id, shown: false }, B(javier.tok));
   assert.deepEqual((await (await call(env, "GET", "/academy")).json()).groups, []);
 });
+
+test("akademin, avgifter: the player says swishat or MATCHi, the coach marks betald or gratis; a new term", async () => {
+  _resetMemory();
+  const env = { PUSH: kv(), DB: fakeD1(), NOW: "2026-10-19T10:00:00Z", ORIGIN, ADMIN_KEY: "k".repeat(32) }, ak = { "X-Admin-Key": env.ADMIN_KEY };
+  const acct = async body => { const a = await (await call(env, "POST", "/admin", { op: "add", ...body }, ak)).json(); return { id: a.id, tok: (await (await call(env, "POST", "/auth/redeem", { code: a.code })).json()).token }; };
+  const javier = await acct({ name: "Javier Castilla", roles: ["tranare"] }), thea = await acct({ pid: 1675246 }), kian = await acct({ pid: 1680004 });
+  const g = await (await call(env, "POST", "/coach", { op: "group", name: "Damlaget", pids: [1675246, 1849853] }, B(javier.tok))).json();
+  assert.deepEqual((await (await call(env, "GET", "/pay?pid=1675246", null, B(thea.tok))).json()).fees, []);   // no price yet
+  await call(env, "POST", "/academy", { op: "group", gid: g.id, shown: true, price: "1 200 kr/termin" }, B(javier.tok));
+  assert.equal((await call(env, "POST", "/pay", { op: "swish", swish: "123 456 78 90" }, B(thea.tok))).status, 403);
+  assert.equal((await call(env, "POST", "/pay", { op: "swish", swish: "123 456 78 90" }, B(javier.tok))).status, 200);
+  let f = await (await call(env, "GET", "/pay?pid=1675246", null, B(thea.tok))).json();
+  assert.deepEqual([f.swish, f.fees], ["1234567890", [{ gid: g.id, gname: "Damlaget", price: "1 200 kr/termin", amount: 1200, status: "obetald" }]]);
+  assert.equal((await call(env, "GET", "/pay?pid=1675246", null, B(kian.tok))).status, 403);
+  // Thea: swishat; she may not mark it paid herself; Kian may not touch hers
+  assert.equal((await call(env, "POST", "/pay", { gid: g.id, pid: 1675246, status: "betald" }, B(thea.tok))).status, 400);
+  assert.equal((await call(env, "POST", "/pay", { gid: g.id, pid: 1675246, status: "swishad" }, B(kian.tok))).status, 403);
+  assert.equal((await call(env, "POST", "/pay", { gid: g.id, pid: 1675246, status: "swishad" }, B(thea.tok))).status, 200);
+  assert.equal(JSON.parse(env.PUSH.m.get("amx:pend") || "[]").length, 0);   // Javier has no phone linked: nothing queued
+  // the coach: the group's list, Thea paid, Cassandra free (a school pupil)
+  let c = await (await call(env, "GET", "/pay?gid=" + g.id, null, B(javier.tok))).json();
+  assert.deepEqual(c.fees.map(x => [x.pid, x.status]).sort(), [[1675246, "swishad"], [1849853, "obetald"]]);
+  assert.equal((await call(env, "GET", "/pay?gid=" + g.id, null, B(thea.tok))).status, 403);
+  await call(env, "POST", "/pay", { gid: g.id, pid: 1675246, status: "betald" }, B(javier.tok));
+  await call(env, "POST", "/pay", { gid: g.id, pid: 1849853, status: "gratis" }, B(javier.tok));
+  assert.equal((await call(env, "POST", "/pay", { gid: g.id, pid: 1675246, status: "matchi" }, B(thea.tok))).status, 400);   // settled
+  // a new term: paid ones back to not paid, free ones stay
+  await call(env, "POST", "/pay", { gid: g.id, op: "reset" }, B(javier.tok));
+  c = await (await call(env, "GET", "/pay?gid=" + g.id, null, B(javier.tok))).json();
+  assert.deepEqual(c.fees.map(x => [x.pid, x.status]).sort(), [[1675246, "obetald"], [1849853, "gratis"]]);
+});

@@ -77,3 +77,60 @@ export async function interestMark(env, me, b, t) {
   else await env.DB.batch([env.DB.prepare("UPDATE interest SET status = ? WHERE id = ?").bind(b.status === "kontaktad" ? "kontaktad" : "ny", r.id), log(env, t, me.id, "interest", { id: r.id, status: b.status })]);
   return { ok: true };
 }
+
+// Fees. A group's price is the coach's text ("1 200 kr/termin"); the amount is its first number. The app never sees a
+// payment: the player says "swishad" or asks for MATCHi, the coach marks "betald" (or "gratis") after checking.
+export const amountOf = p => { const m = /(\d[\d\s]*)/.exec(String(p || "")); const n = m ? Number(m[1].replace(/\s/g, "")) : 0; return n > 0 && n < 100000 ? n : null; };
+const PLAYER_SET = ["swishad", "matchi", "obetald"], COACH_SET = ["swishad", "matchi", "obetald", "betald", "gratis"];
+// GET /pay?pid= (the player, parents, coaches) -> {swish, fees: [{gid, gname, price, amount, status}]} for their groups with a price
+// GET /pay?gid= (the group's coach) -> {fees: [{pid, status, at}]}
+export async function payGet(env, me, q, canTrain) {
+  if (!env.DB) return { err: "no database", status: 503 };
+  if (!me) return { err: "login", status: 401 };
+  const swish = ((await env.DB.prepare("SELECT swish FROM academy_pay WHERE org = ?").bind(ORG).first()) || {}).swish || null;
+  if (q.gid) {
+    const g = await env.DB.prepare("SELECT id FROM tgroups WHERE id = ? AND owner = ?").bind(q.gid, me.id).first();
+    if (!g) return { err: "forbidden", status: 403 };
+    const rows = (await env.DB.prepare("SELECT m.pid, p.status, p.at FROM tgroup_members m LEFT JOIN tpay p ON p.gid = m.gid AND p.pid = m.pid WHERE m.gid = ?").bind(g.id).all()).results;
+    return { swish, fees: rows.map(r => ({ pid: r.pid, status: r.status || "obetald", at: r.at || null })) };
+  }
+  const pid = Number(q.pid);
+  if (!canTrain(me, pid)) return { err: "forbidden", status: 403 };
+  const rows = (await env.DB.prepare("SELECT g.id, g.name, u.price, p.status FROM tgroup_members m JOIN tgroups g ON g.id = m.gid JOIN tgroup_pub u ON u.gid = g.id LEFT JOIN tpay p ON p.gid = g.id AND p.pid = m.pid WHERE m.pid = ? AND u.price IS NOT NULL").bind(pid).all()).results;
+  return { swish, fees: rows.map(r => ({ gid: r.id, gname: r.name, price: r.price, amount: amountOf(r.price), status: r.status || "obetald" })) };
+}
+// POST /pay {gid, pid, status} | {gid, op: "reset"} (a new term: all but "gratis" back to not paid; the coach) | {op: "swish", swish} (the coach)
+export async function payPost(env, me, b, t, canTrain) {
+  if (!env.DB) return { err: "no database", status: 503 };
+  if (!me) return { err: "login", status: 401 };
+  if (b && b.op === "swish") {
+    if (!isHead(me)) return { err: "forbidden", status: 403 };
+    const sw = String(b.swish || "").replace(/[^\d]/g, "");
+    if (sw && !/^\d{7,12}$/.test(sw)) return { err: "swish", status: 400 };
+    await env.DB.prepare("INSERT OR REPLACE INTO academy_pay (org, swish) VALUES (?, ?)").bind(ORG, sw || null).run();
+    return { ok: true };
+  }
+  const g = b && typeof b.gid === "string" && await env.DB.prepare("SELECT id, owner FROM tgroups WHERE id = ? AND org = ?").bind(b.gid, ORG).first();
+  if (!g) return { err: "not found", status: 404 };
+  const coach = g.owner === me.id;
+  if (b.op === "reset") {
+    if (!coach) return { err: "forbidden", status: 403 };
+    await env.DB.batch([env.DB.prepare("DELETE FROM tpay WHERE gid = ? AND status != 'gratis'").bind(g.id), log(env, t, me.id, "pay-reset", { gid: g.id })]);
+    return { ok: true };
+  }
+  const pid = Number(b.pid), status = String(b.status || "");
+  if (!(await env.DB.prepare("SELECT pid FROM tgroup_members WHERE gid = ? AND pid = ?").bind(g.id, pid).first())) return { err: "not found", status: 404 };
+  if (!(coach ? COACH_SET : PLAYER_SET).includes(status)) return { err: "status", status: 400 };
+  if (!coach) {
+    if (!canTrain(me, pid)) return { err: "forbidden", status: 403 };
+    const cur = ((await env.DB.prepare("SELECT status FROM tpay WHERE gid = ? AND pid = ?").bind(g.id, pid).first()) || {}).status;
+    if (cur === "betald" || cur === "gratis") return { err: "done", status: 400 };   // settled by the coach
+  }
+  if (status === "obetald") await env.DB.prepare("DELETE FROM tpay WHERE gid = ? AND pid = ?").bind(g.id, pid).run();
+  else await env.DB.prepare("INSERT OR REPLACE INTO tpay (gid, pid, status, at, by) VALUES (?, ?, ?, ?, ?)").bind(g.id, pid, status, t, me.id).run();
+  if (!coach && (status === "swishad" || status === "matchi")) try {
+    const gn = (await env.DB.prepare("SELECT name FROM tgroups WHERE id = ?").bind(g.id).first()).name;
+    await notifyUsers(env, [g.owner], { title: status === "swishad" ? "Swishat: " + gn : "Dra från MATCHi: " + gn, body: me.name + " · bekräfta under Träning, Grupper", url: "#traning", tag: "padel-pay-" + g.id + "-" + pid });
+  } catch (e) {}
+  return { ok: true };
+}

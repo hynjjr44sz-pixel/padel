@@ -214,3 +214,17 @@ CREATE TABLE IF NOT EXISTS interest (
   status TEXT NOT NULL DEFAULT 'ny'             -- ny, kontaktad
 );
 CREATE INDEX IF NOT EXISTS interest_org ON interest(org, created);
+-- Akademin, fees: the club's Swish number; each group member's fee (no row: not paid). status: swishad (the player says so),
+-- matchi (to be taken from their MATCHi account), betald (the coach saw it), gratis (e.g. a school pupil)
+CREATE TABLE IF NOT EXISTS academy_pay (
+  org TEXT PRIMARY KEY,
+  swish TEXT
+);
+CREATE TABLE IF NOT EXISTS tpay (
+  gid TEXT NOT NULL,
+  pid INTEGER NOT NULL,
+  status TEXT NOT NULL,
+  at INTEGER NOT NULL,
+  by TEXT,
+  PRIMARY KEY (gid, pid)
+);

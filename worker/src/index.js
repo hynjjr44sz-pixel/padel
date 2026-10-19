@@ -9,7 +9,8 @@ import { soonNotes } from "./soon.js";
 import { loadMembers, membersDue, membersRun, membersOut, setVisibility, findMember, memberName, isMember, visible as memberVisible } from "./members.js";
 import { loadCenter, centerRun } from "./center.js";
 import { photoIndex, photoSet, photoGet, photosPending, photosCheck, canPhoto, riIndex, riOut } from "./photos.js";
-import { academyGet, academyPost, interestPost, interestList, interestMark } from "./academy.js";
+import { academyGet, academyPost, interestPost, interestList, interestMark, payGet, payPost } from "./academy.js";
+import { canTrain } from "./train.js";
 import { linkSub, notifyAdmins, notifyUsers } from "./notify.js";
 import { trainGet, trainPost, trainClear, threadGet, threadPost, trainMany } from "./train.js";
 import { coachGet, coachPost, libGet, libPost, plansGet, plansPost } from "./coach.js";
@@ -146,7 +147,7 @@ async function handle(req, env) {
   // the per-IP rate limits and the cap on subscriptions are what keep KV (1000 writes, 100k reads a day) safe.
   if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
   // americano results come several a minute from one phone: the API limit, not the subscribe one
-  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" && url.pathname !== "/auth/request/poll" && !/^\/(train|coach|lib|plans|academy$|academy\/interest\/mark)/.test(url.pathname) ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
+  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" && url.pathname !== "/auth/request/poll" && !/^\/(train|coach|lib|plans|academy$|academy\/interest\/mark|pay$)/.test(url.pathname) ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
   const route = req.method + " " + url.pathname;
   if (route === "GET /health") {
     const rec = await loadRecord(env);
@@ -278,6 +279,13 @@ async function handle(req, env) {
     const me = req.headers.get("Authorization") ? await authUser(env, req, +now(env)) : null;
     const r = await academyGet(env, me);
     return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": me ? "no-store" : "public, max-age=60", "Vary": "Origin, Authorization" });
+  }
+  if (route === "GET /pay" || route === "POST /pay") {
+    const t = +now(env), me = await authUser(env, req, t);
+    let b = null;
+    if (req.method === "POST") try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    const r = b ? await payPost(env, me, b, t, canTrain) : await payGet(env, me, Object.fromEntries(url.searchParams), canTrain);
+    return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
   if (route === "GET /academy/interest") {
     const r = await interestList(env, await authUser(env, req, +now(env)));

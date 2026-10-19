@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bjh8Yw6+4hqAcOy1QUzl4ww1ZAIWmM6Q0+4y78ZYxSg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hfo5BmPJ+q1cOB5JBbIONgaBPKCIKdHUy8QGu2MoinU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -471,6 +471,15 @@
   .trchart{ padding:12px; } .trchart svg{ width:100%; height:auto; display:block; } .trchart rect{ fill:#B9CCF2; } .trchart rect.now{ fill:#2156CB; }
   .trchart .avg{ fill:none; stroke:#E5484D; stroke-width:2.2; stroke-linejoin:round; } .trchart text{ font:600 8px "Chivo Mono", monospace; fill:var(--dim); text-anchor:middle; }
   .trchart p{ margin:8px 0 0 !important; font-size:12px; } .lg{ display:inline-block; width:12px; height:8px; margin:0 4px 0 8px; border-radius:2px; vertical-align:middle; } .lg.bar{ background:#B9CCF2; margin-left:0; } .lg.line{ height:2px; background:#E5484D; }
+  .acadcard{ display:flex; align-items:center; gap:12px; margin:18px 0 0; padding:16px 18px; border-radius:18px; color:#fff; text-decoration:none; background:linear-gradient(120deg, #1D46A8, #2156CB 60%, #3B7BF0); box-shadow:0 14px 30px -16px rgba(33,86,203,.8); }
+  .acadcard b{ font:800 24px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; } .acadcard span{ flex:1; font-size:13px; opacity:.9; } .acadcard i{ font-style:normal; font-size:22px; }
+  .acadhero p{ margin:0 !important; font-size:15px; line-height:1.5; }
+  .acadg{ padding:14px 16px; margin:0 0 10px; } .acadgh{ display:flex; align-items:center; gap:10px; justify-content:space-between; } .acadgh b{ font-size:17px; }
+  .acadg > small{ display:block; margin-top:4px; color:var(--dim); font-size:12.5px; } .acadg p{ margin:10px 0 !important; font-size:14px; line-height:1.45; } .acadg .amxsec, .acadg .amxgo{ margin-top:4px; }
+  .acadi{ padding:12px 14px; margin:0 0 8px; } .acadi.ny{ border-left:4px solid #F76B15; } .acadi small{ color:var(--dim); } .acadi p{ margin:6px 0 !important; font-size:14px; }
+  .trshow{ display:flex; margin:0 0 14px; font-weight:600; }
+  .trmdot{ position:absolute; top:-2px; left:50%; width:8px; height:8px; margin-left:4px; border-radius:50%; background:#E5484D; }
+  .tritem.trcoming{ background:transparent; border:1.5px dashed var(--line); margin-bottom:6px; }
   .trhow{ margin-top:12px; text-align:left; } .trhow summary{ cursor:pointer; font:600 12px/1 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); padding:6px 0; }
   .trhow p{ margin:8px 0 0 !important; font-size:13.5px; line-height:1.45; }
   .trwho{ display:flex; gap:8px; overflow-x:auto; margin:0 0 12px; padding-bottom:4px; }
@@ -1896,6 +1905,8 @@
       <div id="ctrList"></div>
     </section>
 
+    <a class="acadcard" id="acadCard" href="#akademin" hidden><b data-i18n>Akademin</b><span id="acadCardT"></span><i aria-hidden="true">→</i></a>
+
     <section aria-labelledby="h-top" id="secTop">
       <div class="sh"><h2 id="h-top" data-i18n>Topplistan</h2><div class="meta" id="topMeta"></div></div>
       <div class="topctl">
@@ -1942,6 +1953,7 @@
   </main>
   <main class="view" id="tavlingar" tabindex="-1" aria-labelledby="h-tav" hidden></main>
   <main class="view" id="traning" tabindex="-1" hidden></main>
+  <main class="view" id="akademin" tabindex="-1" hidden></main>
   <main class="view" id="amxtv" tabindex="-1" hidden></main>
   <main class="view" id="americano" tabindex="-1" aria-labelledby="h-amxv" hidden>
     <div class="phead"><div class="pt"><h1 id="h-amxv">Americano</h1><div class="pm" data-i18n>Spela med klubben</div></div></div>
@@ -1967,6 +1979,7 @@
       <div class="mtiles">
         <a class="mtile" href="#regler" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5a2 2 0 0 1 2-2h12v15H7a2 2 0 0 0-2 2z"/><path d="M5 20a2 2 0 0 0 2 2h12M9 7.5h6M9 11h4"/></svg><b data-i18n>Regler</b><span data-i18n>Officiella regler, sökbara</span></a>
         <a class="mtile" href="#konto" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20.5c.9-3.8 3.6-5.8 7-5.8s6.1 2 7 5.8"/></svg><b data-i18n>Konto</b><span id="moreAcct" data-i18n>Logga in, begär konto</span></a>
+        <a class="mtile" href="#akademin" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 9 12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.5c1.6 1.6 3.4 2.4 5.5 2.4s3.9-.8 5.5-2.4V11M21.5 9v5.5"/></svg><b data-i18n>Akademin</b><span data-i18n>Grupper och privatlektioner</span></a>
         <a class="mtile" href="#americano" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="2.2"/><circle cx="17" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/><circle cx="17" cy="17" r="2.2"/><path d="M10.4 4.9a7.5 7.5 0 0 1 3.2 0M19.1 10.4a7.5 7.5 0 0 1 0 3.2M13.6 19.1a7.5 7.5 0 0 1-3.2 0M4.9 13.6a7.5 7.5 0 0 1 0-3.2"/></svg><b>Americano</b><span data-i18n>Starta och följ</span></a>
         <a class="mtile" href="#amx/alla" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M7 20v-6M12 20V9M17 20v-9"/></svg><b data-i18n>Alla americanos</b><span data-i18n>Vinnare och tabeller</span></a>
         <a class="mtile" id="morePriv" href="integritet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.4-3 7.9-7 9.5-4-1.6-7-5.1-7-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg><b data-i18n>Integritet</b><span data-i18n>Vad som sparas</span></a>
@@ -2008,6 +2021,50 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Kommande match": "Próximo partido",
+    "Akademin": "Academia",
+    "Grupper och privatlektioner": "Grupos y clases particulares",
+    "Träna med klubbens tränare i grupp eller privat. Anmäl ditt intresse så hör tränaren av sig.": "Entrena con los entrenadores del club en grupo o en privado. Muestra tu interés y el entrenador se pondrá en contacto.",
+    "{n} av {m} spelare": "{n} de {m} jugadores",
+    "{n} spelare": "{n} jugadores",
+    "Ställ dig i kö": "Apúntate a la lista de espera",
+    "Jag är intresserad": "Me interesa",
+    "Inga grupper att visa just nu. Anmäl intresse så hör tränaren av sig.": "No hay grupos que mostrar ahora. Muestra tu interés y el entrenador se pondrá en contacto.",
+    "Privatlektioner": "Clases particulares",
+    "Enskilt eller med en kompis, på din nivå.": "Solo o con un amigo, a tu nivel.",
+    "Jag vill ha en privatlektion": "Quiero una clase particular",
+    "Din anmälan går bara till klubbens tränare. Den sparas i högst ett år.": "Tu solicitud solo llega a los entrenadores del club. Se guarda como máximo un año.",
+    "Privatlektion": "Clase particular",
+    "Gruppträning": "Entrenamiento en grupo",
+    "Telefon eller e-post": "Teléfono o correo",
+    "Ålder och nivå (valfritt)": "Edad y nivel (opcional)",
+    "Till exempel 14 år, spelat ett år": "Por ejemplo 14 años, juega desde hace un año",
+    "skriv namn och telefon eller e-post": "escribe nombre y teléfono o correo",
+    "Tack!": "¡Gracias!",
+    "Tränaren har fått din anmälan och hör av sig.": "El entrenador ha recibido tu solicitud y se pondrá en contacto.",
+    "för många anmälningar härifrån idag": "demasiadas solicitudes desde aquí hoy",
+    "Visa sidan": "Ver la página",
+    "Det här ser alla under Akademin. Namnen på spelarna i grupperna visas aldrig.": "Esto lo ve todo el mundo en Academia. Los nombres de los jugadores de los grupos nunca se muestran.",
+    "Text och privatlektioner": "Texto y clases particulares",
+    "Visas inte": "No visible",
+    "Intresseanmälningar": "Solicitudes de interés",
+    "{n} nya": "{n} nuevas",
+    "Markera kontaktad": "Marcar contactado",
+    "Markera ny": "Marcar nueva",
+    "Inga anmälningar än.": "Aún no hay solicitudes.",
+    "Om akademin": "Sobre la academia",
+    "Till exempel 60 minuter, enskilt eller två spelare": "Por ejemplo 60 minutos, uno o dos jugadores",
+    "Pris privatlektion": "Precio clase particular",
+    "Till exempel 650 kr": "Por ejemplo 650 kr",
+    "Visa gruppen under Akademin": "Mostrar el grupo en Academia",
+    "Till exempel Onsdagar 19:00–20:30": "Por ejemplo miércoles 19:00–20:30",
+    "Max spelare": "Máx. jugadores",
+    "Pris": "Precio",
+    "Om gruppen": "Sobre el grupo",
+    "Ta bort anmälan?": "¿Eliminar la solicitud?",
+    "{n} grupper": "{n} grupos",
+    "{n} lediga platser": "{n} plazas libres",
+    "privatlektioner": "clases particulares",
     "{n} av 5 stjärnor": "{n} de 5 estrellas",
     "Om passet": "Sobre la sesión",
     "Inga kommentarer än.": "Aún no hay comentarios.",
@@ -6151,6 +6208,7 @@
     try { renderDataAt(); } catch (e){}
     RIC = d.ri || {};
     try { applyUp(d.up || {}); } catch (e){ warn("Egna bilder", e); }
+    try { if (VIEW.name === "traning") renderTraining(); } catch (e){ warn("Träning", e); }   // the matches and members came in
     try { rinHeroes(); } catch (e){ warn("Profilbilder", e); }
     if (d.src === "worker"){
       var l = store.json(PUSH_CLS_KEY);
@@ -6262,6 +6320,7 @@
     try { renderAgenda(); } catch (e){ warn("Kommande", e); }
     try { renderAmxHome(); } catch (e){ warn("Americano", e); }
     try { renderCenter(); } catch (e){ warn("På centret", e); }
+    try { acadLoad(false, renderAcadCard); } catch (e){ warn("Akademin", e); }
     try { renderTop(); } catch (e){ warn("Topplistan", e); }
     try { renderTeams(); } catch (e){ warn("Lagen", e); }
     try { renderPlayerList(); } catch (e){ warn("Spelare", e); }
@@ -8048,6 +8107,20 @@
     try { amxArch(P).forEach(function(x){ if (x.d) push(String(x.d).slice(0, 10), Math.max(30, ((x.w || 0) + (x.l || 0)) * 12), 6, "Americano"); }); } catch (e){}
     return out;
   }
+  // coming matches (not in the load until played): tournament and SPL days ahead, Klubbserien matches with their time
+  function trUpcoming(P){
+    var out = [], t = trDay(0), seen = {};
+    if (!P) return out;
+    var evs = []; try { evs = playerEvents(P); } catch (e){}
+    evs.forEach(function(e){
+      if (!e || !e.windowFrom || seen[e.key]) return;
+      seen[e.key] = 1;
+      var d = dayOf(new Date(e.windowFrom)), end = dayOf(new Date(e.windowTo || e.windowFrom));
+      for (var i = 0; i < 7 && d <= end; i++, d = trAdd(d, 1)) if (d > t) out.push({day:d, label:e.name || (e.kind === "tournament" ? _("Tävling") : _("Seriespel")), time:e.time || ""});
+    });
+    try { bhsNext(P).forEach(function(n){ var d = dayOf(n.at); if (d >= t) out.push({day:d, label:_("Klubbserien") + (n.x.a && n.x.b ? ": " + n.x.a + " – " + n.x.b : ""), time:hm(n.at)}); }); } catch (e){}
+    return out;
+  }
   function trItems(pid){
     var P = BYPID[pid], s = (TR.data[pid] && TR.data[pid].s) || [], manual = {};
     s.forEach(function(x){ if (x.kind === "match") manual[x.day] = 1; });
@@ -8077,6 +8150,7 @@
   }
   function trWeek(items, pid){
     var t = trDay(0), d0 = new Date(t + "T12:00:00Z"), mon = trAdd(t, -((d0.getUTCDay() + 6) % 7) + TR.wk * 7), days = [], max = 600;
+    var up = trUpcoming(BYPID[pid]);
     for (var i = 0; i < 7; i++){ var d = trAdd(mon, i), l = items.filter(function(x){ return x.day === d; }); days.push({d:d, l:l, sum:l.reduce(function(a, x){ return a + trLoadOf(x); }, 0)}); }
     days.forEach(function(x){ max = Math.max(max, x.sum); });
     var wsum = days.reduce(function(a, x){ return a + x.sum; }, 0), sel = TR.day && days.some(function(x){ return x.d === TR.day; }) ? TR.day : (TR.wk === 0 ? t : null);
@@ -8085,17 +8159,18 @@
       '<button type="button" class="trnav" data-trw="1" aria-label="' + esc(_("Nästa vecka")) + '"' + (TR.wk >= 0 ? " disabled" : "") + '>›</button></div><div class="trstrip">' +
       days.map(function(x){
         var dd = new Date(x.d + "T12:00:00Z"), bars = x.l.map(function(y){ return '<i style="height:' + Math.max(4, Math.round(100 * trLoadOf(y) / max)) + '%;background:' + TR_KIND[y.kind][1] + (y.auto ? ';opacity:.55' : '') + '"></i>'; }).join("");
-        var planned = trPlans(pid).some(function(p){ return p.day === x.d && !p.done; });
-        return '<button type="button" class="trd' + (x.d === t ? " trtoday" : "") + (x.d === sel ? " trsel" : "") + (x.d > t ? " trfut" : "") + '" data-trd="' + x.d + '"><span class="trbars">' + bars + (planned ? '<em class="trpdot" title="' + esc(_("Planerat")) + '"></em>' : "") + '</span><b>' + esc(DOW[dd.getUTCDay()]) + '</b><small>' + dd.getUTCDate() + '</small></button>';
+        var planned = trPlans(pid).some(function(p){ return p.day === x.d && !p.done; }), coming = up.some(function(u){ return u.day === x.d; });
+        return '<button type="button" class="trd' + (x.d === t ? " trtoday" : "") + (x.d === sel ? " trsel" : "") + (x.d > t ? " trfut" : "") + '" data-trd="' + x.d + '"><span class="trbars">' + bars + (planned ? '<em class="trpdot" title="' + esc(_("Planerat")) + '"></em>' : "") + (coming ? '<em class="trmdot" title="' + esc(_("Match")) + '"></em>' : "") + '</span><b>' + esc(DOW[dd.getUTCDay()]) + '</b><small>' + dd.getUTCDate() + '</small></button>';
       }).join("") + '</div>';
     if (sel){
-      var l = items.filter(function(x){ return x.day === sel; });
-      h += '<div class="trlist">' + (l.length ? l.map(function(x){
+      var l = items.filter(function(x){ return x.day === sel; }), lu = up.filter(function(u){ return u.day === sel; });
+      var cm = lu.map(function(u){ return '<div class="tritem trcoming"><i style="background:' + TR_KIND.match[1] + '"></i><span><b>' + esc(u.label) + '</b><small>' + esc([_("Kommande match"), u.time].filter(Boolean).join(" · ")) + '</small></span></div>'; }).join("");
+      h += '<div class="trlist">' + cm + (l.length ? l.map(function(x){
         return '<div class="tritem' + (x.auto ? " auto" : "") + '"><i style="background:' + TR_KIND[x.kind][1] + '"></i><span><b>' + esc(x.auto ? x.label : _(TR_KIND[x.kind][0])) + '</b><small>' +
           esc([x.min + " min", "RPE " + x.rpe, _("belastning {n}", {n:fmtN(trLoadOf(x))}), x.auto ? _("uppskattat") : ""].filter(Boolean).join(" · ")) + (x.note ? '<br>' + esc(x.note) : "") + '</small>' + trStars(x.stars) +
           (x.auto ? "" : '<button type="button" class="trcom" data-trthread="' + esc(x.id) + '">' + (x.c ? _("Kommentarer ({n})", {n:x.c}) : _("Kommentera")) + '</button>') + '</span>' +
           (x.auto ? "" : '<button type="button" class="trdel" data-trdel="' + esc(x.id) + '" aria-label="' + esc(_("Ta bort")) + '">×</button>') + '</div>';
-      }).join("") : '<p class="empty">' + esc(_("Inget den här dagen.")) + '</p>') + '</div>';
+      }).join("") : (cm ? "" : '<p class="empty">' + esc(_("Inget den här dagen.")) + '</p>')) + '</div>';
     }
     return h;
   }
@@ -8271,6 +8346,7 @@
         '<div class="sh"><h2>' + _("Hjälptränare") + '</h2><div class="meta"></div></div><div class="card amxset"><p class="kdim">' + _("Hjälptränare får använda och fylla på övningsbiblioteket och se gruppernas planer, men inte spelarnas egen träning.") + '</p>' +
         '<div class="kcoachl">' + (c.assistants.length ? c.assistants.map(function(a){ return '<button type="button" class="kcp" data-trunassist="' + esc(a.id) + '">' + esc(a.name) + ' <i aria-hidden="true">×</i></button>'; }).join("") : '<small>' + _("Inga än.") + '</small>') + '</div>' +
         '<select data-trassist="1"><option value="">' + _("Lägg till hjälptränare …") + '</option>' + c.accounts.filter(function(a){ return !c.assistants.some(function(x){ return x.id === a.id; }); }).map(function(a){ return '<option value="' + esc(a.id) + '">' + esc(a.name) + '</option>'; }).join("") + '</select></div>';
+      h += acadCoachHtml();
     }
     return h;
   }
@@ -8412,6 +8488,7 @@
   }
   function ytClose(){ var el = document.getElementById("ytPop"); if (!el) return; el.classList.remove("open"); el.innerHTML = ""; el.hidden = true; }
   function trClick2(ev){
+    if (acadCoachClick(ev)) return true;
     var tb = ev.target.closest("[data-trthread]");
     if (tb){ trThread(tb.getAttribute("data-trthread")); return true; }
     var yb = ev.target.closest("[data-ytplay]");
@@ -8495,6 +8572,108 @@
     var labels = W.map(function(w, i){ return i % 2 ? "" : '<text x="' + (i * bw + bw / 2) + '" y="' + (H + 14) + '">' + isoWeek(new Date(w.m + "T12:00:00Z")) + '</text>'; }).join("");
     return '<section><div class="sh"><h2>' + _("12 veckor") + '</h2><div class="meta">' + _("belastning per vecka") + '</div></div><div class="card trchart"><svg viewBox="0 0 300 ' + (H + 18) + '" role="img" aria-label="' + esc(_("Belastning per vecka, de senaste 12 veckorna")) + '">' +
       bars + '<path d="' + line + '" class="avg"/>' + labels + '</svg><p class="kdim"><i class="lg bar"></i>' + _("Veckans belastning") + ' <i class="lg line"></i>' + _("Snitt 4 veckor") + '</p></div></section>';
+  }
+  /* ---- Akademin: the public page (worker academy.js): intro, the groups the head coach shows (when, level, places,
+     price; no names), private lessons, an interest form (to the coach only). The coach edits it under Träning, Grupper. ---- */
+  var ACAD = {d:null, t:0, busy:false};
+  function acadLoad(force, then){
+    if (!PUSH_API || ACAD.busy || (!force && ACAD.d && Date.now() - ACAD.t < 60000)){ if (then) then(); return; }
+    ACAD.busy = true;
+    withTimeout(fetch(PUSH_API + "/academy", {credentials:"omit"}).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), 10000)
+      .then(function(d){ ACAD.d = d; ACAD.t = Date.now(); }, function(){}).then(function(){ ACAD.busy = false; if (then) then(); });
+  }
+  // the card on the home view: only when there is something to show
+  function renderAcadCard(){
+    var el = document.getElementById("acadCard"), d = ACAD.d;
+    if (!el) return;
+    var gs = d ? (d.groups || []).filter(function(g){ return g.shown; }) : [], free = gs.reduce(function(a, g){ var f = acadFree(g); return a + (f || 0); }, 0);
+    el.hidden = !d || (!gs.length && !d.intro && !d.ptext);
+    if (el.hidden) return;
+    document.getElementById("acadCardT").textContent = gs.length ? _("{n} grupper", {n:gs.length}) + (free ? " · " + _("{n} lediga platser", {n:free}) : "") + (d.ptext ? " · " + _("privatlektioner") : "") : _("Grupper och privatlektioner");
+  }
+  function acadFree(g){ return g.max ? Math.max(0, g.max - g.n) : null; }
+  function renderAcademy(){
+    var box = document.getElementById("akademin");
+    if (!box) return;
+    var d = ACAD.d, h = '<div class="phead"><div class="pt"><h1>' + _("Akademin") + '</h1><div class="pm">Nynäs Padel Club</div></div></div>';
+    if (!d){ box.innerHTML = h + '<p class="empty">' + _("Hämtar …") + '</p>'; acadLoad(true, renderAcademy); return; }
+    var gs = (d.groups || []).filter(function(g){ return g.shown; });
+    h += '<section class="card acadhero"><p>' + (d.intro ? esc(d.intro).replace(/\n/g, "<br>") : esc(_("Träna med klubbens tränare i grupp eller privat. Anmäl ditt intresse så hör tränaren av sig."))) + '</p></section>';
+    h += '<section><div class="sh"><h2>' + _("Grupper") + '</h2><div class="meta">' + (gs.length ? gs.length : "") + '</div></div>' + (gs.length ? gs.map(function(g){
+      var free = acadFree(g);
+      return '<article class="card acadg"><div class="acadgh"><b>' + esc(g.name) + '</b>' + (free != null ? '<span class="ctrp' + (free === 0 ? " full" : free <= 2 ? " few" : "") + '">' + esc(free === 0 ? _("Fullt") : free === 1 ? _("1 plats kvar") : _("{n} platser kvar", {n:free})) + '</span>' : "") + '</div>' +
+        '<small>' + esc([g.sched, g.level, g.max ? _("{n} av {m} spelare", {n:g.n, m:g.max}) : _("{n} spelare", {n:g.n}), g.price].filter(Boolean).join(" · ")) + '</small>' +
+        (g.info ? '<p>' + esc(g.info).replace(/\n/g, "<br>") + '</p>' : "") +
+        '<button type="button" class="amxsec" data-acint="grupp" data-gid="' + esc(g.id) + '" data-gname="' + esc(g.name) + '">' + (free === 0 ? _("Ställ dig i kö") : _("Jag är intresserad")) + '</button></article>';
+    }).join("") : '<p class="empty">' + _("Inga grupper att visa just nu. Anmäl intresse så hör tränaren av sig.") + '</p>') + '</section>';
+    h += '<section><div class="sh"><h2>' + _("Privatlektioner") + '</h2><div class="meta">' + esc(d.pprice || "") + '</div></div><article class="card acadg"><p>' +
+      (d.ptext ? esc(d.ptext).replace(/\n/g, "<br>") : esc(_("Enskilt eller med en kompis, på din nivå."))) + '</p><button type="button" class="amxgo" data-acint="privat">' + _("Jag vill ha en privatlektion") + '</button></article></section>' +
+      '<p class="trnote">' + _("Din anmälan går bara till klubbens tränare. Den sparas i högst ett år.") + '</p>';
+    box.innerHTML = h;
+    box.onclick = function(ev){ var b = ev.target.closest("[data-acint]"); if (b) acadForm(b.getAttribute("data-acint"), b.getAttribute("data-gid"), b.getAttribute("data-gname")); };
+  }
+  function acadForm(kind, gid, gname){
+    trSheetOpen('<h2>' + (kind === "privat" ? _("Privatlektion") : esc(gname || _("Gruppträning"))) + '</h2>' +
+      '<div class="trf"><span>' + _("Namn") + '</span><input id="aiName" maxlength="60" autocomplete="name"></div>' +
+      '<div class="trf"><span>' + _("Telefon eller e-post") + '</span><input id="aiContact" maxlength="80" autocomplete="email" inputmode="email"></div>' +
+      '<div class="trf"><span>' + _("Ålder och nivå (valfritt)") + '</span><input id="aiAge" maxlength="40" placeholder="' + esc(_("Till exempel 14 år, spelat ett år")) + '"></div>' +
+      '<div class="trf"><span>' + _("Meddelande (valfritt)") + '</span><textarea id="aiMsg" rows="3" maxlength="600"></textarea></div>' +
+      '<div class="amxbar"><button type="button" class="amxgo" data-aisend="1">' + _("Skicka") + '</button></div>', function(ev){
+      var b = ev.target.closest("[data-aisend]");
+      if (!b) return;
+      var body = {kind:kind, gid:gid || undefined, name:document.getElementById("aiName").value.trim(), contact:document.getElementById("aiContact").value.trim(), age:document.getElementById("aiAge").value.trim(), msg:document.getElementById("aiMsg").value};
+      if (!body.name || body.contact.length < 5){ trErr2(_("skriv namn och telefon eller e-post")); return; }
+      b.disabled = true;
+      withTimeout(fetch(PUSH_API + "/academy/interest", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), credentials:"omit"}).then(function(r){ return r.json().then(function(d){ if (!r.ok){ var e = new Error(d && d.error || "HTTP " + r.status); e.status = r.status; throw e; } return d; }); }), 15000)
+        .then(function(){
+          var el = document.querySelector("#trSheet2 .sheet-in");
+          if (el) el.innerHTML = '<i class="sheet-grab" aria-hidden="true"></i><h2>' + _("Tack!") + '</h2><p>' + _("Tränaren har fått din anmälan och hör av sig.") + '</p><div class="amxbar"><button type="button" class="amxsec" data-trx2="1">' + _("Stäng") + '</button></div>';
+        }, function(e){ b.disabled = false; trErr2(e.status === 429 ? _("för många anmälningar härifrån idag") : e); });
+    });
+  }
+  // under Träning, Grupper (a head coach): the page, which groups show, the interest
+  function acadCoachHtml(){
+    trGet("acadc", "/academy");
+    trGet("acadi", "/academy/interest");
+    var a = TR.acadc && TR.acadc.d, l = (TR.acadi && TR.acadi.d && TR.acadi.d.list) || [];
+    if (!a) return "";
+    var nyc = l.filter(function(x){ return x.status === "ny"; }).length;
+    return '<div class="sh"><h2>' + _("Akademin") + '</h2><div class="meta"><a class="linkbtn plain" href="#akademin">' + _("Visa sidan") + '</a></div></div>' +
+      '<div class="card amxset"><p class="kdim">' + _("Det här ser alla under Akademin. Namnen på spelarna i grupperna visas aldrig.") + '</p>' +
+      '<div class="amxbar"><button type="button" class="amxsec" data-acpage="1">' + _("Text och privatlektioner") + '</button></div>' +
+      a.groups.filter(function(g){ return g.mine; }).map(function(g){ return '<div class="kvis"><p><b>' + esc(g.name) + '</b><br><small>' + esc(g.shown ? [_("Visas"), g.sched, g.max ? g.n + "/" + g.max : "", g.price].filter(Boolean).join(" · ") : _("Visas inte")) + '</small></p><button type="button" class="amxsec" data-acgroup="' + esc(g.id) + '">' + _("Ändra") + '</button></div>'; }).join("") + '</div>' +
+      '<div class="sh"><h2>' + _("Intresseanmälningar") + '</h2><div class="meta">' + (nyc ? esc(_("{n} nya", {n:nyc})) : "") + '</div></div>' +
+      (l.length ? l.map(function(x){ return '<div class="card acadi' + (x.status === "ny" ? " ny" : "") + '"><b>' + esc(x.name) + '</b> <small>' + esc((x.kind === "privat" ? _("Privatlektion") : x.gname || _("Gruppträning")) + " · " + dayMonD(new Date(x.created))) + '</small>' +
+        '<p><a href="' + esc(/@/.test(x.contact) ? "mailto:" + x.contact : "tel:" + x.contact.replace(/[^\d+]/g, "")) + '">' + esc(x.contact) + '</a>' + (x.age ? " · " + esc(x.age) : "") + '</p>' + (x.msg ? '<p class="kdim">' + esc(x.msg) + '</p>' : "") +
+        '<div class="amxbar"><button type="button" class="amxsec" data-acmark="' + esc(x.id) + '" data-st="' + (x.status === "ny" ? "kontaktad" : "ny") + '">' + (x.status === "ny" ? _("Markera kontaktad") : _("Markera ny")) + '</button><button type="button" class="amxsec del" data-acdel="' + esc(x.id) + '">' + _("Ta bort") + '</button></div></div>'; }).join("")
+        : '<p class="empty">' + _("Inga anmälningar än.") + '</p>');
+  }
+  function acadCoachClick(ev){
+    var b = ev.target.closest("[data-acpage],[data-acgroup],[data-acmark],[data-acdel]");
+    if (!b) return false;
+    var a = TR.acadc && TR.acadc.d, done = function(){ trSheet2Close(); delete TR.acadc; delete TR.acadi; ACAD.d = null; renderTraining(); };
+    if (b.hasAttribute("data-acpage")){
+      trSheetOpen('<h2>' + _("Akademin") + '</h2><div class="trf"><span>' + _("Om akademin") + '</span><textarea id="acIntro" rows="5" maxlength="1500">' + esc(a.intro || "") + '</textarea></div>' +
+        '<div class="trf"><span>' + _("Privatlektioner") + '</span><textarea id="acP" rows="3" maxlength="1500" placeholder="' + esc(_("Till exempel 60 minuter, enskilt eller två spelare")) + '">' + esc(a.ptext || "") + '</textarea></div>' +
+        '<div class="trf"><span>' + _("Pris privatlektion") + '</span><input id="acPP" maxlength="80" value="' + esc(a.pprice || "") + '" placeholder="' + esc(_("Till exempel 650 kr")) + '"></div>' +
+        '<div class="amxbar"><button type="button" class="amxgo" data-acsave="1">' + _("Spara") + '</button></div>', function(e2){
+        var s = e2.target.closest("[data-acsave]"); if (!s) return; s.disabled = true;
+        authApi("/academy", {op:"page", intro:document.getElementById("acIntro").value, ptext:document.getElementById("acP").value, pprice:document.getElementById("acPP").value}).then(done, function(e){ s.disabled = false; trErr2(e); });
+      });
+    } else if (b.hasAttribute("data-acgroup")){
+      var g = a.groups.filter(function(x){ return x.id === b.getAttribute("data-acgroup"); })[0];
+      if (!g) return true;
+      trSheetOpen('<h2>' + esc(g.name) + '</h2><label class="kchk trshow"><input type="checkbox" id="acShown"' + (g.shown ? " checked" : "") + '> ' + _("Visa gruppen under Akademin") + '</label>' +
+        '<div class="trf"><span>' + _("När") + '</span><input id="acSched" maxlength="80" value="' + esc(g.sched || "") + '" placeholder="' + esc(_("Till exempel Onsdagar 19:00–20:30")) + '"></div>' +
+        '<div class="trf trrow"><label><span>' + _("Nivå") + '</span><input id="acLvl" maxlength="40" value="' + esc(g.level || "") + '"></label><label><span>' + _("Max spelare") + '</span><input type="number" id="acMax" min="1" max="99" value="' + esc(g.max || "") + '"></label><label><span>' + _("Pris") + '</span><input id="acPrice" maxlength="80" value="' + esc(g.price || "") + '"></label></div>' +
+        '<div class="trf"><span>' + _("Om gruppen") + '</span><textarea id="acInfo" rows="3" maxlength="600">' + esc(g.info || "") + '</textarea></div>' +
+        '<div class="amxbar"><button type="button" class="amxgo" data-acsave="1">' + _("Spara") + '</button></div>', function(e2){
+        var s = e2.target.closest("[data-acsave]"); if (!s) return; s.disabled = true;
+        authApi("/academy", {op:"group", gid:g.id, shown:document.getElementById("acShown").checked, sched:document.getElementById("acSched").value, level:document.getElementById("acLvl").value, max:+document.getElementById("acMax").value || null, price:document.getElementById("acPrice").value, info:document.getElementById("acInfo").value}).then(done, function(e){ s.disabled = false; trErr2(e); });
+      });
+    } else if (b.hasAttribute("data-acmark")) authApi("/academy/interest/mark", {id:b.getAttribute("data-acmark"), status:b.getAttribute("data-st")}).then(done, function(e){ alert(_("Det gick inte: ") + e.message); });
+    else if (b.hasAttribute("data-acdel")){ if (confirm(_("Ta bort anmälan?"))) authApi("/academy/interest/mark", {id:b.getAttribute("data-acdel"), op:"del"}).then(done, function(e){ alert(_("Det gick inte: ") + e.message); }); }
+    return true;
   }
   function renderAmxHome(){
     var host = document.getElementById("amxHome");
@@ -9703,7 +9882,7 @@
     if (sk) return {view:"stats", key:sk[1] || null};
     var sm = /^#serie\/(\d+)\/([a-z0-9]+)$/.exec(h);
     if (sm) return {view:"match", gid:sm[1], key:sm[2]};
-    if (h === "#spelare" || h === "#tavlingar" || h === "#americano" || h === "#traning") return {view:h.slice(1)};
+    if (h === "#spelare" || h === "#tavlingar" || h === "#americano" || h === "#traning" || h === "#akademin") return {view:h.slice(1)};
     var ki = /^#in\/([a-z2-9]{20})$/.exec(h);
     if (ki || h === "#konto") return {view:"konto", code:ki ? ki[1] : null};
     var kb = /^#konto\/begar\/(\d+)$/.exec(h);
@@ -9721,7 +9900,7 @@
     return P ? {view:"player", who:P.key, P:P, mid:m[2] || null} : {view:"home"};
   }
   function showView(id){
-    ["home", "team", "stats", "match", "tour", "rules", "amx", "konto", "spelare", "tavlingar", "americano", "traning", "amxtv"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
+    ["home", "team", "stats", "match", "tour", "rules", "amx", "konto", "spelare", "tavlingar", "americano", "traning", "akademin", "amxtv"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
       var el = document.getElementById(v);
       if (el) el.hidden = v !== id;
     });
@@ -9807,14 +9986,15 @@
       VIEW = {name:"amxtv", who:null, team:"amxtv" + x.id};
       tvOpen(x.id);
       document.title = _("Storbild") + " · Nynäs Padel";
-    } else if (x.view === "spelare" || x.view === "tavlingar" || x.view === "americano" || x.view === "traning"){
+    } else if (x.view === "spelare" || x.view === "tavlingar" || x.view === "americano" || x.view === "traning" || x.view === "akademin"){
       if (x.view === "spelare"){ try { renderTeams(); } catch (e){} renderPlayerList(); }
       else if (x.view === "tavlingar") renderTav();
-      else if (x.view === "traning"){ TR.data = {}; renderTraining(); authCheck(true); }   // roles and linked players may have changed
+      else if (x.view === "traning"){ TR.data = {}; renderTraining(); authCheck(true); }
+      else if (x.view === "akademin"){ ACAD.d = null; renderAcademy(); }   // roles and linked players may have changed
       else renderAmxHome();
       showView(x.view);
       VIEW = {name:x.view, who:null, team:x.view};
-      document.title = _(x.view === "spelare" ? "Spelare" : x.view === "tavlingar" ? "Tävlingar" : x.view === "traning" ? "Träning" : "Americano") + " · Nynäs Padel";
+      document.title = _(x.view === "spelare" ? "Spelare" : x.view === "tavlingar" ? "Tävlingar" : x.view === "traning" ? "Träning" : x.view === "akademin" ? "Akademin" : "Americano") + " · Nynäs Padel";
     } else if (x.view === "konto"){
       // the code leaves the address bar; logging in waits for a tap (the link may have opened in the wrong browser)
       if (x.code){ history.replaceState(null, "", "#konto"); KONTO.code = x.code; KONTO.msg = ""; renderKonto(); }
@@ -9842,7 +10022,7 @@
       VIEW = {name:"home", who:null};
       document.title = "Nynäs Padel";
     }
-    if (nav) nav.hidden = ["home", "spelare", "tavlingar", "americano", "traning", "konto", "rules", "amx", "stats"].indexOf(VIEW.name) >= 0;
+    if (nav) nav.hidden = ["home", "spelare", "tavlingar", "americano", "traning", "akademin", "konto", "rules", "amx", "stats"].indexOf(VIEW.name) >= 0;
     // the dock follows; a view opened from another tab slides in from that side
     var tabNow = dockTabOf(VIEW.name), tabWas = DOCK_PREV;
     DOCK.set(tabNow, !tabWas);
