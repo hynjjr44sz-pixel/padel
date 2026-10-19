@@ -7,6 +7,7 @@ import { weekDigest, weekNote } from "./week.js";
 import { remindNotes } from "./remind.js";
 import { soonNotes } from "./soon.js";
 import { loadMembers, membersDue, membersRun, membersOut, setVisibility, findMember, memberName, isMember, visible as memberVisible } from "./members.js";
+import { loadCenter, centerRun } from "./center.js";
 import { photoIndex, photoSet, photoGet, photosPending, photosCheck, canPhoto, riIndex, riOut } from "./photos.js";
 import { pkOptions, pkAdd, pkLogin, pkClear } from "./passkey.js";
 import { sha, authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
@@ -162,7 +163,7 @@ async function handle(req, env) {
     // wins: club players who won a class (place 1) or lost its final (place 2) in the last 30 days ("Veckans vinnare")
     const past = (rec && rec.past) || [], lv = await liveView(env, t, events.concat(past)), wins = recentWins(await loadWins(env), t);
     // photos: roster players' RankedIn profile photos {pid: {url, thumb, placeholder}} (the page: only without own photo)
-    // ri: the members' RankedIn photos cut out {pid: v} (photos.js)
+    // ri: the members' RankedIn photos cut out {pid: v} (photos.js); center: Nynäshamn Padelcenter's activities (center.js)
     // board: the club leaderboard per pid {sk skill, w/l/y this year's W–L, rk/rp/rd SPF standing/points/list date, up places
     // gained on that list} (home view: Topplistan; kept in "disc", so it costs no extra KV read)
     await tvClubs(env);
@@ -171,7 +172,7 @@ async function handle(req, env) {
     const withTv = e => { const c = eventClub(e); return c ? { ...e, tv: c.id } : e; };
     const week = weekDigest({ wins: await loadWins(env), board: (rec && rec.board) || {}, bhs, events, players: weekPlayers() }, t, offsetAt(+t));
     return json({ at: rec ? rec.at : null, checked: checkedAt(rec, t), src: "worker", week, events: events.map(withTv), past: past.map(withTv), tv: tv ? tv.clubs : {}, tvs: tvs || {}, latest: lv.latest, live: lv.live, wins, photos: (rec && rec.photos) || {}, bhs: bhs ? { at: bhs.at, groups: bhs.groups, hist: bhs.hist ? { at: bhs.hist.at, members: bhs.hist.members, rank: bhs.hist.rank, sw: bhs.hist.sw || [] } : null } : null,
-      board: (rec && rec.board) || {}, up: await photoIndex(env), ri: riOut(await riIndex(env)), members: membersOut() }, 200, { ...h, "Cache-Control": "public, max-age=120" });
+      board: (rec && rec.board) || {}, up: await photoIndex(env), ri: riOut(await riIndex(env)), center: await loadCenter(env), members: membersOut() }, 200, { ...h, "Cache-Control": "public, max-age=120" });
   }
   if (route === "GET /live") return liveRoute(req, env, url, h);
   // Svenska Padelförbundets regler (rules.json, built every Sunday by .github/workflows/rules.yml): passed through,
@@ -1064,6 +1065,8 @@ export async function tick(env, events) {
       }
     } catch (e) { console.warn("veckan", e.message); }
   }
+  // På centret: Nynäshamn Padelcenter's activities on MATCHi (center.js), once an hour at minute 37
+  if (!events && env.CENTER_OFF !== "1" && mm === 37) try { await centerRun(env, t, budget); } catch (e) { console.warn("centret", e.message); }   // CENTER_OFF: local tests only
   // Own profile pictures: a cut-out the GitHub Action has committed (every 5 min, minute 4, 9, ...)
   if (!events && env.PHOTO_OFF !== "1" && mm % 5 === 4) try { const dr = await loadRecord(env); await photosCheck(env, budget, (dr && dr.photos) || null, isMember); } catch (e) { console.warn("photos", e.message); }   // PHOTO_OFF: local tests only
   // Americano / Mexicano: notiser queued by the organiser's phone (amx.js), sent with this tick's

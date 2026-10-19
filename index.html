@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-eDd3mYf4B2zxhRvGcfFwCgo3FsHxB2LV/LaUawsZ8x8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bVznEdLsBeOss2+Gk1QjcVSzmRkZgTp4k97JphngGzw='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -390,6 +390,12 @@
   .amxnew b{ font:800 22px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.02em; }
   .amxnew span{ grid-column:1; font-size:13px; line-height:1.4; opacity:.85; }
   .amxnew i{ grid-row:1 / 3; grid-column:2; font-style:normal; font-size:24px; }
+  .ctrrow{ display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:center; margin-top:8px; padding:11px 14px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:inherit; text-decoration:none; }
+  .ctrrow small{ display:block; font-size:12px; color:var(--dim); margin-top:3px; }
+  .ctrd{ min-width:76px; } .ctrd b{ font-size:13px; } .ctrn b{ font-size:14px; line-height:1.25; }
+  .ctrp{ display:inline-block; margin-right:7px; font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.03em; padding:4px 7px; border-radius:999px; background:var(--surface-2); color:var(--ink, inherit); white-space:nowrap; }
+  .ctrp.few{ background:#ffe08a; color:#3d2e00; } .ctrp.full{ background:transparent; border:1px solid var(--line); color:var(--dim); }
+  .ctrnote{ margin:10px 2px 0; font-size:12px; color:var(--dim); }
   .amxrow{ display:grid; grid-template-columns:auto 1fr; gap:2px 10px; align-items:center; margin-top:8px; padding:11px 14px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:inherit; text-decoration:none; }
   .amxallk{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding:12px 14px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-weight:600; font-size:14.5px; text-decoration:none; }
   .amxallk i{ font-style:normal; color:var(--dim); }
@@ -421,7 +427,7 @@
   .klist{ padding:0 16px; }
   .missing{ display:grid; grid-template-columns:1fr auto; gap:3px 12px; align-items:center; margin:22px 0 4px; padding:15px 16px; border-radius:16px; border:1px dashed var(--accent); background:var(--accent-soft); color:var(--ink); text-decoration:none; }
   .missing b{ font-size:15px; } .missing span{ grid-column:1; font-size:13px; line-height:1.4; color:var(--dim); } .missing i{ grid-row:1 / 3; grid-column:2; font-style:normal; font-size:22px; color:var(--accent); }
-  .plet{ list-style:none; margin:14px 2px 4px; font:800 15px/1 "Big Shoulders Display", sans-serif; letter-spacing:.06em; color:var(--dim); }
+  .plet{ grid-column:1 / -1; list-style:none; margin:14px 2px 4px; font:800 15px/1 "Big Shoulders Display", sans-serif; letter-spacing:.06em; color:var(--dim); }
   .kmemnote{ margin:0 0 8px !important; }
   .kmemq{ display:block; margin:0 0 10px; } .kmemq input{ width:100%; height:42px; padding:0 12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:500 16px/1 "Instrument Sans", sans-serif; }
   .kmem{ display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); } .kmem:last-child{ border-bottom:0; }
@@ -1769,6 +1775,11 @@
       <p class="calrow" id="calHome" hidden></p>
     </section>
 
+    <section aria-labelledby="h-ctr" id="secCtr" hidden>
+      <div class="sh"><h2 id="h-ctr" data-i18n>På centret</h2><div class="meta" data-i18n>Nynäshamn Padelcenter</div></div>
+      <div id="ctrList"></div>
+    </section>
+
     <section aria-labelledby="h-top" id="secTop">
       <div class="sh"><h2 id="h-top" data-i18n>Topplistan</h2><div class="meta" id="topMeta"></div></div>
       <div class="topctl">
@@ -1879,6 +1890,13 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "På centret": "En el centro",
+    "Nynäshamn Padelcenter": "Nynäshamn Padelcenter",
+    "Fullt": "Completo",
+    "1 plats kvar": "1 plaza libre",
+    "{n} platser kvar": "{n} plazas libres",
+    "Visa alla {n}": "Ver todas ({n})",
+    "Från MATCHi. Bokning och vilka som är anmälda finns där.": "De MATCHi. Allí se reserva y se ve quién está inscrito.",
     "Soffläge": "Modo sofá",
     "Du står inte längre som medlem i Nynäs Padel Club på RankedIn (sedan {d}). Din spelarsida visas inte i appen. Kontot finns kvar, och kommer du tillbaka till klubben syns du igen av sig själv.": "Ya no figuras como miembro de Nynäs Padel Club en RankedIn (desde {d}). Tu página de jugador no se muestra en la app. La cuenta sigue activa y, si vuelves al club, aparecerás de nuevo automáticamente.",
     "Har lämnat klubben": "Ha dejado el club",
@@ -5974,6 +5992,7 @@
     try { renderLatest(); } catch (e){ warn("Senaste resultat", e); }
     try { renderAgenda(); } catch (e){ warn("Kommande", e); }
     try { renderAmxHome(); } catch (e){ warn("Americano", e); }
+    try { renderCenter(); } catch (e){ warn("På centret", e); }
     try { renderTop(); } catch (e){ warn("Topplistan", e); }
     try { renderTeams(); } catch (e){ warn("Lagen", e); }
     try { renderPlayerList(); } catch (e){ warn("Spelare", e); }
@@ -7699,6 +7718,26 @@
   function amxForget(id){ store.set(AMX_MINE, JSON.stringify(amxMine().filter(function(x){ return x.id !== id; }))); var k = amxKeys(); delete k[id]; store.set(AMX_KEYS, JSON.stringify(k)); }
 
   /* ---- home: Mina and the last week's, and Start ---- */
+  /* ---- På centret: Nynäshamn Padelcenter's activities on MATCHi (the worker reads the public page every hour):
+     day, time, name and free seats; booking on MATCHi ---- */
+  var CENTER_URL = "https://www.matchi.se/facilities/nynashamnpadelcenter#activities";
+  function renderCenter(){
+    var sec = document.getElementById("secCtr"), host = document.getElementById("ctrList");
+    if (!sec || !host) return;
+    var today = dayOf(now()), l = ((DISC && DISC.center && DISC.center.list) || []).filter(function(x){ return x.d >= today; });
+    sec.hidden = !l.length;
+    if (!l.length) return;
+    var row = function(x){
+      var free = Math.max(0, x.max - x.n), d = new Date(x.d + "T12:00:00Z");
+      var pill = free === 0 ? _("Fullt") : free === 1 ? _("1 plats kvar") : _("{n} platser kvar", {n:free});
+      return '<a class="ctrrow" href="' + CENTER_URL + '" target="_blank" rel="noopener"><span class="ctrd"><b>' + esc(x.d === today ? _("Idag") : cap(dayLabel(d))) + '</b><small>' + esc(x.t1 + "–" + x.t2) + '</small></span>' +
+        '<span class="ctrn"><b>' + esc(x.name) + '</b><small><span class="ctrp' + (free === 0 ? " full" : free <= 2 ? " few" : "") + '">' + esc(pill) + '</span>' +
+        esc((x.price != null ? x.price + " kr · " : "") + x.n + "/" + x.max) + '</small></span></a>';
+    };
+    var first = l.slice(0, 6), rest = l.slice(6);
+    host.innerHTML = first.map(row).join("") + (rest.length ? '<details class="sgmore"><summary>' + _("Visa alla {n}", {n:l.length}) + '</summary>' + rest.map(row).join("") + '</details>' : "") +
+      '<p class="ctrnote">' + _("Från MATCHi. Bokning och vilka som är anmälda finns där.") + '</p>';
+  }
   function renderAmxHome(){
     var host = document.getElementById("amxHome");
     if (!host) return;
