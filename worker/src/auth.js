@@ -2,6 +2,7 @@
 // (#in/<code>, 7 days); opening it on the phone gives that phone a random token (Authorization: Bearer). Only SHA-256
 // hashes of codes and tokens are stored. Losing the phone: the admin revokes its devices and sends a new link.
 // Roles: admin (everything), arr (arrangör: may start americanos). Without a login the app is read-only as before.
+import { goneOf } from "./members.js";
 export const ORG = "nynas";
 export const ROLES = ["admin", "arr"];
 const INVITE_MS = 7 * 86400e3, MAX_DEVICES = 5, SEEN_MS = 3600e3, IDLE_MS = 180 * 86400e3, REQ_MS = 14 * 86400e3, REQ_OPEN = 40, REQ_TRIES = 5, REQ_PER_IP = 3;
@@ -41,6 +42,7 @@ export async function authUser(env, req, t) {
 export async function meOf(env, u) {
   const roles = await rolesOf(env, u.id), kids = (await env.DB.prepare("SELECT pid FROM guardians WHERE user = ?").bind(u.id).all()).results.map(r => r.pid);
   const me = { id: u.id, name: u.name, pid: u.pid || null, roles, kids };
+  if (u.pid && goneOf(u.pid)) me.left = goneOf(u.pid).at;   // left the club on RankedIn
   me.pk = (await env.DB.prepare("SELECT count(*) AS n FROM passkeys WHERE user = ?").bind(u.id).first()).n;
   if (roles.includes("admin")) me.reqs = (await env.DB.prepare("SELECT count(*) AS n FROM requests WHERE org = ? AND status = 'open' AND created > ?").bind(ORG, Date.now() - REQ_MS).first()).n;
   return me;
@@ -143,6 +145,7 @@ export async function adminUsers(env, t) {
   return { requests: rq.map(r => ({ ...r, parent: !!r.parent })), users: us.map(u => ({ id: u.id, name: u.name, pid: u.pid || null, created: u.created, disabled: !!u.disabled, kids: gs.filter(g => g.user === u.id).map(g => g.pid),
     roles: rs.filter(r => r.user === u.id).map(r => r.role).sort(),
     devices: ds.filter(d => d.user === u.id).map(d => ({ label: d.label, seen: d.seen })),
+    left: u.pid && goneOf(u.pid) ? goneOf(u.pid).at : null,
     invite: (is.find(i => i.user === u.id) || {}).expires || null })) };
 }
 async function newInvite(env, id, t) {

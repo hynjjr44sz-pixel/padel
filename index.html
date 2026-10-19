@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-G9sdSgPFvMMX6OJcExaz6K55I+ki25edhWXQMahZ3pc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-dxaZ5uCnCcZXsj71IPDzd1s7DcOdblfOHtFUy+50v/4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -428,6 +428,7 @@
   .kmseg{ display:flex; flex:none; padding:2px; border-radius:99px; background:var(--surface-2); }
   .kmseg button{ appearance:none; height:30px; padding:0 9px; border:0; border-radius:99px; background:none; color:var(--dim); font:600 12px/1 "Instrument Sans", sans-serif; cursor:pointer; }
   .kmseg button[aria-pressed="true"]{ background:var(--solid); color:var(--solid-ink); }
+  .kleft{ margin:6px 0 12px !important; padding:10px 12px; border-radius:12px; border:1px dashed var(--line); font-size:14px !important; color:var(--dim); }
   .kvis{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:6px 0 12px; padding:10px 12px; border-radius:12px; background:var(--surface-2); } .kvis p{ margin:0 !important; font-size:14px !important; } .kvis small{ color:var(--dim); }
 
   .amxgo.pfile{ position:relative; display:inline-flex; align-items:center; justify-content:center; width:auto; padding:0 18px; overflow:hidden; }
@@ -1878,6 +1879,8 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Du står inte längre som medlem i Nynäs Padel Club på RankedIn (sedan {d}). Din spelarsida visas inte i appen. Kontot finns kvar, och kommer du tillbaka till klubben syns du igen av sig själv.": "Ya no figuras como miembro de Nynäs Padel Club en RankedIn (desde {d}). Tu página de jugador no se muestra en la app. La cuenta sigue activa y, si vuelves al club, aparecerás de nuevo automáticamente.",
+    "Har lämnat klubben": "Ha dejado el club",
     "Öppna": "Abrir",
     "Notiser, telefoner och mest följda spelare.": "Notificaciones, teléfonos y jugadores más seguidos.",
     "Den här enheten är redan tillagd för kontot.": "Este dispositivo ya está añadido a la cuenta.",
@@ -8137,6 +8140,7 @@
       var P = me.pid && BYPID[me.pid];
       h += '<div class="card ktxt"><p><b>' + esc(me.name) + '</b>' + (P ? ' · <a href="#' + esc(P.key) + '">' + _("Din spelarsida") + '</a>' : "") + '</p>' +
         '<p>' + _("Roll: ") + esc(roleText(me.roles)) + (authCan("arr") ? " · " + _("du kan starta americanos") : "") + '</p>' +
+        (me.left ? '<p class="kleft">' + esc(_("Du står inte längre som medlem i Nynäs Padel Club på RankedIn (sedan {d}). Din spelarsida visas inte i appen. Kontot finns kvar, och kommer du tillbaka till klubben syns du igen av sig själv.", {d:dayMonD(new Date(me.left))})) + '</p>' : "") +
         konVisHtml(me) + konPkHtml(me) +
         (me.roles.indexOf("admin") >= 0 ? '<div class="kvis"><p><b>' + _("Statistik") + '</b><br><small>' + _("Notiser, telefoner och mest följda spelare.") + '</small></p><button type="button" class="amxsec" data-k="stats">' + _("Öppna") + '</button></div>' : "") +
         '<button type="button" class="amxsec" data-k="logout">' + _("Logga ut den här telefonen") + '</button></div>';
@@ -8245,8 +8249,8 @@
     if (!A){ h += '<div class="card ktxt"><p>' + _("Hämtar…") + '</p></div>'; konLoad(); return h; }
     var mem = konMembersHtml(A);
     h += '<div class="card klist">' + A.users.map(function(u){
-      var st = u.disabled ? _("Avstängd") : u.devices.length ? _("Inloggad") + " · " + _("senast ") + dayMonD(new Date(u.devices[0].seen)) + (u.devices.length > 1 ? " · " + u.devices.length + _(" enheter") : "")
-        : u.invite ? _("Inbjudan gäller till ") + dayMonD(new Date(u.invite)) : _("Inte inloggad");
+      var st = (u.left ? _("Har lämnat klubben") + " · " : "") + (u.disabled ? _("Avstängd") : u.devices.length ? _("Inloggad") + " · " + _("senast ") + dayMonD(new Date(u.devices[0].seen)) + (u.devices.length > 1 ? " · " + u.devices.length + _(" enheter") : "")
+        : u.invite ? _("Inbjudan gäller till ") + dayMonD(new Date(u.invite)) : _("Inte inloggad"));
       var self = AUTH.me.id === u.id;
       var kids = (u.kids || []).map(function(k){ return BYPID[k] ? BYPID[k].short : ""; }).filter(Boolean);
       return '<details class="krow"><summary><span class="kn"><b>' + esc(u.name) + '</b><small>' + esc(roleText(u.roles) + (kids.length ? " · " + _("förälder till ") + kids.join(", ") : "") + " · " + st) + '</small></span><i aria-hidden="true"></i></summary><div class="kact">' +

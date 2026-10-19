@@ -89,3 +89,36 @@ test("begär konto för en dold junior: the parent types the name, matched again
   applyMembers({ list: [] });
   assert.equal(PLAYERS.length, n0);
 });
+
+test("medlemmar: someone who leaves the club is no longer shown, their account says so; back again: their own choice again", async () => {
+  _resetMemory(); _resetMembers();
+  const env = { PUSH: kv(), DB: fakeD1(), ORIGIN, NOW: "2026-10-19T10:00:00Z", ADMIN_KEY: "k".repeat(32) }, n0 = PLAYERS.length;
+  await membersRun(env, getter(net([])), new Date("2026-10-19T02:03:00Z"), { left: 45 });
+  await setVisibility(env, 900001, "out");   // Anna said no
+  const call = (m, path, body, hd = {}) => worker.fetch(new Request("https://w" + path, { method: m, headers: { Origin: ORIGIN, "Content-Type": "application/json", ...hd }, body: body ? JSON.stringify(body) : undefined }), env);
+  const ak = { "X-Admin-Key": env.ADMIN_KEY };
+  const bo = await (await call("POST", "/admin", { op: "add", pid: 900002 }, ak)).json();
+  const tok = (await (await call("POST", "/auth/redeem", { code: bo.code })).json()).token;
+  assert.equal((await (await call("GET", "/auth/me", null, { Authorization: "Bearer " + tok })).json()).me.left, undefined);
+  // the next day Anna and Bo are gone from the club's list (another club)
+  const saved = MEMBERS[0].participants.slice();
+  MEMBERS[0].participants = saved.filter(p => p.playerId !== 900001 && p.playerId !== 900002);
+  try {
+    await membersRun(env, getter(net([])), new Date("2026-10-20T02:13:00Z"), { left: 45 });
+    assert.ok(!BY_PID.has(900002));
+    assert.ok(!membersOut().some(m => m.pid === 900002));
+    const me = (await (await call("GET", "/auth/me", null, { Authorization: "Bearer " + tok })).json()).me;
+    assert.equal(me.left, "2026-10-20T02:13:00.000Z");
+    const adm = await (await call("GET", "/admin", null, ak)).json();
+    assert.equal(adm.users.find(u => u.pid === 900002).left, "2026-10-20T02:13:00.000Z");
+  } finally { MEMBERS[0].participants = saved; }
+  // back a day later: Anna's no still holds; Bo shown again, the account no longer marked
+  await membersRun(env, getter(net([])), new Date("2026-10-21T02:23:00Z"), { left: 45 });
+  const rec = JSON.parse(env.PUSH.m.get("members"));
+  assert.equal(rec.list.find(m => m.pid === 900001).vis, "out");
+  assert.deepEqual(rec.gone, {});
+  assert.ok(BY_PID.has(900002) && !BY_PID.has(900001));
+  assert.equal((await (await call("GET", "/auth/me", null, { Authorization: "Bearer " + tok })).json()).me.left, undefined);
+  applyMembers({ list: [] });
+  assert.equal(PLAYERS.length, n0);
+});

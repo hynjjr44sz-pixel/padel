@@ -1,5 +1,5 @@
 // Nynäs Padel Club's members on RankedIn (GetMembersAsync), beside the hand-made roster (players.json). Kept in KV
-// "members" {at, list: [{pid, rin, name, age, gender, vis, ck}]}: refreshed once a day, each member looked up once a
+// "members" {at, list: [{pid, rin, name, age, gender, vis, ck}], gone: {pid: {name, at, vis}} (left the club)}: refreshed once a day, each member looked up once a
 // month (profile: age; the SPF ranking lists: gender, which gives the ranking list and the skill rating).
 // Who is shown (opt-in / opt-out): 18 and over unless they said no (vis "out"); under 18 only after a yes (vis "in":
 // the admin, or an approved "Begär konto"). A member not shown is not looked at at all (no discovery, no pushes).
@@ -72,11 +72,16 @@ export async function membersRun(env, get, t, budget) {
     const d = await get("/Organization/GetMembersAsync?id=" + CLUB_ID + "&language=en");
     const rows = (Array.isArray(d) ? d : []).flatMap(g => (g && g.participants) || []);
     if (rows.length) {
-      const old = new Map(rec.list.map(m => [m.pid, m]));
+      const old = new Map(rec.list.map(m => [m.pid, m])), gone = rec.gone || {};
       rec.list = rows.map(r => {
-        const pid = Number(r.playerId), o = old.get(pid) || {};
-        return { ...o, pid, rin: r.playerRankedinId || o.rin || null, name: cap((r.playerFirstName || "") + " " + (r.playerLastName || "")) };
+        const pid = Number(r.playerId), o = old.get(pid) || {}, g = gone[pid];
+        delete gone[pid];   // back in the club: their own choice (Dölj/Visa) again
+        return { ...(g && g.vis ? { vis: g.vis } : {}), ...o, pid, rin: r.playerRankedinId || o.rin || null, name: cap((r.playerFirstName || "") + " " + (r.playerLastName || "")) };
       }).filter(m => m.pid && m.name);
+      // left the club (another club on RankedIn): no longer shown; their choice kept in case they come back
+      const now = new Set(rec.list.map(m => m.pid));
+      for (const m of old.values()) if (!now.has(m.pid)) gone[m.pid] = { name: m.name, at: t.toISOString(), ...(m.vis ? { vis: m.vis } : {}) };
+      rec.gone = gone;
       rec.at = t.toISOString();
       changed = true;
     }
@@ -137,6 +142,8 @@ export async function setVisibility(env, pid, vis) {
   return true;
 }
 export const isMember = pid => ADDED.has(Number(pid));
+// Left the club (no longer on its RankedIn list): {name, at} or null
+export const goneOf = pid => { const g = MEM.rec && MEM.rec.gone && MEM.rec.gone[Number(pid)]; return g ? { name: g.name, at: g.at } : null; };
 // "Begär konto" for a player not shown: the member with that name (any order of case and accents), or null
 export function findMember(name) {
   const want = slug(name), list = (MEM.rec && MEM.rec.list) || [];
