@@ -166,3 +166,19 @@ CREATE TABLE IF NOT EXISTS plan_done (
   session TEXT NOT NULL,
   PRIMARY KEY (plan, pid)
 );
+-- Träning: a thread on a logged session (the coach answers, the player answers back) and the player's stars for it
+CREATE TABLE IF NOT EXISTS tcomments (
+  id TEXT PRIMARY KEY,
+  org TEXT NOT NULL,
+  session TEXT NOT NULL,
+  pid INTEGER NOT NULL,
+  by TEXT NOT NULL,
+  name TEXT,
+  text TEXT NOT NULL,
+  at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS tcomments_session ON tcomments(session, at);
+CREATE TABLE IF NOT EXISTS srate (
+  session TEXT PRIMARY KEY,
+  stars INTEGER NOT NULL
+);

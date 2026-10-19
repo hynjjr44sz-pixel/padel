@@ -35,6 +35,11 @@ test("träning: the player, a parent and a linked coach or PT log and see; nobod
   assert.equal((await call(env, "GET", "/train?pid=1680004", null, bearer(pt.tok))).status, 403);
   assert.equal((await call(env, "GET", "/train?pid=1675246", null, bearer(adm.tok))).status, 403);
   assert.equal((await call(env, "GET", "/train?pid=1675246", null, bearer(kian.tok))).status, 403);
+  // several at once (a coach's group view): only those one may see
+  const m = await (await call(env, "GET", "/train/many?pids=1675246,1680004,999", null, bearer(javier.tok))).json();
+  assert.deepEqual(Object.keys(m.sessions).sort(), ["1675246", "1680004"]);
+  assert.equal(m.sessions[1675246].length, 2);
+  assert.deepEqual(Object.keys((await (await call(env, "GET", "/train/many?pids=1675246,1680004", null, bearer(pt.tok))).json()).sessions), ["1675246"]);
   // delete one; the PT may not clear Thea's history, Thea may
   assert.equal((await call(env, "POST", "/train", { op: "del", id: r.id }, bearer(kian.tok))).status, 403);
   assert.equal((await call(env, "POST", "/train", { op: "del", id: r.id }, bearer(pt.tok))).status, 200);

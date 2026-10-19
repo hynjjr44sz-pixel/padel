@@ -62,16 +62,35 @@ test("träning fas 2: groups, assistants, the library, plans; a player marks a p
   // Cassandra marks the group's session done (logs it); Kian may not use the group's plan
   env.NOW = "2026-10-21T20:30:00Z";
   assert.equal((await call(env, "POST", "/train", { pid: 1680004, day: "2026-10-21", kind: "padel", min: 90, rpe: 6, plan: p1.id }, B(kian.tok))).status, 400);
-  const s = await (await call(env, "POST", "/train", { pid: 1849853, day: "2026-10-21", kind: "padel", min: 85, rpe: 8, note: "Tungt men kul", plan: p1.id }, B(cass.tok))).json();
+  const s = await (await call(env, "POST", "/train", { pid: 1849853, day: "2026-10-21", kind: "padel", min: 85, rpe: 8, note: "Tungt men kul", plan: p1.id, stars: 4 }, B(cass.tok))).json();
   assert.equal((await (await call(env, "GET", "/plans?pid=1849853", null, B(cass.tok))).json()).plans[0].done, s.id);
-  const gp = await (await call(env, "GET", "/plans?gid=" + g.id, null, B(thea.tok))).json();
-  assert.deepEqual(gp.plans[0].done, [{ pid: 1849853, min: 85, rpe: 8, note: "Tungt men kul" }]);
+  let gp = await (await call(env, "GET", "/plans?gid=" + g.id, null, B(thea.tok))).json();
+  assert.deepEqual(gp.plans[0].done, [{ pid: 1849853, session: s.id, min: 85, rpe: 8, note: "Tungt men kul", stars: 4, c: 0 }]);
+  // the thread: Javier answers (a notis to Cassandra's phone), Cassandra answers back (a notis to Javier's); Thea (assistant) may not
+  const cassEp = "https://push.example/cass", javEp = "https://push.example/jav";
+  const sk = async ep => { const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ep))); return "sub:" + [...h.slice(0, 16)].map(b => b.toString(16).padStart(2, "0")).join(""); };
+  for (const [ep, tok] of [[cassEp, cass.tok], [javEp, javier.tok]]) { await env.PUSH.put(await sk(ep), JSON.stringify({ sub: { endpoint: ep } })); assert.equal((await call(env, "POST", "/me/push", { endpoint: ep }, B(tok))).status, 200); }
+  assert.equal((await call(env, "POST", "/train/comment", { id: s.id, text: "Bra!" }, B(thea.tok))).status, 403);
+  assert.equal((await call(env, "POST", "/train/comment", { id: s.id, text: "Bra jobbat! Vila axeln till onsdag." }, B(javier.tok))).status, 200);
+  env.NOW = "2026-10-21T21:00:00Z";
+  assert.equal((await call(env, "POST", "/train/comment", { id: s.id, text: "Tack, ska göra det" }, B(cass.tok))).status, 200);
+  const th = await (await call(env, "GET", "/train/thread?id=" + s.id, null, B(cass.tok))).json();
+  assert.deepEqual([th.session.stars, th.comments.map(c => [c.name, c.text, c.mine])], [4, [["Javier Castilla", "Bra jobbat! Vila axeln till onsdag.", false], ["Cassandra Ersson", "Tack, ska göra det", true]]]);
+  const q = JSON.parse(env.PUSH.m.get("amx:pend"));
+  assert.deepEqual(q.slice(-2).map(x => [x.subs, x.m.title]), [[[await sk(cassEp)], "Javier om passet"], [[await sk(javEp)], "Cassandra om passet"]]);
+  gp = await (await call(env, "GET", "/plans?gid=" + g.id, null, B(javier.tok))).json();
+  assert.equal(gp.plans[0].done[0].c, 2);
+  assert.equal((await (await call(env, "GET", "/train?pid=1849853", null, B(cass.tok))).json()).sessions[0].c, 2);
+  // a new plan for the group: a notis to its players' phones
+  await call(env, "POST", "/plans", { gid: g.id, day: "2026-10-30", time: "18:00", kind: "padel", min: 60, title: "Serve och retur" }, B(javier.tok));
+  const q2 = JSON.parse(env.PUSH.m.get("amx:pend")).pop();
+  assert.deepEqual([q2.subs, q2.m.title, q2.m.body], [[await sk(cassEp)], "Nytt pass: Serve och retur", "fre 30/10 18:00 · 60 min · Damlaget onsdagar"]);
   // the session removed: no longer done
   await call(env, "POST", "/train", { op: "del", id: s.id }, B(cass.tok));
   assert.deepEqual((await (await call(env, "GET", "/plans?gid=" + g.id, null, B(javier.tok))).json()).plans[0].done, []);
   // a plan removed by an assistant; the group removed by Javier with its plans
   assert.equal((await call(env, "POST", "/plans", { op: "del", id: p1.id }, B(thea.tok))).status, 200);
   assert.equal((await call(env, "POST", "/coach", { op: "group-del", id: g.id }, B(javier.tok))).status, 200);
-  assert.deepEqual((await (await call(env, "GET", "/plans?pid=1849853", null, B(cass.tok))).json()).plans.map(p => p.title), ["Ben, Cassandra"]);
+  assert.deepEqual((await (await call(env, "GET", "/plans?pid=1849853", null, B(cass.tok))).json()).plans.map(p => p.title), ["Ben, Cassandra"]);   // the group's plans went with it
   assert.equal((await call(env, "GET", "/train?pid=1849853", null, B(javier.tok))).status, 403);   // no longer his player
 });

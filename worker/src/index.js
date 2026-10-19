@@ -9,7 +9,8 @@ import { soonNotes } from "./soon.js";
 import { loadMembers, membersDue, membersRun, membersOut, setVisibility, findMember, memberName, isMember, visible as memberVisible } from "./members.js";
 import { loadCenter, centerRun } from "./center.js";
 import { photoIndex, photoSet, photoGet, photosPending, photosCheck, canPhoto, riIndex, riOut } from "./photos.js";
-import { trainGet, trainPost, trainClear } from "./train.js";
+import { linkSub, notifyAdmins, notifyUsers } from "./notify.js";
+import { trainGet, trainPost, trainClear, threadGet, threadPost, trainMany } from "./train.js";
 import { coachGet, coachPost, libGet, libPost, plansGet, plansPost } from "./coach.js";
 import { pkOptions, pkAdd, pkLogin, pkClear } from "./passkey.js";
 import { sha, authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
@@ -242,12 +243,18 @@ async function handle(req, env) {
     const r = await trainGet(env, me, Number(url.searchParams.get("pid")), url.searchParams.get("from"), +now(env));
     return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
-  if (route === "POST /train" || route === "POST /train/clear") {
+  if (route === "GET /train/thread" || route === "GET /train/many") {
+    const me = await authUser(env, req, +now(env));
+    if (!me) return json({ error: "login" }, 401, h);
+    const r = route === "GET /train/many" ? await trainMany(env, me, url.searchParams.get("pids"), +now(env)) : await threadGet(env, me, url.searchParams.get("id"));
+    return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
+  }
+  if (route === "POST /train" || route === "POST /train/clear" || route === "POST /train/comment") {
     const me = await authUser(env, req, +now(env));
     if (!me) return json({ error: "login" }, 401, h);
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
-    const r = route === "POST /train" ? await trainPost(env, me, b, +now(env)) : await trainClear(env, me, b);
+    const r = route === "POST /train" ? await trainPost(env, me, b, +now(env)) : route === "POST /train/comment" ? await threadPost(env, me, b, +now(env)) : await trainClear(env, me, b);
     return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
   // Träning, fas 2 (coach.js): groups and assistants, the exercise library, plans
@@ -291,19 +298,16 @@ async function handle(req, env) {
     for (const [k, v] of Object.entries({ ...h, ...SEC, "Content-Security-Policy": "default-src 'none'" })) r.headers.set(k, v);
     return r;
   }
-  // The admin's phones for the admin's own notiser (a new account request): the push subscription already made by the page
+  // This phone's push subscription linked to the account: notiser meant for the person (a new account request for an
+  // admin, a coach's answer, a planned session; notify.js)
   if (route === "POST /me/push") {
     const me = await authUser(env, req, +now(env));
-    if (!can(me, "admin")) return json({ error: "forbidden" }, 403, h);
+    if (!me) return json({ error: "login" }, 401, h);
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
     const k = b && typeof b.endpoint === "string" ? await subKey(b.endpoint) : null;
     if (!k || (await env.PUSH.get(k)) === null) return json({ error: "no subscription" }, 404, h);
-    let a = {};
-    try { a = JSON.parse((await env.PUSH.get("admsubs")) || "{}") || {}; } catch (e) { a = {}; }
-    const l = (a[me.id] || []).filter(x => x !== k);
-    l.unshift(k); a[me.id] = l.slice(0, 5);
-    await env.PUSH.put("admsubs", JSON.stringify(a));
+    await linkSub(env, me, k);
     return json({ ok: true }, 200, h);
   }
   // One's own choice (or a parent's for their junior): shown in the app or not
@@ -1350,17 +1354,6 @@ async function subscribers(env) {
   }))).filter(Boolean);
   SUBS = { list, at: Date.now() };
   return list;
-}
-// A notis to the admins' own phones (POST /me/push): queued with the americano notiser, sent by the next tick
-async function notifyAdmins(env, m) {
-  let a = {};
-  try { a = JSON.parse((await env.PUSH.get("admsubs")) || "{}") || {}; } catch (e) { a = {}; }
-  const subs = [...new Set(Object.values(a).flat())];
-  if (!subs.length) return;
-  let q = [];
-  try { q = JSON.parse((await env.PUSH.get("amx:pend")) || "[]"); } catch (e) { q = []; }
-  q.push({ subs, m });
-  await env.PUSH.put("amx:pend", JSON.stringify(q.slice(-50)));
 }
 // Push: every device gets the messages about the players it follows (prefs.follow), nothing else (a message with subs: those phones only), in its language
 // (prefs.lang). Jobs: {n: KV key, s: subscription, m: [messages as that device gets them], q: queued at (ms)}.

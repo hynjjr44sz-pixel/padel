@@ -8,6 +8,7 @@
 //   a player (and parents): their own plans, with the exercises in them
 import { clean, log, ORG } from "./auth.js";
 import { KINDS, canTrain } from "./train.js";
+import { notifyUsers } from "./notify.js";
 
 export const CATS = ["slag", "ovningar", "strategi", "fys"];
 const LEVELS = ["alla", "nyborjare", "medel", "avancerad"];
@@ -134,8 +135,9 @@ export async function plansGet(env, me, q, t) {
     const g = await canGroup(env, me, q.gid);
     if (!g) return { err: "forbidden", status: 403 };
     const plans = (await env.DB.prepare("SELECT id, gid, pid, day, time, kind, min, title, note, ex FROM plans WHERE org = ? AND gid = ? AND day >= ? AND day <= ? ORDER BY day, time").bind(ORG, g.id, from, to).all()).results;
-    const done = plans.length ? (await env.DB.prepare("SELECT d.plan, d.pid, s.min, s.rpe, s.note FROM plan_done d JOIN sessions s ON s.id = d.session WHERE d.plan IN (" + plans.map(() => "?").join(",") + ")").bind(...plans.map(p => p.id)).all()).results : [];
-    return { group: g, plans: (await withEx(env, plans)).map(p => ({ ...p, done: done.filter(d => d.plan === p.id).map(d => ({ pid: d.pid, min: d.min, rpe: d.rpe, note: d.note })) })) };
+    const done = plans.length ? (await env.DB.prepare("SELECT d.plan, d.pid, d.session, s.min, s.rpe, s.note, r.stars, (SELECT count(*) FROM tcomments c WHERE c.session = d.session) AS c FROM plan_done d JOIN sessions s ON s.id = d.session LEFT JOIN srate r ON r.session = d.session " +
+      "WHERE d.plan IN (" + plans.map(() => "?").join(",") + ")").bind(...plans.map(p => p.id)).all()).results : [];
+    return { group: g, plans: (await withEx(env, plans)).map(p => ({ ...p, done: done.filter(d => d.plan === p.id).map(d => ({ pid: d.pid, session: d.session, min: d.min, rpe: d.rpe, note: d.note, stars: d.stars || null, c: d.c })) })) };
   }
   const pid = Number(q.pid);
   if (!canTrain(me, pid)) return { err: "forbidden", status: 403 };
@@ -166,8 +168,20 @@ export async function plansPost(env, me, b, t) {
   if (ex.length && (await env.DB.prepare("SELECT count(*) AS n FROM exercises WHERE org = ? AND id IN (" + ex.map(() => "?").join(",") + ")").bind(ORG, ...ex).first()).n !== ex.length) return { err: "exercise", status: 400 };
   const note = String(b.note || "").replace(/[\u0000-\u0008\u000b-\u001f<>]/g, "").trim().slice(0, 1000) || null, id = old ? old.id : rid();
   if (old) await env.DB.prepare("UPDATE plans SET day = ?, time = ?, kind = ?, min = ?, title = ?, note = ?, ex = ? WHERE id = ?").bind(day, time, kind, min, title, note, JSON.stringify(ex), id).run();
-  else await env.DB.batch([env.DB.prepare("INSERT INTO plans (id, org, gid, pid, day, time, kind, min, title, note, ex, by, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(id, ORG, gid, pid, day, time, kind, min, title, note, JSON.stringify(ex), me.id, t),
-    log(env, t, me.id, "plan", { id, gid, pid, day })]);
+  else {
+    await env.DB.batch([env.DB.prepare("INSERT INTO plans (id, org, gid, pid, day, time, kind, min, title, note, ex, by, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(id, ORG, gid, pid, day, time, kind, min, title, note, JSON.stringify(ex), me.id, t),
+      log(env, t, me.id, "plan", { id, gid, pid, day })]);
+    // a notis to the players (their own accounts and their parents'), for a session from today on
+    if (day >= dayOf(t)) try {
+      const pids = gid ? (await env.DB.prepare("SELECT pid FROM tgroup_members WHERE gid = ?").bind(gid).all()).results.map(r => r.pid) : [pid];
+      const gname = gid ? ((await env.DB.prepare("SELECT name FROM tgroups WHERE id = ?").bind(gid).first()) || {}).name : null;
+      if (pids.length) {
+        const users = (await env.DB.prepare("SELECT id FROM users WHERE org = ? AND pid IN (" + pids.map(() => "?").join(",") + ") UNION SELECT user FROM guardians WHERE pid IN (" + pids.map(() => "?").join(",") + ")").bind(ORG, ...pids, ...pids).all()).results.map(r => r.id).filter(u => u !== me.id);
+        const W = ["sön", "mån", "tis", "ons", "tor", "fre", "lör"], d = new Date(day + "T12:00:00Z");
+        await notifyUsers(env, users, { title: "Nytt pass: " + title, body: [W[d.getUTCDay()] + " " + d.getUTCDate() + "/" + (d.getUTCMonth() + 1) + (time ? " " + time : ""), min + " min", gname].filter(Boolean).join(" · "), url: "#traning", tag: "padel-plan-" + id });
+      }
+    } catch (e) {}
+  }
   return { ok: true, id };
 }
 // Is plan `id` one of this player's (own, or their group's)? For marking it done (train.js)

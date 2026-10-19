@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bZDBdoLHEMgOEelkl8GXrmy+lEO16kRemvIhH1KeXqI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bjh8Yw6+4hqAcOy1QUzl4ww1ZAIWmM6Q0+4y78ZYxSg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -456,6 +456,21 @@
   .trf textarea{ width:100%; padding:12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; resize:vertical; }
   .trgpick{ max-height:40vh; overflow:auto; margin-top:8px; } .trgpick .kchk{ display:flex; margin:8px 2px; } .trgpick .kchk[hidden]{ display:none; }
   .trbars{ position:relative; } .trpdot{ position:absolute; top:-2px; left:50%; width:8px; height:8px; margin-left:-4px; border-radius:50%; border:2px solid #F76B15; background:var(--surface); }
+  .trstars{ color:#F5A524; letter-spacing:1px; font-size:13px; margin-left:4px; } .trstars i{ font-style:normal; color:var(--line); }
+  .trcom{ display:inline-block; margin-top:6px; padding:5px 10px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 12px/1 inherit; }
+  .trsel{ display:flex; gap:6px; } .trsel button{ width:44px; height:44px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--line); font-size:24px; line-height:1; }
+  .trsel button[aria-pressed="true"]{ color:#F5A524; border-color:#F5A524; background:#FFF6E0; }
+  .trthd{ padding:12px; border-radius:14px; background:var(--surface-2); margin-bottom:12px; } .trthd b{ display:block; } .trthd small{ display:block; color:var(--dim); font-size:12px; margin-top:2px; } .trthd p{ margin:8px 0 0 !important; font-size:14px; }
+  .trcm{ display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+  .trc1{ max-width:86%; padding:8px 12px; border-radius:14px 14px 14px 4px; background:var(--surface-2); } .trc1.me{ align-self:flex-end; border-radius:14px 14px 4px 14px; background:#DCE8FF; }
+  .trc1 b{ font-size:12px; } .trc1 b small{ font-weight:400; color:var(--dim); } .trc1 p{ margin:2px 0 0 !important; font-size:14px; }
+  .trgl{ padding:6px; } .trglr{ display:flex; align-items:center; gap:10px; width:100%; padding:8px; border:0; border-radius:12px; background:none; color:var(--ink); text-align:left; }
+  .trglr + .trglr{ border-top:1px solid var(--line); border-radius:0; } .trglr > span:not(.av){ flex:1; } .trglr .av{ flex:0 0 auto; } .trglr b{ display:block; font-size:14px; } .trglr small{ display:block; font-size:11.5px; color:var(--dim); }
+  .trglr em{ font:800 20px/1 "Big Shoulders Display", sans-serif; font-style:normal; } .trglr > i{ width:12px; height:12px; border-radius:50%; background:var(--line); }
+  .trglr.z-ok > i{ background:#30A46C; } .trglr.z-up > i{ background:#FFC53D; } .trglr.z-hi > i{ background:#E5484D; } .trglr.z-low > i{ background:#7FB2F0; } .trglr.z-hi em{ color:#CE2C31; }
+  .trchart{ padding:12px; } .trchart svg{ width:100%; height:auto; display:block; } .trchart rect{ fill:#B9CCF2; } .trchart rect.now{ fill:#2156CB; }
+  .trchart .avg{ fill:none; stroke:#E5484D; stroke-width:2.2; stroke-linejoin:round; } .trchart text{ font:600 8px "Chivo Mono", monospace; fill:var(--dim); text-anchor:middle; }
+  .trchart p{ margin:8px 0 0 !important; font-size:12px; } .lg{ display:inline-block; width:12px; height:8px; margin:0 4px 0 8px; border-radius:2px; vertical-align:middle; } .lg.bar{ background:#B9CCF2; margin-left:0; } .lg.line{ height:2px; background:#E5484D; }
   .trhow{ margin-top:12px; text-align:left; } .trhow summary{ cursor:pointer; font:600 12px/1 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); padding:6px 0; }
   .trhow p{ margin:8px 0 0 !important; font-size:13.5px; line-height:1.45; }
   .trwho{ display:flex; gap:8px; overflow-x:auto; margin:0 0 12px; padding-bottom:4px; }
@@ -1993,6 +2008,24 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "{n} av 5 stjärnor": "{n} de 5 estrellas",
+    "Om passet": "Sobre la sesión",
+    "Inga kommentarer än.": "Aún no hay comentarios.",
+    "Skriv en kommentar …": "Escribe un comentario …",
+    "Skicka": "Enviar",
+    "Kommentarer ({n})": "Comentarios ({n})",
+    "Kommentera": "Comentar",
+    "Svara": "Responder",
+    "Kommentarer": "Comentarios",
+    "Hur var passet?": "¿Qué tal la sesión?",
+    "Vad var bra, vad kan bli bättre?": "¿Qué fue bien, qué puede mejorar?",
+    "Belastning": "Carga",
+    "senaste 7 dagarna mot vanligt": "últimos 7 días frente a lo habitual",
+    "12 veckor": "12 semanas",
+    "belastning per vecka": "carga por semana",
+    "Belastning per vecka, de senaste 12 veckorna": "Carga por semana, últimas 12 semanas",
+    "Veckans belastning": "Carga de la semana",
+    "Snitt 4 veckor": "Media 4 semanas",
     "Spela klippet": "Reproducir el vídeo",
     "Öppna på YouTube": "Abrir en YouTube",
     "Videoklipp": "Vídeo",
@@ -7966,8 +7999,8 @@
     var row = function(x){
       var free = Math.max(0, x.max - x.n), d = new Date(x.d + "T12:00:00Z");
       var pill = free === 0 ? _("Fullt") : free === 1 ? _("1 plats kvar") : _("{n} platser kvar", {n:free});
-      // MATCHi's own Book button: log in (if needed), then straight to that occasion
-      var href = x.oid ? "https://www.matchi.se/login/auth?returnUrl=" + encodeURIComponent("/activities/search?id=" + (+x.oid) + "&comeback=true") : CENTER_URL;
+      // the activity on the facility's page (its own anchor), where MATCHi's Book button is; the login detour went blank on phones
+      var href = x.id ? CENTER_URL.replace(/#.*$/, "") + "#ClassActivity-" + (+x.id) : CENTER_URL;
       return '<a class="ctrrow" href="' + esc(href) + '" target="_blank" rel="noopener"><span class="ctrd"><b>' + esc(x.d === today ? _("Idag") : cap(dayLabel(d))) + '</b><small>' + esc(x.t1 + "–" + x.t2) + '</small></span>' +
         '<span class="ctrn"><b>' + esc(x.name) + '</b><small><span class="ctrp' + (free === 0 ? " full" : free <= 2 ? " few" : "") + '">' + esc(pill) + '</span>' +
         esc((x.price != null ? x.price + " kr · " : "") + x.n + "/" + x.max) + '</small></span></a>';
@@ -8059,7 +8092,8 @@
       var l = items.filter(function(x){ return x.day === sel; });
       h += '<div class="trlist">' + (l.length ? l.map(function(x){
         return '<div class="tritem' + (x.auto ? " auto" : "") + '"><i style="background:' + TR_KIND[x.kind][1] + '"></i><span><b>' + esc(x.auto ? x.label : _(TR_KIND[x.kind][0])) + '</b><small>' +
-          esc([x.min + " min", "RPE " + x.rpe, _("belastning {n}", {n:fmtN(trLoadOf(x))}), x.auto ? _("uppskattat") : ""].filter(Boolean).join(" · ")) + (x.note ? '<br>' + esc(x.note) : "") + '</small></span>' +
+          esc([x.min + " min", "RPE " + x.rpe, _("belastning {n}", {n:fmtN(trLoadOf(x))}), x.auto ? _("uppskattat") : ""].filter(Boolean).join(" · ")) + (x.note ? '<br>' + esc(x.note) : "") + '</small>' + trStars(x.stars) +
+          (x.auto ? "" : '<button type="button" class="trcom" data-trthread="' + esc(x.id) + '">' + (x.c ? _("Kommentarer ({n})", {n:x.c}) : _("Kommentera")) + '</button>') + '</span>' +
           (x.auto ? "" : '<button type="button" class="trdel" data-trdel="' + esc(x.id) + '" aria-label="' + esc(_("Ta bort")) + '">×</button>') + '</div>';
       }).join("") : '<p class="empty">' + esc(_("Inget den här dagen.")) + '</p>') + '</div>';
     }
@@ -8100,7 +8134,7 @@
       '<p>' + _("Siffran i mitten är kvoten mellan dem. Under 0,8 är en lugn vecka, 0,8–1,3 lagom, 1,3–1,5 ökar snabbt och över 1,5 risk för överbelastning. Det är snabba ökningar som ökar skaderisken mest, inte mängden i sig.") + '</p>' +
       '<p>' + _("Matcher räknas in uppskattat: en tävlingsdag som 150 minuter på nivå 7, en seriedag som 120 minuter, en klubbseriematch som 90 minuter. Loggar du en match samma dag gäller din siffra.") + '</p></details></section>' +
       '<section><div class="sh"><h2>' + (pid === me.pid ? _("Min vecka") : _("{n}s vecka", {n:P ? P.short || P.name : "#" + pid})) + '</h2><div class="meta">' + esc(trName(pid)) + '</div></div><div class="card trweek">' + trWeek(items, pid) + '</div></section>' +
-      trPlansHtml(pid) +
+      trPlansHtml(pid) + trChart(items) +
       '<p class="trnote">' + _("Belastning = minuter × hur tungt det kändes (1–10). Matcher från tävlingar, serier och americanos räknas in av sig själva, uppskattat. Loggar du en match samma dag gäller din siffra.") + '</p>' +
       ((me.pid === pid || (me.kids || []).indexOf(pid) >= 0) && data.s.length ? '<p class="trnote"><button type="button" class="linkbtn" data-trclear="1">' + _("Radera all träningshistorik för {n}", {n:trName(pid)}) + '</button></p>' : "");
     box.innerHTML = h;
@@ -8115,7 +8149,8 @@
       '<div class="trf"><span>' + _("Hur länge") + ' <b id="trMinV">' + f.min + ' min</b></span><div class="trcs">' + [30, 45, 60, 75, 90, 120].map(function(m){ return chip("min", m, m + " min", f.min === m); }).join("") + '</div></div>' +
       '<div class="trf"><span>' + _("Hur tungt") + ' <b id="trRpeV">' + f.rpe + ' · ' + esc(_(TR_RPE[f.rpe])) + '</b></span><div class="trrpe">' +
         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function(n){ return '<button type="button" data-tf="rpe" data-v="' + n + '" aria-pressed="' + (f.rpe === n) + '" style="--h:' + (130 - n * 13) + '">' + n + '</button>'; }).join("") + '</div></div>' +
-      '<div class="trf"><span>' + _("Anteckning (valfritt)") + '</span><input id="trNote" maxlength="200" autocomplete="off" value="' + esc(f.note || "") + '" placeholder="' + esc(_("Till exempel övningar, hur kroppen kändes")) + '"></div>' +
+      (f.plan ? '<div class="trf"><span>' + _("Hur var passet?") + '</span><div class="trsel" role="group">' + [1, 2, 3, 4, 5].map(function(n){ return '<button type="button" data-tf="stars" data-v="' + n + '" aria-pressed="' + (f.stars >= n) + '" aria-label="' + esc(_("{n} av 5 stjärnor", {n:n})) + '">★</button>'; }).join("") + '</div></div>' : "") +
+      '<div class="trf"><span>' + _("Anteckning (valfritt)") + '</span><input id="trNote" maxlength="200" autocomplete="off" value="' + esc(f.note || "") + '" placeholder="' + esc(f.plan ? _("Vad var bra, vad kan bli bättre?") : _("Till exempel övningar, hur kroppen kändes")) + '"></div>' +
       '<div class="trf trsave"><span class="trprev" id="trPrev">' + esc(_("Belastning {n}", {n:fmtN(f.min * f.rpe)})) + '</span><button type="button" class="amxgo" data-trsave="1">' + _("Spara") + '</button></div><p class="amxerr" id="trErr"></p></div>';
     el.hidden = false;
     requestAnimationFrame(function(){ el.classList.add("open"); });
@@ -8129,7 +8164,7 @@
     if (b.hasAttribute("data-tf")){
       var k = b.getAttribute("data-tf"), v = b.getAttribute("data-v");
       f[k] = k === "kind" ? v : +v;
-      [].forEach.call(b.parentNode.children, function(x){ x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      [].forEach.call(b.parentNode.children, function(x){ x.setAttribute("aria-pressed", k === "stars" ? (+x.getAttribute("data-v") <= f.stars ? "true" : "false") : x === b ? "true" : "false"); });
       document.getElementById("trMinV").textContent = f.min + " min";
       document.getElementById("trRpeV").textContent = f.rpe + " · " + _(TR_RPE[f.rpe]);
       document.getElementById("trPrev").textContent = _("Belastning {n}", {n:fmtN(f.min * f.rpe)});
@@ -8137,7 +8172,7 @@
     }
     b.disabled = true;
     var day = f.plan && f.planDay && f.planDay <= trDay(0) && f.planDay >= trDay(-60) ? f.planDay : trDay(f.day);
-    authApi("/train", {pid:TR.pid, day:day, kind:f.kind, min:f.min, rpe:f.rpe, note:f.note || "", plan:f.plan || undefined}).then(function(){
+    authApi("/train", {pid:TR.pid, day:day, kind:f.kind, min:f.min, rpe:f.rpe, note:f.note || "", plan:f.plan || undefined, stars:f.plan && f.stars ? f.stars : undefined}).then(function(){
       f.note = ""; f.plan = null; f.planDay = null; Object.keys(TR).forEach(function(k){ if (/^(pl|gp)/.test(k)) delete TR[k]; }); TR.day = day; TR.wk = 0; trSheetClose(); trLoad(TR.pid, true);
     }, function(e){ b.disabled = false; var er = document.getElementById("trErr"); if (er) er.textContent = _("Det gick inte: ") + e.message; });
   }
@@ -8190,7 +8225,7 @@
   function trPlanCard(p, pid, fb){
     var d = new Date(p.day + "T12:00:00Z"), t = trDay(0), K = TR_KIND[p.kind] || TR_KIND.annat;
     var when = (p.day === t ? _("Idag") : cap(dayLabel(d))) + (p.time ? " " + p.time : "");
-    var act = pid ? (p.done ? '<span class="trdone">✓ ' + _("Klart") + '</span>' : p.day <= t ? '<button type="button" class="amxgo" data-trdo="' + esc(p.id) + '" data-pid="' + pid + '">' + _("Klar, logga passet") + '</button>' : "") : "";
+    var act = pid ? (p.done ? '<span class="trdone">✓ ' + _("Klart") + '</span><button type="button" class="amxsec" data-trthread="' + esc(p.done) + '">' + _("Kommentarer") + '</button>' : p.day <= t ? '<button type="button" class="amxgo" data-trdo="' + esc(p.id) + '" data-pid="' + pid + '">' + _("Klar, logga passet") + '</button>' : "") : "";
     var edit = (pid ? trCanPlan(pid) && !p.gid : true) ? '<button type="button" class="amxsec" data-trplanned="' + esc(p.id) + '">' + _("Ändra") + '</button>' : "";
     return '<details class="card trplan"><summary><i style="background:' + K[1] + '"></i><span><b>' + esc(p.title) + '</b><small>' + esc([when, p.min + " min", _(K[0]), p.gname || ""].filter(Boolean).join(" · ")) + '</small></span>' +
       (fb ? '<em class="trfbn">' + fb + '</em>' : p.done ? '<em class="trok">✓</em>' : "") + '</summary>' +
@@ -8215,12 +8250,15 @@
       var gp = TR["gp" + g.id] && TR["gp" + g.id].d, plans = (gp && gp.plans) || [], t = trDay(0);
       h += '<p class="trback"><button type="button" class="linkbtn plain" data-trgrp="">‹ ' + _("Alla grupper") + '</button></p><div class="sh"><h2>' + esc(g.name) + '</h2><div class="meta">' + g.pids.length + " " + _("spelare") + '</div></div>' +
         '<div class="trmem">' + g.pids.map(function(p){ var P = BYPID[p]; return '<button type="button" data-trp="' + p + '"' + (head ? "" : " disabled") + '>' + (P ? avatar(P.name) : "") + '<span>' + esc(P ? P.short || P.name : "#" + p) + '</span></button>'; }).join("") + '</div>' +
-        (g.own ? '<div class="amxbar"><button type="button" class="amxsec" data-trgedit="' + esc(g.id) + '">' + _("Ändra gruppen") + '</button></div>' : "") +
+        (g.own ? '<div class="amxbar"><button type="button" class="amxsec" data-trgedit="' + esc(g.id) + '">' + _("Ändra gruppen") + '</button></div>' +
+          '<div class="sh"><h2>' + _("Belastning") + '</h2><div class="meta">' + _("senaste 7 dagarna mot vanligt") + '</div></div>' + trGroupLoad(g) : "") +
         '<div class="sh"><h2>' + _("Planerat") + '</h2><div class="meta"><button type="button" class="linkbtn plain" data-trplan="g' + esc(g.id) + '">+ ' + _("Planera pass") + '</button></div></div>';
       var vis = plans.filter(function(p){ return p.day >= trAdd(t, -14); });
       h += vis.length ? vis.map(function(p){
-        var fb = (p.done || []).map(function(d){ var P = BYPID[d.pid]; return '<li><b>' + esc(P ? P.short || P.name : "#" + d.pid) + '</b> ' + esc(d.min + " min · RPE " + d.rpe) + (d.note ? '<br><small>' + esc(d.note) + '</small>' : "") + '</li>'; }).join("");
-        return trPlanCard(Object.assign({}, p, {done:null, feedback:p.day <= t ? '<div class="trfb"><b>' + _("Feedback") + '</b>' + (fb ? '<ul>' + fb + '</ul>' : '<p class="kdim">' + _("Ingen har loggat passet än.") + '</p>') + '</div>' : ""}), null, p.day <= t ? (p.done || []).length + "/" + g.pids.length : "");
+        var fb = (p.done || []).map(function(d){ var P = BYPID[d.pid]; return '<li><b>' + esc(P ? P.short || P.name : "#" + d.pid) + '</b> ' + esc(d.min + " min · RPE " + d.rpe) + ' ' + trStars(d.stars) + (d.note ? '<br><small>' + esc(d.note) + '</small>' : "") +
+          (g.own ? '<br><button type="button" class="trcom" data-trthread="' + esc(d.session) + '">' + (d.c ? _("Kommentarer ({n})", {n:d.c}) : _("Svara")) + '</button>' : "") + '</li>'; }).join("");
+        var st = (p.done || []).filter(function(d){ return d.stars; }), avg = st.length ? st.reduce(function(a, d){ return a + d.stars; }, 0) / st.length : 0;
+        return trPlanCard(Object.assign({}, p, {done:null, feedback:p.day <= t ? '<div class="trfb"><b>' + _("Feedback") + (avg ? ' · ' + avg.toFixed(1).replace(".", ",") + ' ★' : "") + '</b>' + (fb ? '<ul>' + fb + '</ul>' : '<p class="kdim">' + _("Ingen har loggat passet än.") + '</p>') + '</div>' : ""}), null, p.day <= t ? (p.done || []).length + "/" + g.pids.length + (avg ? " · " + avg.toFixed(1).replace(".", ",") + "★" : "") : "");
       }).join("") : '<p class="empty">' + _("Inget planerat.") + '</p>';
       return h;
     }
@@ -8374,6 +8412,8 @@
   }
   function ytClose(){ var el = document.getElementById("ytPop"); if (!el) return; el.classList.remove("open"); el.innerHTML = ""; el.hidden = true; }
   function trClick2(ev){
+    var tb = ev.target.closest("[data-trthread]");
+    if (tb){ trThread(tb.getAttribute("data-trthread")); return true; }
     var yb = ev.target.closest("[data-ytplay]");
     if (yb){ ytOpen(yb.getAttribute("data-ytplay"), yb.getAttribute("data-yttitle")); return true; }
     var b = ev.target.closest("[data-trtab],[data-trgrp],[data-trgedit],[data-trplan],[data-trplanned],[data-trdo],[data-trexed],[data-trcat],[data-trtopic],[data-trunassist]");
@@ -8391,7 +8431,7 @@
       var pid = +b.getAttribute("data-pid"), pl = trPlans(pid).filter(function(x){ return x.id === b.getAttribute("data-trdo"); })[0];
       if (!pl) return true;
       var off = Math.round((Date.parse(pl.day + "T12:00:00Z") - Date.parse(trDay(0) + "T12:00:00Z")) / 864e5);
-      TR.pid = pid; TR.f = {kind:pl.kind, day:Math.max(-2, Math.min(0, off)), min:pl.min, rpe:5, note:"", plan:pl.id, planDay:pl.day};
+      TR.pid = pid; TR.f = {kind:pl.kind, day:Math.max(-2, Math.min(0, off)), min:pl.min, rpe:5, stars:0, note:"", plan:pl.id, planDay:pl.day};
       trSheet();
     } else if (b.hasAttribute("data-trexed")){ var eid = b.getAttribute("data-trexed"), L = TR.lib && TR.lib.d; trExSheet(eid && L ? JSON.parse(JSON.stringify(L.ex.filter(function(x){ return x.id === eid; })[0] || null)) : null); }
     else if (b.hasAttribute("data-trcat")){ TR.cat = b.getAttribute("data-trcat"); TR.topic = null; renderTraining(); }
@@ -8407,6 +8447,54 @@
     if (ev.target.id !== "trLq") return;
     TR.lq = ev.target.value; var pos = ev.target.selectionStart; renderTraining();
     var q = document.getElementById("trLq"); if (q){ q.focus(); try { q.setSelectionRange(pos, pos); } catch (e){} }
+  }
+  /* ---- Träning: the thread on a logged session (coach <-> player), stars; a group's load; the load over 12 weeks ---- */
+  function trStars(n){ return n ? '<span class="trstars" aria-label="' + esc(_("{n} av 5 stjärnor", {n:n})) + '">' + "★★★★★".slice(0, n) + '<i>' + "★★★★★".slice(n) + '</i></span>' : ""; }
+  function trThread(id){
+    authApi("/train/thread?id=" + encodeURIComponent(id)).then(function(d){
+      var x = d.session, K = TR_KIND[x.kind] || TR_KIND.annat, P = BYPID[x.pid];
+      var when = function(t){ var dt = new Date(t); return dayMonD(dt) + " " + hm(dt); };
+      trSheetOpen('<h2>' + _("Om passet") + '</h2><div class="trthd"><b>' + esc(_(K[0]) + " · " + (P ? P.name : "")) + '</b><small>' + esc([cap(dayLabel(new Date(x.day + "T12:00:00Z"))), x.min + " min", "RPE " + x.rpe].join(" · ")) + '</small>' + trStars(x.stars) +
+        (x.note ? '<p>' + esc(x.note) + '</p>' : "") + '</div><div class="trcm">' + (d.comments.length ? d.comments.map(function(c){ return '<div class="trc1' + (c.mine ? " me" : "") + '"><b>' + esc(c.name || "") + ' <small>' + esc(when(c.at)) + '</small></b><p>' + esc(c.text) + '</p></div>'; }).join("") : '<p class="kdim">' + _("Inga kommentarer än.") + '</p>') + '</div>' +
+        '<div class="trf"><textarea id="tcText" rows="3" maxlength="600" placeholder="' + esc(_("Skriv en kommentar …")) + '"></textarea></div><div class="amxbar"><button type="button" class="amxgo" data-tcsend="1">' + _("Skicka") + '</button></div>', function(ev){
+        var b = ev.target.closest("[data-tcsend]");
+        if (!b) return;
+        var tx = document.getElementById("tcText").value.trim();
+        if (!tx) return;
+        b.disabled = true;
+        authApi("/train/comment", {id:id, text:tx}).then(function(){ Object.keys(TR).forEach(function(k){ if (/^(pl|gp)/.test(k)) delete TR[k]; }); delete TR.data[x.pid]; trThread(id); renderTraining(); }, function(e){ b.disabled = false; trErr2(e); });
+      });
+    }, function(e){ alert(_("Det gick inte: ") + e.message); });
+  }
+  // the group's load: every member's gauge value, the highest first (sessions in one call, the matches from the app)
+  function trGroupLoad(g){
+    var key = "gm" + g.id;
+    trGet(key, "/train/many?pids=" + g.pids.join(","));
+    var x = TR[key] && TR[key].d;
+    if (!x) return '<p class="empty">' + _("Hämtar …") + '</p>';
+    var rows = g.pids.filter(function(p){ return x.sessions[p]; }).map(function(p){
+      var P = BYPID[p], manual = {}, s = x.sessions[p];
+      s.forEach(function(y){ if (y.kind === "match") manual[y.day] = 1; });
+      var R = trRatio(s.concat(trAuto(P).filter(function(y){ return !manual[y.day]; })));
+      return {p:p, P:P, R:R};
+    }).sort(function(a, b){ return (b.R.enough ? b.R.r : -1) - (a.R.enough ? a.R.r : -1); });
+    return '<div class="card trgl">' + rows.map(function(r){
+      return '<button type="button" class="trglr z-' + r.R.zone + '" data-trp="' + r.p + '">' + (r.P ? avatar(r.P.name) : "") + '<span><b>' + esc(r.P ? r.P.name : "#" + r.p) + '</b><small>' + esc(_(TR_ZONE[r.R.zone][0])) + '</small></span>' +
+        '<em>' + (r.R.enough ? r.R.r.toFixed(2).replace(".", ",") : "–") + '</em><i aria-hidden="true"></i></button>';
+    }).join("") + '</div>';
+  }
+  // 12 weeks: the week's load (bars) and the 4-week average (line)
+  function trChart(items){
+    var t = trDay(0), d0 = new Date(t + "T12:00:00Z"), mon = trAdd(t, -((d0.getUTCDay() + 6) % 7)), W = [];
+    for (var i = 11; i >= 0; i--){ var m = trAdd(mon, -7 * i); W.push({m:m, v:trSum(items, m, trAdd(m, 6))}); }
+    if (!W.some(function(w){ return w.v; })) return "";
+    var avg = W.map(function(w, i){ var l = W.slice(Math.max(0, i - 3), i + 1); return l.reduce(function(a, x){ return a + x.v; }, 0) / l.length; });
+    var max = Math.max.apply(null, W.map(function(w){ return w.v; }).concat(avg, [600])), H = 120, bw = 300 / 12;
+    var bars = W.map(function(w, i){ var h = Math.round(H * w.v / max); return '<rect x="' + (i * bw + 4) + '" y="' + (H - h) + '" width="' + (bw - 8) + '" height="' + h + '" rx="4" class="' + (i === 11 ? "now" : "") + '"><title>' + esc(_("Vecka {n}", {n:isoWeek(new Date(w.m + "T12:00:00Z"))}) + ": " + fmtN(w.v)) + '</title></rect>'; }).join("");
+    var line = avg.map(function(v, i){ return (i ? "L" : "M") + (i * bw + bw / 2).toFixed(1) + " " + (H - H * v / max).toFixed(1); }).join(" ");
+    var labels = W.map(function(w, i){ return i % 2 ? "" : '<text x="' + (i * bw + bw / 2) + '" y="' + (H + 14) + '">' + isoWeek(new Date(w.m + "T12:00:00Z")) + '</text>'; }).join("");
+    return '<section><div class="sh"><h2>' + _("12 veckor") + '</h2><div class="meta">' + _("belastning per vecka") + '</div></div><div class="card trchart"><svg viewBox="0 0 300 ' + (H + 18) + '" role="img" aria-label="' + esc(_("Belastning per vecka, de senaste 12 veckorna")) + '">' +
+      bars + '<path d="' + line + '" class="avg"/>' + labels + '</svg><p class="kdim"><i class="lg bar"></i>' + _("Veckans belastning") + ' <i class="lg line"></i>' + _("Snitt 4 veckor") + '</p></div></section>';
   }
   function renderAmxHome(){
     var host = document.getElementById("amxHome");
@@ -8773,9 +8861,10 @@
     if (!AUTH || !PUSH_API || (!force && Date.now() - (AUTH.at || 0) < 6 * 3600e3)) return;
     authApi("/auth/me").then(function(d){ AUTH.me = d.me; AUTH.at = Date.now(); authSave(AUTH); admPush(); try { renderAmxHome(); } catch (e){} }, function(){});
   }
-  // the admin's phone with notiser on: linked to the account, so a new "Begär konto" reaches it
+  // this phone, notiser on: linked to the account, so notiser meant for the person reach it (a new "Begär konto" for an
+  // admin, a coach's answer, a planned session)
   function admPush(){
-    if (!AUTH || !authCan("admin") || !pushOn()) return;
+    if (!AUTH || !pushOn()) return;
     swReady().then(function(r){ return r.pushManager.getSubscription(); }).then(function(sub){
       if (sub) authApi("/me/push", {endpoint:sub.endpoint}).catch(function(){});
     }).catch(function(){});

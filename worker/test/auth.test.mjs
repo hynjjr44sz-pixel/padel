@@ -173,8 +173,8 @@ test("begär konto: at most 3 a day from one network; the admin's phones get a n
   // a day later: room again
   env.NOW = "2026-10-20T10:00:01Z";
   assert.equal((await call(env, "POST", "/auth/request", { name: "Spam 4" }, ip)).status, 200);
-  // not an admin: no linking
-  assert.equal((await call(env, "POST", "/me/push", { endpoint: ep })).status, 403);
+  // not logged in: no linking
+  assert.equal((await call(env, "POST", "/me/push", { endpoint: ep })).status, 401);
 });
 
 test("konto: the admin links an account to a player profile (or none); statistics for an admin without the key", async () => {
