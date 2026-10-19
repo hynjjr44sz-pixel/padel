@@ -8,7 +8,8 @@ import { remindNotes } from "./remind.js";
 import { soonNotes } from "./soon.js";
 import { loadMembers, membersDue, membersRun, membersOut, setVisibility, findMember, memberName, visible as memberVisible } from "./members.js";
 import { photoIndex, photoSet, photoGet, photosPending, photosCheck, canPhoto } from "./photos.js";
-import { authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
+import { pkOptions, pkAdd, pkLogin, pkClear } from "./passkey.js";
+import { sha, authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
 import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, amxAll, publicOf } from "./amx.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, newResults, resultsDue, fetchGroupResults, fetchGroupTable } from "./bhs.js";
@@ -210,11 +211,11 @@ async function handle(req, env) {
   }
   if (route === "POST /amx" || (am && req.method === "POST")) {
     // starting one takes a login with the role arrangör (or admin); running it takes the americano's own key
-    const me = am ? null : await authUser(env, req, +now(env));
+    const me = await authUser(env, req, +now(env));   // null at once without an Authorization header
     if (!am && !can(me, "arr")) return json({ error: me ? "role" : "login" }, me ? 403 : 401, h);
     let b;
     try { b = await readBody(req, 800000); } catch (e) { return json({ error: "bad json" }, 400, h); }   // guests' photos (about 10 kB each)
-    const r = am ? await amxUpdate(env, am[1], b, +now(env)) : await amxCreate(env, b, BY_PID, +now(env), me);
+    const r = am ? await amxUpdate(env, am[1], b, +now(env), !!me && me.roles.includes("admin")) : await amxCreate(env, b, BY_PID, +now(env), me);
     return r.err ? json({ error: r.err }, r.status || 400, h) : json(r, 200, h);
   }
   // Club accounts (auth.js): the invite link, who am I, log out; the admin's list and changes
@@ -229,6 +230,14 @@ async function handle(req, env) {
     return me ? json({ me }, 200, { ...h, "Cache-Control": "no-store" }) : json({ error: "login" }, 401, h);
   }
   if (route === "POST /auth/logout") return json(await logout(env, req), 200, h);
+  // Passkeys (passkey.js): the admin adds one when logged in, and logs in with it later
+  if (route === "POST /auth/pk/options" || route === "POST /auth/pk/add" || route === "POST /auth/pk/login" || route === "POST /auth/pk/clear") {
+    let b;
+    try { b = await readBody(req, 20000); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    const t = +now(env), me = route === "POST /auth/pk/login" ? null : await authUser(env, req, t);
+    const r = route === "POST /auth/pk/options" ? await pkOptions(env, me, b, t) : route === "POST /auth/pk/add" ? await pkAdd(env, me, b, t) : route === "POST /auth/pk/login" ? await pkLogin(env, b, t) : await pkClear(env, me, t);
+    return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
+  }
   // Own profile pictures (photos.js): upload or remove (logged in: own, a parent's junior, admin), the images, the Action's list
   if (route === "POST /me/photo") {
     const me = await authUser(env, req, +now(env));
@@ -247,6 +256,21 @@ async function handle(req, env) {
     for (const [k, v] of Object.entries({ ...h, ...SEC, "Content-Security-Policy": "default-src 'none'" })) r.headers.set(k, v);
     return r;
   }
+  // The admin's phones for the admin's own notiser (a new account request): the push subscription already made by the page
+  if (route === "POST /me/push") {
+    const me = await authUser(env, req, +now(env));
+    if (!can(me, "admin")) return json({ error: "forbidden" }, 403, h);
+    let b;
+    try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    const k = b && typeof b.endpoint === "string" ? await subKey(b.endpoint) : null;
+    if (!k || (await env.PUSH.get(k)) === null) return json({ error: "no subscription" }, 404, h);
+    let a = {};
+    try { a = JSON.parse((await env.PUSH.get("admsubs")) || "{}") || {}; } catch (e) { a = {}; }
+    const l = (a[me.id] || []).filter(x => x !== k);
+    l.unshift(k); a[me.id] = l.slice(0, 5);
+    await env.PUSH.put("admsubs", JSON.stringify(a));
+    return json({ ok: true }, 200, h);
+  }
   // One's own choice (or a parent's for their junior): shown in the app or not
   if (route === "POST /me/visibility") {
     const me = await authUser(env, req, +now(env));
@@ -262,7 +286,9 @@ async function handle(req, env) {
   if (route === "POST /auth/request" || route === "POST /auth/request/poll" || route === "POST /auth/request/cancel") {
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
-    const t = +now(env), r = route === "POST /auth/request" ? await requestAccess(env, b, t, BY_PID, findMember) : route === "POST /auth/request/poll" ? await requestPoll(env, b, t) : await requestCancel(env, b);
+    const t = +now(env), ip = await sha("ip:" + (req.headers.get("CF-Connecting-IP") || "local") + ":" + (env.FANOUT_KEY || env.ADMIN_KEY || ""));
+    const r = route === "POST /auth/request" ? await requestAccess(env, b, t, BY_PID, findMember, ip) : route === "POST /auth/request/poll" ? await requestPoll(env, b, t) : await requestCancel(env, b);
+    if (!r.err && route === "POST /auth/request") try { await notifyAdmins(env, { title: "Ny kontoansökan", body: (b.parent ? "En förälder" : "Någon") + " vill ha ett konto. Be om koden och godkänn under Konto.", url: "#konto", tag: "padel-konto" }); } catch (e) {}
     return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
   if (route === "GET /admin" || route === "POST /admin") {
@@ -797,6 +823,7 @@ function teamRoster(ev) {
 function dedupe(msgs) {
   const out = [], byTag = new Map();
   for (const x of msgs) {
+    if (x.subs) { out.push(x); continue; }   // to given phones (the admin's): as it is
     const k = x.m.tag + "\u0000" + x.m.title + "\u0000" + x.m.body, was = byTag.get(k);
     if (was) { x.pids.forEach(p => { if (!was.pids.includes(p)) was.pids.push(p); }); if (x.team && !was.team) was.team = x.team; continue; }
     const y = { pids: x.pids.slice(), m: x.m, ...(x.team ? { team: x.team } : {}) };
@@ -1287,7 +1314,18 @@ async function subscribers(env) {
   SUBS = { list, at: Date.now() };
   return list;
 }
-// Push: every device gets the messages about the players it follows (prefs.follow), nothing else, in its language
+// A notis to the admins' own phones (POST /me/push): queued with the americano notiser, sent by the next tick
+async function notifyAdmins(env, m) {
+  let a = {};
+  try { a = JSON.parse((await env.PUSH.get("admsubs")) || "{}") || {}; } catch (e) { a = {}; }
+  const subs = [...new Set(Object.values(a).flat())];
+  if (!subs.length) return;
+  let q = [];
+  try { q = JSON.parse((await env.PUSH.get("amx:pend")) || "[]"); } catch (e) { q = []; }
+  q.push({ subs, m });
+  await env.PUSH.put("amx:pend", JSON.stringify(q.slice(-50)));
+}
+// Push: every device gets the messages about the players it follows (prefs.follow), nothing else (a message with subs: those phones only), in its language
 // (prefs.lang). Jobs: {n: KV key, s: subscription, m: [messages as that device gets them], q: queued at (ms)}.
 async function fanOut(env, msgs, budget, log) {
   const raw = await env.PUSH.get("outbox");
@@ -1300,7 +1338,7 @@ async function fanOut(env, msgs, budget, log) {
   if (msgs.length) {
     const devs = (await subscribers(env)).map(({ name, rec }) => {
       const f = new Set(followOf(rec.prefs)), tm = new Set(teamsOf(rec.prefs)), lang = langOf(rec.prefs);
-      const out = mergeForDevice(msgs.filter(x => x.pids.some(p => f.has(Number(p))) || (x.team && tm.has(Number(x.team)))).map(x => localize(x.m, lang)));
+      const out = mergeForDevice(msgs.filter(x => x.subs ? x.subs.includes(name) : (x.pids || []).some(p => f.has(Number(p))) || (x.team && tm.has(Number(x.team)))).map(x => localize(x.m, lang)));
       return out.length ? { n: name, s: rec.sub, m: out, q: nowMs, lang } : null;
     }).filter(Boolean);
     // Fold into one notis per device when there are many pushes (subrequests, and CPU: about 0.3 ms per encrypted push).

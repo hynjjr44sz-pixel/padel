@@ -4,7 +4,8 @@ import worker, { _resetMemory } from "../src/index.js";
 import { fakeD1 } from "./d1.mjs";
 function kv() { const m = new Map(); return { m, get: async k => m.has(k) ? m.get(k) : null, put: async (k, v) => { m.set(k, v); }, delete: async k => { m.delete(k); }, list: async () => ({ keys: [], list_complete: true }) }; }
 const ORIGIN = "https://padel.holmberg.st";
-const call = (env, method, path, body, hd = {}) => worker.fetch(new Request("https://w" + path, { method, headers: { Origin: ORIGIN, "Content-Type": "application/json", ...hd }, body: body ? JSON.stringify(body) : undefined }), env);
+let IPN = 0;   // each "Begär konto" from its own network unless a test says otherwise (at most 3 a day from one)
+const call = (env, method, path, body, hd = {}) => worker.fetch(new Request("https://w" + path, { method, headers: { Origin: ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "10.0.0." + (++IPN % 250), ...hd }, body: body ? JSON.stringify(body) : undefined }), env);
 const bearer = t => ({ Authorization: "Bearer " + t });
 const mkEnv = () => ({ PUSH: kv(), DB: fakeD1(), NOW: "2026-10-18T10:00:00Z", ORIGIN, ADMIN_KEY: "k".repeat(32) });
 const round = [{ a: [0, 1], b: [2, 3] }], players = [{ pid: 1675246 }, { n: "B B" }, { n: "C C" }, { n: "D D" }];
@@ -143,4 +144,35 @@ test("begär konto: the phone shows a code, the admin types it in, the same phon
   env.NOW = "2026-11-02T10:00:01Z";
   assert.deepEqual(await (await call(env, "POST", "/auth/request/poll", { wait: o.wait })).json(), { status: "gone" });
   assert.equal((await (await call(env, "GET", "/admin", null, ak)).json()).requests.length, 0);
+});
+
+test("begär konto: at most 3 a day from one network; the admin's phones get a notis", async () => {
+  _resetMemory();
+  const env = mkEnv(), ip = { "CF-Connecting-IP": "203.0.113.9" };
+  // the admin's phone: subscribed, then linked to the admin's account
+  const ep = "https://push.example/admin-phone";
+  const admTok = await (async () => {
+    const inv = await (await call(env, "POST", "/admin", { op: "add", name: "Mikael", roles: ["admin"] }, { "X-Admin-Key": env.ADMIN_KEY })).json();
+    return (await (await call(env, "POST", "/auth/redeem", { code: inv.code, label: "iPhone" })).json()).token;
+  })();
+  assert.equal((await call(env, "POST", "/me/push", { endpoint: ep }, bearer(admTok))).status, 404);   // not subscribed (yet)
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ep)));
+  const k = "sub:" + [...h.slice(0, 16)].map(b => b.toString(16).padStart(2, "0")).join("");
+  await env.PUSH.put(k, JSON.stringify({ sub: { endpoint: ep } }));
+  assert.equal((await call(env, "POST", "/me/push", { endpoint: ep }, bearer(admTok))).status, 200);
+  assert.deepEqual(JSON.parse(await env.PUSH.get("admsubs")), { [(await (await call(env, "GET", "/auth/me", null, bearer(admTok))).json()).me.id]: [k] });
+  for (let i = 0; i < 3; i++) assert.equal((await call(env, "POST", "/auth/request", { name: "Spam " + i }, ip)).status, 200);
+  const r = await call(env, "POST", "/auth/request", { name: "Spam 3" }, ip);
+  assert.equal(r.status, 429);
+  assert.equal((await call(env, "POST", "/auth/request", { name: "Annan" }, { "CF-Connecting-IP": "203.0.113.10" })).status, 200);
+  const q = JSON.parse(await env.PUSH.get("amx:pend"));
+  assert.equal(q.length, 4);
+  assert.deepEqual(q[0].subs, [k]);
+  assert.equal(q[0].m.title, "Ny kontoansökan");
+  assert.ok(!JSON.stringify(q).includes("Spam"));   // no names in the notis
+  // a day later: room again
+  env.NOW = "2026-10-20T10:00:01Z";
+  assert.equal((await call(env, "POST", "/auth/request", { name: "Spam 4" }, ip)).status, 200);
+  // not an admin: no linking
+  assert.equal((await call(env, "POST", "/me/push", { endpoint: ep })).status, 403);
 });

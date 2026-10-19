@@ -83,3 +83,20 @@ test("arkiv: ended -> kept for good and on the club players' archive; reopened -
   assert.equal((await (await call(env, "GET", "/amx/pl/1675246")).json()).list.length, 0);
   assert.equal((await (await call(env, "GET", "/amx")).json()).list.length, 0);
 });
+
+test("admin: may end and delete any americano without its key; an arrangör without the key may not; results still need the key", async () => {
+  _resetMemory();
+  const env = { PUSH: kv(), DB: fakeD1(), NOW: "2026-10-18T10:00:00Z", ORIGIN };
+  const r = await (await call(env, "POST", "/amx", { name: "Någons", fmt: "americano", pts: 16, courts: 1, players: [{ n: "A A" }, { n: "B B" }, { n: "C C" }, { n: "D D" }], round: [{ a: [0, 1], b: [2, 3] }] })).json();
+  const { sha } = await import("../src/auth.js");
+  env.DB.db.prepare("INSERT INTO users (id, org, name, pid, created) VALUES ('boss', 'nynas', 'Boss', NULL, 0)").run();
+  env.DB.db.prepare("INSERT INTO roles (user, org, role) VALUES ('boss', 'nynas', 'admin')").run();
+  env.DB.db.prepare("INSERT INTO devices (hash, user, created, seen) VALUES (?, 'boss', 0, ?)").run(await sha("B".repeat(43)), Date.parse("2026-10-18T00:00:00Z"));
+  const post = (body, hd) => worker.fetch(new Request("https://w/amx/" + r.id, { method: "POST", headers: { Origin: ORIGIN, "Content-Type": "application/json", ...hd }, body: JSON.stringify(body) }), env);
+  const arr = await arrHeader(env.DB), adm = { Authorization: "Bearer " + "B".repeat(43) };
+  assert.equal((await post({ op: "delete" }, arr)).status, 403);                       // arrangör, not theirs
+  assert.equal((await post({ op: "score", r: 0, m: 0, s: [10, 6] }, adm)).status, 403); // admin: no results without the key
+  assert.equal((await post({ op: "end" }, adm)).status, 200);
+  assert.equal((await post({ op: "delete" }, adm)).status, 200);
+  assert.equal((await call(env, "GET", "/amx/" + r.id)).status, 404);
+});

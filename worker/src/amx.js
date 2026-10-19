@@ -179,10 +179,12 @@ export async function amxCreate(env, b, byPid, now, by) {
   return { id: t.id, key, t: publicOf(t) };
 }
 // POST /amx/<id> {key, op: "score" {r, m, s:[x,y]} | "round" {round} | "end" | "reopen"} -> the americano
-export async function amxUpdate(env, id, b, now) {
+// admin: a logged-in admin (no key) may end, reopen or delete any americano; the results still take the organiser's key
+export async function amxUpdate(env, id, b, now, admin) {
   const t = await amxGet(env, id);
   if (!t) return { err: "not found", status: 404 };
-  if (!b || typeof b.key !== "string" || (await hash(b.key)) !== t.kh) return { err: "forbidden", status: 403 };
+  const byAdmin = !!admin && b && ["end", "reopen", "delete"].includes(b.op);
+  if (!byAdmin && (!b || typeof b.key !== "string" || (await hash(b.key)) !== t.kh)) return { err: "forbidden", status: 403 };
   let notes = [];
   if (b.op === "score") {
     const r = Number(b.r), m = Number(b.m), x = t.rounds[r] && t.rounds[r][m], s = Array.isArray(b.s) ? b.s.map(Number) : null;

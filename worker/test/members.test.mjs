@@ -23,6 +23,12 @@ function net(calls) {
       const hit = women && who === "Anna Andersson" ? [{ Participant: { NewParticipantId: 900001 } }] : [];
       return new Response(JSON.stringify({ Payload: hit, TotalCount: hit.length }));
     }
+    // Bo is on no ranking list: the class he played in before (Herr C) says men's
+    if (/ParticipatedEventsAsync\?playerId=900002/.test(u)) return new Response(JSON.stringify({ Payload: [{ Id: 77, Type: 4, State: 4 }] }));
+    if (/ParticipatedEventsAsync/.test(u)) return new Response(JSON.stringify({ Payload: [] }));
+    if (/GetInfoAsync\?id=77/.test(u)) return new Response(JSON.stringify({ TournamentSidebarModel: { Classes: [{ Id: 1, Name: "Dam C" }, { Id: 2, Name: "Mix" }, { Id: 3, Name: "Herr C" }] } }));
+    if (/GetPlayersForClassAsync\?tournamentId=77&tournamentClassId=1&/.test(u)) return new Response(JSON.stringify({ Participants: [{ Participant: { FirstPlayer: { Id: 5 }, SecondPlayer: { Id: 6 } } }] }));
+    if (/GetPlayersForClassAsync\?tournamentId=77&tournamentClassId=3&/.test(u)) return new Response(JSON.stringify({ Participants: [{ Participant: { FirstPlayer: { Id: 7 }, SecondPlayer: { Id: 900002 } } }] }));
     return new Response("{}", { status: 404 });
   };
 }
@@ -34,10 +40,10 @@ test("medlemmar: the club's list once a day; 18+ shown unless they said no, juni
   const r = await membersRun(env, getter(net(calls)), t, { left: 45 });
   assert.deepEqual(r, { members: 4, shown: 2, checked: 4 });
   const rec = JSON.parse(env.PUSH.m.get("members"));
-  assert.deepEqual(rec.list.map(m => [m.name, m.age, m.gender]), [["Anna Andersson", 34, "F"], ["Bo Berg", 52, null], ["Cia Ung", 15, null], ["Thea Holmberg Löving", undefined, undefined]]);
+  assert.deepEqual(rec.list.map(m => [m.name, m.age, m.gender]), [["Anna Andersson", 34, "F"], ["Bo Berg", 52, "M"], ["Cia Ung", 15, null], ["Thea Holmberg Löving", undefined, undefined]]);
   // shown: Anna (women's list: ranking and skill rating) and Bo; not Cia (15); Thea stays the roster's own entry
   assert.equal(PLAYERS.length, n0 + 2);
-  assert.deepEqual([BY_PID.get(900001).who, BY_PID.get(900001).rt, BY_PID.get(900001).rid, BY_PID.get(900002).gender], ["anna-andersson", 4, 65, null]);
+  assert.deepEqual([BY_PID.get(900001).who, BY_PID.get(900001).rt, BY_PID.get(900001).rid, BY_PID.get(900002).gender], ["anna-andersson", 4, 65, "M"]);
   assert.ok(!BY_PID.has(900003));
   assert.equal(BY_PID.get(1675246).who, "thea");
   assert.deepEqual(membersOut().map(m => m.key), ["anna-andersson", "bo-berg"]);

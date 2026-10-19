@@ -4,7 +4,7 @@
 // Roles: admin (everything), arr (arrangör: may start americanos). Without a login the app is read-only as before.
 export const ORG = "nynas";
 export const ROLES = ["admin", "arr"];
-const INVITE_MS = 7 * 86400e3, MAX_DEVICES = 5, SEEN_MS = 3600e3, IDLE_MS = 180 * 86400e3, REQ_MS = 14 * 86400e3, REQ_OPEN = 30, REQ_TRIES = 5;
+const INVITE_MS = 7 * 86400e3, MAX_DEVICES = 5, SEEN_MS = 3600e3, IDLE_MS = 180 * 86400e3, REQ_MS = 14 * 86400e3, REQ_OPEN = 40, REQ_TRIES = 5, REQ_PER_IP = 3;
 // the code a requesting phone shows (no 0/O, 1/I/L): "K7Q 42X"
 const REQ_ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 export const normCode = c => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -20,9 +20,9 @@ function rnd(n, abc) {
 }
 const CODE_ABC = "abcdefghijkmnpqrstuvwxyz23456789", TOKEN_ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 export const CODE_RE = /^[a-z2-9]{20}$/, TOKEN_RE = /^[A-Za-z0-9_-]{43}$/;
-const clean = (s, n) => String(s || "").replace(/[\u0000-\u001f<>]/g, "").replace(/\s+/g, " ").trim().slice(0, n);
+export const clean = (s, n) => String(s || "").replace(/[\u0000-\u001f<>]/g, "").replace(/\s+/g, " ").trim().slice(0, n);
 const rolesOf = async (env, id) => (await env.DB.prepare("SELECT role FROM roles WHERE user = ? AND org = ?").bind(id, ORG).all()).results.map(r => r.role).sort();
-const log = (env, t, user, act, detail) => env.DB.prepare("INSERT INTO log (at, org, user, act, detail) VALUES (?, ?, ?, ?, ?)").bind(t, ORG, user, act, detail ? JSON.stringify(detail) : null);
+export const log = (env, t, user, act, detail) => env.DB.prepare("INSERT INTO log (at, org, user, act, detail) VALUES (?, ?, ?, ?, ?)").bind(t, ORG, user, act, detail ? JSON.stringify(detail) : null);
 
 // The logged-in person of a request, or null: {id, name, pid, roles}
 export async function authUser(env, req, t) {
@@ -38,9 +38,10 @@ export async function authUser(env, req, t) {
   return meOf(env, r);
 }
 // {id, name, pid, roles, kids (the juniors a parent looks after), reqs (open requests, for an admin)}
-async function meOf(env, u) {
+export async function meOf(env, u) {
   const roles = await rolesOf(env, u.id), kids = (await env.DB.prepare("SELECT pid FROM guardians WHERE user = ?").bind(u.id).all()).results.map(r => r.pid);
   const me = { id: u.id, name: u.name, pid: u.pid || null, roles, kids };
+  if (roles.includes("admin")) me.pk = (await env.DB.prepare("SELECT count(*) AS n FROM passkeys WHERE user = ?").bind(u.id).first()).n;
   if (roles.includes("admin")) me.reqs = (await env.DB.prepare("SELECT count(*) AS n FROM requests WHERE org = ? AND status = 'open' AND created > ?").bind(ORG, Date.now() - REQ_MS).first()).n;
   return me;
 }
@@ -60,7 +61,7 @@ export async function redeem(env, b, t) {
   return { token, me: await meOf(env, await env.DB.prepare("SELECT id, name, pid FROM users WHERE id = ?").bind(inv.user).first()) };
 }
 // a new logged-in phone for the user (at most MAX_DEVICES: the least recently seen goes) -> its token
-async function newDevice(env, user, label, t, act) {
+export async function newDevice(env, user, label, t, act) {
   const token = rnd(43, TOKEN_ABC);
   const old = (await env.DB.prepare("SELECT hash FROM devices WHERE user = ? ORDER BY seen DESC").bind(user).all()).results.slice(MAX_DEVICES - 1);
   await env.DB.batch([
@@ -75,8 +76,13 @@ async function newDevice(env, user, label, t, act) {
 // shows code; the person sends the code to the admin (WhatsApp, SMS, in person), who types it in to approve.
 // A player not shown in the app (a junior before a yes) is given by name ("player"): matched against the club's members
 // here (findMember: name -> {pid, name} or null), so the page never needs the list of members who are not shown.
-export async function requestAccess(env, b, t, byPid, findMember) {
+export async function requestAccess(env, b, t, byPid, findMember, ipHash) {
   if (!env.DB) return { err: "no database", status: 503 };
+  // spam: at most REQ_PER_IP a day from one network
+  if (ipHash) {
+    await env.DB.prepare("DELETE FROM reqlimit WHERE at < ?").bind(t - 86400e3).run();
+    if ((await env.DB.prepare("SELECT count(*) AS n FROM reqlimit WHERE ip = ? AND at > ?").bind(ipHash, t - 86400e3).first()).n >= REQ_PER_IP) return { err: "limit", status: 429 };
+  }
   let pid = Number(b && b.pid) || null, P = pid && byPid.get(pid);
   const parent = !!(b && b.parent), typed = clean(b && b.player, 60);
   if (pid && !P) return { err: "unknown player", status: 400 };
@@ -96,6 +102,7 @@ export async function requestAccess(env, b, t, byPid, findMember) {
     env.DB.prepare("INSERT INTO requests (id, org, pid, name, parent, msg, label, code, wait, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
       .bind(id, ORG, pid, name, parent ? 1 : 0, msg.slice(0, 300) || null, clean(b && b.label, 60) || null, await sha(code), await sha(wait), t),
     log(env, t, null, "request", { id, pid, name, parent }),
+    ...(ipHash ? [env.DB.prepare("INSERT INTO reqlimit (ip, at) VALUES (?, ?)").bind(ipHash, t)] : []),
   ]);
   return { id, wait, code: code.slice(0, 3) + " " + code.slice(3) };
 }
@@ -205,8 +212,8 @@ export async function adminOp(env, me, b, t, byPid) {
     ]);
     return { ok: true, roles };
   }
-  if (op === "revoke") {
-    await env.DB.batch([env.DB.prepare("DELETE FROM devices WHERE user = ?").bind(u.id), env.DB.prepare("DELETE FROM invites WHERE user = ? AND used IS NULL").bind(u.id), log(env, t, who, "revoke", { id: u.id })]);
+  if (op === "revoke") {   // a lost phone: its passkeys too
+    await env.DB.batch([env.DB.prepare("DELETE FROM devices WHERE user = ?").bind(u.id), env.DB.prepare("DELETE FROM passkeys WHERE user = ?").bind(u.id), env.DB.prepare("DELETE FROM invites WHERE user = ? AND used IS NULL").bind(u.id), log(env, t, who, "revoke", { id: u.id })]);
     return { ok: true };
   }
   if (op === "disable") {
@@ -214,7 +221,7 @@ export async function adminOp(env, me, b, t, byPid) {
     return { ok: true };
   }
   if (op === "remove") {
-    await env.DB.batch(["devices", "invites", "roles", "guardians"].map(tb => env.DB.prepare("DELETE FROM " + tb + " WHERE user = ?").bind(u.id))
+    await env.DB.batch(["devices", "invites", "roles", "guardians", "passkeys"].map(tb => env.DB.prepare("DELETE FROM " + tb + " WHERE user = ?").bind(u.id))
       .concat([env.DB.prepare("DELETE FROM users WHERE id = ?").bind(u.id), log(env, t, who, "remove", { id: u.id, name: u.name })]));
     return { ok: true };
   }

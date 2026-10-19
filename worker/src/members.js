@@ -58,10 +58,12 @@ export function membersOut() {
   return PLAYERS.filter(p => ADDED.has(p.pid)).map(p => ({ key: p.who, pid: p.pid, name: p.me, short: p.name, gender: p.gender, rankedinId: p.rin, member: 1 }));   // no age: not public
 }
 
+// due a look: never, a month ago, or no gender yet and its old classes not looked at (members checked before that)
+const stale = (m, t) => !m.ck || +t - m.ck > CHECK_DAYS * DAY || (!m.gender && !m.gck);
 // Once a day the list; then up to PER_RUN members looked up (profile, then the women's and men's lists by full name)
 export function membersDue(rec, t) {
   if (!rec || !rec.at || +t - Date.parse(rec.at) > DAY) return true;
-  return rec.list.some(m => !m.ck || +t - m.ck > CHECK_DAYS * DAY);
+  return rec.list.some(m => stale(m, t));
 }
 export async function membersRun(env, get, t, budget) {
   const rec = await loadMembers(env, true);
@@ -79,9 +81,9 @@ export async function membersRun(env, get, t, budget) {
       changed = true;
     }
   }
-  const todo = rec.list.filter(m => !m.ck || +t - m.ck > CHECK_DAYS * DAY).slice(0, PER_RUN);
+  const todo = rec.list.filter(m => stale(m, t)).slice(0, PER_RUN);
   for (const m of todo) {
-    if (BY_PID.has(m.pid) && !ADDED.has(m.pid)) { m.ck = +t; changed = true; continue; }   // in players.json: nothing to look up
+    if (BY_PID.has(m.pid) && !ADDED.has(m.pid)) { m.ck = +t; m.gck = 1; changed = true; continue; }   // in players.json: nothing to look up
     if (budget.left < 4) break;
     try {
       if (m.rin) {
@@ -96,6 +98,9 @@ export async function membersRun(env, get, t, budget) {
           encodeURIComponent(m.name) + "&skip=0&take=50&rankingDate=" + day);
         if (((r && r.Payload) || []).some(x => x && x.Participant && Number(x.Participant.NewParticipantId) === m.pid)) { g = k; break; }
       }
+      if (!g && !m.gender) {
+        try { g = await genderFromClasses(get, m.pid, budget); m.gck = 1; } catch (e) { if (e.budget) throw e; m.gck = 1; }
+      }
       m.gender = g || m.gender || null;
       m.ck = +t;
       changed = true;
@@ -103,6 +108,25 @@ export async function membersRun(env, get, t, budget) {
   }
   if (changed) await save(env, rec);
   return { members: rec.list.length, shown: rec.list.filter(visible).length, checked: todo.length };
+}
+// Not on a ranking list (no SPF points yet): the class the member played in before, "Herr C" -> M, "Dam B" -> F.
+// The latest two tournaments, their men's and women's classes until the member is found (at most 10 calls).
+const CLASS_G = n => /^(herr|men|male|gentlemen)/i.test(n) ? "M" : /^(dam|women|female|ladies)/i.test(n) ? "F" : null;
+export async function genderFromClasses(get, pid, budget) {
+  let calls = 0;
+  const pe = await get("/player/ParticipatedEventsAsync?playerId=" + pid + "&isFuture=false&language=en&skip=0&take=10");
+  for (const e of ((pe && pe.Payload) || []).filter(x => x.Type === 4).slice(0, 2)) {
+    if (budget.left < 4 || calls >= 10) break;
+    const info = ((await get("/tournament/GetInfoAsync?id=" + e.Id + "&language=en")) || {}).TournamentSidebarModel || {};
+    calls++;
+    for (const c of (info.Classes || []).filter(c => CLASS_G(String(c.Name || "").trim()))) {
+      if (budget.left < 3 || calls >= 10) break;
+      const pl = await get("/tournament/GetPlayersForClassAsync?tournamentId=" + e.Id + "&tournamentClassId=" + c.Id + "&language=en");
+      calls++;
+      if (((pl && pl.Participants) || []).some(x => { const q = x.Participant || {}; return (q.FirstPlayer || {}).Id === pid || (q.SecondPlayer || {}).Id === pid; })) return CLASS_G(String(c.Name).trim());
+    }
+  }
+  return null;
 }
 // Admin, "Begär konto", a member's own choice: vis "in" | "out" | null (by age again)
 export async function setVisibility(env, pid, vis) {

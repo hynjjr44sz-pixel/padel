@@ -65,3 +65,26 @@ CREATE TABLE IF NOT EXISTS guardians (
   pid INTEGER NOT NULL,
   PRIMARY KEY (user, pid)
 );
+-- "Begär konto": at most a few requests a day from one network (the address only as a salted hash)
+CREATE TABLE IF NOT EXISTS reqlimit (
+  ip TEXT NOT NULL,
+  at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS reqlimit_ip ON reqlimit(ip, at);
+-- passkeys (Face ID / Touch ID): the admin logs in without a link. Only ES256; the public key as SPKI (base64url)
+CREATE TABLE IF NOT EXISTS passkeys (
+  id TEXT PRIMARY KEY,                          -- the credential id (base64url)
+  user TEXT NOT NULL,
+  spki TEXT NOT NULL,
+  counter INTEGER NOT NULL DEFAULT 0,
+  label TEXT,
+  created INTEGER NOT NULL,
+  used INTEGER
+);
+CREATE INDEX IF NOT EXISTS passkeys_user ON passkeys(user);
+-- a passkey challenge: once, for 5 minutes (user: the account adding a passkey; null for a login)
+CREATE TABLE IF NOT EXISTS pkchal (
+  ch TEXT PRIMARY KEY,
+  user TEXT,
+  at INTEGER NOT NULL
+);

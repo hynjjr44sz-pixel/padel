@@ -1,7 +1,7 @@
 // Browser test of index.html (Playwright + Chromium): RankedIn and the push worker are mocked with the same
 // fake API as the worker tests (test/fake-rankedin.mjs); GET /events is produced by the real worker code.
 //   python3 -m http.server 19021 --bind 127.0.0.1   (from the repo root)
-//   NODE_PATH=$(npm root -g) PAGE_URL=http://127.0.0.1:19021/ node worker/test/page-e2e.mjs
+//   NODE_PATH=$(npm root -g) PAGE_URL=http://localhost:19021/ node worker/test/page-e2e.mjs
 // Env: CHROMIUM (default /opt/pw-browsers/chromium), SHOTS=<dir> saves screenshots.
 import { createRequire } from "node:module";
 import assert from "node:assert/strict";
@@ -17,10 +17,10 @@ import { fakeD1 } from "./d1.mjs";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
-const BASE = process.env.PAGE_URL || "http://127.0.0.1:19021/";
+const BASE = process.env.PAGE_URL || "http://localhost:19021/";   // localhost, not an IP: passkeys need a domain
 const T = "2026-09-27T13:52:00+02:00";   // Järfälla no 11, Damer C on (Thea and Cassandra), Kian's SPL next Saturday
 const PUSH_API = "https://padel-push.holmberg-padel.workers.dev";
-const AMX_KV = new Map(), AMX_ENV = { ORIGIN: "https://padel.holmberg.st", PUSH: { get: async k => AMX_KV.has(k) ? AMX_KV.get(k) : null, put: async (k, v) => { AMX_KV.set(k, v); }, delete: async k => { AMX_KV.delete(k); }, list: async () => ({ keys: [], list_complete: true }) }, DB: fakeD1(), ADMIN_KEY: "a".repeat(32) };
+const AMX_KV = new Map(), AMX_ENV = { ORIGIN: "https://padel.holmberg.st", PUSH: { get: async k => AMX_KV.has(k) ? AMX_KV.get(k) : null, put: async (k, v) => { AMX_KV.set(k, v); }, delete: async k => { AMX_KV.delete(k); }, list: async () => ({ keys: [], list_complete: true }) }, DB: fakeD1(), ADMIN_KEY: "a".repeat(32), RP_ID: "localhost", ALLOW_LOCALHOST: "1" };   // passkeys: the page runs on localhost
 const SHOTS = process.env.SHOTS || "";
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
@@ -315,6 +315,26 @@ try {
     const k2 = await page.evaluate(() => [document.getElementById("kLink")?.value, document.querySelector("#konto .klist")?.textContent.replace(/\s+/g, " ")]);
     const used = await (await worker.fetch(new Request("https://w/auth/redeem", { method: "POST", headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json" }, body: JSON.stringify({ code: boot.code }) }), AMX_ENV)).status;
     ok("Konto: the admin invites Thea as arrangör (a one-time link), the admin's own link is used up", /#in\/[a-z2-9]{20}$/.test(k2[0] || "") && /Thea Holmberg LövingArrangör · Inbjudan gäller till/.test(k2[1] || "") && used === 410, { k2, used });
+  }
+  { // Face ID (a virtual authenticator): the admin adds a passkey, logs out, logs in again with it, no link
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("WebAuthn.enable");
+    await cdp.send("WebAuthn.addVirtualAuthenticator", { options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true } });
+    await page.goto(url("#konto"));
+    await page.waitForSelector('#konto [data-k="pkadd"]', { timeout: 8000 }).catch(() => {});
+    await page.click('#konto [data-k="pkadd"]');
+    await page.waitForFunction(() => /Face ID utan länk\./.test(document.getElementById("konto").textContent), null, { timeout: 8000 }).catch(() => {});
+    const pk1 = await page.evaluate(() => [document.querySelector("#konto .kmsg")?.textContent, document.querySelector("#konto .kvis small")?.textContent]);
+    page.once("dialog", d => d.accept());
+    await page.click('#konto [data-k="logout"]');
+    await page.waitForSelector('#konto [data-k="pklogin"]', { timeout: 8000 }).catch(() => {});
+    const out = await page.evaluate(() => document.getElementById("acct").textContent);
+    await page.click('#konto [data-k="pklogin"]');
+    await page.waitForFunction(() => /Välkommen, Mikael/.test(document.querySelector("#konto .kmsg")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    const pk2 = await page.evaluate(() => [document.querySelector("#konto .kmsg")?.textContent, document.getElementById("acct").textContent, document.querySelector("#konto .pkerr, #pkErr")?.textContent]);
+    const keys = AMX_ENV.DB.db.prepare("SELECT count(*) n FROM passkeys").get().n;
+    ok("Face ID: the admin adds a passkey, logs out, and logs in again with it (no link)", /Nästa gång kan du logga in med Face ID/.test(pk1[0] || "") && /Face ID utan länk\./.test(pk1[1] || "") && out !== "Konto: Mikael" && /Välkommen, Mikael/.test(pk2[0] || "") && pk2[1] === "Konto: Mikael" && keys === 1, { pk1, out, pk2, keys });
+    await cdp.detach().catch(() => {});
   }
   { // Profilbild: the admin (logged in above) on Thea's page: upload, crop, shown on the card at once; removed again
     await page.goto(url("#thea"));
