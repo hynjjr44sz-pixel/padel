@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-gql0JVN38EGJIpW+B60WTDuyjnzTtTTLESJndS1EJH8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-GsVtw0UEVZwdRLAcL4p/MIKQKprFmf6svovUtaktfzE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -8640,7 +8640,7 @@
     authApi("/admin").then(function(d){ KONTO.loading = false; KONTO.adm = d; renderKonto(); }, function(e){ KONTO.loading = false; KONTO.msg = _("Kunde inte hämta kontona: ") + e.message; renderKonto(); });
   }
   function konOp(body, then){
-    return authApi("/admin", body).then(function(r){ KONTO.adm = null; if (then) then(r); renderKonto(); }, function(e){
+    return authApi("/admin", body).then(function(r){ KONTO.adm = null; if (then) then(r); authCheck(true); renderKonto(); }, function(e){
       alert(e.message === "exists" ? _("Den spelaren har redan ett konto.") : e.message === "self" ? _("Du kan inte låsa ute dig själv.") : _("Det gick inte: ") + e.message);
       KONTO.adm = null; renderKonto();
     });
@@ -9347,7 +9347,7 @@
     } else if (x.view === "spelare" || x.view === "tavlingar" || x.view === "americano" || x.view === "traning"){
       if (x.view === "spelare"){ try { renderTeams(); } catch (e){} renderPlayerList(); }
       else if (x.view === "tavlingar") renderTav();
-      else if (x.view === "traning"){ TR.data = {}; renderTraining(); }
+      else if (x.view === "traning"){ TR.data = {}; renderTraining(); authCheck(true); }   // roles and linked players may have changed
       else renderAmxHome();
       showView(x.view);
       VIEW = {name:x.view, who:null, team:x.view};
