@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-oeGrPZzgd4smIcrJFDgLa9v1zvgkmIEWrV+g8Fj6gno='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-G9sdSgPFvMMX6OJcExaz6K55I+ki25edhWXQMahZ3pc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1878,6 +1878,8 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Öppna": "Abrir",
+    "Notiser, telefoner och mest följda spelare.": "Notificaciones, teléfonos y jugadores más seguidos.",
     "Den här enheten är redan tillagd för kontot.": "Este dispositivo ya está añadido a la cuenta.",
     "Logga in med {m}": "Iniciar sesión con {m}",
     "För den som har lagt till inloggning med Face ID eller fingeravtryck (passkey) på sitt konto.": "Para quien ha añadido el inicio de sesión con Face ID o huella (passkey) a su cuenta.",
@@ -8136,6 +8138,7 @@
       h += '<div class="card ktxt"><p><b>' + esc(me.name) + '</b>' + (P ? ' · <a href="#' + esc(P.key) + '">' + _("Din spelarsida") + '</a>' : "") + '</p>' +
         '<p>' + _("Roll: ") + esc(roleText(me.roles)) + (authCan("arr") ? " · " + _("du kan starta americanos") : "") + '</p>' +
         konVisHtml(me) + konPkHtml(me) +
+        (me.roles.indexOf("admin") >= 0 ? '<div class="kvis"><p><b>' + _("Statistik") + '</b><br><small>' + _("Notiser, telefoner och mest följda spelare.") + '</small></p><button type="button" class="amxsec" data-k="stats">' + _("Öppna") + '</button></div>' : "") +
         '<button type="button" class="amxsec" data-k="logout">' + _("Logga ut den här telefonen") + '</button></div>';
       if (me.roles.indexOf("admin") >= 0) h += konAdminHtml();
     }
@@ -8229,7 +8232,7 @@
     }).join("");
   }
   function konAdminHtml(){
-    var A = KONTO.adm, h = '<div class="amxbar kstat"><a class="amxsec" href="#stats">' + _("Statistik") + '</a></div>' + konReqsHtml(A) + '<div class="sh"><h2>' + _("Lägg till") + '</h2><div class="meta">' + _("Admin") + '</div></div>';
+    var A = KONTO.adm, h = konReqsHtml(A) + '<div class="sh"><h2>' + _("Lägg till") + '</h2><div class="meta">' + _("Admin") + '</div></div>';
     var used = A ? A.users.map(function(u){ return u.pid; }) : [];
     var opts = ROSTER.filter(function(p){ return used.indexOf(p.pid) < 0; }).slice().sort(function(a, b){ return a.name.localeCompare(b.name, "sv"); });
     h += '<div class="card amxset"><label class="amxf"><span>' + _("Klubbspelare") + '</span><select id="kPid"><option value="">' + _("Ingen, skriv namn nedan") + '</option>' +
@@ -8312,6 +8315,7 @@
     var b = ev.target.closest("button[data-k]");
     if (!b) return;
     var k = b.getAttribute("data-k"), id = b.getAttribute("data-id"), u = id && KONTO.adm && KONTO.adm.users.filter(function(x){ return x.id === id; })[0];
+    if (k === "stats"){ location.hash = "#stats"; return; }
     if (k === "pkadd"){ pkAdd(b); return; }
     if (k === "pklogin"){ pkLogin(b); return; }
     if (k === "pkclear"){

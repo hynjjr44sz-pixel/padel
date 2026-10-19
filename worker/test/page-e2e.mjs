@@ -338,7 +338,7 @@ try {
     await cdp.detach().catch(() => {});
     delete AMX_ENV.RP_ID; delete AMX_ENV.ALLOW_LOCALHOST;
     // Statistik from Konto: an admin needs no key
-    await page.click('#konto .kstat a');
+    await page.click('#konto [data-k="stats"]');
     await page.waitForFunction(() => /Telefoner/.test(document.getElementById("stats")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
     const st = await page.evaluate(() => [location.hash, document.getElementById("stats")?.textContent.slice(0, 80)]);
     ok("Statistik: the admin opens it from Konto without the owner's key", st[0] === "#stats" && /Telefoner/.test(st[1] || ""), st);
