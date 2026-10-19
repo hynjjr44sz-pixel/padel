@@ -145,9 +145,9 @@ async function newPage(opts = {}) {
       return r.fulfill({ status: opts.liveStatus || 200, contentType: "application/json", body: opts.liveStatus ? "{}" : opts.live, headers: h });
     }
     if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
-    if (/^\/(amx|auth|admin|me\/|photo\/|stats$)/.test(u.pathname)) {   // the real worker code, its own KV and database
+    if (/^\/(amx|auth|admin|me\/|photo\/|stats$|train)/.test(u.pathname)) {   // the real worker code, its own KV and database
       const q = r.request(), au = q.headers()["authorization"];
-      return worker.fetch(new Request("https://w" + u.pathname, { method: q.method(), headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", ...(au ? { Authorization: au } : {}) }, body: q.method() === "POST" ? q.postData() : undefined }), AMX_ENV)
+      return worker.fetch(new Request("https://w" + u.pathname + u.search, { method: q.method(), headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", ...(au ? { Authorization: au } : {}) }, body: q.method() === "POST" ? q.postData() : undefined }), AMX_ENV)
         .then(async x => r.fulfill({ status: x.status, contentType: "application/json", body: await x.text(), headers: h }));
     }
     if (u.pathname === "/rules") return r.fulfill({ contentType: "application/json", body: JSON.stringify({ v: 1, checked: "2026-09-27T04:40:00Z", docs: [
@@ -365,7 +365,7 @@ try {
     const t1 = await page.evaluate(() => [document.querySelector("#traning .trlist")?.textContent.replace(/\s+/g, " "), document.querySelector("#traning .trnums")?.textContent.replace(/\s+/g, " ")]);
     const row = AMX_ENV.DB.db.prepare("SELECT pid, kind, min, rpe, note FROM sessions").get();
     ok("Träning: in the menu bar; a note before the account is linked; a gym session logged, in the week and the load", t0[0] === true && /inte kopplat/.test(t0[1] || "") && /315/.test(prev || "") &&
-      /Gym.*45 min · RPE 7 · belastning 315.*Ben och bål/.test(t1[0] || "") && /Senaste 7 dagarna\s*315/.test(t1[1] || "") && row && row.pid === 1849853 && row.kind === "gym" && row.min === 45 && row.rpe === 7, { t0, prev, t1, row });
+      /Gym.*45 min · RPE 7 · belastning 315.*Ben och bål.*Järfälla Padel Open no 11.*uppskattat/.test(t1[0] || "") && /Senaste 7 dagarna 3 465/.test(t1[1] || "") && row && row.pid === 1849853 && row.kind === "gym" && row.min === 45 && row.rpe === 7, { t0, prev, t1, row });
   }
   { // Profilbild: the admin (logged in above) on Thea's page: upload, crop, shown on the card at once; removed again
     await page.goto(url("#thea"));
