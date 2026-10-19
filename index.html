@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-2yKg0yz8e0ymvscLHv8wurzhewuZe42IUu+IOlDbqpI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-p82dzHD3SStHEwYMXt2W++SKFp+NESUv/cRSn/nZC2U='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -491,6 +491,8 @@
   .trfeer{ display:flex; align-items:center; gap:10px; padding:8px; } .trfeer + .trfeer{ border-top:1px solid var(--line); } .trfeer > span:not(.av){ flex:1; } .trfeer .av{ flex:0 0 auto; }
   .trfeer b{ display:block; font-size:14px; } .trfeer small{ display:block; font-size:11.5px; color:var(--dim); } .trfeer.st-obetald small{ color:#CE2C31; } .trfeer.st-swishad small, .trfeer.st-matchi small{ color:#AB6400; }
   .trfeer select{ max-width:42%; padding:8px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; font-size:13px; }
+  .trsheet .sheet-in > h2{ padding-right:44px; }
+  .shx{ position:absolute; top:12px; right:12px; z-index:2; width:36px; height:36px; border:0; border-radius:50%; background:var(--surface-2); color:var(--ink); font-size:22px; line-height:1; }
   .swopen{ width:100%; margin:0 0 10px; }
   .swrow{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 10px; padding:10px 12px; margin:0 0 8px; border-radius:12px; background:var(--surface-2); } .swrow span{ flex:0 0 100%; font:600 10.5px/1.2 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); } .swrow b{ flex:1; font-size:15px; word-break:break-word; } .swrow .amxsec{ margin:0; padding:8px 12px; }
   .trhow{ margin-top:12px; text-align:left; } .trhow summary{ cursor:pointer; font:600 12px/1 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); padding:6px 0; }
@@ -2034,6 +2036,7 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Anmälningar": "Solicitudes",
     "Swish öppnas med allt ifyllt. Fungerar det inte, kopiera uppgifterna här under.": "Swish se abre con todo rellenado. Si no funciona, copia los datos aquí abajo.",
     "Öppna Swish": "Abrir Swish",
     "Ej betald": "No pagado",
@@ -8259,7 +8262,7 @@
     var f = TR.f, el = document.getElementById("trSheet");
     if (!el){ el = document.createElement("div"); el.className = "sheet trsheet"; el.id = "trSheet"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); document.body.appendChild(el); el.addEventListener("click", trSheetClick); }
     var chip = function(k, v, label, on, col){ return '<button type="button" class="trc" data-tf="' + k + '" data-v="' + v + '" aria-pressed="' + !!on + '"' + (col ? ' style="--c:' + col + '"' : "") + '>' + esc(label) + '</button>'; };
-    el.innerHTML = '<div class="sheet-bg" data-trx="1"></div><div class="sheet-in"><i class="sheet-grab" aria-hidden="true"></i><h2>' + _("Logga pass") + '</h2>' +
+    el.innerHTML = '<div class="sheet-bg" data-trx="1"></div><div class="sheet-in"><i class="sheet-grab" aria-hidden="true"></i><button type="button" class="shx" data-trx="1" aria-label="' + esc(_("Stäng")) + '">×</button><h2>' + _("Logga pass") + '</h2>' +
       '<div class="trf"><span>' + _("Vad") + '</span><div class="trcs">' + Object.keys(TR_KIND).map(function(k){ return chip("kind", k, _(TR_KIND[k][0]), f.kind === k, TR_KIND[k][1]); }).join("") + '</div></div>' +
       '<div class="trf"><span>' + _("När") + '</span><div class="trcs">' + [0, -1, -2].map(function(o){ return chip("day", o, o === 0 ? _("Idag") : o === -1 ? _("Igår") : cap(dayLabel(new Date(trDay(o) + "T12:00:00Z"))), f.day === o); }).join("") + '</div></div>' +
       '<div class="trf"><span>' + _("Hur länge") + ' <b id="trMinV">' + f.min + ' min</b></span><div class="trcs">' + [30, 45, 60, 75, 90, 120].map(function(m){ return chip("min", m, m + " min", f.min === m); }).join("") + '</div></div>' +
@@ -8408,7 +8411,7 @@
   function trSheetOpen(html, onclick){
     var el = document.getElementById("trSheet2");
     if (!el){ el = document.createElement("div"); el.className = "sheet trsheet"; el.id = "trSheet2"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); document.body.appendChild(el); }
-    el.innerHTML = '<div class="sheet-bg" data-trx2="1"></div><div class="sheet-in"><i class="sheet-grab" aria-hidden="true"></i>' + html + '<p class="amxerr" id="trErr2"></p></div>';
+    el.innerHTML = '<div class="sheet-bg" data-trx2="1"></div><div class="sheet-in"><i class="sheet-grab" aria-hidden="true"></i><button type="button" class="shx" data-trx2="1" aria-label="' + esc(_("Stäng")) + '">×</button>' + html + '<p class="amxerr" id="trErr2"></p></div>';
     el.onclick = function(ev){ if (ev.target.closest("[data-trx2]")){ trSheet2Close(); return; } onclick(ev); };
     el.hidden = false;
     requestAnimationFrame(function(){ el.classList.add("open"); });
@@ -8684,7 +8687,7 @@
       '<div class="card amxset"><p class="kdim">' + _("Det här ser alla under Akademin. Namnen på spelarna i grupperna visas aldrig.") + '</p>' +
       '<div class="amxbar"><button type="button" class="amxsec" data-acpage="1">' + _("Text och privatlektioner") + '</button></div>' +
       a.groups.filter(function(g){ return g.mine; }).map(function(g){ return '<div class="kvis"><p><b>' + esc(g.name) + '</b><br><small>' + esc(g.shown ? [_("Visas"), g.sched, g.max ? g.n + "/" + g.max : "", g.price].filter(Boolean).join(" · ") : _("Visas inte")) + '</small></p><button type="button" class="amxsec" data-acgroup="' + esc(g.id) + '">' + _("Ändra") + '</button></div>'; }).join("") + '</div>' +
-      '<div class="sh"><h2>' + _("Intresseanmälningar") + '</h2><div class="meta">' + (nyc ? esc(_("{n} nya", {n:nyc})) : "") + '</div></div>' +
+      '<div class="sh"><h2>' + _("Anmälningar") + '</h2><div class="meta">' + (nyc ? esc(_("{n} nya", {n:nyc})) : "") + '</div></div>' +
       (l.length ? l.map(function(x){ return '<div class="card acadi' + (x.status === "ny" ? " ny" : "") + '"><b>' + esc(x.name) + '</b> <small>' + esc((x.kind === "privat" ? _("Privatlektion") : x.gname || _("Gruppträning")) + " · " + dayMonD(new Date(x.created))) + '</small>' +
         '<p><a href="' + esc(/@/.test(x.contact) ? "mailto:" + x.contact : "tel:" + x.contact.replace(/[^\d+]/g, "")) + '">' + esc(x.contact) + '</a>' + (x.age ? " · " + esc(x.age) : "") + '</p>' + (x.msg ? '<p class="kdim">' + esc(x.msg) + '</p>' : "") +
         '<div class="amxbar"><button type="button" class="amxsec" data-acmark="' + esc(x.id) + '" data-st="' + (x.status === "ny" ? "kontaktad" : "ny") + '">' + (x.status === "ny" ? _("Markera kontaktad") : _("Markera ny")) + '</button><button type="button" class="amxsec del" data-acdel="' + esc(x.id) + '">' + _("Ta bort") + '</button></div></div>'; }).join("")
