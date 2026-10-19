@@ -234,7 +234,7 @@ try {
   await page.click('#moreSheet .mtile[href="#regler"]');
   await page.waitForSelector("#rules:not([hidden])", { timeout: 8000 }).catch(() => {});
   const more2 = await page.evaluate(() => [document.getElementById("moreSheet").classList.contains("open"), document.querySelector("#dock .dtab.on")?.getAttribute("data-tab")]);
-  ok("Mer: a sheet with Regler, Konto, Americano, Alla americanos, Integritet and the language; Regler opens and the sheet closes", more[0] && more[1] === "Regler,Konto,Americano,Alla americanos,Integritet" && more[2] && !more2[0] && more2[1] === "mer", { more, more2 });
+  ok("Mer: a sheet with Regler, Konto, Akademin, Americano, Alla americanos, Integritet and the language; Regler opens and the sheet closes", more[0] && more[1] === "Regler,Konto,Akademin,Americano,Alla americanos,Integritet" && more[2] && !more2[0] && more2[1] === "mer", { more, more2 });
   await page.click('#dock .dtab[data-tab="idag"]');
   await page.waitForSelector("#home:not([hidden])", { timeout: 8000 }).catch(() => {});
   ok("home: no horizontal scroll at 390", await noHScroll(page));

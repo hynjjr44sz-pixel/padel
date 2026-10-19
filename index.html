@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-CZFMKfpbHt7fzk7a6CgRcGBSoHcYqrIndWOe4RAg+mk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-2yKg0yz8e0ymvscLHv8wurzhewuZe42IUu+IOlDbqpI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -491,6 +491,7 @@
   .trfeer{ display:flex; align-items:center; gap:10px; padding:8px; } .trfeer + .trfeer{ border-top:1px solid var(--line); } .trfeer > span:not(.av){ flex:1; } .trfeer .av{ flex:0 0 auto; }
   .trfeer b{ display:block; font-size:14px; } .trfeer small{ display:block; font-size:11.5px; color:var(--dim); } .trfeer.st-obetald small{ color:#CE2C31; } .trfeer.st-swishad small, .trfeer.st-matchi small{ color:#AB6400; }
   .trfeer select{ max-width:42%; padding:8px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; font-size:13px; }
+  .swopen{ width:100%; margin:0 0 10px; }
   .swrow{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 10px; padding:10px 12px; margin:0 0 8px; border-radius:12px; background:var(--surface-2); } .swrow span{ flex:0 0 100%; font:600 10.5px/1.2 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); } .swrow b{ flex:1; font-size:15px; word-break:break-word; } .swrow .amxsec{ margin:0; padding:8px 12px; }
   .trhow{ margin-top:12px; text-align:left; } .trhow summary{ cursor:pointer; font:600 12px/1 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); padding:6px 0; }
   .trhow p{ margin:8px 0 0 !important; font-size:13.5px; line-height:1.45; }
@@ -2033,6 +2034,8 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Swish öppnas med allt ifyllt. Fungerar det inte, kopiera uppgifterna här under.": "Swish se abre con todo rellenado. Si no funciona, copia los datos aquí abajo.",
+    "Öppna Swish": "Abrir Swish",
     "Ej betald": "No pagado",
     "Swishat, väntar på bekräftelse": "Pagado por Swish, pendiente de confirmar",
     "Dras från MATCHi-kontot": "Se cobra de la cuenta MATCHi",
@@ -8737,9 +8740,13 @@
     if (!f) return;
     var msg = ("Akademi " + f.gname + " " + (P ? P.name : "")).slice(0, 50);
     var row = function(lab, val, copy){ return '<div class="swrow"><span>' + esc(lab) + '</span><b>' + esc(val) + '</b><button type="button" class="amxsec" data-copy="' + esc(copy) + '">' + _("Kopiera") + '</button></div>'; };
-    trSheetOpen('<h2>' + _("Swisha") + '</h2><p class="kdim">' + _("Öppna Swish och betala till föreningen. Kopiera uppgifterna med knapparna.") + '</p>' +
+    // Swish's own link (app.swish.nu, documented for QR codes): opens the app with payee, amount and message filled in and locked
+    var swl = "https://app.swish.nu/1/p/sw/?sw=" + encodeURIComponent(x.swish) + (f.amount ? "&amt=" + f.amount + "&cur=SEK" : "") + "&msg=" + encodeURIComponent(msg) + "&src=qr";
+    trSheetOpen('<h2>' + _("Swisha") + '</h2><button type="button" class="amxgo swopen" data-swl="1">' + _("Öppna Swish") + '</button>' +
+      '<p class="kdim">' + _("Swish öppnas med allt ifyllt. Fungerar det inte, kopiera uppgifterna här under.") + '</p>' +
       row(_("Swish-nummer"), fmtSwish(x.swish), x.swish) + (f.amount ? row(_("Belopp"), fmtN(f.amount) + " kr", String(f.amount)) : "") + row(_("Meddelande"), msg, msg) +
-      '<div class="amxbar"><button type="button" class="amxgo" data-fdone="1">' + _("Jag har swishat") + '</button></div>', function(ev){
+      '<div class="amxbar"><button type="button" class="amxsec" data-fdone="1">' + _("Jag har swishat") + '</button></div>', function(ev){
+      if (ev.target.closest("[data-swl]")){ location.href = swl; return; }   // a Universal Link: the Swish app when it is there
       var c = ev.target.closest("[data-copy]");
       if (c){ var v = c.getAttribute("data-copy"); try { navigator.clipboard.writeText(v).then(function(){ c.textContent = _("Kopierat"); }, function(){}); } catch (e){} return; }
       var d = ev.target.closest("[data-fdone]");
