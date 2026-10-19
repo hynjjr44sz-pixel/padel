@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-jACS2h02OzfYvL2lLUhzh8ZTmNyO+OoziVDqmfrisnY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-H9qNZsUmAZMKcn2XAYynNfHbuQO8AyPz2YgXxO2yu+c='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1890,6 +1890,11 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Klubbserien": "Liga del club",
+    "1 vinst": "1 victoria",
+    "{n} vinster": "{n} victorias",
+    "1 förlust": "1 derrota",
+    "{n} förluster": "{n} derrotas",
     "På centret": "En el centro",
     "Nynäshamn Padelcenter": "Nynäshamn Padelcenter",
     "Fullt": "Completo",
@@ -2224,7 +2229,6 @@
     "Veckan i klubben":"La semana en el club",
     "Vann":"Ganaron",
     "Klättrade":"Subieron",
-    "{w} vunna, {l} förlorade":"{w} ganados, {l} perdidos",
     "Den här veckan":"Esta semana",
     "Följda spelare i kalendern":"Jugadores seguidos en el calendario",
     "Tävlingar, lagmatcher och seriematcher. Uppdateras av sig själv.":"Torneos, partidos de equipo y de liga. Se actualiza solo.",
@@ -6139,7 +6143,7 @@
       if (w.won && w.won.length) line(_("Vann"), w.won.map(function(x){ return x.who + " · " + x.cls; }).join(", "));
       if (w.fin && w.fin.length) line(_("Final"), w.fin.map(function(x){ return x.who + " · " + x.cls; }).join(", "));
       if (w.climb && w.climb.length) line(_("Klättrade"), w.climb.map(function(x){ return x.who + " +" + x.up + (x.rk ? " (#" + x.rk + ")" : ""); }).join(", "));
-      if (w.series && w.series.w + w.series.l) line(_("Serier"), _("{w} vunna, {l} förlorade", {w:w.series.w, l:w.series.l}));
+      if (w.series && w.series.w + w.series.l) line(_("Klubbserien"), (w.series.w === 1 ? _("1 vinst") : _("{n} vinster", {n:w.series.w})) + ", " + (w.series.l === 1 ? _("1 förlust") : _("{n} förluster", {n:w.series.l})));
       if (w.coming && w.coming.length) line(_("Den här veckan"), w.coming.map(function(x){ return x.name + " (" + x.n + _(" från klubben") + ")"; }).join(", "));
     }
     sec.hidden = !rows.length;

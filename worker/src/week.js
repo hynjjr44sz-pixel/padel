@@ -47,7 +47,7 @@ export function weekNote(w, lang = "sv") {
   if (w.won.length) lines.push((es ? "Ganaron: " : "Vann: ") + w.won.map(x => x.who + " (" + x.cls + ")").join(", "));
   if (w.fin.length) lines.push((es ? "Final: " : "Final: ") + w.fin.map(x => x.who + " (" + x.cls + ")").join(", "));
   if (w.climb.length) lines.push((es ? "Subieron: " : "Klättrade: ") + w.climb.map(x => x.who + " +" + x.up).join(", "));
-  if (w.series.w + w.series.l) lines.push((es ? "Ligas: " : "Serier: ") + w.series.w + (es ? (w.series.w === 1 ? " victoria, " : " victorias, ") : (w.series.w === 1 ? " vinst, " : " vinster, ")) + w.series.l + (es ? (w.series.l === 1 ? " derrota" : " derrotas") : (w.series.l === 1 ? " förlust" : " förluster")));
+  if (w.series.w + w.series.l) lines.push((es ? "Liga del club: " : "Klubbserien: ") + w.series.w + (es ? (w.series.w === 1 ? " victoria, " : " victorias, ") : (w.series.w === 1 ? " vinst, " : " vinster, ")) + w.series.l + (es ? (w.series.l === 1 ? " derrota" : " derrotas") : (w.series.l === 1 ? " förlust" : " förluster")));
   if (w.coming.length) lines.push((es ? "Esta semana: " : "Den här veckan: ") + w.coming.map(x => x.name + " (" + x.n + ")").join(", "));
   if (!lines.length) return null;
   return { title: es ? "La semana en el club" : "Veckan i klubben", body: lines.join("\n"), tag: "padel-veckan", url: "./#/" };

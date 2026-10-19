@@ -17,6 +17,6 @@ test("veckan i klubben: last week's wins, finals, climbers, series and the week 
   assert.deepEqual(w.coming, [{ name: "Fall Open", d: "2026-10-17", n: 2 }]);
   const n = weekNote(w);
   assert.equal(n.title, "Veckan i klubben");
-  assert.match(n.body, /Vann: Tobias \(Herrar 50\+\)\nFinal: Thea & Cassandra \(Dam B\)\nKlättrade: Thea \+12\nSerier: 1 vinst, 1 förlust\nDen här veckan: Fall Open \(2\)/);
+  assert.match(n.body, /Vann: Tobias \(Herrar 50\+\)\nFinal: Thea & Cassandra \(Dam B\)\nKlättrade: Thea \+12\nKlubbserien: 1 vinst, 1 förlust\nDen här veckan: Fall Open \(2\)/);
   assert.equal(weekNote(weekDigest({ players }, t)), null);
 });
