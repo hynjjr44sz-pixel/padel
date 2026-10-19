@@ -182,3 +182,35 @@ CREATE TABLE IF NOT EXISTS srate (
   session TEXT PRIMARY KEY,
   stars INTEGER NOT NULL
 );
+-- Akademin: the public page (intro, private lessons) and the groups shown there; interest from anyone (to the coaches)
+CREATE TABLE IF NOT EXISTS academy (
+  org TEXT PRIMARY KEY,
+  intro TEXT,
+  ptext TEXT,                                   -- private lessons: what is offered
+  pprice TEXT,                                  -- private lessons: price, as the coach writes it
+  updated INTEGER,
+  by TEXT
+);
+CREATE TABLE IF NOT EXISTS tgroup_pub (
+  gid TEXT PRIMARY KEY,
+  shown INTEGER NOT NULL DEFAULT 0,
+  level TEXT,
+  sched TEXT,                                   -- e.g. "Onsdagar 19:00-20:30"
+  max INTEGER,
+  price TEXT,
+  info TEXT
+);
+CREATE TABLE IF NOT EXISTS interest (
+  id TEXT PRIMARY KEY,
+  org TEXT NOT NULL,
+  kind TEXT NOT NULL,                           -- grupp, privat
+  gid TEXT,
+  name TEXT NOT NULL,
+  contact TEXT NOT NULL,
+  age TEXT,
+  msg TEXT,
+  ip TEXT,
+  created INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'ny'             -- ny, kontaktad
+);
+CREATE INDEX IF NOT EXISTS interest_org ON interest(org, created);
