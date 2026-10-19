@@ -661,7 +661,10 @@
   .amxtbl td:nth-child(2){ max-width:0; width:60%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .amxtbl td, .amxtbl th{ border-left:0; }
   #amx .phead h1{ font-size:clamp(30px, 10vw, 52px); overflow-wrap:normal; hyphens:auto; }
-  .amxtbl .tpos{ color:var(--dim); width:22px; }
+  .amxtbl td.tpos{ display:table-cell; vertical-align:middle; width:28px; padding-left:6px; color:var(--dim); font:800 16px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; }
+  .amxtbl tr.me td:first-child{ box-shadow:inset 3px 0 0 var(--accent); }
+  .amxtbl td{ vertical-align:middle; }
+  .amxtbl td:nth-child(2){ font:600 14px/1.2 "Instrument Sans", sans-serif; } .amxtbl td:nth-child(2) a{ color:inherit; text-decoration:none; } .amxtbl .amxtn{ display:flex; }
   .amxtbl tr.me td{ background:var(--accent-soft); }
   .amxshare{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
   .amxshare button{ appearance:none; height:40px; padding:0 14px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 13px/1 "Instrument Sans", sans-serif; cursor:pointer; }
