@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-GsVtw0UEVZwdRLAcL4p/MIKQKprFmf6svovUtaktfzE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-4mVY+iI5vfN2qdEPBVlZSICKR6oQiDqw7WYz4WrZnxw='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -411,6 +411,8 @@
   .trnums span{ display:block; font:600 10px/1.2 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); }
   .trnums b{ font:800 24px/1.1 "Big Shoulders Display", sans-serif; }
   .trlog{ width:100%; }
+  .trhow{ margin-top:12px; text-align:left; } .trhow summary{ cursor:pointer; font:600 12px/1 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); padding:6px 0; }
+  .trhow p{ margin:8px 0 0 !important; font-size:13.5px; line-height:1.45; }
   .trwho{ display:flex; gap:8px; overflow-x:auto; margin:0 0 12px; padding-bottom:4px; }
   .trwho button{ display:flex; align-items:center; gap:6px; padding:4px 12px 4px 4px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 13px/1 inherit; white-space:nowrap; }
   .trwho button[aria-pressed="true"]{ background:var(--ink); color:var(--surface); border-color:var(--ink); }
@@ -1946,6 +1948,11 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Så räknas det": "Cómo se calcula",
+    "Varje pass ger belastning = minuter × hur tungt det kändes (1–10). 60 minuter på nivå 6 blir 360.": "Cada sesión da una carga = minutos × lo duro que se sintió (1–10). 60 minutos a nivel 6 son 360.",
+    "Senaste 7 dagarna är summan den senaste veckan. Snitt per vecka är de senaste 4 veckorna delat med 4, alltså en vanlig vecka.": "Últimos 7 días es la suma de la última semana. Media semanal es las últimas 4 semanas dividido entre 4, una semana normal.",
+    "Siffran i mitten är kvoten mellan dem. Under 0,8 är en lugn vecka, 0,8–1,3 lagom, 1,3–1,5 ökar snabbt och över 1,5 risk för överbelastning. Det är snabba ökningar som ökar skaderisken mest, inte mängden i sig.": "La cifra del centro es la proporción entre ambas. Menos de 0,8 es una semana tranquila, 0,8–1,3 adecuada, 1,3–1,5 sube rápido y más de 1,5 riesgo de sobrecarga. Son los aumentos rápidos los que más elevan el riesgo de lesión, no la cantidad en sí.",
+    "Matcher räknas in uppskattat: en tävlingsdag som 150 minuter på nivå 7, en seriedag som 120 minuter, en klubbseriematch som 90 minuter. Loggar du en match samma dag gäller din siffra.": "Los partidos se suman estimados: un día de torneo como 150 minutos a nivel 7, un día de liga 120 minutos, un partido de la liga del club 90 minutos. Si registras un partido el mismo día, vale tu cifra.",
     "Annat": "Otro",
     "Anteckning (valfritt)": "Nota (opcional)",
     "Bara du, dina föräldrar och de tränare du kopplas till ser din träning.": "Solo tú, tus padres y los entrenadores vinculados ven tu entrenamiento.",
@@ -7978,7 +7985,11 @@
     var items = trItems(pid), R = trRatio(items), Z = TR_ZONE[R.zone];
     h += '<section class="card trhero z-' + R.zone + '"><div class="trgw">' + trGauge(R) + '<div class="trval"><b>' + (R.enough ? R.r.toFixed(2).replace(".", ",") : "–") + '</b><span>' + esc(_(Z[0])) + '</span></div></div>' +
       '<p class="trz">' + esc(_(Z[1])) + '</p><div class="trnums"><div><span>' + _("Senaste 7 dagarna") + '</span><b>' + fmtN(R.a) + '</b></div><div><span>' + _("Snitt per vecka, 4 veckor") + '</span><b>' + fmtN(R.c) + '</b></div></div>' +
-      '<button type="button" class="amxgo trlog" data-trlog="1">' + _("Logga pass") + '</button></section>' +
+      '<button type="button" class="amxgo trlog" data-trlog="1">' + _("Logga pass") + '</button>' +
+      '<details class="trhow"><summary>' + _("Så räknas det") + '</summary><p>' + _("Varje pass ger belastning = minuter × hur tungt det kändes (1–10). 60 minuter på nivå 6 blir 360.") + '</p>' +
+      '<p>' + _("Senaste 7 dagarna är summan den senaste veckan. Snitt per vecka är de senaste 4 veckorna delat med 4, alltså en vanlig vecka.") + '</p>' +
+      '<p>' + _("Siffran i mitten är kvoten mellan dem. Under 0,8 är en lugn vecka, 0,8–1,3 lagom, 1,3–1,5 ökar snabbt och över 1,5 risk för överbelastning. Det är snabba ökningar som ökar skaderisken mest, inte mängden i sig.") + '</p>' +
+      '<p>' + _("Matcher räknas in uppskattat: en tävlingsdag som 150 minuter på nivå 7, en seriedag som 120 minuter, en klubbseriematch som 90 minuter. Loggar du en match samma dag gäller din siffra.") + '</p></details></section>' +
       '<section><div class="sh"><h2>' + (pid === me.pid ? _("Min vecka") : _("{n}s vecka", {n:P ? P.short || P.name : "#" + pid})) + '</h2><div class="meta">' + esc(trName(pid)) + '</div></div><div class="card trweek">' + trWeek(items, pid) + '</div></section>' +
       '<p class="trnote">' + _("Belastning = minuter × hur tungt det kändes (1–10). Matcher från tävlingar, serier och americanos räknas in av sig själva, uppskattat. Loggar du en match samma dag gäller din siffra.") + '</p>' +
       ((me.pid === pid || (me.kids || []).indexOf(pid) >= 0) && data.s.length ? '<p class="trnote"><button type="button" class="linkbtn" data-trclear="1">' + _("Radera all träningshistorik för {n}", {n:trName(pid)}) + '</button></p>' : "");
