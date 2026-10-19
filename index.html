@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-LrM3VMdIGy4zziWp5qdvvILfjNgK9LZD23U9KuLcDkQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-QN9egeIbm7v/DVtWONqv6Xsk9/Kgd2FO2OpeVLsVe5M='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -8116,7 +8116,7 @@
     b.disabled = true;
     var day = f.plan && f.planDay && f.planDay <= trDay(0) && f.planDay >= trDay(-60) ? f.planDay : trDay(f.day);
     authApi("/train", {pid:TR.pid, day:day, kind:f.kind, min:f.min, rpe:f.rpe, note:f.note || "", plan:f.plan || undefined}).then(function(){
-      f.note = ""; f.plan = null; f.planDay = null; delete TR["pl" + TR.pid]; TR.day = day; TR.wk = 0; trSheetClose(); trLoad(TR.pid, true);
+      f.note = ""; f.plan = null; f.planDay = null; Object.keys(TR).forEach(function(k){ if (/^(pl|gp)/.test(k)) delete TR[k]; }); TR.day = day; TR.wk = 0; trSheetClose(); trLoad(TR.pid, true);
     }, function(e){ b.disabled = false; var er = document.getElementById("trErr"); if (er) er.textContent = _("Det gick inte: ") + e.message; });
   }
   function trClick(ev){
