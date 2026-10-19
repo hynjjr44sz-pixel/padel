@@ -812,7 +812,8 @@ try {
       await page.goto(url("#thea"));
       await page.waitForSelector('#p-thea [data-mid="6872156"]', { timeout: 8000 }).catch(() => {});
       await page.waitForTimeout(1500);
-      const html = await page.evaluate(() => { const b = document.getElementById("dyn-thea").cloneNode(true); b.querySelectorAll(".livebar").forEach(x => x.remove()); return b.innerHTML; });
+      // the draw itself; the skill ratings (.sk) come in their own calls at their own pace and are tested above
+      const html = await page.evaluate(() => { const b = document.getElementById("dyn-thea").cloneNode(true); b.querySelectorAll(".livebar, .sk").forEach(x => x.remove()); return b.innerHTML; });
       const n = drawCalls(api);
       await ctx.close();
       return { html, n };
