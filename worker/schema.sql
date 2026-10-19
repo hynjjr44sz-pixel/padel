@@ -294,3 +294,15 @@ CREATE TABLE IF NOT EXISTS hrmax (
   pid INTEGER PRIMARY KEY,
   bpm INTEGER NOT NULL
 );
+-- Hälsodata: the consent to bring in watch data (by the player from 13, else a parent), and the birth year (the player's
+-- or a parent's input; for the max pulse and the junior advice)
+CREATE TABLE IF NOT EXISTS hconsent (
+  pid INTEGER PRIMARY KEY,
+  user TEXT NOT NULL,
+  parent INTEGER NOT NULL DEFAULT 0,
+  at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS pinfo (
+  pid INTEGER PRIMARY KEY,
+  born INTEGER
+);

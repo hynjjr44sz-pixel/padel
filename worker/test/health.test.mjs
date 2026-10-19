@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import worker, { _resetMemory } from "../src/index.js";
 import { fakeD1 } from "./d1.mjs";
-import { kindOf, rpeOf, whenOf, minutesOf, parseImport, stravaRun } from "../src/health.js";
+import { kindOf, rpeOf, whenOf, minutesOf, parseImport, stravaRun, hrmaxByAge } from "../src/health.js";
 
 const ORIGIN = "https://padel.holmberg.st";
 const kv = () => { const m = new Map(); return { m, get: async k => m.has(k) ? m.get(k) : null, put: async (k, v) => { m.set(k, v); }, delete: async k => { m.delete(k); }, list: async () => ({ keys: [], list_complete: true }) }; };
@@ -17,6 +17,7 @@ test("hälsodata: parsing what a Genväg or a watch sends", () => {
   assert.equal(kindOf("Cykling"), "fys"); assert.equal(kindOf("Yoga"), "fys"); assert.equal(kindOf("Golf"), "annat");
   assert.equal(rpeOf("padel", 150, 200), 6); assert.equal(rpeOf("padel", 175, 200), 8); assert.equal(rpeOf("padel", null, 0), 6); assert.equal(rpeOf("fys", null, 0), 5);
   assert.equal(rpeOf("lop", 185, 0), 9);   // no max known: 195
+  assert.equal(hrmaxByAge(2006, Date.parse("2026-10-19")), 194); assert.equal(hrmaxByAge(null, 0), 0);
   assert.equal(whenOf("2026-10-18T18:30:00+02:00"), Date.parse("2026-10-18T16:30:00Z"));
   assert.equal(whenOf("2026-10-18 18:30"), Date.parse("2026-10-18T16:30:00Z"));
   assert.equal(whenOf("18 okt. 2026 kl. 18:30"), Date.parse("2026-10-18T16:30:00Z"));
@@ -37,7 +38,14 @@ test("hälsodata: an Apple Hälsa link; workouts in once, estimated RPE changed,
   // only the player (or a parent) makes a link: not another player, not the coach
   assert.equal((await call(env, "POST", "/hk/key", { pid: 1675246 }, bearer(kian.tok))).status, 403);
   assert.equal((await call(env, "POST", "/hk/key", { pid: 1675246 }, bearer(javier.tok))).status, 403);
-  const { key } = await (await call(env, "POST", "/hk/key", { pid: 1675246 }, bearer(thea.tok))).json();
+  // the consent first; Thea born 2015 (under 13): only a parent may give it
+  assert.deepEqual(await (await call(env, "POST", "/hk/key", { pid: 1675246 }, bearer(thea.tok))).json(), { error: "consent" });
+  assert.equal((await call(env, "POST", "/hk/profile", { pid: 1675246, born: 2030 }, bearer(thea.tok))).status, 400);
+  assert.equal((await call(env, "POST", "/hk/profile", { pid: 1675246, born: 2015 }, bearer(javier.tok))).status, 403);
+  assert.equal((await call(env, "POST", "/hk/profile", { pid: 1675246, born: 2015 }, bearer(thea.tok))).status, 200);
+  assert.equal((await call(env, "POST", "/hk/key", { pid: 1675246, consent: true }, bearer(thea.tok))).status, 403);
+  await call(env, "POST", "/hk/profile", { pid: 1675246, born: 2006 }, bearer(thea.tok));   // 20: she may herself
+  const { key } = await (await call(env, "POST", "/hk/key", { pid: 1675246, consent: true }, bearer(thea.tok))).json();
   assert.match(key, /^[A-Za-z0-9_-]{43}$/);
   assert.equal(env.DB.db.prepare("SELECT count(*) AS n FROM hkeys WHERE hash = ?").get(key).n, 0);   // only the hash is kept
   assert.equal((await shortcut(env, "/hk/" + "x".repeat(43), "Padel;2026-10-18 18:30;60")).status, 404);
@@ -49,6 +57,7 @@ test("hälsodata: an Apple Hälsa link; workouts in once, estimated RPE changed,
   const g = await (await call(env, "GET", "/train?pid=1675246", null, bearer(javier.tok))).json();   // the coach sees them
   assert.deepEqual(g.sessions.map(x => [x.day, x.kind, x.min, x.rpe, x.src, x.hr, x.est]), [["2026-10-18", "padel", 90, 7, "apple", 160, 1], ["2026-10-17", "gym", 45, 6, "apple", null, 1]]);
   assert.deepEqual(g.days, [{ day: "2026-10-19", rhr: 52, hrv: 61, sleep: 7.5 }]);
+  assert.deepEqual([g.born, g.hrmax], [2006, 190]);
   // the player sets how hard it was
   assert.equal((await call(env, "POST", "/train", { op: "rpe", id: g.sessions[0].id, rpe: 8 }, bearer(kian.tok))).status, 403);
   assert.equal((await call(env, "POST", "/train", { op: "rpe", id: g.sessions[0].id, rpe: 8 }, bearer(thea.tok))).status, 200);
@@ -61,7 +70,7 @@ test("hälsodata: an Apple Hälsa link; workouts in once, estimated RPE changed,
   r = await (await shortcut(env, "/hk/" + key, JSON.stringify({ workouts: [{ type: "Padel", start: "2026-10-19T08:00:00+02:00", min: 60, hr: 150 }] }))).json();
   assert.equal(r.added, 1);
   const c = await (await call(env, "GET", "/hk?pid=1675246", null, bearer(thea.tok))).json();
-  assert.equal(c.apple.n, 3); assert.deepEqual(c.strava, { ready: false, on: null });
+  assert.equal(c.apple.n, 3); assert.deepEqual(c.strava, { ready: false, on: null }); assert.equal(c.consent.parent, false); assert.equal(c.born, 2006);
   assert.equal((await call(env, "GET", "/hk?pid=1675246", null, bearer(javier.tok))).status, 403);
   assert.equal((await call(env, "POST", "/strava/start", { pid: 1675246 }, bearer(thea.tok))).status, 503);
   // a new link replaces the old; off removes it
@@ -69,6 +78,11 @@ test("hälsodata: an Apple Hälsa link; workouts in once, estimated RPE changed,
   assert.equal((await shortcut(env, "/hk/" + key, body)).status, 404);
   assert.equal((await call(env, "POST", "/hk/key", { pid: 1675246, op: "off" }, bearer(thea.tok))).status, 200);
   assert.equal((await shortcut(env, "/hk/" + k2, body)).status, 404);
+  // the consent taken back: the health data gone, a new connection asks again
+  assert.equal((await call(env, "POST", "/hk/profile", { pid: 1675246, op: "revoke" }, bearer(thea.tok))).status, 200);
+  assert.equal(env.DB.db.prepare("SELECT count(*) AS n FROM health_day").get().n, 0);
+  assert.equal(env.DB.db.prepare("SELECT count(*) AS n FROM sess_ext WHERE hr IS NOT NULL").get().n, 0);
+  assert.equal((await call(env, "POST", "/hk/key", { pid: 1675246 }, bearer(thea.tok))).status, 400);
   // clearing the history takes the watch data too
   await call(env, "POST", "/train/clear", { pid: 1675246 }, bearer(thea.tok));
   assert.equal(env.DB.db.prepare("SELECT count(*) AS n FROM health_day").get().n + env.DB.db.prepare("SELECT count(*) AS n FROM sess_ext").get().n, 0);
@@ -78,7 +92,8 @@ test("hälsodata: Strava connect, the activities read, a refreshed token, off", 
   _resetMemory();
   const env = { PUSH: kv(), DB: fakeD1(), NOW: "2026-10-19T10:00:00Z", ORIGIN, ADMIN_KEY: "k".repeat(32), STRAVA_ID: "123", STRAVA_SECRET: "s".repeat(40) }, ak = { "X-Admin-Key": env.ADMIN_KEY };
   const a = await (await call(env, "POST", "/admin", { op: "add", pid: 1675246 }, ak)).json(), tok = (await (await call(env, "POST", "/auth/redeem", { code: a.code })).json()).token;
-  const st = await (await call(env, "POST", "/strava/start", { pid: 1675246 }, bearer(tok))).json();
+  assert.equal((await call(env, "POST", "/strava/start", { pid: 1675246 }, bearer(tok))).status, 400);   // the consent first
+  const st = await (await call(env, "POST", "/strava/start", { pid: 1675246, consent: true }, bearer(tok))).json();
   const u = new URL(st.url), state = u.searchParams.get("state");
   assert.equal(u.searchParams.get("redirect_uri"), "https://w/strava/back"); assert.equal(u.searchParams.get("scope"), "activity:read_all");
   const real = globalThis.fetch, seen = [];

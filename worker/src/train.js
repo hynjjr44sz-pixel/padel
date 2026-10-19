@@ -25,7 +25,9 @@ export async function trainGet(env, me, pid, from, t) {
     "LEFT JOIN sess_ext x ON x.session = s.id WHERE s.org = ? AND s.pid = ? AND s.day >= ? ORDER BY s.day DESC, s.created DESC LIMIT 400").bind(ORG, pid, f).all()).results;
   // the watch's days (resting pulse, HRV, sleep), the last 6 weeks
   const days = (await env.DB.prepare("SELECT day, rhr, hrv, sleep FROM health_day WHERE pid = ? AND day >= ? ORDER BY day").bind(pid, dayOf(t - 42 * 864e5)).all()).results;
-  return { pid, sessions: rows.map(r => ({ ...r, mine: r.by === me.id })), days };
+  // for the models on the page: the birth year and the highest pulse the watch has seen
+  const pi = await env.DB.prepare("SELECT (SELECT born FROM pinfo WHERE pid = ?) AS born, (SELECT bpm FROM hrmax WHERE pid = ?) AS hrmax").bind(pid, pid).first();
+  return { pid, sessions: rows.map(r => ({ ...r, mine: r.by === me.id })), days, born: pi.born, hrmax: pi.hrmax };
 }
 
 // POST /train {pid, day, kind, min, rpe, note, plan?, stars? (1-5, how the session was)} -> {ok, id}; {op: "del", id} removes one (whoever may see the player)

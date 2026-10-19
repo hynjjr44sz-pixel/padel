@@ -14,6 +14,36 @@ const rid = () => [...crypto.getRandomValues(new Uint8Array(8))].map(b => b.toSt
 export const KEY_RE = /^[A-Za-z0-9_-]{43}$/;
 const DAY_RE = /^\d{4}-\d\d-\d\d$/, BACK = 30 * 864e5, MAX_W = 60;
 const own = (me, pid) => !!me && !!pid && (me.pid === pid || (me.kids || []).includes(pid));
+const yearOf = t => new Date(t).getUTCFullYear();
+// The max pulse by age (Tanaka: 208 - 0.7 x age) until the watch has measured a higher one
+export const hrmaxByAge = (born, t) => born ? Math.round(208 - 0.7 * (yearOf(t) - born)) : 0;
+// Before the first connection: the consent, given by the player (13 or older) or a parent. {err} or null.
+async function consent(env, me, pid, b, t) {
+  if (await env.DB.prepare("SELECT pid FROM hconsent WHERE pid = ?").bind(pid).first()) return null;
+  if (!b || b.consent !== true) return { err: "consent", status: 400 };
+  const parent = me.pid !== pid;
+  const p = await env.DB.prepare("SELECT born FROM pinfo WHERE pid = ?").bind(pid).first();
+  if (!parent && p && p.born && yearOf(t) - p.born < 13) return { err: "parent", status: 403 };   // under 13: a parent says yes
+  await env.DB.batch([env.DB.prepare("INSERT INTO hconsent (pid, user, parent, at) VALUES (?, ?, ?, ?)").bind(pid, me.id, parent ? 1 : 0, t), log(env, t, me.id, "health-consent", { pid, parent })]);
+  return null;
+}
+// POST /hk/born {pid, born}: the birth year (the player or a parent); {pid, op: "revoke"}: the consent taken back, the
+// connections off and the watch's health data deleted (the training sessions stay, without pulse and kcal)
+export async function hkProfile(env, me, b, t) {
+  const pid = Number(b && b.pid);
+  if (!own(me, pid)) return { err: "forbidden", status: 403 };
+  if (b.op === "revoke") {
+    const row = await env.DB.prepare("SELECT access FROM strava WHERE pid = ?").bind(pid).first();
+    if (row) try { await fetch(STRAVA + "/oauth/deauthorize", { method: "POST", headers: { Authorization: "Bearer " + row.access }, signal: AbortSignal.timeout(8000) }); } catch (e) {}
+    await env.DB.batch([...["hkeys", "strava", "hconsent", "health_day", "hrmax"].map(tb => env.DB.prepare("DELETE FROM " + tb + " WHERE pid = ?").bind(pid)),
+      env.DB.prepare("UPDATE sess_ext SET hr = NULL, hrmax = NULL, kcal = NULL WHERE pid = ?").bind(pid), log(env, t, me.id, "health-revoke", { pid })]);
+    return { ok: true };
+  }
+  const born = b.born == null || b.born === "" ? null : Math.round(Number(b.born));
+  if (born !== null && !(born >= 1930 && born <= yearOf(t) - 5)) return { err: "born", status: 400 };
+  await env.DB.prepare("INSERT OR REPLACE INTO pinfo (pid, born) VALUES (?, ?)").bind(pid, born).run();
+  return { ok: true };
+}
 
 // The watch's name of a workout -> one of the kinds (train.js KINDS)
 export function kindOf(type) {
@@ -77,7 +107,7 @@ export function parseImport(body) {
 // Workouts in a common form -> new sessions (those already imported are left), the days -> health_day
 // w: [{ext, type, start (ms), min, hr, hrmax, kcal, rpe?}]
 export async function importInto(env, user, pid, src, ws, days, t) {
-  const mx = await env.DB.prepare("SELECT bpm FROM hrmax WHERE pid = ?").bind(pid).first();
+  const mx = await env.DB.prepare("SELECT bpm FROM hrmax WHERE pid = ?").bind(pid).first(), pi = await env.DB.prepare("SELECT born FROM pinfo WHERE pid = ?").bind(pid).first();
   let max = mx ? mx.bpm : 0;
   const seen = Math.max(0, ...ws.map(w => w.hrmax >= 150 && w.hrmax <= 230 ? Math.round(w.hrmax) : 0));
   const st = [];
@@ -88,7 +118,7 @@ export async function importInto(env, user, pid, src, ws, days, t) {
     const mins = Math.round(w.min);
     if (!w.start || !(mins >= 5 && mins <= 360) || w.start < t - BACK || w.start > t + 36e5 || have.has(w.ext)) continue;
     have.add(w.ext);
-    const kind = kindOf(w.type), est = !(w.rpe >= 1 && w.rpe <= 10), rpe = est ? rpeOf(kind, w.hr, max) : Math.round(w.rpe), id = rid();
+    const kind = kindOf(w.type), est = !(w.rpe >= 1 && w.rpe <= 10), rpe = est ? rpeOf(kind, w.hr, Math.max(max, hrmaxByAge(pi && pi.born, t))) : Math.round(w.rpe), id = rid();
     const hr = w.hr >= 40 && w.hr <= 230 ? Math.round(w.hr) : null, kcal = w.kcal > 0 && w.kcal < 5000 ? Math.round(w.kcal) : null;
     st.push(env.DB.prepare("INSERT INTO sessions (id, org, pid, day, kind, min, rpe, note, by, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(id, ORG, pid, dayOf(w.start), kind, mins, rpe, clean(w.type, 60) || null, user, t),
       env.DB.prepare("INSERT INTO sess_ext (session, pid, src, ext, hr, hrmax, kcal, est) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").bind(id, pid, src, w.ext, hr, w.hrmax >= 60 && w.hrmax <= 240 ? Math.round(w.hrmax) : null, kcal, est ? 1 : 0));
@@ -115,6 +145,8 @@ export async function hkKey(env, me, b, t) {
   if (!own(me, pid)) return { err: "forbidden", status: 403 };
   await env.DB.prepare("DELETE FROM hkeys WHERE pid = ? AND user = ?").bind(pid, me.id).run();
   if (b.op === "off") return { ok: true };
+  const c = await consent(env, me, pid, b, t);
+  if (c) return c;
   const key = B64(crypto.getRandomValues(new Uint8Array(32)));
   await env.DB.batch([env.DB.prepare("INSERT INTO hkeys (hash, user, pid, created, n) VALUES (?, ?, ?, ?, 0)").bind(await sha(key), me.id, pid, t), log(env, t, me.id, "hk-key", { pid })]);
   return { key };
@@ -141,10 +173,12 @@ export async function hkImport(env, key, raw, t) {
 const STRAVA = "https://www.strava.com";
 export const stravaReady = env => !!(env.STRAVA_ID && env.STRAVA_SECRET);
 // POST /strava/start {pid} -> {url} to send the browser to (the state lives 10 min in KV)
-export async function stravaStart(env, me, b, base) {
+export async function stravaStart(env, me, b, base, t) {
   const pid = Number(b && b.pid);
   if (!stravaReady(env)) return { err: "off", status: 503 };
   if (!own(me, pid)) return { err: "forbidden", status: 403 };
+  const c = await consent(env, me, pid, b, t);
+  if (c) return c;
   const state = rid() + rid();
   await env.PUSH.put("sts:" + state, JSON.stringify({ user: me.id, pid }), { expirationTtl: 600 });
   return { url: STRAVA + "/oauth/mobile/authorize?" + new URLSearchParams({ client_id: env.STRAVA_ID, redirect_uri: base + "/strava/back", response_type: "code", approval_prompt: "auto", scope: "activity:read_all", state }) };
@@ -224,5 +258,6 @@ export async function connOf(env, me, pid) {
   if (!own(me, pid)) return { err: "forbidden", status: 403 };
   const k = await env.DB.prepare("SELECT created, last, n FROM hkeys WHERE pid = ? AND user = ?").bind(pid, me.id).first();
   const s = await env.DB.prepare("SELECT name, last, polled FROM strava WHERE pid = ?").bind(pid).first();
-  return { apple: k ? { created: k.created, last: k.last, n: k.n } : null, strava: { ready: stravaReady(env), on: s ? { name: s.name, last: s.last, polled: s.polled } : null } };
+  const c = await env.DB.prepare("SELECT parent, at FROM hconsent WHERE pid = ?").bind(pid).first(), pi = await env.DB.prepare("SELECT born FROM pinfo WHERE pid = ?").bind(pid).first();
+  return { consent: c ? { parent: !!c.parent, at: c.at } : null, born: pi ? pi.born : null, apple: k ? { created: k.created, last: k.last, n: k.n } : null, strava: { ready: stravaReady(env), on: s ? { name: s.name, last: s.last, polled: s.polled } : null } };
 }

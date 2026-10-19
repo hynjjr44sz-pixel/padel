@@ -371,6 +371,13 @@ try {
     await page.waitForSelector('#traning [data-hk="on"]', { timeout: 8000 }).catch(() => {});
     await page.waitForSelector("#trSheet", { state: "hidden", timeout: 8000 }).catch(() => {});
     await page.click('#traning [data-hk="on"]');
+    // the consent first: without the box ticked, nothing; then the birth year and the box
+    await page.waitForSelector("#trSheet2 #hkOk", { timeout: 8000 }).catch(() => {});
+    await page.click("#trSheet2 [data-hkc]");
+    const cerr = await page.evaluate(() => document.getElementById("trErr2")?.textContent || "");
+    await page.selectOption("#hkBorn", "1995");
+    await page.check("#trSheet2 #hkOk");
+    await page.click("#trSheet2 [data-hkc]");
     await page.waitForSelector("#trSheet2 .hklink b", { timeout: 8000 }).catch(() => {});
     const link = await page.evaluate(() => document.querySelector("#trSheet2 .hklink b")?.textContent || "");
     const key = (/\/hk\/([A-Za-z0-9_-]{43})$/.exec(link) || [])[1];
@@ -384,7 +391,8 @@ try {
     await page.waitForSelector("#traning .trtoday", { timeout: 8000 }).catch(() => {});
     await page.click("#traning .trtoday").catch(() => {});
     await page.waitForSelector("#traning .trsrc", { timeout: 8000 }).catch(() => {});
-    const h1 = await page.evaluate(() => [document.querySelector("#traning .trlist")?.textContent.replace(/\s+/g, " "), document.querySelector("#traning .trbody")?.textContent.replace(/\s+/g, " "), document.querySelector("#traning .trconn")?.textContent.replace(/\s+/g, " ")]);
+    const h1 = await page.evaluate(() => [document.querySelector("#traning .trlist")?.textContent.replace(/\s+/g, " "), document.querySelector("#traning .trbody")?.textContent.replace(/\s+/g, " "), document.querySelector("#traning .trconn")?.textContent.replace(/\s+/g, " "), document.querySelector("#traning .trready")?.textContent.replace(/\s+/g, " ")]);
+    const cons = AMX_ENV.DB.db.prepare("SELECT parent FROM hconsent WHERE pid = 1849853").get(), born = AMX_ENV.DB.db.prepare("SELECT born FROM pinfo WHERE pid = 1849853").get();
     await page.click("#traning [data-hkrpe]").catch(() => {});
     await page.waitForSelector('#trSheet2 [data-hkv="9"]', { timeout: 8000 }).catch(() => {});
     await page.click('#trSheet2 [data-hkv="9"]').catch(() => {});
@@ -392,7 +400,8 @@ try {
     const h2 = await page.evaluate(() => [document.querySelector("#traning .trlist")?.textContent.replace(/\s+/g, " "), !!document.querySelector("#traning [data-hkrpe]")]);
     ok("Hälsodata: an Apple Hälsa link with the steps; a Genväg's workout and days in Träning; the estimated effort changed", steps === 7 && imp && imp.added === 1 && imp.days === 7 &&
       /Padelträning60 min · RPE 8 .*Apple Hälsa · puls 165.*Uppskattat 8/.test(h1[0] || "") && /Vilopuls58 bpmsnitt 50.*vilopulsen är 8 slag över ditt snitt, HRV är lägre än vanligt, du har sovit mindre än 6 timmar/i.test(h1[1] || "") &&
-      /Apple HälsaPå · senast/.test(h1[2] || "") && /RPE 9/.test(h2[0] || "") && h2[1] === false, { link, steps, imp, h1, h2 });
+      /Apple HälsaPå · senast/.test(h1[2] || "") && /RPE 9/.test(h2[0] || "") && h2[1] === false && /kryssa i/.test(cerr) && cons && cons.parent === 0 && born && born.born === 1995 &&
+      /Födelseår1995/.test(h1[2] || "") && /Godkänt .*Återkalla/.test(h1[2] || "") && /^\d+ ?DagsformSliten$/.test((h1[3] || "").trim()), { link, steps, imp, h1, h2, cerr, cons, born });
   }
   { // Träning, fas 2: Mikael as head coach: a group with Cassandra (himself here), a planned session with an exercise; done as the player -> feedback
     const uid = AMX_ENV.DB.db.prepare("SELECT id FROM users WHERE name = 'Mikael Holmberg'").get().id;

@@ -13,7 +13,7 @@ import { academyGet, academyPost, interestPost, interestList, interestMark, payG
 import { canTrain } from "./train.js";
 import { linkSub, notifyAdmins, notifyUsers } from "./notify.js";
 import { trainGet, trainPost, trainClear, threadGet, threadPost, trainMany } from "./train.js";
-import { hkKey, hkImport, stravaStart, stravaBack, stravaOff, stravaRun, connOf } from "./health.js";
+import { hkKey, hkProfile, hkImport, stravaStart, stravaBack, stravaOff, stravaRun, connOf } from "./health.js";
 import { coachGet, coachPost, libGet, libPost, plansGet, plansPost } from "./coach.js";
 import { pkOptions, pkAdd, pkLogin, pkClear } from "./passkey.js";
 import { sha, authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
@@ -164,7 +164,7 @@ async function handle(req, env) {
   // the per-IP rate limits and the cap on subscriptions are what keep KV (1000 writes, 100k reads a day) safe.
   if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
   // americano results come several a minute from one phone: the API limit, not the subscribe one
-  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" && url.pathname !== "/auth/request/poll" && !/^\/(train|coach|lib|plans|academy$|academy\/interest\/mark|pay$|hk\/key|strava\/)/.test(url.pathname) ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
+  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" && url.pathname !== "/auth/request/poll" && !/^\/(train|coach|lib|plans|academy$|academy\/interest\/mark|pay$|hk\/key|hk\/profile|strava\/)/.test(url.pathname) ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
   const route = req.method + " " + url.pathname;
   if (route === "GET /health") {
     const rec = await loadRecord(env);
@@ -277,13 +277,13 @@ async function handle(req, env) {
     return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
   // Hälsodata: what is connected; an Apple Hälsa key; Strava on and off
-  if (route === "GET /hk" || route === "POST /hk/key" || route === "POST /strava/start" || route === "POST /strava/off") {
+  if (route === "GET /hk" || route === "POST /hk/key" || route === "POST /hk/profile" || route === "POST /strava/start" || route === "POST /strava/off") {
     const me = await authUser(env, req, +now(env));
     if (!me) return json({ error: "login" }, 401, h);
     let b = {};
     if (req.method === "POST") try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
     const r = route === "GET /hk" ? await connOf(env, me, Number(url.searchParams.get("pid"))) : route === "POST /hk/key" ? await hkKey(env, me, b, +now(env))
-      : route === "POST /strava/start" ? await stravaStart(env, me, b, url.origin) : await stravaOff(env, me, b);
+      : route === "POST /hk/profile" ? await hkProfile(env, me, b, +now(env)) : route === "POST /strava/start" ? await stravaStart(env, me, b, url.origin, +now(env)) : await stravaOff(env, me, b);
     return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
   // Träning, fas 2 (coach.js): groups and assistants, the exercise library, plans

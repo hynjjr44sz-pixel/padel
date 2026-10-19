@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-pmbJBIGJdRevUhVd2q1usTAwT4bNjc5GhTPK9mSn8mE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-gNRc9zELunH42LbTjyis8qgLFkNxI5TIyOihA5/0Xx8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -534,6 +534,16 @@
   .trbn span{ display:block; font:500 10.5px/1 "Chivo Mono", monospace; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; } .trbn b{ display:block; margin-top:6px; font:900 26px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; } .trbn b small{ font:500 11px/1 "Chivo Mono", monospace; color:var(--dim); }
   .trbn em{ display:block; margin-top:4px; font:500 11px/1.2 "Chivo Mono", monospace; font-style:normal; color:var(--dim); }
   .trbw, .trbok{ margin:12px 0 0; padding:9px 12px; border-radius:10px; font-size:13px; } .trbw{ background:color-mix(in srgb, #FFC53D 22%, transparent); } .trbok{ background:color-mix(in srgb, #30A46C 14%, transparent); }
+  .trready{ position:relative; display:flex; align-items:center; gap:12px; margin-top:10px; padding:10px 12px; border-radius:12px; background:var(--surface-2); overflow:hidden; }
+  .trready b{ font:900 40px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; } .trready span{ font-weight:700; font-size:15px; } .trready em{ display:block; font:500 10.5px/1.2 "Chivo Mono", monospace; font-style:normal; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); }
+  .trready i{ position:absolute; left:0; bottom:0; height:4px; } .trready.rhi i{ background:#30A46C; } .trready.rmid i{ background:#FFC53D; } .trready.rlo i{ background:#E5484D; }
+  .trform{ padding:14px 16px; margin-top:12px; } .trform .trz{ margin:10px 0 0; font-size:14px; }
+  .trfbar{ position:relative; display:flex; height:10px; margin-top:14px; border-radius:99px; overflow:visible; }
+  .trfbar i{ display:block; height:100%; } .trfbar .z1{ flex:30; background:#E5484D; border-radius:99px 0 0 99px; } .trfbar .z2{ flex:30; background:#FFC53D; } .trfbar .z3{ flex:35; background:#30A46C; } .trfbar .z4{ flex:25; background:#7FB2F0; border-radius:0 99px 99px 0; }
+  .trfbar em{ position:absolute; top:-5px; width:6px; height:20px; margin-left:-3px; border-radius:3px; background:var(--ink); box-shadow:0 0 0 2px var(--surface); }
+  .trfl{ display:flex; justify-content:space-between; margin-top:6px; font:500 10.5px/1 "Chivo Mono", monospace; color:var(--dim); }
+  .trfe{ margin:10px 0 0; padding:9px 12px; border-radius:10px; background:var(--surface-2); font-size:13.5px; line-height:1.4; }
+  .trcy{ font:900 15px/1 "Big Shoulders Display", sans-serif; }
   .trconn{ padding:6px 16px 14px; } .trconn .kdim{ margin:10px 0 0; font-size:12px; }
   .trcr{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); } .trcr > span:nth-child(2){ flex:1; min-width:0; } .trcr b{ display:block; font-size:15px; } .trcr small{ display:block; font-size:12px; color:var(--dim); margin-top:2px; }
   .trci{ flex:none; display:grid; place-items:center; width:36px; height:36px; border-radius:10px; background:var(--surface-2, rgba(127,127,127,.12)); }
@@ -2061,6 +2071,47 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Används för att uppskatta maxpulsen och för råden för unga spelare. Syns bara för spelaren, föräldrar och tränare.":"Se usa para estimar el pulso máximo y para los consejos a jugadores jóvenes. Solo lo ven el jugador, los padres y los entrenadores.",
+    "Bara spelaren, föräldrar och kopplade tränare ser det. Inte klubbens admin.":"Solo lo ven el jugador, los padres y los entrenadores vinculados. No el admin del club.",
+    "Dagsform":"Forma del día",
+    "Du kan när som helst återkalla, då raderas hälsodatan.":"Puedes retirarlo en cualquier momento y los datos de salud se borran.",
+    "Formkurva":"Curva de forma",
+    "Fortsätter du som nu är du i form till dess.":"Si sigues así, estarás en forma para entonces.",
+    "Födelseår":"Año de nacimiento",
+    "Ger bättre uppskattning av maxpuls och råd för unga":"Mejora la estimación del pulso máximo y los consejos para jóvenes",
+    "Godkänn hälsodata":"Aprobar datos de salud",
+    "Godkänn och fortsätt":"Aprobar y continuar",
+    "Godkänt av vårdnadshavare {d}.":"Aprobado por el tutor {d}.",
+    "Godkänt {d}.":"Aprobado {d}.",
+    "I form":"En forma",
+    "Ingen vilodag senaste veckan. Unga behöver minst en, gärna två.":"Ningún día de descanso la última semana. Los jóvenes necesitan al menos uno, mejor dos.",
+    "Inget delas vidare eller används till något annat.":"Nada se comparte ni se usa para otra cosa.",
+    "Inom råden för din ålder: {h} av högst {a} timmar och {r} vilodagar senaste veckan.":"Dentro de los consejos para tu edad: {h} de un máximo de {a} horas y {r} días de descanso la última semana.",
+    "Jag är minst 13 år och godkänner detta.":"Tengo al menos 13 años y lo apruebo.",
+    "Jag är vårdnadshavare till {n} och godkänner detta.":"Soy tutor de {n} y lo apruebo.",
+    "Juniorkoll":"Control junior",
+    "Kondition är din belastning i snitt över 4 veckor, trötthet samma sak över 1 vecka. Formen är skillnaden. När tröttheten sjunker snabbare än konditionen, efter några lätta dagar, blir du pigg men behåller det du byggt upp. Det kallas att trappa ner inför en tävling.":"La condición es tu carga media en 4 semanas, el cansancio lo mismo en 1 semana. La forma es la diferencia. Cuando el cansancio baja más rápido que la condición, tras unos días suaves, estás fresco pero conservas lo construido. Se llama reducir la carga antes de un torneo.",
+    "Kör lätt de sista {n} dagarna, så är du i form.":"Entrena suave los últimos {n} días y estarás en forma.",
+    "Pass, puls, vilopuls, HRV och sömn från klockan sparas för {n} och används för belastning, dagsform och formkurva.":"Entrenamientos, pulso, pulso en reposo, HRV y sueño del reloj se guardan para {n} y se usan para la carga, la forma del día y la curva de forma.",
+    "Sliten":"Cansado",
+    "Utvilad":"Descansado",
+    "Välj år …":"Elige año …",
+    "för maxpuls och juniorråd":"para pulso máximo y consejos junior",
+    "imorgon":"mañana",
+    "kryssa i rutan för att godkänna":"marca la casilla para aprobar",
+    "under 13 år behöver en förälder logga in och godkänna":"con menos de 13 años, un padre o madre debe iniciar sesión y aprobar",
+    "{h} timmar senaste veckan, mer än rådet för din ålder (högst {a} timmar).":"{h} horas la última semana, más de lo aconsejado para tu edad (máximo {a} horas).",
+    "{n} år":"{n} años",
+    "Även med lätta dagar fram till dess är du trött. Dra ner redan nu.":"Incluso con días suaves hasta entonces estarás cansado. Baja la carga ya.",
+    "Återkalla godkännandet? Klockan kopplas från och vilopuls, HRV, sömn och puls raderas. Passen ligger kvar i träningsloggen.":"¿Retirar la aprobación? El reloj se desconecta y se borran pulso en reposo, HRV, sueño y pulso. Los entrenamientos quedan en el registro.",
+    "Återkalla och radera hälsodata":"Retirar y borrar datos de salud",
+    "Tränar hårt":"Entrenando duro",
+    "Pigg":"Fresco",
+    "Okej":"Bien",
+    "Mycket mer belastning än du är van vid. Vila eller kör lätt några dagar.":"Mucha más carga de la habitual. Descansa o entrena suave unos días.",
+    "Du bygger form, men är trött just nu.":"Estás construyendo forma, pero ahora estás cansado.",
+    "Bra balans mellan träning och vila.":"Buen equilibrio entre entrenamiento y descanso.",
+    "Lite träning en tid. Bra inför tävling, men formen sjunker om det håller i sig.":"Poco entrenamiento un tiempo. Bien antes de un torneo, pero la forma baja si sigue así.",
     "Lägg i grupp":"Añadir a un grupo",
     "Skapa en grupp först, under Grupper.":"Crea primero un grupo, en Grupos.",
     "Vilken spelare är det?":"¿Qué jugador es?",
@@ -8241,12 +8292,12 @@
     var x = TR.data[pid];
     if (!pid || TR.busy[pid] || (!force && x && Date.now() - x.t < 60000)) return;
     TR.busy[pid] = true;
-    authApi("/train?pid=" + pid).then(function(d){ TR.busy[pid] = false; TR.data[pid] = {t:Date.now(), s:d.sessions || [], days:d.days || []}; renderTraining(); },
+    authApi("/train?pid=" + pid).then(function(d){ TR.busy[pid] = false; TR.data[pid] = {t:Date.now(), s:d.sessions || [], days:d.days || [], born:d.born || null, hrmax:d.hrmax || null}; renderTraining(); },
       function(e){ TR.busy[pid] = false; TR.data[pid] = {t:Date.now(), s:[], err:e.message}; renderTraining(); });
   }
   // the matches the app knows, as estimated sessions {day, kind, min, rpe, label, auto}
   function trAuto(P){
-    var out = [], today = trDay(0), from = trAdd(today, -35), seen = {};
+    var out = [], today = trDay(0), from = trAdd(today, -119), seen = {};   // as far back as the sessions (the form curve)
     if (!P) return out;
     var push = function(day, min, rpe, label){ if (day >= from && day <= today) out.push({day:day, kind:"match", min:min, rpe:rpe, label:label, auto:1}); };
     var evs = []; try { evs = pastEvents(P.key).concat(playerEvents(P)); } catch (e){}
@@ -8364,7 +8415,7 @@
       '<p>' + _("Siffran i mitten är kvoten mellan dem. Under 0,8 är en lugn vecka, 0,8–1,3 lagom, 1,3–1,5 ökar snabbt och över 1,5 risk för överbelastning. Det är snabba ökningar som ökar skaderisken mest, inte mängden i sig.") + '</p>' +
       '<p>' + _("Matcher räknas in uppskattat: en tävlingsdag som 150 minuter på nivå 7, en seriedag som 120 minuter, en klubbseriematch som 90 minuter. Loggar du en match samma dag gäller din siffra.") + '</p></details></section>' +
       '<section><div class="sh"><h2>' + (pid === me.pid ? _("Min vecka") : _("{n}s vecka", {n:P ? P.short || P.name : "#" + pid})) + '</h2><div class="meta">' + esc(trName(pid)) + '</div></div><div class="card trweek">' + trWeek(items, pid) + '</div></section>' +
-      trBodyHtml(data.days) + trPlansHtml(pid) + trFeesHtml(pid) + trChart(items) + trConnHtml(pid) +
+      trBodyHtml(data.days, R) + trFormHtml(items, pid) + trJuniorHtml(items, data.born) + trPlansHtml(pid) + trFeesHtml(pid) + trChart(items) + trConnHtml(pid) +
       '<p class="trnote">' + _("Belastning = minuter × hur tungt det kändes (1–10). Matcher från tävlingar, serier och americanos räknas in av sig själva, uppskattat. Loggar du en match samma dag gäller din siffra.") + '</p>' +
       ((me.pid === pid || (me.kids || []).indexOf(pid) >= 0) && data.s.length ? '<p class="trnote"><button type="button" class="linkbtn" data-trclear="1">' + _("Radera all träningshistorik för {n}", {n:trName(pid)}) + '</button></p>' : "");
     box.innerHTML = h;
@@ -8425,8 +8476,28 @@
   /* ---- Hälsodata (worker health.js): workouts and a day's resting pulse, HRV and sleep from the player's watch; Apple
      Hälsa through a Genväg that posts to a personal link, Strava (Garmin, Polar, Suunto ...) with the club's Strava app ---- */
   var HK_SRC = {apple:"Apple Hälsa", strava:"Strava"};
-  function trBodyHtml(days){
+  // Dagsform 0-100: today's resting pulse and HRV against the player's own last 4 weeks (in standard deviations), the
+  // night's sleep and the week's load; null without today's (or yesterday's) values
+  function trReady(days, R){
+    var last = days && days[days.length - 1];
+    if (!last || last.day < trAdd(trDay(0), -1)) return null;
+    var base = days.filter(function(d){ return d.day < last.day && d.day >= trAdd(last.day, -28); }), sc = 70, any = false;
+    var z = function(k, floor){ var v = base.map(function(d){ return d[k]; }).filter(function(x){ return x != null; });
+      if (last[k] == null || v.length < 5) return null;
+      var m = v.reduce(function(a, b){ return a + b; }, 0) / v.length, sd = Math.sqrt(v.reduce(function(a, b){ return a + (b - m) * (b - m); }, 0) / v.length);
+      return (last[k] - m) / Math.max(sd, floor(m)); };
+    var lim = function(v, a, b){ return Math.max(a, Math.min(b, v)); };
+    var zr = z("rhr", function(){ return 1.5; }), zh = z("hrv", function(m){ return m * .08; });
+    if (zr != null){ sc -= lim(zr, -2, 3) * 8; any = true; }
+    if (zh != null){ sc += lim(zh, -3, 2) * 8; any = true; }
+    if (last.sleep != null){ sc += lim((last.sleep - 7.5) * 6, -18, 6); any = true; }
+    if (!any) return null;
+    sc += R.zone === "hi" ? -12 : R.zone === "up" ? -6 : R.zone === "low" ? 4 : 0;
+    return Math.round(lim(sc, 5, 100));
+  }
+  function trBodyHtml(days, R){
     if (!days || !days.length) return "";
+    var rd = R ? trReady(days, R) : null;
     var last = days[days.length - 1], prev = days.slice(0, -1).filter(function(d){ return d.day >= trAdd(last.day, -28); });
     var avg = function(k){ var v = prev.map(function(d){ return d[k]; }).filter(function(x){ return x != null; }); return v.length >= 3 ? v.reduce(function(a, b){ return a + b; }, 0) / v.length : null; };
     var ar = avg("rhr"), av = avg("hrv"), as = avg("sleep"), warn = [];
@@ -8435,9 +8506,65 @@
     if (last.sleep != null && last.sleep < 6) warn.push(_("du har sovit mindre än 6 timmar"));
     var dec = function(v){ return String(Math.round(v * 10) / 10).replace(".", ","); };
     var cell = function(label, v, unit, a){ return v == null ? "" : '<div><span>' + esc(label) + '</span><b>' + dec(v) + '<small> ' + unit + '</small></b><em>' + (a != null ? esc(_("snitt {n}", {n:dec(a)})) : "&nbsp;") + '</em></div>'; };
-    return '<section class="card trbody"><div class="trbh"><b>' + _("Kroppen") + '</b><span>' + esc(last.day === trDay(0) ? _("Idag") : dayMon(last.day)) + '</span></div><div class="trbn">' +
+    return '<section class="card trbody"><div class="trbh"><b>' + _("Kroppen") + '</b><span>' + esc(last.day === trDay(0) ? _("Idag") : dayMon(last.day)) + '</span></div>' +
+      (rd != null ? '<div class="trready r' + (rd >= 75 ? "hi" : rd >= 55 ? "mid" : "lo") + '"><b>' + rd + '</b><span><em>' + _("Dagsform") + '</em>' + esc(_(rd >= 75 ? "Pigg" : rd >= 55 ? "Okej" : "Sliten")) + '</span><i style="width:' + rd + '%"></i></div>' : "") + '<div class="trbn">' +
       cell(_("Vilopuls"), last.rhr, "bpm", ar) + cell("HRV", last.hrv, "ms", av) + cell(_("Sömn"), last.sleep, "h", as) + '</div>' +
       (warn.length ? '<p class="trbw">' + esc(cap(warn.join(", ")) + ". " + _("Ta det lite lugnare idag.")) + '</p>' : prev.length >= 3 ? '<p class="trbok">' + esc(_("Inget avvikande. Kör som planerat.")) + '</p>' : "") + '</section>';
+  }
+  // Formkurva (Banister): fitness = the load averaged over 42 days, fatigue = over 7 days; form = fitness - fatigue, as a
+  // share of fitness. Before the next match (tournament, series): how many easy days at the end bring the form up to "i form".
+  var TR_KC = 1 - Math.exp(-1 / 28), TR_KA = 1 - Math.exp(-1 / 7);   // 4 weeks, not the classic 6: the matches the app knows go back about that far
+  function trFormOf(items){
+    var t = trDay(0), L = {}, n = 0, first = null;
+    items.forEach(function(x){ if (x.day <= t && x.day >= trAdd(t, -119)){ L[x.day] = (L[x.day] || 0) + trLoadOf(x); if (!first || x.day < first) first = x.day; } });
+    if (!first || first > trAdd(t, -41)) return {ctl:0, atl:0, n:0};   // under 6 weeks of history: too little to tell
+    // started at the first 4 weeks' daily average (not 0: a short history would look like a sudden rise)
+    var seed = 0;
+    for (var e = first; e < trAdd(first, 28); e = trAdd(e, 1)) seed += (L[e] || 0) / 28;
+    var ctl = seed, atl = seed;
+    for (var d = first; d <= t; d = trAdd(d, 1)){ var l = L[d] || 0; ctl += (l - ctl) * TR_KC; atl += (l - atl) * TR_KA; if (l && d >= trAdd(t, -41)) n++; }
+    return {ctl:ctl, atl:atl, n:n};
+  }
+  var trPct = function(f){ return f.ctl > 0 ? (f.ctl - f.atl) / f.ctl * 100 : 0; };
+  // days ahead: as now (the daily average) until the last k days, those easy (a quarter)
+  function trProject(f, days, k){
+    var c = f.ctl, a = f.atl, l = f.ctl;
+    for (var i = 1; i <= days; i++){ var x = i > days - k ? l / 4 : l; c += (x - c) * TR_KC; a += (x - a) * TR_KA; }
+    return trPct({ctl:c, atl:a});
+  }
+  function trFormHtml(items, pid){
+    var f = trFormOf(items);
+    if (f.n < 8 || f.ctl < 30) return "";
+    // fatigue at most 1.2 x fitness is "i form", up to 1.5 x "tränar hårt", more "sliten"; under 0.85 x "utvilad"
+    var p = trPct(f), st = p < -50 ? ["Sliten", "Mycket mer belastning än du är van vid. Vila eller kör lätt några dagar."] : p < -20 ? ["Tränar hårt", "Du bygger form, men är trött just nu."] :
+      p <= 15 ? ["I form", "Bra balans mellan träning och vila."] : ["Utvilad", "Lite träning en tid. Bra inför tävling, men formen sjunker om det håller i sig."];
+    var up = trUpcoming(BYPID[pid]).sort(function(a, b){ return a.day < b.day ? -1 : 1; })[0], ev = "";
+    if (up){
+      var dd = Math.round((Date.parse(up.day + "T12:00:00Z") - Date.parse(trDay(0) + "T12:00:00Z")) / 864e5);
+      if (dd >= 1 && dd <= 21){
+        var k = -1;
+        for (var j = 0; j <= Math.min(7, dd); j++) if (trProject(f, dd, j) >= -20){ k = j; break; }
+        ev = '<p class="trfe"><b>' + esc(up.label) + '</b> ' + esc(dd === 1 ? _("imorgon") : _("om {n} dagar", {n:dd})) + '<br>' + esc(k < 0 ? _("Även med lätta dagar fram till dess är du trött. Dra ner redan nu.") : k === 0 ? _("Fortsätter du som nu är du i form till dess.") : _("Kör lätt de sista {n} dagarna, så är du i form.", {n:k})) + '</p>';
+      }
+    }
+    var pos = Math.max(0, Math.min(100, (p + 80) / 120 * 100));   // -80 .. +40
+    return '<section class="card trform"><div class="trbh"><b>' + _("Formkurva") + '</b><span>' + esc(_(st[0])) + '</span></div>' +
+      '<div class="trfbar" aria-hidden="true"><i class="z1"></i><i class="z2"></i><i class="z3"></i><i class="z4"></i><em style="left:' + pos.toFixed(1) + '%"></em></div><div class="trfl"><span>' + _("Sliten") + '</span><span>' + _("I form") + '</span><span>' + _("Utvilad") + '</span></div>' +
+      '<p class="trz">' + esc(_(st[1])) + '</p>' + ev +
+      '<details class="trhow"><summary>' + _("Så räknas det") + '</summary><p>' + _("Kondition är din belastning i snitt över 4 veckor, trötthet samma sak över 1 vecka. Formen är skillnaden. När tröttheten sjunker snabbare än konditionen, efter några lätta dagar, blir du pigg men behåller det du byggt upp. Det kallas att trappa ner inför en tävling.") + '</p></details></section>';
+  }
+  // Juniorkoll: the common advice for young players, at most their age in hours of training a week, and a day or two of rest
+  function trJuniorHtml(items, born){
+    if (!born) return "";
+    var age = +trDay(0).slice(0, 4) - born;
+    if (age < 6 || age >= 19) return "";
+    var t = trDay(0), from = trAdd(t, -6), wk = items.filter(function(x){ return x.day >= from && x.day <= t; }), h = wk.reduce(function(a, x){ return a + x.min; }, 0) / 60, d = {};
+    wk.forEach(function(x){ d[x.day] = 1; });
+    var rest = 7 - Object.keys(d).length, w = [];
+    if (h > age) w.push(_("{h} timmar senaste veckan, mer än rådet för din ålder (högst {a} timmar).", {h:String(Math.round(h * 10) / 10).replace(".", ","), a:age}));
+    if (rest < 1) w.push(_("Ingen vilodag senaste veckan. Unga behöver minst en, gärna två."));
+    return '<section class="card trbody"><div class="trbh"><b>' + _("Juniorkoll") + '</b><span>' + esc(_("{n} år", {n:age})) + '</span></div>' +
+      (w.length ? '<p class="trbw">' + esc(w.join(" ")) + '</p>' : '<p class="trbok">' + esc(_("Inom råden för din ålder: {h} av högst {a} timmar och {r} vilodagar senaste veckan.", {h:String(Math.round(h * 10) / 10).replace(".", ","), a:age, r:rest})) + '</p>') + '</section>';
   }
   function trConnHtml(pid){
     var me = AUTH && AUTH.me;
@@ -8455,7 +8582,9 @@
       row('<svg viewBox="0 0 24 24" width="20" height="20"><path d="M10 2 4 14h4l2-4 2 4h4L10 2zm6 12-2 4-2-4h-2l4 8 4-8h-2z" fill="#FC4C02"/></svg>', "Strava",
         s.on ? _("Kopplad till {n}", {n:s.on.name || "Strava"}) + " · " + when(s.on.last) : s.ready ? _("Garmin, Polar, Suunto, Coros, Android och fler") : _("Kommer snart: Garmin, Polar, Suunto och Android via Strava"),
         s.on ? '<button type="button" class="amxsec" data-hk="soff">' + _("Koppla från") + '</button>' : s.ready ? '<button type="button" class="amxgo" data-hk="son">' + _("Koppla") + '</button>' : "") +
-      '<p class="kdim">' + _("Passen från klockan läggs in av sig själva. Hur tungt det var uppskattas från pulsen, och du kan ändra det. Bara du, dina föräldrar och dina tränare ser det.") + '</p></div></section>';
+      row('<b class="trcy">' + (c.born ? String(c.born).slice(2) : "?") + '</b>', _("Födelseår"), c.born ? String(c.born) + " · " + _("för maxpuls och juniorråd") : _("Ger bättre uppskattning av maxpuls och råd för unga"), '<button type="button" class="amxsec" data-hk="born">' + (c.born ? _("Ändra") : _("Lägg till")) + '</button>') +
+      '<p class="kdim">' + _("Passen från klockan läggs in av sig själva. Hur tungt det var uppskattas från pulsen, och du kan ändra det. Bara du, dina föräldrar och dina tränare ser det.") + '</p>' +
+      (c.consent ? '<p class="kdim">' + esc(c.consent.parent ? _("Godkänt av vårdnadshavare {d}.", {d:dayMon(dayOf(new Date(c.consent.at)))}) : _("Godkänt {d}.", {d:dayMon(dayOf(new Date(c.consent.at)))})) + ' <button type="button" class="linkbtn" data-hk="revoke">' + _("Återkalla och radera hälsodata") + '</button></p>' : "") + '</div></section>';
   }
   // The steps for a Genväg that sends the last days' workouts to the personal link (iOS names in Swedish)
   function hkGuide(link){
@@ -8488,7 +8617,25 @@
     }
     var b = ev.target.closest("[data-hk]");
     if (!b) return false;
-    var k = b.getAttribute("data-hk"), pid = TR.pid, again = function(){ delete TR["hk" + pid]; renderTraining(); };
+    var k = b.getAttribute("data-hk"), pid = TR.pid, again = function(){ delete TR["hk" + pid]; delete TR.data[pid]; renderTraining(); };
+    var C = (TR["hk" + pid] && TR["hk" + pid].d) || {}, me = AUTH && AUTH.me, kid = !!me && me.pid !== pid, yr = +trDay(0).slice(0, 4);
+    var years = function(sel){ var o = '<option value="">' + esc(_("Välj år …")) + '</option>'; for (var y = yr - 6; y >= 1940; y--) o += '<option' + (y === sel ? " selected" : "") + '>' + y + '</option>'; return o; };
+    // the consent before the first connection: the player from 13, else a parent (the birth year asked at the same time)
+    var withConsent = function(go){
+      if (C.consent) return go({});
+      trSheetOpen('<h2>' + _("Godkänn hälsodata") + '</h2><p>' + esc(_("Pass, puls, vilopuls, HRV och sömn från klockan sparas för {n} och används för belastning, dagsform och formkurva.", {n:trName(pid)})) + '</p>' +
+        '<ul class="hksteps"><li>' + _("Bara spelaren, föräldrar och kopplade tränare ser det. Inte klubbens admin.") + '</li><li>' + _("Inget delas vidare eller används till något annat.") + '</li><li>' + _("Du kan när som helst återkalla, då raderas hälsodatan.") + '</li></ul>' +
+        '<div class="trf"><span>' + _("Födelseår") + '</span><select id="hkBorn">' + years(C.born) + '</select></div>' +
+        '<label class="kchk trshow"><input type="checkbox" id="hkOk"> ' + esc(kid ? _("Jag är vårdnadshavare till {n} och godkänner detta.", {n:trName(pid)}) : _("Jag är minst 13 år och godkänner detta.")) + '</label>' +
+        '<div class="amxbar"><button type="button" class="amxgo" data-hkc="1">' + _("Godkänn och fortsätt") + '</button></div>', function(e2){
+        var ok = e2.target.closest("[data-hkc]"); if (!ok) return;
+        var by = +document.getElementById("hkBorn").value || null;
+        if (!document.getElementById("hkOk").checked){ trErr2(_("kryssa i rutan för att godkänna")); return; }
+        if (!kid && by && yr - by < 13){ trErr2(_("under 13 år behöver en förälder logga in och godkänna")); return; }
+        ok.disabled = true;
+        (by && by !== C.born ? authApi("/hk/profile", {pid:pid, born:by}) : Promise.resolve()).then(function(){ C.born = by || C.born; trSheet2Close(); go({consent:true}); }, function(e){ ok.disabled = false; trErr2(e); });
+      });
+    };
     var sheetClick = function(e2){
       var c = e2.target.closest("[data-copy]");
       if (c){ try { navigator.clipboard.writeText(c.getAttribute("data-copy")).then(function(){ c.textContent = _("Kopierat"); }, function(){}); } catch (er){} return; }
@@ -8497,15 +8644,20 @@
       if (x.getAttribute("data-hk2") === "new"){ if (confirm(_("En ny länk ersätter den gamla. Genvägen måste få den nya länken."))) newKey(); }
       else if (confirm(_("Sluta hämta från Apple Hälsa? Passen som redan finns ligger kvar."))) authApi("/hk/key", {pid:pid, op:"off"}).then(function(){ trSheet2Close(); again(); }, trErr2);
     };
-    var newKey = function(){
-      authApi("/hk/key", {pid:pid}).then(function(d){
+    var newKey = function(extra){
+      authApi("/hk/key", Object.assign({pid:pid}, extra || {})).then(function(d){
         trSheetOpen('<h2>' + _("Apple Hälsa") + '</h2>' + hkGuide(PUSH_API + "/hk/" + d.key), sheetClick); again();
       }, function(e){ alert(_("Det gick inte: ") + e.message); });
     };
-    if (k === "on") newKey();
+    if (k === "on") withConsent(newKey);
+    else if (k === "born") trSheetOpen('<h2>' + _("Födelseår") + '</h2><p class="kdim">' + _("Används för att uppskatta maxpulsen och för råden för unga spelare. Syns bara för spelaren, föräldrar och tränare.") + '</p><div class="trf"><select id="hkBorn2">' + years(C.born) + '</select></div><div class="amxbar"><button type="button" class="amxgo" data-hkb="1">' + _("Spara") + '</button></div>', function(e2){
+      if (!e2.target.closest("[data-hkb]")) return;
+      authApi("/hk/profile", {pid:pid, born:document.getElementById("hkBorn2").value || null}).then(function(){ trSheet2Close(); again(); }, trErr2);
+    });
+    else if (k === "revoke"){ if (confirm(_("Återkalla godkännandet? Klockan kopplas från och vilopuls, HRV, sömn och puls raderas. Passen ligger kvar i träningsloggen."))) authApi("/hk/profile", {pid:pid, op:"revoke"}).then(again, function(e){ alert(_("Det gick inte: ") + e.message); }); }
     else if (k === "guide") trSheetOpen('<h2>' + _("Apple Hälsa") + '</h2><p class="kdim">' + _("Länken visas bara när den skapas. Har du tappat den, skapa en ny.") + '</p>' + hkGuide(null) +
       '<div class="amxbar"><button type="button" class="amxsec" data-hk2="new">' + _("Skapa ny länk") + '</button><button type="button" class="amxsec del" data-hk2="off">' + _("Stäng av") + '</button></div>', sheetClick);
-    else if (k === "son") authApi("/strava/start", {pid:pid}).then(function(d){ location.href = d.url; }, function(e){ alert(_("Det gick inte: ") + e.message); });
+    else if (k === "son") withConsent(function(extra){ authApi("/strava/start", Object.assign({pid:pid}, extra)).then(function(d){ location.href = d.url; }, function(e){ alert(_("Det gick inte: ") + e.message); }); });
     else if (k === "soff"){ if (confirm(_("Koppla från Strava? Passen som redan finns ligger kvar."))) authApi("/strava/off", {pid:pid}).then(again, function(e){ alert(_("Det gick inte: ") + e.message); }); }
     return true;
   }
@@ -8614,7 +8766,7 @@
     el.hidden = false;
     requestAnimationFrame(function(){ el.classList.add("open"); });
   }
-  function trSheet2Close(){ var el = document.getElementById("trSheet2"); if (!el) return; el.classList.remove("open"); setTimeout(function(){ el.hidden = true; }, 250); }
+  function trSheet2Close(){ var el = document.getElementById("trSheet2"); if (!el) return; el.classList.remove("open"); setTimeout(function(){ if (!el.classList.contains("open")) el.hidden = true; }, 250); }
   function trErr2(e){ var er = document.getElementById("trErr2"); if (er) er.textContent = _("Det gick inte: ") + (e && e.message || e); }
   function trPlanSheet(target, p){
     // target: "p<pid>" | "g<gid>"; p: the plan when changing one. The library first (the exercises to pick from)
