@@ -94,3 +94,25 @@ test("träning fas 2: groups, assistants, the library, plans; a player marks a p
   assert.deepEqual((await (await call(env, "GET", "/plans?pid=1849853", null, B(cass.tok))).json()).plans.map(p => p.title), ["Ben, Cassandra"]);   // the group's plans went with it
   assert.equal((await call(env, "GET", "/train?pid=1849853", null, B(javier.tok))).status, 403);   // no longer his player
 });
+
+test("träning: Upprepa varje vecka: one plan a week up to the end day; remove one, or one and the rest of the series", async () => {
+  _resetMemory();
+  const env = { PUSH: kv(), DB: fakeD1(), NOW: "2026-10-19T10:00:00Z", ORIGIN, ADMIN_KEY: "k".repeat(32) }, ak = { "X-Admin-Key": env.ADMIN_KEY };
+  const a = await (await call(env, "POST", "/admin", { op: "add", name: "Javier", roles: ["tranare"] }, ak)).json();
+  const tok = (await (await call(env, "POST", "/auth/redeem", { code: a.code })).json()).token;
+  const g = await (await call(env, "POST", "/coach", { op: "group", name: "Onsdagar", pids: [1675246] }, B(tok))).json();
+  const r = await (await call(env, "POST", "/plans", { gid: g.id, day: "2026-10-21", time: "19:00", kind: "padel", min: 90, title: "Onsdagsträning", until: "2026-11-12" }, B(tok))).json();
+  assert.equal(r.weeks, 4);
+  let l = (await (await call(env, "GET", "/plans?gid=" + g.id, null, B(tok))).json()).plans;
+  assert.deepEqual(l.map(p => p.day), ["2026-10-21", "2026-10-28", "2026-11-04", "2026-11-11"]);
+  assert.ok(l.every(p => p.series && p.series === l[0].series));
+  // one week off: only that one
+  await call(env, "POST", "/plans", { op: "del", id: l[1].id }, B(tok));
+  // from 4 Nov on: the rest of the series
+  const d = await (await call(env, "POST", "/plans", { op: "del", id: l[2].id, rest: true }, B(tok))).json();
+  assert.equal(d.n, 2);
+  assert.deepEqual((await (await call(env, "GET", "/plans?gid=" + g.id, null, B(tok))).json()).plans.map(p => p.day), ["2026-10-21"]);
+  // a single plan has no series
+  const one = await (await call(env, "POST", "/plans", { gid: g.id, day: "2026-12-02", kind: "padel", min: 60, title: "Extra" }, B(tok))).json();
+  assert.equal(one.weeks, undefined);
+});

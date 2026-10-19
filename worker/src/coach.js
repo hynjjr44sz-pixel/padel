@@ -134,7 +134,7 @@ export async function plansGet(env, me, q, t) {
   if (q.gid) {
     const g = await canGroup(env, me, q.gid);
     if (!g) return { err: "forbidden", status: 403 };
-    const plans = (await env.DB.prepare("SELECT id, gid, pid, day, time, kind, min, title, note, ex FROM plans WHERE org = ? AND gid = ? AND day >= ? AND day <= ? ORDER BY day, time").bind(ORG, g.id, from, to).all()).results;
+    const plans = (await env.DB.prepare("SELECT p.id, p.gid, p.pid, p.day, p.time, p.kind, p.min, p.title, p.note, p.ex, s.series FROM plans p LEFT JOIN plan_series s ON s.plan = p.id WHERE p.org = ? AND p.gid = ? AND p.day >= ? AND p.day <= ? ORDER BY p.day, p.time").bind(ORG, g.id, from, to).all()).results;
     const done = plans.length ? (await env.DB.prepare("SELECT d.plan, d.pid, d.session, s.min, s.rpe, s.note, r.stars, (SELECT count(*) FROM tcomments c WHERE c.session = d.session) AS c FROM plan_done d JOIN sessions s ON s.id = d.session LEFT JOIN srate r ON r.session = d.session " +
       "WHERE d.plan IN (" + plans.map(() => "?").join(",") + ")").bind(...plans.map(p => p.id)).all()).results : [];
     return { group: g, plans: (await withEx(env, plans)).map(p => ({ ...p, done: done.filter(d => d.plan === p.id).map(d => ({ pid: d.pid, session: d.session, min: d.min, rpe: d.rpe, note: d.note, stars: d.stars || null, c: d.c })) })) };
@@ -142,22 +142,24 @@ export async function plansGet(env, me, q, t) {
   const pid = Number(q.pid);
   if (!canTrain(me, pid)) return { err: "forbidden", status: 403 };
   const gids = (await env.DB.prepare("SELECT gid FROM tgroup_members WHERE pid = ?").bind(pid).all()).results.map(r => r.gid);
-  const plans = (await env.DB.prepare("SELECT p.id, p.gid, p.pid, p.day, p.time, p.kind, p.min, p.title, p.note, p.ex, g.name AS gname FROM plans p LEFT JOIN tgroups g ON g.id = p.gid WHERE p.org = ? AND p.day >= ? AND p.day <= ? AND (p.pid = ?" +
+  const plans = (await env.DB.prepare("SELECT p.id, p.gid, p.pid, p.day, p.time, p.kind, p.min, p.title, p.note, p.ex, g.name AS gname, s.series FROM plans p LEFT JOIN tgroups g ON g.id = p.gid LEFT JOIN plan_series s ON s.plan = p.id WHERE p.org = ? AND p.day >= ? AND p.day <= ? AND (p.pid = ?" +
     (gids.length ? " OR p.gid IN (" + gids.map(() => "?").join(",") + ")" : "") + ") ORDER BY p.day, p.time").bind(ORG, from, to, pid, ...gids).all()).results;
   const done = plans.length ? (await env.DB.prepare("SELECT plan, session FROM plan_done WHERE pid = ? AND plan IN (" + plans.map(() => "?").join(",") + ")").bind(pid, ...plans.map(p => p.id)).all()).results : [];
   return { pid, plans: (await withEx(env, plans)).map(p => ({ ...p, done: (done.find(d => d.plan === p.id) || {}).session || null })) };
 }
-// POST /plans {op: save {id?, gid | pid, day, time, kind, min, title, note, ex} | del {id}}
+// POST /plans {op: save {id?, gid | pid, day, time, kind, min, title, note, ex, until? (a new one: the same every week up to
+// that day, at most 40)} | del {id, rest? (this one and the series' later ones)}}
 export async function plansPost(env, me, b, t) {
   if (!env.DB) return { err: "no database", status: 503 };
   if (!me) return { err: "login", status: 401 };
-  const old = b && typeof b.id === "string" ? await env.DB.prepare("SELECT id, gid, pid FROM plans WHERE id = ? AND org = ?").bind(b.id, ORG).first() : null;
+  const old = b && typeof b.id === "string" ? await env.DB.prepare("SELECT p.id, p.gid, p.pid, p.day, s.series FROM plans p LEFT JOIN plan_series s ON s.plan = p.id WHERE p.id = ? AND p.org = ?").bind(b.id, ORG).first() : null;
   if (b && b.id && !old) return { err: "not found", status: 404 };
   if (old && !(await canPlan(env, me, old.gid, old.pid))) return { err: "forbidden", status: 403 };
   if (b && b.op === "del") {
     if (!old) return { err: "not found", status: 404 };
-    await env.DB.batch([env.DB.prepare("DELETE FROM plan_done WHERE plan = ?").bind(old.id), env.DB.prepare("DELETE FROM plans WHERE id = ?").bind(old.id)]);
-    return { ok: true };
+    const ids = b.rest && old.series ? (await env.DB.prepare("SELECT p.id FROM plan_series s JOIN plans p ON p.id = s.plan WHERE s.series = ? AND p.day >= ?").bind(old.series, old.day).all()).results.map(r => r.id) : [old.id];
+    await env.DB.batch(ids.flatMap(i => ["plan_done", "plan_series"].map(tb => env.DB.prepare("DELETE FROM " + tb + " WHERE plan = ?").bind(i)).concat([env.DB.prepare("DELETE FROM plans WHERE id = ?").bind(i)])));
+    return { ok: true, n: ids.length };
   }
   const gid = old ? old.gid : (typeof b.gid === "string" && b.gid ? b.gid : null), pid = old ? old.pid : (gid ? null : Number(b.pid) || null);
   if (!old && !(await canPlan(env, me, gid, pid))) return { err: "forbidden", status: 403 };
@@ -167,10 +169,16 @@ export async function plansPost(env, me, b, t) {
   const ex = [...new Set((Array.isArray(b.ex) ? b.ex : []).filter(x => typeof x === "string"))].slice(0, 20);
   if (ex.length && (await env.DB.prepare("SELECT count(*) AS n FROM exercises WHERE org = ? AND id IN (" + ex.map(() => "?").join(",") + ")").bind(ORG, ...ex).first()).n !== ex.length) return { err: "exercise", status: 400 };
   const note = String(b.note || "").replace(/[\u0000-\u0008\u000b-\u001f<>]/g, "").trim().slice(0, 1000) || null, id = old ? old.id : rid();
+  let weeks = 1;
   if (old) await env.DB.prepare("UPDATE plans SET day = ?, time = ?, kind = ?, min = ?, title = ?, note = ?, ex = ? WHERE id = ?").bind(day, time, kind, min, title, note, JSON.stringify(ex), id).run();
   else {
-    await env.DB.batch([env.DB.prepare("INSERT INTO plans (id, org, gid, pid, day, time, kind, min, title, note, ex, by, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(id, ORG, gid, pid, day, time, kind, min, title, note, JSON.stringify(ex), me.id, t),
-      log(env, t, me.id, "plan", { id, gid, pid, day })]);
+    // every week up to `until`: one plan a week, each changeable on its own; the series lets them go together
+    const days = [day];
+    if (DAY_RE.test(String(b.until || "")) && b.until > day) for (let d = day; days.length < 40;) { d = new Date(Date.parse(d + "T12:00:00Z") + 7 * 864e5).toISOString().slice(0, 10); if (d > b.until) break; days.push(d); }
+    const ids = days.map((d, i) => i ? rid() : id), series = days.length > 1 ? rid() : null;
+    await env.DB.batch(days.flatMap((d, i) => [env.DB.prepare("INSERT INTO plans (id, org, gid, pid, day, time, kind, min, title, note, ex, by, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(ids[i], ORG, gid, pid, d, time, kind, min, title, note, JSON.stringify(ex), me.id, t),
+      ...(series ? [env.DB.prepare("INSERT INTO plan_series (plan, series) VALUES (?, ?)").bind(ids[i], series)] : [])]).concat([log(env, t, me.id, "plan", { id, gid, pid, day, weeks: days.length })]));
+    weeks = days.length;
     // a notis to the players (their own accounts and their parents'), for a session from today on
     if (day >= dayOf(t)) try {
       const pids = gid ? (await env.DB.prepare("SELECT pid FROM tgroup_members WHERE gid = ?").bind(gid).all()).results.map(r => r.pid) : [pid];
@@ -178,11 +186,11 @@ export async function plansPost(env, me, b, t) {
       if (pids.length) {
         const users = (await env.DB.prepare("SELECT id FROM users WHERE org = ? AND pid IN (" + pids.map(() => "?").join(",") + ") UNION SELECT user FROM guardians WHERE pid IN (" + pids.map(() => "?").join(",") + ")").bind(ORG, ...pids, ...pids).all()).results.map(r => r.id).filter(u => u !== me.id);
         const W = ["sön", "mån", "tis", "ons", "tor", "fre", "lör"], d = new Date(day + "T12:00:00Z");
-        await notifyUsers(env, users, { title: "Nytt pass: " + title, body: [W[d.getUTCDay()] + " " + d.getUTCDate() + "/" + (d.getUTCMonth() + 1) + (time ? " " + time : ""), min + " min", gname].filter(Boolean).join(" · "), url: "#traning", tag: "padel-plan-" + id });
+        await notifyUsers(env, users, { title: "Nytt pass: " + title, body: [(days.length > 1 ? "varje " + ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"][d.getUTCDay()] + " från " : W[d.getUTCDay()] + " ") + d.getUTCDate() + "/" + (d.getUTCMonth() + 1) + (time ? " " + time : ""), min + " min", gname].filter(Boolean).join(" · "), url: "#traning", tag: "padel-plan-" + id });
       }
     } catch (e) {}
   }
-  return { ok: true, id };
+  return { ok: true, id, ...(weeks > 1 ? { weeks } : {}) };
 }
 // Is plan `id` one of this player's (own, or their group's)? For marking it done (train.js)
 export async function planFor(env, id, pid) {

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-p82dzHD3SStHEwYMXt2W++SKFp+NESUv/cRSn/nZC2U='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-f5cA6fKnI0V/XSt3QdEBkrBsEDsBxo/N8tOnKJEMr/0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -495,6 +495,15 @@
   .shx{ position:absolute; top:12px; right:12px; z-index:2; width:36px; height:36px; border:0; border-radius:50%; background:var(--surface-2); color:var(--ink); font-size:22px; line-height:1; }
   .swopen{ width:100%; margin:0 0 10px; }
   .swrow{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 10px; padding:10px 12px; margin:0 0 8px; border-radius:12px; background:var(--surface-2); } .swrow span{ flex:0 0 100%; font:600 10.5px/1.2 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); } .swrow b{ flex:1; font-size:15px; word-break:break-word; } .swrow .amxsec{ margin:0; padding:8px 12px; }
+  /* Träning: room above each heading; selects that match the inputs */
+  #traning .sh{ margin-top:28px; } #traning .trtabs + .sh, #traning .trback + .sh{ margin-top:6px; }
+  #traning select{ width:100%; padding:12px 40px 12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238B8D98' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;
+    color:var(--ink); font:inherit; font-size:15px; -webkit-appearance:none; appearance:none; }
+  #traning .trfeer select{ width:auto; max-width:44%; padding:8px 30px 8px 10px; font-size:13px; background-position:right 10px center; }
+  #traning .amxset > p.kdim{ margin:0 0 10px; } #traning .kcoachl{ margin:0 0 10px; }
+  .trrep{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; padding:10px 12px; border-radius:12px; background:var(--surface-2); } .trrep .kchk{ font-weight:600; }
+  .trrepu{ display:flex; align-items:center; gap:8px; } .trrepu span{ font-size:13px; color:var(--dim); } .trrepu input{ width:auto !important; padding:8px 10px !important; }
+  .trrep:has(#pRep:not(:checked)) .trrepu{ opacity:.45; }
   .trhow{ margin-top:12px; text-align:left; } .trhow summary{ cursor:pointer; font:600 12px/1 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); padding:6px 0; }
   .trhow p{ margin:8px 0 0 !important; font-size:13.5px; line-height:1.45; }
   .trwho{ display:flex; gap:8px; overflow-x:auto; margin:0 0 12px; padding-bottom:4px; }
@@ -2036,6 +2045,11 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Upprepa varje vecka": "Repetir cada semana",
+    "till och med": "hasta",
+    "Ta bort detta och kommande": "Eliminar esta y las siguientes",
+    "Ta bort det här passet och alla kommande veckor i serien?": "¿Eliminar esta sesión y todas las semanas siguientes de la serie?",
+    "välj ett slutdatum efter första passet": "elige una fecha final posterior a la primera sesión",
     "Anmälningar": "Solicitudes",
     "Swish öppnas med allt ifyllt. Fungerar det inte, kopiera uppgifterna här under.": "Swish se abre con todo rellenado. Si no funciona, copia los datos aquí abajo.",
     "Öppna Swish": "Abrir Swish",
@@ -8102,8 +8116,9 @@
     var row = function(x){
       var free = Math.max(0, x.max - x.n), d = new Date(x.d + "T12:00:00Z");
       var pill = free === 0 ? _("Fullt") : free === 1 ? _("1 plats kvar") : _("{n} platser kvar", {n:free});
-      // the activity on the facility's page (its own anchor), where MATCHi's Book button is; the login detour went blank on phones
-      var href = x.id ? CENTER_URL.replace(/#.*$/, "") + "#ClassActivity-" + (+x.id) : CENTER_URL;
+      // MATCHi's own landing for one occasion: it opens the booking box for exactly that one (where MATCHi sends you after
+      // logging in); not via the login page, which went blank on phones. Without the occasion: the activity on the facility page
+      var href = x.oid ? "https://www.matchi.se/activities/search?id=" + (+x.oid) + "&comeback=true" : x.id ? CENTER_URL.replace(/#.*$/, "") + "#ClassActivity-" + (+x.id) : CENTER_URL;
       return '<a class="ctrrow" href="' + esc(href) + '" target="_blank" rel="noopener"><span class="ctrd"><b>' + esc(x.d === today ? _("Idag") : cap(dayLabel(d))) + '</b><small>' + esc(x.t1 + "–" + x.t2) + '</small></span>' +
         '<span class="ctrn"><b>' + esc(x.name) + '</b><small><span class="ctrp' + (free === 0 ? " full" : free <= 2 ? " few" : "") + '">' + esc(pill) + '</span>' +
         esc((x.price != null ? x.price + " kr · " : "") + x.n + "/" + x.max) + '</small></span></a>';
@@ -8386,7 +8401,7 @@
         g.pids.slice(0, 5).map(function(p){ var P = BYPID[p]; return P ? avatar(P.name) : ""; }).join("") + '</span><i aria-hidden="true">›</i></button>';
     }).join("") : '<p class="empty">' + _("Inga grupper än.") + '</p>';
     if (head){
-      h += '<div class="amxbar"><button type="button" class="amxgo" data-trgedit="">' + _("Ny grupp") + '</button></div>' +
+      h += '<div class="amxbar"><button type="button" class="amxsec" data-trgedit="">+ ' + _("Ny grupp") + '</button></div>' +
         '<div class="sh"><h2>' + _("Hjälptränare") + '</h2><div class="meta"></div></div><div class="card amxset"><p class="kdim">' + _("Hjälptränare får använda och fylla på övningsbiblioteket och se gruppernas planer, men inte spelarnas egen träning.") + '</p>' +
         '<div class="kcoachl">' + (c.assistants.length ? c.assistants.map(function(a){ return '<button type="button" class="kcp" data-trunassist="' + esc(a.id) + '">' + esc(a.name) + ' <i aria-hidden="true">×</i></button>'; }).join("") : '<small>' + _("Inga än.") + '</small>') + '</div>' +
         '<select data-trassist="1"><option value="">' + _("Lägg till hjälptränare …") + '</option>' + c.accounts.filter(function(a){ return !c.assistants.some(function(x){ return x.id === a.id; }); }).map(function(a){ return '<option value="' + esc(a.id) + '">' + esc(a.name) + '</option>'; }).join("") + '</select></div>';
@@ -8435,15 +8450,22 @@
       '<div class="trf"><span>' + _("Typ") + '</span><div class="trcs" id="pKinds">' + kinds + '</div></div>' +
       '<div class="trf"><span>' + _("Övningar") + '</span>' + (exl || '<p class="kdim">' + _("Biblioteket är tomt än.") + '</p>') + '</div>' +
       '<div class="trf"><span>' + _("Anteckning till spelarna") + '</span><textarea id="pNote" rows="3" maxlength="1000">' + esc(p.note || "") + '</textarea></div>' +
-      '<div class="amxbar"><button type="button" class="amxgo" data-psave="1">' + _("Spara") + '</button>' + (p.id ? '<button type="button" class="amxsec del" data-pdel="1">' + _("Ta bort") + '</button>' : "") + '</div>', function(ev){
+      (p.id ? "" : '<div class="trf trrep"><label class="kchk"><input type="checkbox" id="pRep"> ' + _("Upprepa varje vecka") + '</label><label class="trrepu"><span>' + _("till och med") + '</span><input type="date" id="pUntil" value="' + esc(trAdd(p.day, 7 * 9)) + '"></label></div>') +
+      '<div class="amxbar"><button type="button" class="amxgo" data-psave="1">' + _("Spara") + '</button>' + (p.id ? '<button type="button" class="amxsec del" data-pdel="1">' + _("Ta bort") + '</button>' + (p.series ? '<button type="button" class="amxsec del" data-pdel="rest">' + _("Ta bort detta och kommande") + '</button>' : "") : "") + '</div>', function(ev){
       var k = ev.target.closest("[data-pk]");
       if (k){ p.kind = k.getAttribute("data-pk"); [].forEach.call(k.parentNode.children, function(x){ x.setAttribute("aria-pressed", x === k ? "true" : "false"); }); return; }
       var b = ev.target.closest("[data-psave],[data-pdel]");
       if (!b) return;
-      if (b.hasAttribute("data-pdel")){ if (!confirm(_("Ta bort passet?"))) return; b.disabled = true; authApi("/plans", {op:"del", id:p.id}).then(trPlanDone, function(e){ b.disabled = false; trErr2(e); }); return; }
+      if (b.hasAttribute("data-pdel")){
+        var rest = b.getAttribute("data-pdel") === "rest";
+        if (!confirm(rest ? _("Ta bort det här passet och alla kommande veckor i serien?") : _("Ta bort passet?"))) return;
+        b.disabled = true; authApi("/plans", {op:"del", id:p.id, rest:rest}).then(trPlanDone, function(e){ b.disabled = false; trErr2(e); }); return;
+      }
       var body = {title:document.getElementById("pTitle").value.trim(), day:document.getElementById("pDay").value, time:document.getElementById("pTime").value || "", min:+document.getElementById("pMin").value, kind:p.kind, note:document.getElementById("pNote").value,
         ex:[].map.call(document.querySelectorAll("#trSheet2 [data-pex]:checked"), function(x){ return x.getAttribute("data-pex"); })};
       if (!body.title){ trErr2(_("skriv en rubrik")); return; }
+      var rep = document.getElementById("pRep");
+      if (rep && rep.checked){ body.until = document.getElementById("pUntil").value; if (!body.until || body.until <= body.day){ trErr2(_("välj ett slutdatum efter första passet")); return; } }
       if (p.id) body.id = p.id; else if (target[0] === "g") body.gid = target.slice(1); else body.pid = +target.slice(1);
       b.disabled = true;
       authApi("/plans", body).then(trPlanDone, function(e){ b.disabled = false; trErr2(e); });

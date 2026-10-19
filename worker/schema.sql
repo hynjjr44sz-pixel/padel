@@ -228,3 +228,9 @@ CREATE TABLE IF NOT EXISTS tpay (
   by TEXT,
   PRIMARY KEY (gid, pid)
 );
+-- a weekly series of plans ("Upprepa varje vecka"): the plans that belong together
+CREATE TABLE IF NOT EXISTS plan_series (
+  plan TEXT PRIMARY KEY,
+  series TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS plan_series_s ON plan_series(series);
