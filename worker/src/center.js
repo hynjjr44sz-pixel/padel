@@ -1,6 +1,7 @@
 // "På centret": Nynäshamn Padelcenter's activities on MATCHi (lunchpadel, clinics, courses), from the facility's public
 // page: name, day, time, signed/seats and price. No login and no names (who is signed up shows only to MATCHi users).
-// Read once an hour into KV "center" {at, list: [{id, name, d, t1, t2, n, max, price}]}; GET /events "center".
+// Read once an hour into KV "center" {at, list: [{id, oid (the occasion, for booking), name, d, t1, t2, n, max, price}]};
+// GET /events "center".
 export const CENTER_URL = "https://www.matchi.se/facilities/nynashamnpadelcenter";
 const DAY = 864e5;
 const text = s => String(s || "").replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(/&#34;|&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
@@ -16,10 +17,12 @@ export function parseCenter(html, today) {
     for (const row of item.split('<tr class="activity-occasion').slice(1)) {
       const tm = /(\d\d:\d\d)\s*-\s*(\d\d:\d\d)/.exec(row), d = (/<small>(\d{4}-\d\d-\d\d)<\/small>/.exec(row) || [])[1];
       const seats = /<\/i>\s*(\d+)\s*\/\s*(\d+)\s*</.exec(row), price = /<strong>\s*(\d+)\s*SEK\s*<\/strong>/.exec(row);
+      const oid = Number((/loginBeforeBooking\(this\.href,\s*(?:&#39;|')(\d+)/.exec(row) || /id%3D(\d+)/.exec(row) || [])[1]) || null;
       if (!tm || !d || !seats || d < today || d > end) continue;
       const k = name + "|" + d + "|" + tm[1], was = out.get(k);
-      if (was) { was.n += +seats[1]; was.max += +seats[2]; continue; }
-      out.set(k, { id: aid ? Number(aid) : null, name, d, t1: tm[1], t2: tm[2], n: +seats[1], max: +seats[2], price: price ? +price[1] : null });
+      // the occasion to book: the first with a free seat
+      if (was) { if (was.n >= was.max && +seats[1] < +seats[2] && oid) was.oid = oid; was.n += +seats[1]; was.max += +seats[2]; continue; }
+      out.set(k, { id: aid ? Number(aid) : null, oid, name, d, t1: tm[1], t2: tm[2], n: +seats[1], max: +seats[2], price: price ? +price[1] : null });
     }
   }
   return [...out.values()].sort((a, b) => (a.d + a.t1).localeCompare(b.d + b.t1) || a.name.localeCompare(b.name)).slice(0, 60);

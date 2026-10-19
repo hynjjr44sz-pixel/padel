@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bVznEdLsBeOss2+Gk1QjcVSzmRkZgTp4k97JphngGzw='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-jACS2h02OzfYvL2lLUhzh8ZTmNyO+OoziVDqmfrisnY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1896,7 +1896,7 @@
     "1 plats kvar": "1 plaza libre",
     "{n} platser kvar": "{n} plazas libres",
     "Visa alla {n}": "Ver todas ({n})",
-    "Från MATCHi. Bokning och vilka som är anmälda finns där.": "De MATCHi. Allí se reserva y se ve quién está inscrito.",
+    "Från MATCHi. Tryck på en aktivitet för att anmäla dig där.": "De MATCHi. Toca una actividad para inscribirte allí.",
     "Soffläge": "Modo sofá",
     "Du står inte längre som medlem i Nynäs Padel Club på RankedIn (sedan {d}). Din spelarsida visas inte i appen. Kontot finns kvar, och kommer du tillbaka till klubben syns du igen av sig själv.": "Ya no figuras como miembro de Nynäs Padel Club en RankedIn (desde {d}). Tu página de jugador no se muestra en la app. La cuenta sigue activa y, si vuelves al club, aparecerás de nuevo automáticamente.",
     "Har lämnat klubben": "Ha dejado el club",
@@ -7730,13 +7730,15 @@
     var row = function(x){
       var free = Math.max(0, x.max - x.n), d = new Date(x.d + "T12:00:00Z");
       var pill = free === 0 ? _("Fullt") : free === 1 ? _("1 plats kvar") : _("{n} platser kvar", {n:free});
-      return '<a class="ctrrow" href="' + CENTER_URL + '" target="_blank" rel="noopener"><span class="ctrd"><b>' + esc(x.d === today ? _("Idag") : cap(dayLabel(d))) + '</b><small>' + esc(x.t1 + "–" + x.t2) + '</small></span>' +
+      // MATCHi's own Book button: log in (if needed), then straight to that occasion
+      var href = x.oid ? "https://www.matchi.se/login/auth?returnUrl=" + encodeURIComponent("/activities/search?id=" + (+x.oid) + "&comeback=true") : CENTER_URL;
+      return '<a class="ctrrow" href="' + esc(href) + '" target="_blank" rel="noopener"><span class="ctrd"><b>' + esc(x.d === today ? _("Idag") : cap(dayLabel(d))) + '</b><small>' + esc(x.t1 + "–" + x.t2) + '</small></span>' +
         '<span class="ctrn"><b>' + esc(x.name) + '</b><small><span class="ctrp' + (free === 0 ? " full" : free <= 2 ? " few" : "") + '">' + esc(pill) + '</span>' +
         esc((x.price != null ? x.price + " kr · " : "") + x.n + "/" + x.max) + '</small></span></a>';
     };
     var first = l.slice(0, 6), rest = l.slice(6);
     host.innerHTML = first.map(row).join("") + (rest.length ? '<details class="sgmore"><summary>' + _("Visa alla {n}", {n:l.length}) + '</summary>' + rest.map(row).join("") + '</details>' : "") +
-      '<p class="ctrnote">' + _("Från MATCHi. Bokning och vilka som är anmälda finns där.") + '</p>';
+      '<p class="ctrnote">' + _("Från MATCHi. Tryck på en aktivitet för att anmäla dig där.") + '</p>';
   }
   function renderAmxHome(){
     var host = document.getElementById("amxHome");
