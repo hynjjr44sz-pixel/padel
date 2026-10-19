@@ -42,7 +42,7 @@ test("passkey: DER signature to raw", () => {
   assert.equal(derToRaw(Uint8Array.of(0x31, 0)), null);
 });
 
-test("passkey: the admin adds one, logs in with it on a new phone; only once per challenge; wrong origin, key, flags, counter", async () => {
+test("passkey: anyone logged in adds one (the admin here), logs in with it on a new phone; only once per challenge; wrong origin, key, flags, counter", async () => {
   _resetMemory();
   const env = { PUSH: kv(), DB: fakeD1(), NOW: "2026-10-18T10:00:00Z", ORIGIN, ADMIN_KEY: "k".repeat(32) };
   const ak = { "X-Admin-Key": env.ADMIN_KEY };
@@ -52,14 +52,12 @@ test("passkey: the admin adds one, logs in with it on a new phone; only once per
   };
   const adm = await add("Mikael", ["admin"]), arr = await add("Arr", ["arr"]);
   const ph = await phone();
-  // not logged in / not an admin: no adding
-  assert.equal((await call(env, "POST", "/auth/pk/options", { add: true })).status, 403);
-  assert.equal((await call(env, "POST", "/auth/pk/options", { add: true }, bearer(arr))).status, 403);
+  // not logged in: no adding
+  assert.equal((await call(env, "POST", "/auth/pk/options", { add: true })).status, 401);
   let o = await (await call(env, "POST", "/auth/pk/options", { add: true }, bearer(adm))).json();
   assert.equal(o.rp.id, "padel.holmberg.st");
   assert.deepEqual(o.exclude, []);
   assert.equal((await call(env, "POST", "/auth/pk/add", { ...ph.create(o.challenge), alg: -257 }, bearer(adm))).status, 400);   // only ES256
-  assert.equal((await call(env, "POST", "/auth/pk/add", ph.create(o.challenge), bearer(arr))).status, 403);
   assert.equal((await call(env, "POST", "/auth/pk/add", ph.create(o.challenge), bearer(adm))).status, 200);
   assert.equal((await call(env, "POST", "/auth/pk/add", ph.create(o.challenge), bearer(adm))).status, 400);   // the challenge once
   assert.equal((await (await call(env, "GET", "/auth/me", null, bearer(adm))).json()).me.pk, 1);
@@ -96,6 +94,14 @@ test("passkey: the admin adds one, logs in with it on a new phone; only once per
   o = await (await call(env, "POST", "/auth/pk/options", { add: true }, bearer(adm2))).json();
   env.NOW = "2026-10-18T10:05:01Z";
   assert.equal((await call(env, "POST", "/auth/pk/add", ph.create(o.challenge), bearer(adm2))).status, 400);
+  o = await (await call(env, "POST", "/auth/pk/options", { add: true }, bearer(adm))).json();
+  assert.equal((await call(env, "POST", "/auth/pk/add", (await phone()).create(o.challenge), bearer(arr))).status, 400);   // another account's challenge
+  // an arrangör (any account): adds one too, and logs in with it
+  const ph2 = await phone();
+  o = await (await call(env, "POST", "/auth/pk/options", { add: true }, bearer(arr))).json();
+  assert.equal((await call(env, "POST", "/auth/pk/add", ph2.create(o.challenge), bearer(arr))).status, 200);
+  const c2 = (await (await call(env, "POST", "/auth/pk/options", {})).json()).challenge;
+  assert.equal((await (await call(env, "POST", "/auth/pk/login", await ph2.get(c2))).json()).me.name, "Arr");
   // clearing one's own
   assert.equal((await call(env, "POST", "/auth/pk/clear", {}, bearer(adm2))).status, 200);
   assert.equal((await call(env, "POST", "/auth/pk/clear", {})).status, 401);

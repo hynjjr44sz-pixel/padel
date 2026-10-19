@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-fADjBkfDHSpWSMFzJ58do2pzgc61kQxDjpiXlZjrohc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-oeGrPZzgd4smIcrJFDgLa9v1zvgkmIEWrV+g8Fj6gno='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -8150,7 +8150,7 @@
       var q = document.getElementById("kMemQ"); if (q){ q.focus(); try { q.setSelectionRange(pos, pos); } catch (e){} }
     };
   }
-  /* ---- Passkey (Face ID / Touch ID): the admin adds one when logged in and later logs in with it, no link needed.
+  /* ---- Passkey (Face ID / Touch ID / fingerprint): anyone logged in adds one and later logs in with it, no link needed.
      The worker keeps the public key only (passkey.js). ---- */
   function pkOk(){ return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create && window.isSecureContext); }
   function pkB64(b){ var s = "", a = new Uint8Array(b); for (var i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
@@ -8159,7 +8159,7 @@
   function pkName(){ var u = navigator.userAgent || ""; return /iPhone|iPad/.test(u) ? "Face ID" : /Android/.test(u) ? _("fingeravtryck") : /Mac/.test(u) ? "Touch ID" : /Windows/.test(u) ? "Windows Hello" : _("passkey"); }
   function pkErrText(e){ return e && e.name === "NotAllowedError" ? _("Avbrutet.") : e && e.name === "InvalidStateError" ? _("Den här enheten är redan tillagd för kontot.") : _("Det gick inte: ") + (e && e.message || ""); }
   function konPkHtml(me){
-    if (me.roles.indexOf("admin") < 0 || !pkOk()) return "";
+    if (!pkOk()) return "";
     return '<div class="kvis"><p><b>' + esc(pkName().charAt(0).toUpperCase() + pkName().slice(1)) + '</b><br><small>' + esc(me.pk ? _("Du kan logga in med {m} utan länk.", {m:pkName()}) : _("Logga in med {m} i stället för en länk nästa gång.", {m:pkName()})) + '</small></p>' +
       '<span><button type="button" class="amxsec" data-k="pkadd">' + _("Lägg till") + '</button>' + (me.pk ? ' <button type="button" class="amxsec del" data-k="pkclear">' + _("Ta bort") + '</button>' : "") + '</span></div>';
   }

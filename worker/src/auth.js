@@ -37,11 +37,11 @@ export async function authUser(env, req, t) {
   if (t - r.seen > SEEN_MS) await env.DB.prepare("UPDATE devices SET seen = ? WHERE hash = ?").bind(t, hash).run();
   return meOf(env, r);
 }
-// {id, name, pid, roles, kids (the juniors a parent looks after), reqs (open requests, for an admin)}
+// {id, name, pid, roles, kids (the juniors a parent looks after), pk (passkeys), reqs (open requests, for an admin)}
 export async function meOf(env, u) {
   const roles = await rolesOf(env, u.id), kids = (await env.DB.prepare("SELECT pid FROM guardians WHERE user = ?").bind(u.id).all()).results.map(r => r.pid);
   const me = { id: u.id, name: u.name, pid: u.pid || null, roles, kids };
-  if (roles.includes("admin")) me.pk = (await env.DB.prepare("SELECT count(*) AS n FROM passkeys WHERE user = ?").bind(u.id).first()).n;
+  me.pk = (await env.DB.prepare("SELECT count(*) AS n FROM passkeys WHERE user = ?").bind(u.id).first()).n;
   if (roles.includes("admin")) me.reqs = (await env.DB.prepare("SELECT count(*) AS n FROM requests WHERE org = ? AND status = 'open' AND created > ?").bind(ORG, Date.now() - REQ_MS).first()).n;
   return me;
 }

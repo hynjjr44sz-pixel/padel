@@ -1,7 +1,7 @@
-// Passkeys (WebAuthn: Face ID, Touch ID, Windows Hello) for the admin: once logged in, the admin adds one on the phone;
+// Passkeys (WebAuthn: Face ID, Touch ID, fingerprint, Windows Hello) for everyone with an account: once logged in, one adds a passkey on the phone;
 // later that phone, or another with the same keychain, logs in with it and no link is needed. Only ES256 (what
 // platform authenticators use). The public key comes from the browser (getPublicKey(): SPKI); no attestation is
-// asked for, the admin adding it is already logged in. Challenges are used once and live 5 minutes.
+// asked for, the person adding it is already logged in. Challenges are used once and live 5 minutes.
 import { meOf, newDevice, clean, log, ORG } from "./auth.js";
 
 const CH_MS = 5 * 60e3, MAX_KEYS = 10, ES256 = -7;
@@ -54,22 +54,22 @@ export function derToRaw(der) {
   return out;
 }
 
-// POST /auth/pk/options {add: true} (logged in, admin) | {} (a login) -> what navigator.credentials needs
+// POST /auth/pk/options {add: true} (logged in) | {} (a login) -> what navigator.credentials needs
 export async function pkOptions(env, me, b, t) {
   if (!env.DB) return { err: "no database", status: 503 };
   const rp = rpIdOf(env);
   if (b && b.add) {
-    if (!me || !me.roles.includes("admin")) return { err: "forbidden", status: 403 };
+    if (!me) return { err: "login", status: 401 };
     const have = (await env.DB.prepare("SELECT id FROM passkeys WHERE user = ?").bind(me.id).all()).results.map(r => r.id);
     return { challenge: await newChallenge(env, me.id, t), rp: { id: rp, name: "Nynäs Padel" }, user: { id: b64u(te.encode(me.id)), name: me.name, displayName: me.name }, exclude: have };
   }
   return { challenge: await newChallenge(env, null, t), rpId: rp };
 }
 
-// POST /auth/pk/add {id, clientDataJSON, publicKey (SPKI), alg, label} (logged in, admin)
+// POST /auth/pk/add {id, clientDataJSON, publicKey (SPKI), alg, label} (logged in)
 export async function pkAdd(env, me, b, t) {
   if (!env.DB) return { err: "no database", status: 503 };
-  if (!me || !me.roles.includes("admin")) return { err: "forbidden", status: 403 };
+  if (!me) return { err: "login", status: 401 };
   if (!b || !B64U_RE.test(b.id || "") || !B64U_RE.test(b.publicKey || "") || Number(b.alg) !== ES256) return { err: "bad key", status: 400 };
   const c = clientData(env, b.clientDataJSON, "webauthn.create");
   if (!c || (await takeChallenge(env, c.challenge, t)) !== me.id) return { err: "challenge", status: 400 };
