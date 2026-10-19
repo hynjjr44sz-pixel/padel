@@ -14,10 +14,11 @@ export async function academyGet(env, me) {
   if (!env.DB) return { err: "no database", status: 503 };
   const a = (await env.DB.prepare("SELECT intro, ptext, pprice FROM academy WHERE org = ?").bind(ORG).first()) || {};
   const all = isHead(me);   // the coach sees their groups not shown too (to choose)
-  const gs = (await env.DB.prepare("SELECT g.id, g.name, g.owner, p.shown, p.level, p.sched, p.max, p.price, p.info, (SELECT count(*) FROM tgroup_members m WHERE m.gid = g.id) AS n " +
-    "FROM tgroups g LEFT JOIN tgroup_pub p ON p.gid = g.id WHERE g.org = ? ORDER BY g.name").bind(ORG).all()).results
+  const gs = (await env.DB.prepare("SELECT g.id, g.name, g.owner, p.shown, p.level, p.sched, p.max, p.price, p.info, s.dow, s.time, s.min, s.open, (SELECT count(*) FROM tgroup_members m WHERE m.gid = g.id) AS n " +
+    "FROM tgroups g LEFT JOIN tgroup_pub p ON p.gid = g.id LEFT JOIN tgroup_slot s ON s.gid = g.id WHERE g.org = ? ORDER BY g.name").bind(ORG).all()).results
     .filter(g => g.shown || (all && g.owner === me.id))
-    .map(g => ({ id: g.id, name: g.name, shown: !!g.shown, level: g.level, sched: g.sched, max: g.max, price: g.price, info: g.info, n: g.n, ...(all && g.owner === me.id ? { mine: true } : {}) }));
+    .map(g => ({ id: g.id, name: g.name, shown: !!g.shown, level: g.level, sched: g.sched, max: g.max, price: g.price, info: g.info, n: g.n,
+      dow: g.dow ?? null, time: g.time || null, min: g.min || null, open: !!g.open, ...(all && g.owner === me.id ? { mine: true } : {}) }));
   const out = { intro: a.intro || null, ptext: a.ptext || null, pprice: a.pprice || null, groups: gs };
   if (all) out.swish = ((await env.DB.prepare("SELECT swish FROM academy_pay WHERE org = ?").bind(ORG).first()) || {}).swish || null;   // the coach's settings
   return out;
@@ -36,46 +37,72 @@ export async function academyPost(env, me, b, t) {
     if (!g) return { err: "not found", status: 404 };
     const max = b.max ? Math.round(Number(b.max)) : null;
     if (max !== null && !(max >= 1 && max <= 99)) return { err: "max", status: 400 };
-    await env.DB.prepare("INSERT OR REPLACE INTO tgroup_pub (gid, shown, level, sched, max, price, info) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .bind(g.id, b.shown ? 1 : 0, clean(b.level, 40) || null, clean(b.sched, 80) || null, max, clean(b.price, 80) || null, text(b.info, 600)).run();
+    // the fixed slot: weekday, start and length; "När" then reads e.g. "Onsdagar 19:00–20:30"
+    const dow = b.dow === "" || b.dow == null ? null : Number(b.dow), time = /^([01]\d|2[0-3]):[0-5]\d$/.test(b.time || "") ? b.time : null, min = b.min ? Math.round(Number(b.min)) : null;
+    if ((dow !== null && !(dow >= 0 && dow <= 6)) || (min !== null && !(min >= 15 && min <= 300))) return { err: "slot", status: 400 };
+    let sched = clean(b.sched, 80) || null;
+    if (dow !== null && time) {
+      const end = min ? new Date(Date.parse("2000-01-01T" + time + ":00Z") + min * 60e3).toISOString().slice(11, 16) : null;
+      sched = ["Söndagar", "Måndagar", "Tisdagar", "Onsdagar", "Torsdagar", "Fredagar", "Lördagar"][dow] + " " + time + (end ? "–" + end : "");
+    }
+    await env.DB.batch([env.DB.prepare("INSERT OR REPLACE INTO tgroup_pub (gid, shown, level, sched, max, price, info) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .bind(g.id, b.shown ? 1 : 0, clean(b.level, 40) || null, sched, max, clean(b.price, 80) || null, text(b.info, 600)),
+      env.DB.prepare("INSERT OR REPLACE INTO tgroup_slot (gid, dow, time, min, open) VALUES (?, ?, ?, ?, ?)").bind(g.id, dow, time, min, b.open ? 1 : 0)]);
     return { ok: true };
   }
   return { err: "bad op", status: 400 };
 }
-// POST /academy/interest {kind: grupp|privat, gid?, name, contact, age, msg} (anyone; at most PER_IP a day from one network)
-export async function interestPost(env, b, t, ipHash) {
+// POST /academy/interest {kind: grupp|privat|anmalan, gid?, name, contact, age, msg, pid?} (anyone; at most PER_IP a day from
+// one network). anmalan: a sign-up for a group open for it; from a logged-in account for one of its players (pid), the coach
+// adds the player with one tap
+export async function interestPost(env, b, t, ipHash, me, canTrain) {
   if (!env.DB) return { err: "no database", status: 503 };
-  const kind = b && b.kind === "privat" ? "privat" : "grupp", name = clean(b && b.name, 60), contact = clean(b && b.contact, 80);
+  const kind = b && (b.kind === "privat" || b.kind === "anmalan") ? b.kind : "grupp";
+  const pid = me && b && b.pid && canTrain(me, Number(b.pid)) ? Number(b.pid) : null;
+  let name = clean(b && b.name, 60), contact = clean(b && b.contact, 80);
+  if (pid && !name) name = ((await env.DB.prepare("SELECT name FROM users WHERE pid = ? AND org = ?").bind(pid, ORG).first()) || {}).name || null;
+  if (pid && !contact) contact = "Konto i appen: " + me.name;
   if (!name || !contact || contact.length < 5) return { err: "name", status: 400 };
   let gname = null;
-  const gid = kind === "grupp" && typeof b.gid === "string" ? b.gid : null;
+  const gid = kind !== "privat" && typeof b.gid === "string" ? b.gid : null;
+  if (kind === "anmalan" && !gid) return { err: "group", status: 400 };
   if (gid) {
-    const g = await env.DB.prepare("SELECT g.name FROM tgroups g JOIN tgroup_pub p ON p.gid = g.id WHERE g.id = ? AND p.shown = 1").bind(gid).first();
-    if (!g) return { err: "group", status: 400 };
+    const g = await env.DB.prepare("SELECT g.name, s.open FROM tgroups g JOIN tgroup_pub p ON p.gid = g.id LEFT JOIN tgroup_slot s ON s.gid = g.id WHERE g.id = ? AND p.shown = 1").bind(gid).first();
+    if (!g || (kind === "anmalan" && !g.open)) return { err: "group", status: 400 };
+    if (pid && await env.DB.prepare("SELECT pid FROM tgroup_members WHERE gid = ? AND pid = ?").bind(gid, pid).first()) return { err: "member", status: 400 };
     gname = g.name;
   }
   await env.DB.prepare("DELETE FROM interest WHERE org = ? AND created < ?").bind(ORG, t - KEEP_MS).run();
   if (ipHash && (await env.DB.prepare("SELECT count(*) AS n FROM interest WHERE ip = ? AND created > ?").bind(ipHash, t - 864e5).first()).n >= PER_IP) return { err: "limit", status: 429 };
   const id = rid();
-  await env.DB.prepare("INSERT INTO interest (id, org, kind, gid, name, contact, age, msg, ip, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-    .bind(id, ORG, kind, gid, name, contact, clean(b.age, 40) || null, text(b.msg, 600), ipHash || null, t).run();
+  await env.DB.batch([env.DB.prepare("INSERT INTO interest (id, org, kind, gid, name, contact, age, msg, ip, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    .bind(id, ORG, kind, gid, name, contact, clean(b.age, 40) || null, text(b.msg, 600), ipHash || null, t),
+    ...(pid ? [env.DB.prepare("INSERT INTO interest_pid (id, pid) VALUES (?, ?)").bind(id, pid)] : [])]);
   try {
     const heads = (await env.DB.prepare("SELECT user FROM roles WHERE org = ? AND role = 'tranare'").bind(ORG).all()).results.map(r => r.user);
-    await notifyUsers(env, heads, { title: kind === "privat" ? "Intresse: privatlektion" : "Intresse: " + (gname || "gruppträning"), body: name + " vill veta mer. Se Träning, Grupper.", url: "#traning", tag: "padel-intresse" });
+    await notifyUsers(env, heads, { title: kind === "privat" ? "Intresse: privatlektion" : kind === "anmalan" ? "Anmälan: " + gname : "Intresse: " + (gname || "gruppträning"), body: name + (kind === "anmalan" ? " vill gå med i gruppen." : " vill veta mer.") + " Se Träning, Grupper.", url: "#traning", tag: "padel-intresse" });
   } catch (e) {}
   return { ok: true };
 }
 // GET /academy/interest (a head coach) -> {list}; POST /academy/interest {id, status: ny|kontaktad} | {id, op: del}
 export async function interestList(env, me) {
   if (!isHead(me)) return { err: "forbidden", status: 403 };
-  const l = (await env.DB.prepare("SELECT i.id, i.kind, i.gid, g.name AS gname, i.name, i.contact, i.age, i.msg, i.created, i.status FROM interest i LEFT JOIN tgroups g ON g.id = i.gid WHERE i.org = ? ORDER BY i.created DESC LIMIT 200").bind(ORG).all()).results;
+  const l = (await env.DB.prepare("SELECT i.id, i.kind, i.gid, g.name AS gname, i.name, i.contact, i.age, i.msg, i.created, i.status, x.pid, (SELECT count(*) FROM tgroup_members m WHERE m.gid = i.gid AND m.pid = x.pid) AS member " +
+    "FROM interest i LEFT JOIN tgroups g ON g.id = i.gid LEFT JOIN interest_pid x ON x.id = i.id WHERE i.org = ? ORDER BY i.created DESC LIMIT 200").bind(ORG).all()).results;
   return { list: l };
 }
 export async function interestMark(env, me, b, t) {
   if (!isHead(me)) return { err: "forbidden", status: 403 };
   const r = b && typeof b.id === "string" && await env.DB.prepare("SELECT id FROM interest WHERE id = ? AND org = ?").bind(b.id, ORG).first();
   if (!r) return { err: "not found", status: 404 };
-  if (b.op === "del") await env.DB.prepare("DELETE FROM interest WHERE id = ?").bind(r.id).run();
+  if (b.op === "add") {
+    // a sign-up with a player: into the group (the coach's own), marked handled
+    const x = await env.DB.prepare("SELECT i.gid, p.pid FROM interest i JOIN interest_pid p ON p.id = i.id JOIN tgroups g ON g.id = i.gid WHERE i.id = ? AND g.owner = ?").bind(r.id, me.id).first();
+    if (!x) return { err: "not found", status: 404 };
+    await env.DB.batch([env.DB.prepare("INSERT OR IGNORE INTO tgroup_members (gid, pid) VALUES (?, ?)").bind(x.gid, x.pid), env.DB.prepare("UPDATE interest SET status = 'kontaktad' WHERE id = ?").bind(r.id), log(env, t, me.id, "signup-add", { gid: x.gid, pid: x.pid })]);
+    return { ok: true };
+  }
+  if (b.op === "del") await env.DB.batch([env.DB.prepare("DELETE FROM interest_pid WHERE id = ?").bind(r.id), env.DB.prepare("DELETE FROM interest WHERE id = ?").bind(r.id)]);
   else await env.DB.batch([env.DB.prepare("UPDATE interest SET status = ? WHERE id = ?").bind(b.status === "kontaktad" ? "kontaktad" : "ny", r.id), log(env, t, me.id, "interest", { id: r.id, status: b.status })]);
   return { ok: true };
 }

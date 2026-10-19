@@ -22,7 +22,7 @@ test("akademin: the coach's page and shown groups (no names), interest from anyo
   await call(env, "POST", "/academy", { op: "group", gid: g1.id, shown: true, level: "C-nivå", sched: "Onsdagar 19:00", max: 8, price: "1 200 kr/termin", info: "Teknik och spel" }, B(javier.tok));
   const pub = await (await call(env, "GET", "/academy")).json();
   assert.deepEqual(pub, { intro: "Nynäs padelakademi", ptext: "Privatlektion 60 min", pprice: "650 kr",
-    groups: [{ id: g1.id, name: "Damlaget onsdagar", shown: true, level: "C-nivå", sched: "Onsdagar 19:00", max: 8, price: "1 200 kr/termin", info: "Teknik och spel", n: 2 }] });
+    groups: [{ id: g1.id, name: "Damlaget onsdagar", shown: true, level: "C-nivå", sched: "Onsdagar 19:00", max: 8, price: "1 200 kr/termin", info: "Teknik och spel", n: 2, dow: null, time: null, min: null, open: false }] });
   assert.ok(!JSON.stringify(pub).includes("1675246"));   // no players
   // the coach sees the group not shown too
   assert.deepEqual((await (await call(env, "GET", "/academy", null, B(javier.tok))).json()).groups.map(g => [g.name, g.shown, g.mine]), [["Damlaget onsdagar", true, true], ["Privat grupp", false, true]]);
@@ -79,4 +79,35 @@ test("akademin, avgifter: the player says swishat or MATCHi, the coach marks bet
   await call(env, "POST", "/pay", { gid: g.id, op: "reset" }, B(javier.tok));
   c = await (await call(env, "GET", "/pay?gid=" + g.id, null, B(javier.tok))).json();
   assert.deepEqual(c.fees.map(x => [x.pid, x.status]).sort(), [[1675246, "obetald"], [1849853, "gratis"]]);
+});
+
+test("akademin: a group's fixed slot, open for sign-ups; a logged-in player signs up, the coach adds them with one tap", async () => {
+  _resetMemory();
+  const env = { PUSH: kv(), DB: fakeD1(), NOW: "2026-10-19T10:00:00Z", ORIGIN, ADMIN_KEY: "k".repeat(32) }, ak = { "X-Admin-Key": env.ADMIN_KEY };
+  const acct = async body => { const a = await (await call(env, "POST", "/admin", { op: "add", ...body }, ak)).json(); return { id: a.id, tok: (await (await call(env, "POST", "/auth/redeem", { code: a.code })).json()).token }; };
+  const javier = await acct({ name: "Javier Castilla", roles: ["tranare"] }), kian = await acct({ pid: 1680004 });
+  const g = await (await call(env, "POST", "/coach", { op: "group", name: "Juniorer", pids: [1675246] }, B(javier.tok))).json();
+  assert.equal((await call(env, "POST", "/academy", { op: "group", gid: g.id, shown: true, dow: 9 }, B(javier.tok))).status, 400);
+  await call(env, "POST", "/academy", { op: "group", gid: g.id, shown: true, dow: 6, time: "10:00", min: 90, max: 8, price: "900 kr" }, B(javier.tok));
+  let a = (await (await call(env, "GET", "/academy")).json()).groups[0];
+  assert.deepEqual([a.sched, a.dow, a.time, a.min, a.open], ["Lördagar 10:00–11:30", 6, "10:00", 90, false]);
+  // not open: no sign-up
+  assert.equal((await call(env, "POST", "/academy/interest", { kind: "anmalan", gid: g.id, pid: 1680004 }, B(kian.tok))).status, 400);
+  await call(env, "POST", "/academy", { op: "group", gid: g.id, shown: true, dow: 6, time: "10:00", min: 90, max: 8, open: true }, B(javier.tok));
+  assert.equal((await (await call(env, "GET", "/academy")).json()).groups[0].open, true);
+  // Kian, logged in, signs up himself (no name or contact needed); someone not logged in with name and phone
+  assert.equal((await call(env, "POST", "/academy/interest", { kind: "anmalan", gid: g.id, pid: 1680004 }, B(kian.tok))).status, 200);
+  assert.equal((await call(env, "POST", "/academy/interest", { kind: "anmalan", gid: g.id, name: "Ny Spelare", contact: "070-1112233" })).status, 200);
+  // Thea is already in it: no sign-up for her by a coach-less account; a pid one may not speak for is ignored (needs a name)
+  assert.equal((await call(env, "POST", "/academy/interest", { kind: "anmalan", gid: g.id, pid: 1675246 }, B(kian.tok))).status, 400);
+  let l = (await (await call(env, "GET", "/academy/interest", null, B(javier.tok))).json()).list;
+  const k = l.find(x => x.pid === 1680004);
+  assert.deepEqual([k.kind, k.name, k.member], ["anmalan", "Kian Borgström", 0]);
+  assert.equal((await call(env, "POST", "/academy/interest/mark", { id: l.find(x => !x.pid).id, op: "add" }, B(javier.tok))).status, 404);   // no player to add
+  assert.equal((await call(env, "POST", "/academy/interest/mark", { id: k.id, op: "add" }, B(javier.tok))).status, 200);
+  a = (await (await call(env, "GET", "/academy")).json()).groups[0];
+  assert.equal(a.n, 2);
+  l = (await (await call(env, "GET", "/academy/interest", null, B(javier.tok))).json()).list;
+  assert.deepEqual([l.find(x => x.pid === 1680004).member, l.find(x => x.pid === 1680004).status], [1, "kontaktad"]);
+  assert.equal((await call(env, "POST", "/academy/interest", { kind: "anmalan", gid: g.id, pid: 1680004 }, B(kian.tok))).status, 400);   // already in it
 });

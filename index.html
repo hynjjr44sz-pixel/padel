@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-f5cA6fKnI0V/XSt3QdEBkrBsEDsBxo/N8tOnKJEMr/0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-EsMGq5ZeBMNqF0u0Iwr+NLZHDjWXf9/RCbi1hgRUOdM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -497,7 +497,7 @@
   .swrow{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 10px; padding:10px 12px; margin:0 0 8px; border-radius:12px; background:var(--surface-2); } .swrow span{ flex:0 0 100%; font:600 10.5px/1.2 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); } .swrow b{ flex:1; font-size:15px; word-break:break-word; } .swrow .amxsec{ margin:0; padding:8px 12px; }
   /* Träning: room above each heading; selects that match the inputs */
   #traning .sh{ margin-top:28px; } #traning .trtabs + .sh, #traning .trback + .sh{ margin-top:6px; }
-  #traning select{ width:100%; padding:12px 40px 12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238B8D98' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;
+  #traning select, .trsheet select{ width:100%; padding:12px 40px 12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238B8D98' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;
     color:var(--ink); font:inherit; font-size:15px; -webkit-appearance:none; appearance:none; }
   #traning .trfeer select{ width:auto; max-width:44%; padding:8px 30px 8px 10px; font-size:13px; background-position:right 10px center; }
   #traning .amxset > p.kdim{ margin:0 0 10px; } #traning .kcoachl{ margin:0 0 10px; }
@@ -2045,6 +2045,24 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Veckodag": "Día",
+    "Söndagar": "Domingos",
+    "Måndagar": "Lunes",
+    "Tisdagar": "Martes",
+    "Onsdagar": "Miércoles",
+    "Torsdagar": "Jueves",
+    "Fredagar": "Viernes",
+    "Lördagar": "Sábados",
+    "Öppen för anmälan": "Abierto a inscripciones",
+    "Anmäl dig": "Inscríbete",
+    "Någon annan": "Otra persona",
+    "Gruppen är full. Du hamnar i kö, och tränaren hör av sig när en plats blir ledig.": "El grupo está completo. Quedas en lista de espera y el entrenador te avisará cuando haya plaza.",
+    "Tränaren bekräftar anmälan och lägger till dig i gruppen.": "El entrenador confirma la inscripción y te añade al grupo.",
+    "redan med i gruppen": "ya está en el grupo",
+    "Lägg till i gruppen": "Añadir al grupo",
+    "I gruppen": "En el grupo",
+    "anmälan öppen": "inscripción abierta",
+    "Lägg in passen": "Crear las sesiones",
     "Upprepa varje vecka": "Repetir cada semana",
     "till och med": "hasta",
     "Ta bort detta och kommande": "Eliminar esta y las siguientes",
@@ -8450,7 +8468,7 @@
       '<div class="trf"><span>' + _("Typ") + '</span><div class="trcs" id="pKinds">' + kinds + '</div></div>' +
       '<div class="trf"><span>' + _("Övningar") + '</span>' + (exl || '<p class="kdim">' + _("Biblioteket är tomt än.") + '</p>') + '</div>' +
       '<div class="trf"><span>' + _("Anteckning till spelarna") + '</span><textarea id="pNote" rows="3" maxlength="1000">' + esc(p.note || "") + '</textarea></div>' +
-      (p.id ? "" : '<div class="trf trrep"><label class="kchk"><input type="checkbox" id="pRep"> ' + _("Upprepa varje vecka") + '</label><label class="trrepu"><span>' + _("till och med") + '</span><input type="date" id="pUntil" value="' + esc(trAdd(p.day, 7 * 9)) + '"></label></div>') +
+      (p.id ? "" : '<div class="trf trrep"><label class="kchk"><input type="checkbox" id="pRep"' + (p.rep ? " checked" : "") + '> ' + _("Upprepa varje vecka") + '</label><label class="trrepu"><span>' + _("till och med") + '</span><input type="date" id="pUntil" value="' + esc(p.until || trAdd(p.day, 7 * 9)) + '"></label></div>') +
       '<div class="amxbar"><button type="button" class="amxgo" data-psave="1">' + _("Spara") + '</button>' + (p.id ? '<button type="button" class="amxsec del" data-pdel="1">' + _("Ta bort") + '</button>' + (p.series ? '<button type="button" class="amxsec del" data-pdel="rest">' + _("Ta bort detta och kommande") + '</button>' : "") : "") + '</div>', function(ev){
       var k = ev.target.closest("[data-pk]");
       if (k){ p.kind = k.getAttribute("data-pk"); [].forEach.call(k.parentNode.children, function(x){ x.setAttribute("aria-pressed", x === k ? "true" : "false"); }); return; }
@@ -8642,7 +8660,7 @@
   }
   /* ---- Akademin: the public page (worker academy.js): intro, the groups the head coach shows (when, level, places,
      price; no names), private lessons, an interest form (to the coach only). The coach edits it under Träning, Grupper. ---- */
-  var ACAD = {d:null, t:0, busy:false};
+  var ACAD = {d:null, t:0, busy:false}, ACAD_DOW = ["Söndagar", "Måndagar", "Tisdagar", "Onsdagar", "Torsdagar", "Fredagar", "Lördagar"];
   function acadLoad(force, then){
     if (!PUSH_API || ACAD.busy || (!force && ACAD.d && Date.now() - ACAD.t < 60000)){ if (then) then(); return; }
     ACAD.busy = true;
@@ -8671,32 +8689,39 @@
       return '<article class="card acadg"><div class="acadgh"><b>' + esc(g.name) + '</b>' + (free != null ? '<span class="ctrp' + (free === 0 ? " full" : free <= 2 ? " few" : "") + '">' + esc(free === 0 ? _("Fullt") : free === 1 ? _("1 plats kvar") : _("{n} platser kvar", {n:free})) + '</span>' : "") + '</div>' +
         '<small>' + esc([g.sched, g.level, g.max ? _("{n} av {m} spelare", {n:g.n, m:g.max}) : _("{n} spelare", {n:g.n}), g.price].filter(Boolean).join(" · ")) + '</small>' +
         (g.info ? '<p>' + esc(g.info).replace(/\n/g, "<br>") + '</p>' : "") +
-        '<button type="button" class="amxsec" data-acint="grupp" data-gid="' + esc(g.id) + '" data-gname="' + esc(g.name) + '">' + (free === 0 ? _("Ställ dig i kö") : _("Jag är intresserad")) + '</button></article>';
+        (g.open ? '<button type="button" class="' + (free === 0 ? "amxsec" : "amxgo") + '" data-acint="anmalan" data-gid="' + esc(g.id) + '" data-gname="' + esc(g.name) + '" data-full="' + (free === 0 ? 1 : "") + '">' + (free === 0 ? _("Ställ dig i kö") : _("Anmäl dig")) + '</button>'
+          : '<button type="button" class="amxsec" data-acint="grupp" data-gid="' + esc(g.id) + '" data-gname="' + esc(g.name) + '">' + _("Jag är intresserad") + '</button>') + '</article>';
     }).join("") : '<p class="empty">' + _("Inga grupper att visa just nu. Anmäl intresse så hör tränaren av sig.") + '</p>') + '</section>';
     h += '<section><div class="sh"><h2>' + _("Privatlektioner") + '</h2><div class="meta">' + esc(d.pprice || "") + '</div></div><article class="card acadg"><p>' +
       (d.ptext ? esc(d.ptext).replace(/\n/g, "<br>") : esc(_("Enskilt eller med en kompis, på din nivå."))) + '</p><button type="button" class="amxgo" data-acint="privat">' + _("Jag vill ha en privatlektion") + '</button></article></section>' +
       '<p class="trnote">' + _("Din anmälan går bara till klubbens tränare. Den sparas i högst ett år.") + '</p>';
     box.innerHTML = h;
-    box.onclick = function(ev){ var b = ev.target.closest("[data-acint]"); if (b) acadForm(b.getAttribute("data-acint"), b.getAttribute("data-gid"), b.getAttribute("data-gname")); };
+    box.onclick = function(ev){ var b = ev.target.closest("[data-acint]"); if (b) acadForm(b.getAttribute("data-acint"), b.getAttribute("data-gid"), b.getAttribute("data-gname"), !!b.getAttribute("data-full")); };
   }
-  function acadForm(kind, gid, gname){
+  function acadForm(kind, gid, gname, full){
+    var me = AUTH && AUTH.me, mine = me ? [me.pid].concat(me.kids || []).filter(Boolean) : [];
+    var who = kind === "anmalan" && mine.length ? '<div class="trf"><span>' + _("Vem gäller det?") + '</span><select id="aiPid">' + mine.map(function(p){ var P = BYPID[p]; return '<option value="' + p + '">' + esc(p === me.pid ? _("Jag") + (P ? " (" + P.name + ")" : "") : P ? P.name : "#" + p) + '</option>'; }).join("") + '<option value="">' + _("Någon annan") + '</option></select></div>' : "";
     trSheetOpen('<h2>' + (kind === "privat" ? _("Privatlektion") : esc(gname || _("Gruppträning"))) + '</h2>' +
-      '<div class="trf"><span>' + _("Namn") + '</span><input id="aiName" maxlength="60" autocomplete="name"></div>' +
+      (kind === "anmalan" ? '<p class="kdim">' + esc(full ? _("Gruppen är full. Du hamnar i kö, och tränaren hör av sig när en plats blir ledig.") : _("Tränaren bekräftar anmälan och lägger till dig i gruppen.")) + '</p>' : "") + who +
+      '<div class="aiother"' + (who ? " hidden" : "") + '><div class="trf"><span>' + _("Namn") + '</span><input id="aiName" maxlength="60" autocomplete="name"></div>' +
       '<div class="trf"><span>' + _("Telefon eller e-post") + '</span><input id="aiContact" maxlength="80" autocomplete="email" inputmode="email"></div>' +
-      '<div class="trf"><span>' + _("Ålder och nivå (valfritt)") + '</span><input id="aiAge" maxlength="40" placeholder="' + esc(_("Till exempel 14 år, spelat ett år")) + '"></div>' +
+      '<div class="trf"><span>' + _("Ålder och nivå (valfritt)") + '</span><input id="aiAge" maxlength="40" placeholder="' + esc(_("Till exempel 14 år, spelat ett år")) + '"></div></div>' +
       '<div class="trf"><span>' + _("Meddelande (valfritt)") + '</span><textarea id="aiMsg" rows="3" maxlength="600"></textarea></div>' +
       '<div class="amxbar"><button type="button" class="amxgo" data-aisend="1">' + _("Skicka") + '</button></div>', function(ev){
       var b = ev.target.closest("[data-aisend]");
       if (!b) return;
-      var body = {kind:kind, gid:gid || undefined, name:document.getElementById("aiName").value.trim(), contact:document.getElementById("aiContact").value.trim(), age:document.getElementById("aiAge").value.trim(), msg:document.getElementById("aiMsg").value};
-      if (!body.name || body.contact.length < 5){ trErr2(_("skriv namn och telefon eller e-post")); return; }
+      var ps = document.getElementById("aiPid"), pid = ps && ps.value ? +ps.value : null;
+      var body = {kind:kind, gid:gid || undefined, pid:pid || undefined, name:pid ? "" : document.getElementById("aiName").value.trim(), contact:pid ? "" : document.getElementById("aiContact").value.trim(), age:pid ? "" : document.getElementById("aiAge").value.trim(), msg:document.getElementById("aiMsg").value};
+      if (!pid && (!body.name || body.contact.length < 5)){ trErr2(_("skriv namn och telefon eller e-post")); return; }
       b.disabled = true;
-      withTimeout(fetch(PUSH_API + "/academy/interest", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), credentials:"omit"}).then(function(r){ return r.json().then(function(d){ if (!r.ok){ var e = new Error(d && d.error || "HTTP " + r.status); e.status = r.status; throw e; } return d; }); }), 15000)
+      withTimeout(fetch(PUSH_API + "/academy/interest", {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, pid ? authHdr() : {}), body:JSON.stringify(body), credentials:"omit"}).then(function(r){ return r.json().then(function(d){ if (!r.ok){ var e = new Error(d && d.error || "HTTP " + r.status); e.status = r.status; throw e; } return d; }); }), 15000)
         .then(function(){
           var el = document.querySelector("#trSheet2 .sheet-in");
           if (el) el.innerHTML = '<i class="sheet-grab" aria-hidden="true"></i><h2>' + _("Tack!") + '</h2><p>' + _("Tränaren har fått din anmälan och hör av sig.") + '</p><div class="amxbar"><button type="button" class="amxsec" data-trx2="1">' + _("Stäng") + '</button></div>';
-        }, function(e){ b.disabled = false; trErr2(e.status === 429 ? _("för många anmälningar härifrån idag") : e); });
+        }, function(e){ b.disabled = false; trErr2(e.status === 429 ? _("för många anmälningar härifrån idag") : e.message === "member" ? _("redan med i gruppen") : e); });
     });
+    var ps0 = document.getElementById("aiPid");
+    if (ps0) ps0.onchange = function(){ var o = document.querySelector("#trSheet2 .aiother"); if (o) o.hidden = !!ps0.value; };
   }
   // under Träning, Grupper (a head coach): the page, which groups show, the interest
   function acadCoachHtml(){
@@ -8708,15 +8733,16 @@
     return '<div class="sh"><h2>' + _("Akademin") + '</h2><div class="meta"><a class="linkbtn plain" href="#akademin">' + _("Visa sidan") + '</a></div></div>' +
       '<div class="card amxset"><p class="kdim">' + _("Det här ser alla under Akademin. Namnen på spelarna i grupperna visas aldrig.") + '</p>' +
       '<div class="amxbar"><button type="button" class="amxsec" data-acpage="1">' + _("Text och privatlektioner") + '</button></div>' +
-      a.groups.filter(function(g){ return g.mine; }).map(function(g){ return '<div class="kvis"><p><b>' + esc(g.name) + '</b><br><small>' + esc(g.shown ? [_("Visas"), g.sched, g.max ? g.n + "/" + g.max : "", g.price].filter(Boolean).join(" · ") : _("Visas inte")) + '</small></p><button type="button" class="amxsec" data-acgroup="' + esc(g.id) + '">' + _("Ändra") + '</button></div>'; }).join("") + '</div>' +
+      a.groups.filter(function(g){ return g.mine; }).map(function(g){ return '<div class="kvis"><p><b>' + esc(g.name) + '</b><br><small>' + esc(g.shown ? [_("Visas"), g.sched, g.max ? g.n + "/" + g.max : "", g.price, g.open ? _("anmälan öppen") : ""].filter(Boolean).join(" · ") : _("Visas inte")) + '</small></p>' +
+        '<span class="kbtns"><button type="button" class="amxsec" data-acgroup="' + esc(g.id) + '">' + _("Ändra") + '</button>' + (g.dow != null && g.time ? '<button type="button" class="amxsec" data-acplans="' + esc(g.id) + '">' + _("Lägg in passen") + '</button>' : "") + '</span></div>'; }).join("") + '</div>' +
       '<div class="sh"><h2>' + _("Anmälningar") + '</h2><div class="meta">' + (nyc ? esc(_("{n} nya", {n:nyc})) : "") + '</div></div>' +
-      (l.length ? l.map(function(x){ return '<div class="card acadi' + (x.status === "ny" ? " ny" : "") + '"><b>' + esc(x.name) + '</b> <small>' + esc((x.kind === "privat" ? _("Privatlektion") : x.gname || _("Gruppträning")) + " · " + dayMonD(new Date(x.created))) + '</small>' +
-        '<p><a href="' + esc(/@/.test(x.contact) ? "mailto:" + x.contact : "tel:" + x.contact.replace(/[^\d+]/g, "")) + '">' + esc(x.contact) + '</a>' + (x.age ? " · " + esc(x.age) : "") + '</p>' + (x.msg ? '<p class="kdim">' + esc(x.msg) + '</p>' : "") +
-        '<div class="amxbar"><button type="button" class="amxsec" data-acmark="' + esc(x.id) + '" data-st="' + (x.status === "ny" ? "kontaktad" : "ny") + '">' + (x.status === "ny" ? _("Markera kontaktad") : _("Markera ny")) + '</button><button type="button" class="amxsec del" data-acdel="' + esc(x.id) + '">' + _("Ta bort") + '</button></div></div>'; }).join("")
+      (l.length ? l.map(function(x){ return '<div class="card acadi' + (x.status === "ny" ? " ny" : "") + '"><b>' + esc(x.name) + '</b> <small>' + esc((x.kind === "privat" ? _("Privatlektion") : x.kind === "anmalan" ? _("Anmälan") + ": " + (x.gname || "") : x.gname || _("Gruppträning")) + " · " + dayMonD(new Date(x.created))) + '</small>' +
+        '<p>' + (/@/.test(x.contact) || /^[\d\s+()-]{6,}$/.test(x.contact) ? '<a href="' + esc(/@/.test(x.contact) ? "mailto:" + x.contact : "tel:" + x.contact.replace(/[^\d+]/g, "")) + '">' + esc(x.contact) + '</a>' : esc(x.contact)) + (x.age ? " · " + esc(x.age) : "") + '</p>' + (x.msg ? '<p class="kdim">' + esc(x.msg) + '</p>' : "") +
+        '<div class="amxbar">' + (x.pid && !x.member ? '<button type="button" class="amxgo" data-acadd="' + esc(x.id) + '">' + _("Lägg till i gruppen") + '</button>' : x.pid ? '<span class="trdone">✓ ' + _("I gruppen") + '</span>' : "") + '<button type="button" class="amxsec" data-acmark="' + esc(x.id) + '" data-st="' + (x.status === "ny" ? "kontaktad" : "ny") + '">' + (x.status === "ny" ? _("Markera kontaktad") : _("Markera ny")) + '</button><button type="button" class="amxsec del" data-acdel="' + esc(x.id) + '">' + _("Ta bort") + '</button></div></div>'; }).join("")
         : '<p class="empty">' + _("Inga anmälningar än.") + '</p>');
   }
   function acadCoachClick(ev){
-    var b = ev.target.closest("[data-acpage],[data-acgroup],[data-acmark],[data-acdel]");
+    var b = ev.target.closest("[data-acpage],[data-acgroup],[data-acmark],[data-acdel],[data-acadd],[data-acplans]");
     if (!b) return false;
     var a = TR.acadc && TR.acadc.d, done = function(){ trSheet2Close(); delete TR.acadc; delete TR.acadi; ACAD.d = null; renderTraining(); };
     if (b.hasAttribute("data-acpage")){
@@ -8733,14 +8759,24 @@
       var g = a.groups.filter(function(x){ return x.id === b.getAttribute("data-acgroup"); })[0];
       if (!g) return true;
       trSheetOpen('<h2>' + esc(g.name) + '</h2><label class="kchk trshow"><input type="checkbox" id="acShown"' + (g.shown ? " checked" : "") + '> ' + _("Visa gruppen under Akademin") + '</label>' +
-        '<div class="trf"><span>' + _("När") + '</span><input id="acSched" maxlength="80" value="' + esc(g.sched || "") + '" placeholder="' + esc(_("Till exempel Onsdagar 19:00–20:30")) + '"></div>' +
+        '<div class="trf trrow"><label><span>' + _("Veckodag") + '</span><select id="acDow"><option value="">–</option>' + [1, 2, 3, 4, 5, 6, 0].map(function(d){ return '<option value="' + d + '"' + (g.dow === d ? " selected" : "") + '>' + esc(_(ACAD_DOW[d])) + '</option>'; }).join("") + '</select></label>' +
+          '<label><span>' + _("Tid") + '</span><input type="time" id="acTime" value="' + esc(g.time || "") + '"></label><label><span>' + _("Minuter") + '</span><input type="number" id="acMin" min="15" max="300" value="' + esc(g.min || "") + '"></label></div>' +
+        '<label class="kchk trshow"><input type="checkbox" id="acOpen"' + (g.open ? " checked" : "") + '> ' + _("Öppen för anmälan") + '</label>' +
         '<div class="trf trrow"><label><span>' + _("Nivå") + '</span><input id="acLvl" maxlength="40" value="' + esc(g.level || "") + '"></label><label><span>' + _("Max spelare") + '</span><input type="number" id="acMax" min="1" max="99" value="' + esc(g.max || "") + '"></label><label><span>' + _("Pris") + '</span><input id="acPrice" maxlength="80" value="' + esc(g.price || "") + '"></label></div>' +
         '<div class="trf"><span>' + _("Om gruppen") + '</span><textarea id="acInfo" rows="3" maxlength="600">' + esc(g.info || "") + '</textarea></div>' +
         '<div class="amxbar"><button type="button" class="amxgo" data-acsave="1">' + _("Spara") + '</button></div>', function(e2){
         var s = e2.target.closest("[data-acsave]"); if (!s) return; s.disabled = true;
-        authApi("/academy", {op:"group", gid:g.id, shown:document.getElementById("acShown").checked, sched:document.getElementById("acSched").value, level:document.getElementById("acLvl").value, max:+document.getElementById("acMax").value || null, price:document.getElementById("acPrice").value, info:document.getElementById("acInfo").value}).then(done, function(e){ s.disabled = false; trErr2(e); });
+        authApi("/academy", {op:"group", gid:g.id, shown:document.getElementById("acShown").checked, dow:document.getElementById("acDow").value, time:document.getElementById("acTime").value, min:+document.getElementById("acMin").value || null, open:document.getElementById("acOpen").checked, sched:g.sched || "", level:document.getElementById("acLvl").value, max:+document.getElementById("acMax").value || null, price:document.getElementById("acPrice").value, info:document.getElementById("acInfo").value}).then(done, function(e){ s.disabled = false; trErr2(e); });
       });
     } else if (b.hasAttribute("data-acmark")) authApi("/academy/interest/mark", {id:b.getAttribute("data-acmark"), status:b.getAttribute("data-st")}).then(done, function(e){ alert(_("Det gick inte: ") + e.message); });
+    else if (b.hasAttribute("data-acadd")) authApi("/academy/interest/mark", {id:b.getAttribute("data-acadd"), op:"add"}).then(function(){ delete TR.coach; Object.keys(TR).forEach(function(k){ if (/^(gm|gpay)/.test(k)) delete TR[k]; }); authCheck(true); done(); }, function(e){ alert(_("Det gick inte: ") + e.message); });
+    else if (b.hasAttribute("data-acplans")){
+      // the group's fixed slot every week of the term: the plan sheet filled in, "every week" on
+      var gp = a && a.groups.filter(function(x){ return x.id === b.getAttribute("data-acplans"); })[0];
+      if (!gp || gp.dow == null) return true;
+      var t0 = trDay(1), d0 = new Date(t0 + "T12:00:00Z"), first = trAdd(t0, (gp.dow - d0.getUTCDay() + 7) % 7);
+      trPlanSheet("g" + gp.id, {kind:"padel", min:gp.min || 90, day:first, time:gp.time || "", title:gp.name, note:"", ex:[], rep:true, until:trAdd(first, 7 * 11)});
+    }
     else if (b.hasAttribute("data-acdel")){ if (confirm(_("Ta bort anmälan?"))) authApi("/academy/interest/mark", {id:b.getAttribute("data-acdel"), op:"del"}).then(done, function(e){ alert(_("Det gick inte: ") + e.message); }); }
     return true;
   }

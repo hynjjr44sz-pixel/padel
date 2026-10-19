@@ -296,7 +296,8 @@ async function handle(req, env) {
     try { b = await readBody(req, 6000); } catch (e) { return json({ error: "bad json" }, 400, h); }
     const t = +now(env);
     let r;
-    if (route === "POST /academy/interest") r = await interestPost(env, b, t, await sha("ip:" + (req.headers.get("CF-Connecting-IP") || "local") + ":" + (env.FANOUT_KEY || env.ADMIN_KEY || "")));
+    if (route === "POST /academy/interest") r = await interestPost(env, b, t, await sha("ip:" + (req.headers.get("CF-Connecting-IP") || "local") + ":" + (env.FANOUT_KEY || env.ADMIN_KEY || "")),
+      req.headers.get("Authorization") ? await authUser(env, req, t) : null, canTrain);
     else {
       const me = await authUser(env, req, t);
       r = route === "POST /academy" ? await academyPost(env, me, b, t) : await interestMark(env, me, b, t);

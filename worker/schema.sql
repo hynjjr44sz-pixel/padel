@@ -234,3 +234,16 @@ CREATE TABLE IF NOT EXISTS plan_series (
   series TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS plan_series_s ON plan_series(series);
+-- a group's fixed slot (weekday 0-6 with 0 = Sunday, start, minutes) and whether it takes sign-ups (Akademin)
+CREATE TABLE IF NOT EXISTS tgroup_slot (
+  gid TEXT PRIMARY KEY,
+  dow INTEGER,
+  time TEXT,
+  min INTEGER,
+  open INTEGER NOT NULL DEFAULT 0
+);
+-- a sign-up from a logged-in account for one of its players (the coach adds the player with one tap)
+CREATE TABLE IF NOT EXISTS interest_pid (
+  id TEXT PRIMARY KEY,
+  pid INTEGER NOT NULL
+);
