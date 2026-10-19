@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-QN9egeIbm7v/DVtWONqv6Xsk9/Kgd2FO2OpeVLsVe5M='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-bZDBdoLHEMgOEelkl8GXrmy+lEO16kRemvIhH1KeXqI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -419,6 +419,23 @@
   .trexi{ display:flex; align-items:center; justify-content:center; font:800 22px/1 "Big Shoulders Display", sans-serif; color:var(--dim); }
   .trex > summary b{ display:block; font-size:14px; line-height:1.25; } .trex > summary small{ display:block; font-size:12px; color:var(--dim); margin-top:3px; }
   .trex p{ margin:0 12px 10px !important; font-size:13.5px; line-height:1.45; } .trex .amxsec{ margin:0 12px 12px; }
+  .trplay{ position:relative; display:block; width:calc(100% - 24px); margin:0 12px 10px; padding:0; border:0; border-radius:12px; overflow:hidden; background:#000; aspect-ratio:16/9; cursor:pointer; }
+  .trplay img{ width:100%; height:100%; object-fit:cover; opacity:.85; display:block; }
+  .trplay i{ position:absolute; left:50%; top:50%; width:64px; height:44px; margin:-22px 0 0 -32px; border-radius:14px; background:rgba(229,72,77,.92); box-shadow:0 8px 24px rgba(0,0,0,.35); transition:transform .2s; }
+  .trplay i::after{ content:""; position:absolute; left:26px; top:13px; border-left:16px solid #fff; border-top:9px solid transparent; border-bottom:9px solid transparent; }
+  .trplay:active i{ transform:scale(.92); }
+  .ytpop{ position:fixed; z-index:200; left:50%; top:50%; width:min(720px, calc(100% - 20px)); transform:translate(-50%, -50%) scale(.92); opacity:0; border-radius:18px; overflow:hidden; background:#0B1020;
+    box-shadow:0 30px 80px rgba(0,0,0,.55), 0 0 0 100vmax rgba(4,10,27,.55); transition:transform .45s cubic-bezier(.2,1.3,.3,1), opacity .25s, width .35s, box-shadow .3s; }
+  .ytpop.open{ transform:translate(-50%, -50%); opacity:1; }
+  .ytpop.mini{ left:auto; top:auto; right:12px; bottom:calc(96px + env(safe-area-inset-bottom)); width:min(280px, 62vw); transform:none; box-shadow:0 16px 40px rgba(0,0,0,.45); touch-action:none; cursor:grab; }
+  .ytpop.mini[style*="left"]{ right:auto; bottom:auto; } .ytpop.drag{ transition:none; cursor:grabbing; }
+  .ytbar{ display:flex; align-items:center; gap:4px; padding:6px 6px 6px 12px; color:#fff; }
+  .ytbar span{ flex:1; min-width:0; font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ytbar button{ width:32px; height:32px; border:0; border-radius:50%; background:rgba(255,255,255,.12); color:#fff; font-size:16px; line-height:1; }
+  .ytpop.mini [data-yt="mini"], .ytpop:not(.mini) [data-yt="big"]{ display:none; }
+  .ytbox{ position:relative; aspect-ratio:16/9; background:#000; } .ytbox iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+  .ytpop.mini .ytbox iframe{ pointer-events:auto; }
+  @media (prefers-reduced-motion: reduce){ .ytpop{ transition:none; } }
   .trexyt{ display:inline-block; margin:0 12px 12px; font-weight:600; }
   .card.trplan{ padding:0; margin:0 0 8px; overflow:hidden; }
   .trplan > summary{ display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; list-style:none; } .trplan > summary::-webkit-details-marker{ display:none; }
@@ -1976,6 +1993,11 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Spela klippet": "Reproducir el vídeo",
+    "Öppna på YouTube": "Abrir en YouTube",
+    "Videoklipp": "Vídeo",
+    "Litet fönster": "Ventana pequeña",
+    "Stort fönster": "Ventana grande",
     "Strategi": "Estrategia",
     "Alla": "Todos",
     "Alla grupper": "Todos los grupos",
@@ -8153,7 +8175,8 @@
   function trExHtml(x, open){
     return '<details class="trex"' + (open ? " open" : "") + '><summary>' + (x.yt ? '<img src="' + esc(ytThumb(x.yt)) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="trexi">' + esc(_(TR_CAT[x.cat] || "").charAt(0)) + '</span>') +
       '<span><b>' + esc(x.title) + '</b><small>' + esc([_(TR_CAT[x.cat] || ""), x.topic, x.level && x.level !== "alla" ? _(TR_LVL[x.level]) : "", x.min ? x.min + " min" : ""].filter(Boolean).join(" · ")) + '</small></span></summary>' +
-      (x.body ? '<p>' + esc(x.body).replace(/\n/g, "<br>") + '</p>' : "") + (x.yt ? '<a class="trexyt" href="' + esc(ytUrl(x.yt)) + '" target="_blank" rel="noopener">' + _("Se klippet på YouTube") + ' ↗︎</a>' : "") +
+      (x.yt ? '<button type="button" class="trplay" data-ytplay="' + esc(x.yt) + '" data-yttitle="' + esc(x.title) + '"><img src="' + esc(ytThumb(x.yt)) + '" alt="" loading="lazy" referrerpolicy="no-referrer"><i aria-hidden="true"></i><span class="sr">' + _("Spela klippet") + '</span></button>' : "") +
+      (x.body ? '<p>' + esc(x.body).replace(/\n/g, "<br>") + '</p>' : "") + (x.yt ? '<a class="trexyt" href="' + esc(ytUrl(x.yt)) + '" target="_blank" rel="noopener">' + _("Öppna på YouTube") + ' ↗︎</a>' : "") +
       (x.id && trIsLib() && (x.mine || trIsHead()) ? '<button type="button" class="amxsec" data-trexed="' + esc(x.id) + '">' + _("Ändra") + '</button>' : "") + '</details>';
   }
   // the player's plans: coming (and the last week's not done), each with its exercises; done -> logged
@@ -8313,7 +8336,46 @@
     var q = document.getElementById("gQ");
     if (q) q.oninput = function(){ var v = norm(q.value); [].forEach.call(document.querySelectorAll("#trSheet2 [data-gn]"), function(l){ l.hidden = !!v && l.getAttribute("data-gn").indexOf(v) < 0; }); };
   }
+  /* ---- the clip inside the app: a window over the page, shrinks to a small floating one (drag it anywhere) ---- */
+  function ytOpen(id, title){
+    if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return;
+    var el = document.getElementById("ytPop");
+    if (!el){
+      el = document.createElement("div"); el.id = "ytPop"; el.className = "ytpop"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", _("Videoklipp"));
+      document.body.appendChild(el);
+      el.addEventListener("click", function(ev){
+        var b = ev.target.closest("[data-yt]");
+        if (!b) return;
+        var k = b.getAttribute("data-yt");
+        if (k === "close") ytClose();
+        else if (k === "mini"){ el.classList.add("mini"); el.style.left = el.style.top = ""; }
+        else if (k === "big"){ el.classList.remove("mini"); el.style.left = el.style.top = ""; }
+      });
+      // drag the small window
+      var drag = null;
+      el.addEventListener("pointerdown", function(ev){
+        if (!el.classList.contains("mini") || ev.target.closest("[data-yt]")) return;
+        var r = el.getBoundingClientRect(); drag = {dx:ev.clientX - r.left, dy:ev.clientY - r.top}; el.setPointerCapture(ev.pointerId); el.classList.add("drag");
+      });
+      el.addEventListener("pointermove", function(ev){
+        if (!drag) return;
+        var w = el.offsetWidth, h = el.offsetHeight;
+        el.style.left = Math.max(4, Math.min(innerWidth - w - 4, ev.clientX - drag.dx)) + "px";
+        el.style.top = Math.max(4, Math.min(innerHeight - h - 4, ev.clientY - drag.dy)) + "px";
+      });
+      var up = function(){ drag = null; el.classList.remove("drag"); };
+      el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+    }
+    el.classList.remove("mini"); el.style.left = el.style.top = "";
+    el.innerHTML = '<div class="ytbar"><span>' + esc(title || "") + '</span><button type="button" data-yt="mini" aria-label="' + esc(_("Litet fönster")) + '">▁</button><button type="button" data-yt="big" aria-label="' + esc(_("Stort fönster")) + '">▢</button><button type="button" data-yt="close" aria-label="' + esc(_("Stäng")) + '">×</button></div>' +
+      '<div class="ytbox"><iframe src="https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&playsinline=1&rel=0&modestbranding=1" title="' + esc(title || "YouTube") + '" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>';
+    el.hidden = false;
+    requestAnimationFrame(function(){ el.classList.add("open"); });
+  }
+  function ytClose(){ var el = document.getElementById("ytPop"); if (!el) return; el.classList.remove("open"); el.innerHTML = ""; el.hidden = true; }
   function trClick2(ev){
+    var yb = ev.target.closest("[data-ytplay]");
+    if (yb){ ytOpen(yb.getAttribute("data-ytplay"), yb.getAttribute("data-yttitle")); return true; }
     var b = ev.target.closest("[data-trtab],[data-trgrp],[data-trgedit],[data-trplan],[data-trplanned],[data-trdo],[data-trexed],[data-trcat],[data-trtopic],[data-trunassist]");
     if (!b) return false;
     if (b.hasAttribute("data-trtab")){ TR.tab = b.getAttribute("data-trtab"); renderTraining(); }
