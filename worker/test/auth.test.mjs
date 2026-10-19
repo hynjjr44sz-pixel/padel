@@ -176,3 +176,24 @@ test("begär konto: at most 3 a day from one network; the admin's phones get a n
   // not an admin: no linking
   assert.equal((await call(env, "POST", "/me/push", { endpoint: ep })).status, 403);
 });
+
+test("konto: the admin links an account to a player profile (or none); statistics for an admin without the key", async () => {
+  _resetMemory();
+  const env = { ...mkEnv(), STATS_KEY: "s".repeat(32) }, ak = { "X-Admin-Key": env.ADMIN_KEY };
+  const a = await (await call(env, "POST", "/admin", { op: "add", name: "Mikael", roles: ["admin"] }, ak)).json();
+  const tok = (await (await call(env, "POST", "/auth/redeem", { code: a.code })).json()).token;
+  const b = await (await call(env, "POST", "/admin", { op: "add", pid: 1680004 }, ak)).json();
+  assert.equal((await call(env, "POST", "/admin", { op: "link", id: a.id, pid: 999 }, bearer(tok))).status, 400);       // not a player
+  assert.equal((await call(env, "POST", "/admin", { op: "link", id: a.id, pid: 1680004 }, bearer(tok))).status, 409);   // Kian has his own
+  assert.equal((await call(env, "POST", "/admin", { op: "link", id: a.id, pid: 1675246 }, bearer(tok))).status, 200);
+  assert.equal((await (await call(env, "GET", "/auth/me", null, bearer(tok))).json()).me.pid, 1675246);
+  assert.equal((await call(env, "POST", "/admin", { op: "link", id: a.id, pid: null }, bearer(tok))).status, 200);
+  assert.equal((await (await call(env, "GET", "/auth/me", null, bearer(tok))).json()).me.pid, null);
+  assert.ok(b.id);
+  // statistics: the key, or an admin's login; not an arrangör's
+  assert.equal((await call(env, "GET", "/stats", null, bearer(tok))).status, 200);
+  const arr = await (await call(env, "POST", "/admin", { op: "add", name: "Arr", roles: ["arr"] }, ak)).json();
+  const at = (await (await call(env, "POST", "/auth/redeem", { code: arr.code })).json()).token;
+  assert.equal((await call(env, "GET", "/stats", null, bearer(at))).status, 403);
+  assert.equal((await call(env, "GET", "/stats")).status, 403);
+});

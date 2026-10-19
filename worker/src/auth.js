@@ -154,7 +154,7 @@ async function newInvite(env, id, t) {
   return { code, expires: t + INVITE_MS };
 }
 const validRoles = r => [...new Set((Array.isArray(r) ? r : []).filter(x => ROLES.includes(x)))];
-// POST /admin {op, ...}: add {name, pid, roles} | invite {id} | roles {id, roles} | revoke {id} | disable {id, on} | remove {id}
+// POST /admin {op, ...}: add {name, pid, roles} | invite {id} | roles {id, roles} | link {id, pid} | revoke {id} | disable {id, on} | remove {id}
 export async function adminOp(env, me, b, t, byPid) {
   const op = b && b.op, who = me ? me.id : "admin-key";
   if (op === "add") {
@@ -211,6 +211,14 @@ export async function adminOp(env, me, b, t, byPid) {
       log(env, t, who, "roles", { id: u.id, roles }),
     ]);
     return { ok: true, roles };
+  }
+  // the account's own player profile (a club player or member shown in the app), or none
+  if (op === "link") {
+    const pid = b.pid == null || b.pid === "" ? null : Number(b.pid);
+    if (pid !== null && !byPid.has(pid)) return { err: "unknown player", status: 400 };
+    if (pid !== null && await env.DB.prepare("SELECT id FROM users WHERE org = ? AND pid = ? AND id != ?").bind(ORG, pid, u.id).first()) return { err: "exists", status: 409 };
+    await env.DB.batch([env.DB.prepare("UPDATE users SET pid = ? WHERE id = ?").bind(pid, u.id), log(env, t, who, "link", { id: u.id, pid })]);
+    return { ok: true, pid };
   }
   if (op === "revoke") {   // a lost phone: its passkeys too
     await env.DB.batch([env.DB.prepare("DELETE FROM devices WHERE user = ?").bind(u.id), env.DB.prepare("DELETE FROM passkeys WHERE user = ?").bind(u.id), env.DB.prepare("DELETE FROM invites WHERE user = ? AND used IS NULL").bind(u.id), log(env, t, who, "revoke", { id: u.id })]);

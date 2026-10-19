@@ -145,7 +145,7 @@ async function newPage(opts = {}) {
       return r.fulfill({ status: opts.liveStatus || 200, contentType: "application/json", body: opts.liveStatus ? "{}" : opts.live, headers: h });
     }
     if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
-    if (/^\/(amx|auth|admin|me\/|photo\/)/.test(u.pathname)) {   // the real worker code, its own KV and database
+    if (/^\/(amx|auth|admin|me\/|photo\/|stats$)/.test(u.pathname)) {   // the real worker code, its own KV and database
       const q = r.request(), au = q.headers()["authorization"];
       return worker.fetch(new Request("https://w" + u.pathname, { method: q.method(), headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", ...(au ? { Authorization: au } : {}) }, body: q.method() === "POST" ? q.postData() : undefined }), AMX_ENV)
         .then(async x => r.fulfill({ status: x.status, contentType: "application/json", body: await x.text(), headers: h }));
@@ -323,7 +323,7 @@ try {
     await page.goto(url("#konto"));
     await page.waitForSelector('#konto [data-k="pkadd"]', { timeout: 8000 }).catch(() => {});
     await page.click('#konto [data-k="pkadd"]');
-    await page.waitForFunction(() => /Face ID utan länk\./.test(document.getElementById("konto").textContent), null, { timeout: 8000 }).catch(() => {});
+    await page.waitForFunction(() => /passkey utan länk\./.test(document.getElementById("konto").textContent), null, { timeout: 8000 }).catch(() => {});
     const pk1 = await page.evaluate(() => [document.querySelector("#konto .kmsg")?.textContent, document.querySelector("#konto .kvis small")?.textContent]);
     page.once("dialog", d => d.accept());
     await page.click('#konto [data-k="logout"]');
@@ -333,8 +333,13 @@ try {
     await page.waitForFunction(() => /Välkommen, Mikael/.test(document.querySelector("#konto .kmsg")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
     const pk2 = await page.evaluate(() => [document.querySelector("#konto .kmsg")?.textContent, document.getElementById("acct").textContent, document.querySelector("#konto .pkerr, #pkErr")?.textContent]);
     const keys = AMX_ENV.DB.db.prepare("SELECT count(*) n FROM passkeys").get().n;
-    ok("Face ID: the admin adds a passkey, logs out, and logs in again with it (no link)", /Nästa gång kan du logga in med Face ID/.test(pk1[0] || "") && /Face ID utan länk\./.test(pk1[1] || "") && out !== "Konto: Mikael" && /Välkommen, Mikael/.test(pk2[0] || "") && pk2[1] === "Konto: Mikael" && keys === 1, { pk1, out, pk2, keys });
+    ok("Face ID: the admin adds a passkey, logs out, and logs in again with it (no link)", /Nästa gång kan du logga in med passkey/.test(pk1[0] || "") && /passkey utan länk\./.test(pk1[1] || "") && out !== "Konto: Mikael" && /Välkommen, Mikael/.test(pk2[0] || "") && pk2[1] === "Konto: Mikael" && keys === 1, { pk1, out, pk2, keys });
     await cdp.detach().catch(() => {});
+    // Statistik from Konto: an admin needs no key
+    await page.click('#konto .kstat a');
+    await page.waitForFunction(() => /Telefoner/.test(document.getElementById("stats")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    const st = await page.evaluate(() => [location.hash, document.getElementById("stats")?.textContent.slice(0, 80)]);
+    ok("Statistik: the admin opens it from Konto without the owner's key", st[0] === "#stats" && /Telefoner/.test(st[1] || ""), st);
   }
   { // Profilbild: the admin (logged in above) on Thea's page: upload, crop, shown on the card at once; removed again
     await page.goto(url("#thea"));

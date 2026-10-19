@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-KOr8NZzliyO4PcdQYRQYd1hBx7Zva8p3yRVX4H+YSQE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-fADjBkfDHSpWSMFzJ58do2pzgc61kQxDjpiXlZjrohc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1878,19 +1878,22 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Den här enheten är redan tillagd för kontot.": "Este dispositivo ya está añadido a la cuenta.",
+    "Logga in med {m}": "Iniciar sesión con {m}",
+    "För den som har lagt till inloggning med Face ID eller fingeravtryck (passkey) på sitt konto.": "Para quien ha añadido el inicio de sesión con Face ID o huella (passkey) a su cuenta.",
+    "Du kan logga in med {m} utan länk.": "Puedes iniciar sesión con {m} sin enlace.",
+    "Logga in med {m} i stället för en länk nästa gång.": "Inicia sesión con {m} en lugar de un enlace la próxima vez.",
+    "Klart. Nästa gång kan du logga in med {m} under Konto.": "Listo. La próxima vez puedes iniciar sesión con {m} en Cuenta.",
+    "Det gick inte att logga in så. Logga in med en länk och lägg till {m} igen.": "No se pudo iniciar sesión así. Inicia sesión con un enlace y añade {m} de nuevo.",
+    "Ta bort inloggningen med Face ID och fingeravtryck för ditt konto på alla enheter?": "¿Quitar el inicio de sesión con Face ID y huella de tu cuenta en todos los dispositivos?",
+    "Borttaget. Ta också bort nyckeln i telefonens lösenordsinställningar om du vill.": "Eliminado. Si quieres, borra también la clave en los ajustes de contraseñas del teléfono.",
+    "fingeravtryck": "huella",
+    "passkey": "passkey",
+    "Spelarprofil": "Perfil de jugador",
+    "Ingen": "Ninguno",
     "Förslag kommer när vi vet om {n} spelar dam- eller herrklasser. Det läses från SPF-rankingen eller en tidigare tävling på RankedIn.": "Habrá sugerencias cuando sepamos si {n} juega en categorías femeninas o masculinas. Se obtiene del ranking de la SPF o de un torneo anterior en RankedIn.",
-    "Logga in med Face ID": "Iniciar sesión con Face ID",
-    "För den som har lagt till Face ID (passkey) på sitt konto.": "Para quien ha añadido Face ID (passkey) a su cuenta.",
     "Avbrutet.": "Cancelado.",
-    "Den här enheten har redan Face ID för kontot.": "Este dispositivo ya tiene Face ID para la cuenta.",
-    "Face ID": "Face ID",
-    "Du kan logga in med Face ID utan länk.": "Puedes iniciar sesión con Face ID sin enlace.",
-    "Logga in med Face ID i stället för en länk nästa gång.": "Inicia sesión con Face ID en lugar de un enlace la próxima vez.",
     "enheten stöds inte": "el dispositivo no es compatible",
-    "Klart. Nästa gång kan du logga in med Face ID under Konto.": "Listo. La próxima vez puedes iniciar sesión con Face ID en Cuenta.",
-    "Face ID gick inte att använda. Logga in med en länk och lägg till Face ID igen.": "No se pudo usar Face ID. Inicia sesión con un enlace y añade Face ID de nuevo.",
-    "Ta bort Face ID-inloggningen för ditt konto på alla enheter?": "¿Quitar el inicio de sesión con Face ID de tu cuenta en todos los dispositivos?",
-    "Face ID är borttaget. Ta också bort nyckeln i telefonens lösenordsinställningar om du vill.": "Face ID eliminado. Si quieres, borra también la clave en los ajustes de contraseñas del teléfono.",
     "För många ansökningar härifrån. Försök igen i morgon, eller hör av dig till {a}.": "Demasiadas solicitudes desde aquí. Inténtalo mañana o contacta con {a}.",
     "Du är admin och kan byta bild för alla spelare. Andra ser den här rutan bara på sin egen sida eller sitt barns.":"Eres admin y puedes cambiar la foto de cualquier jugador. Los demás solo ven este recuadro en su propia página o la de su hijo/a.",
     "Kontot går bara att använda i appen själv.":"La cuenta solo se puede usar en la propia app.",
@@ -6416,8 +6419,9 @@
     var key = store.get(STATS_KEY_LS);
     box.innerHTML = '<div class="phead"><div class="pt"><h1>' + _("Statistik") + '</h1><div class="pm">' + _("Bara för dig") + '</div></div></div><div id="statsBody"><p class="empty">' + _("Hämtar …") + '</p></div>';
     var body = box.querySelector("#statsBody");
-    if (!key || !PUSH_API){ body.innerHTML = '<p class="empty">' + _("Den här sidan är privat.") + '</p>'; return; }
-    withTimeout(fetch(PUSH_API + "/stats", {headers:{"X-Stats-Key":key}, cache:"no-store", credentials:"omit"}).then(function(r){ if (r.status === 403) throw new Error("403"); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), 10000).then(function(s){
+    var adm = !key && authCan("admin");   // a logged-in admin needs no key
+    if ((!key && !adm) || !PUSH_API){ body.innerHTML = '<p class="empty">' + _("Den här sidan är privat.") + '</p>'; return; }
+    withTimeout(fetch(PUSH_API + "/stats", {headers:key ? {"X-Stats-Key":key} : authHdr(), cache:"no-store", credentials:"omit"}).then(function(r){ if (r.status === 403) throw new Error("403"); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }), 10000).then(function(s){
       var d = s.devices, pu = s.pushes, dt = s.data, mx = Math.max.apply(null, pu.days.map(function(x){ return x.sent; }).concat([1]));
       var when = function(iso){ if (!iso) return "–"; var x = new Date(iso); return (dayOf(x) === dayOf(now()) ? _("idag") : dayLabel(x)) + " " + hm(x); };
       var tile = function(k, v, sub){ return '<div><span>' + esc(k) + '</span><b>' + esc(v) + '</b><small>' + esc(sub || "") + '</small></div>'; };
@@ -8125,8 +8129,8 @@
         '<div class="sh"><h2>' + _("Har du en länk?") + '</h2><div class="meta"></div></div>' +
         '<div class="card amxset"><label class="amxf"><span>' + _("Har du en länk eller kod?") + '</span><input id="kCode" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="' + esc(_("Klistra in den här")) + '"></label>' +
         '<div class="amxf"><button type="button" class="amxgo" data-k="paste">' + _("Logga in") + '</button><p class="amxerr" id="kErr"></p></div></div>' +
-        (pkOk() ? '<div class="card amxset"><div class="amxf"><button type="button" class="amxsec" data-k="pklogin">' + _("Logga in med Face ID") + '</button><p class="amxerr" id="pkErr"></p>' +
-          '<small>' + _("För den som har lagt till Face ID (passkey) på sitt konto.") + '</small></div></div>' : "");
+        (pkOk() ? '<div class="card amxset"><div class="amxf"><button type="button" class="amxsec" data-k="pklogin">' + _("Logga in med {m}", {m:pkName()}) + '</button><p class="amxerr" id="pkErr"></p>' +
+          '<small>' + _("För den som har lagt till inloggning med Face ID eller fingeravtryck (passkey) på sitt konto.") + '</small></div></div>' : "");
     } else {
       var P = me.pid && BYPID[me.pid];
       h += '<div class="card ktxt"><p><b>' + esc(me.name) + '</b>' + (P ? ' · <a href="#' + esc(P.key) + '">' + _("Din spelarsida") + '</a>' : "") + '</p>' +
@@ -8137,7 +8141,7 @@
     }
     box.innerHTML = h;
     box.onclick = konClick;
-    box.onchange = function(ev){ var c = ev.target; if (c.hasAttribute("data-role")) konRole(c); };
+    box.onchange = function(ev){ var c = ev.target; if (c.hasAttribute("data-role")) konRole(c); else if (c.hasAttribute("data-link")) konOp({op:"link", id:c.getAttribute("data-link"), pid:c.value ? +c.value : null}, function(){ authCheck(true); }); };
     box.oninput = function(ev){
       if (ev.target.id !== "kMemQ") return;
       KONTO.mq = ev.target.value;
@@ -8151,10 +8155,12 @@
   function pkOk(){ return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create && window.isSecureContext); }
   function pkB64(b){ var s = "", a = new Uint8Array(b); for (var i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
   function pkBin(s){ var b = atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
-  function pkErrText(e){ return e && e.name === "NotAllowedError" ? _("Avbrutet.") : e && e.name === "InvalidStateError" ? _("Den här enheten har redan Face ID för kontot.") : _("Det gick inte: ") + (e && e.message || ""); }
+  // what the phone calls it: Face ID (iPhone, iPad), Touch ID (Mac), fingeravtryck (Android), Windows Hello
+  function pkName(){ var u = navigator.userAgent || ""; return /iPhone|iPad/.test(u) ? "Face ID" : /Android/.test(u) ? _("fingeravtryck") : /Mac/.test(u) ? "Touch ID" : /Windows/.test(u) ? "Windows Hello" : _("passkey"); }
+  function pkErrText(e){ return e && e.name === "NotAllowedError" ? _("Avbrutet.") : e && e.name === "InvalidStateError" ? _("Den här enheten är redan tillagd för kontot.") : _("Det gick inte: ") + (e && e.message || ""); }
   function konPkHtml(me){
     if (me.roles.indexOf("admin") < 0 || !pkOk()) return "";
-    return '<div class="kvis"><p><b>' + _("Face ID") + '</b><br><small>' + esc(me.pk ? _("Du kan logga in med Face ID utan länk.") : _("Logga in med Face ID i stället för en länk nästa gång.")) + '</small></p>' +
+    return '<div class="kvis"><p><b>' + esc(pkName().charAt(0).toUpperCase() + pkName().slice(1)) + '</b><br><small>' + esc(me.pk ? _("Du kan logga in med {m} utan länk.", {m:pkName()}) : _("Logga in med {m} i stället för en länk nästa gång.", {m:pkName()})) + '</small></p>' +
       '<span><button type="button" class="amxsec" data-k="pkadd">' + _("Lägg till") + '</button>' + (me.pk ? ' <button type="button" class="amxsec del" data-k="pkclear">' + _("Ta bort") + '</button>' : "") + '</span></div>';
   }
   function authMe(){ authApi("/auth/me").then(function(d){ AUTH.me = d.me; AUTH.at = Date.now(); authSave(AUTH); renderKonto(); }, function(){ renderKonto(); }); }
@@ -8168,7 +8174,7 @@
       var r = c.response;
       if (!r.getPublicKey || r.getPublicKeyAlgorithm() !== -7) throw new Error(_("enheten stöds inte"));
       return authApi("/auth/pk/add", {id:pkB64(c.rawId), clientDataJSON:pkB64(r.clientDataJSON), publicKey:pkB64(r.getPublicKey()), alg:-7, label:devLabel()});
-    }).then(function(){ KONTO.msg = _("Klart. Nästa gång kan du logga in med Face ID under Konto."); authMe(); },
+    }).then(function(){ KONTO.msg = _("Klart. Nästa gång kan du logga in med {m} under Konto.", {m:pkName()}); authMe(); },
       function(e){ b.disabled = false; KONTO.msg = pkErrText(e); renderKonto(); });
   }
   function pkLogin(b){
@@ -8183,7 +8189,7 @@
       authSave({token:d.token, me:d.me, at:Date.now()});
       KONTO.msg = _("Välkommen, {n}! Den här telefonen är nu inloggad.", {n:d.me.name.split(" ")[0]});
       AMX.list = null; admPush(); renderKonto();
-    }, function(e){ b.disabled = false; if (er) er.textContent = e && e.status === 401 ? _("Face ID gick inte att använda. Logga in med en länk och lägg till Face ID igen.") : pkErrText(e); });
+    }, function(e){ b.disabled = false; if (er) er.textContent = e && e.status === 401 ? _("Det gick inte att logga in så. Logga in med en länk och lägg till {m} igen.", {m:pkName()}) : pkErrText(e); });
   }
   // "Synas i appen": one's own choice (a club member's), a parent's for their junior
   function konVisHtml(me){
@@ -8223,7 +8229,7 @@
     }).join("");
   }
   function konAdminHtml(){
-    var A = KONTO.adm, h = konReqsHtml(A) + '<div class="sh"><h2>' + _("Lägg till") + '</h2><div class="meta">' + _("Admin") + '</div></div>';
+    var A = KONTO.adm, h = '<div class="amxbar kstat"><a class="amxsec" href="#stats">' + _("Statistik") + '</a></div>' + konReqsHtml(A) + '<div class="sh"><h2>' + _("Lägg till") + '</h2><div class="meta">' + _("Admin") + '</div></div>';
     var used = A ? A.users.map(function(u){ return u.pid; }) : [];
     var opts = ROSTER.filter(function(p){ return used.indexOf(p.pid) < 0; }).slice().sort(function(a, b){ return a.name.localeCompare(b.name, "sv"); });
     h += '<div class="card amxset"><label class="amxf"><span>' + _("Klubbspelare") + '</span><select id="kPid"><option value="">' + _("Ingen, skriv namn nedan") + '</option>' +
@@ -8243,6 +8249,9 @@
       return '<details class="krow"><summary><span class="kn"><b>' + esc(u.name) + '</b><small>' + esc(roleText(u.roles) + (kids.length ? " · " + _("förälder till ") + kids.join(", ") : "") + " · " + st) + '</small></span><i aria-hidden="true"></i></summary><div class="kact">' +
         '<label class="kchk"><input type="checkbox" data-role="arr" data-id="' + esc(u.id) + '"' + (u.roles.indexOf("arr") >= 0 ? " checked" : "") + '> ' + _("Arrangör") + '</label>' +
         '<label class="kchk"><input type="checkbox" data-role="admin" data-id="' + esc(u.id) + '"' + (u.roles.indexOf("admin") >= 0 ? " checked" : "") + (self ? " disabled" : "") + '> ' + _("Admin") + '</label>' +
+        '<label class="amxf kpl"><span>' + _("Spelarprofil") + '</span><select data-link="' + esc(u.id) + '"><option value="">' + _("Ingen") + '</option>' +
+          ROSTER.filter(function(p){ return p.pid === u.pid || used.indexOf(p.pid) < 0; }).slice().sort(function(a, b){ return a.name.localeCompare(b.name, "sv"); })
+            .map(function(p){ return '<option value="' + p.pid + '"' + (p.pid === u.pid ? " selected" : "") + '>' + esc(p.name) + '</option>'; }).join("") + '</select></label>' +
         '<div class="amxbar"><button type="button" class="amxsec" data-k="invite" data-id="' + esc(u.id) + '">' + _("Ny inloggningslänk") + '</button>' +
         (u.devices.length ? '<button type="button" class="amxsec" data-k="revoke" data-id="' + esc(u.id) + '">' + _("Logga ut överallt") + '</button>' : "") +
         (self ? "" : '<button type="button" class="amxsec" data-k="disable" data-on="' + (u.disabled ? "" : "1") + '" data-id="' + esc(u.id) + '">' + (u.disabled ? _("Aktivera") : _("Stäng av")) + '</button>' +
@@ -8306,8 +8315,8 @@
     if (k === "pkadd"){ pkAdd(b); return; }
     if (k === "pklogin"){ pkLogin(b); return; }
     if (k === "pkclear"){
-      if (!confirm(_("Ta bort Face ID-inloggningen för ditt konto på alla enheter?"))) return;
-      authApi("/auth/pk/clear", {}).then(function(){ KONTO.msg = _("Face ID är borttaget. Ta också bort nyckeln i telefonens lösenordsinställningar om du vill."); authMe(); },
+      if (!confirm(_("Ta bort inloggningen med Face ID och fingeravtryck för ditt konto på alla enheter?"))) return;
+      authApi("/auth/pk/clear", {}).then(function(){ KONTO.msg = _("Borttaget. Ta också bort nyckeln i telefonens lösenordsinställningar om du vill."); authMe(); },
         function(er){ alert(_("Det gick inte: ") + er.message); });
       return;
     }

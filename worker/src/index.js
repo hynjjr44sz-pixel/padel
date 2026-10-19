@@ -147,9 +147,10 @@ async function handle(req, env) {
     const rec = await loadRecord(env);
     return json({ ok: true, active: activeEvents(now(env), merge(rec ? rec.events : [])).map(e => e.cls || e.name), discoveredAt: rec ? rec.at : null }, 200, h);
   }
-  // The owner's statistics (the page's #stats view): secret STATS_KEY (read only; off without it).
+  // The owner's statistics (the page's #stats view): secret STATS_KEY or an admin login (read only).
   if (route === "GET /stats") {
-    if (!env.STATS_KEY || !sameSecret(req.headers.get("X-Stats-Key"), env.STATS_KEY)) return json({ error: "forbidden" }, 403, h);
+    // the owner's key, or a logged-in admin
+    if (!(env.STATS_KEY && sameSecret(req.headers.get("X-Stats-Key"), env.STATS_KEY)) && !can(await authUser(env, req, +now(env)), "admin")) return json({ error: "forbidden" }, 403, h);
     return json(await ownerStats(env, now(env)), 200, { ...h, "Cache-Control": "no-store" });
   }
   if (route === "GET /vapid") return json({ key: env.VAPID_PUBLIC_KEY || "", classes: await covers(env) }, env.VAPID_PUBLIC_KEY ? 200 : 503, h);
