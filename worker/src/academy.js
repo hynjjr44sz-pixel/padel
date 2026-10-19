@@ -18,7 +18,9 @@ export async function academyGet(env, me) {
     "FROM tgroups g LEFT JOIN tgroup_pub p ON p.gid = g.id WHERE g.org = ? ORDER BY g.name").bind(ORG).all()).results
     .filter(g => g.shown || (all && g.owner === me.id))
     .map(g => ({ id: g.id, name: g.name, shown: !!g.shown, level: g.level, sched: g.sched, max: g.max, price: g.price, info: g.info, n: g.n, ...(all && g.owner === me.id ? { mine: true } : {}) }));
-  return { intro: a.intro || null, ptext: a.ptext || null, pprice: a.pprice || null, groups: gs };
+  const out = { intro: a.intro || null, ptext: a.ptext || null, pprice: a.pprice || null, groups: gs };
+  if (all) out.swish = ((await env.DB.prepare("SELECT swish FROM academy_pay WHERE org = ?").bind(ORG).first()) || {}).swish || null;   // the coach's settings
+  return out;
 }
 // POST /academy {op: page {intro, ptext, pprice} | group {gid, shown, level, sched, max, price, info}}: a head coach
 export async function academyPost(env, me, b, t) {

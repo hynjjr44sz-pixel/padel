@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hfo5BmPJ+q1cOB5JBbIONgaBPKCIKdHUy8QGu2MoinU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-CZFMKfpbHt7fzk7a6CgRcGBSoHcYqrIndWOe4RAg+mk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -331,6 +331,12 @@
   .dkmarks{ position:absolute; inset:0; z-index:0; pointer-events:none; }
   .dkmark{ position:absolute; top:7px; width:16px; height:6px; margin-left:-8px; border-radius:50%; background:radial-gradient(closest-side, rgba(255,240,170,.75), rgba(255,240,170,0)); animation:dk-mark 1.6s ease-out forwards; }
   @keyframes dk-mark{ 0%{ opacity:1; transform:scale(.4); } 20%{ opacity:.9; transform:scale(1.15); } 100%{ opacity:0; transform:scale(1.3); } }
+  /* Träning: an ECG line; on the open tab a bright pulse runs along it */
+  .dtab .dk-ecg-run{ stroke-width:2.6; stroke-dasharray:0 100; opacity:0; }
+  .dtab.on .dk-ecg{ opacity:.45; }
+  .dtab.on .dk-ecg-run{ opacity:1; stroke-dasharray:22 78; animation:dk-ecg 1.6s linear infinite; }
+  @keyframes dk-ecg{ from{ stroke-dashoffset:100; } to{ stroke-dashoffset:0; } }
+  @media (prefers-reduced-motion: reduce){ .dtab.on .dk-ecg-run{ animation:none; stroke-dasharray:none; } .dtab.on .dk-ecg{ opacity:1; } }
   /* each icon's own move when its tab opens */
   .dtab svg g{ transform-box:fill-box; transform-origin:center; }
   .dtab.pop .dk-rays{ animation:dk-rays .9s cubic-bezier(.2,1,.3,1); }
@@ -480,6 +486,12 @@
   .trshow{ display:flex; margin:0 0 14px; font-weight:600; }
   .trmdot{ position:absolute; top:-2px; left:50%; width:8px; height:8px; margin-left:4px; border-radius:50%; background:#E5484D; }
   .tritem.trcoming{ background:transparent; border:1.5px dashed var(--line); margin-bottom:6px; }
+  .trfee{ padding:12px 14px; margin:0 0 8px; } .trfee > div:first-child{ display:flex; justify-content:space-between; gap:10px; align-items:baseline; } .trfee b{ font-size:15px; } .trfee small{ color:var(--dim); }
+  .trfst{ margin:6px 0 4px !important; font-weight:600; font-size:13.5px; } .st-obetald .trfst{ color:#CE2C31; } .st-swishad .trfst, .st-matchi .trfst{ color:#AB6400; } .st-betald .trfst, .st-gratis .trfst{ color:#218358; }
+  .trfeer{ display:flex; align-items:center; gap:10px; padding:8px; } .trfeer + .trfeer{ border-top:1px solid var(--line); } .trfeer > span:not(.av){ flex:1; } .trfeer .av{ flex:0 0 auto; }
+  .trfeer b{ display:block; font-size:14px; } .trfeer small{ display:block; font-size:11.5px; color:var(--dim); } .trfeer.st-obetald small{ color:#CE2C31; } .trfeer.st-swishad small, .trfeer.st-matchi small{ color:#AB6400; }
+  .trfeer select{ max-width:42%; padding:8px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; font-size:13px; }
+  .swrow{ display:flex; align-items:center; gap:10px; padding:10px 12px; margin:0 0 8px; border-radius:12px; background:var(--surface-2); } .swrow span{ flex:0 0 96px; font-size:12px; color:var(--dim); } .swrow b{ flex:1; font-size:16px; word-break:break-word; }
   .trhow{ margin-top:12px; text-align:left; } .trhow summary{ cursor:pointer; font:600 12px/1 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); padding:6px 0; }
   .trhow p{ margin:8px 0 0 !important; font-size:13.5px; line-height:1.45; }
   .trwho{ display:flex; gap:8px; overflow-x:auto; margin:0 0 12px; padding-bottom:4px; }
@@ -1969,7 +1981,7 @@
     <span class="dball-sh" id="dockBallSh" aria-hidden="true"></span>
     <span class="dball-ring" id="dockRing" aria-hidden="true"></span>
     <span class="dball" id="dockBall" aria-hidden="true"><i></i></span>
-    <div class="dkbar" id="dockBar"><svg class="dkcourt" viewBox="0 0 400 68" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1.3" vector-effect="non-scaling-stroke"><rect x="5" y="5" width="390" height="58" rx="3"/><path d="M80 5v58M320 5v58"/><path d="M80 34h240" stroke-opacity=".45"/></g><path class="dknet" d="M200 2v64" stroke="#fff" stroke-width="2.2" vector-effect="non-scaling-stroke"/><path d="M196 2v64M204 2v64" stroke="#fff" stroke-opacity=".35" stroke-width="1" stroke-dasharray="1.5 2.5" vector-effect="non-scaling-stroke"/></svg><span class="dkmarks" id="dockMarks" aria-hidden="true"></span><span class="dblob" id="dockBlob" aria-hidden="true"><i></i></span><a class="dtab" draggable="false" data-tab="spelare" href="#spelare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="4.6" r="2.1"/><path d="M8.6 7.4l-1.2 5.4 2.8 2.2-1.1 5.6M7.4 12.8l-2.6 5.8M8.9 9.2l3.8 1.6"/><g class="dk-swing"><path d="M12.7 10.8l1.6-1.4"/><ellipse class="dk-accent" cx="17.2" cy="7" rx="2.7" ry="3.4" transform="rotate(42 17.2 7)"/></g></svg><span data-i18n>Spelare</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="tavlingar" href="#tavlingar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="dk-draw" d="M3 4.5h4.5v4H3M3 15.5h4.5v4H3M7.5 6.5h3v11h-3M10.5 12h3"/><circle class="dk-accent" cx="17.6" cy="12" r="3.4"/><path d="M15.2 10.6c1.4.4 2.4 1.6 2.6 3.1"/></svg><span data-i18n>Tävlingar</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="idag" href="#/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle class="dk-accent" cx="12" cy="11.5" r="3.6"/><g class="dk-rays"><path d="M12 3.6v1.6M12 17.8v1.6M4.1 11.5h1.6M18.3 11.5h1.6M6.4 5.9l1.1 1.1M16.5 16l1.1 1.1M6.4 17.1l1.1-1.1M16.5 7l1.1-1.1"/></g><path d="M3 21h18"/></svg><span data-i18n>Idag</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="traning" href="#traning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18.5a8.5 8.5 0 0 1 16 0"/><path class="dk-draw dk-accent" d="M2.5 12.5h3.2l1.8-3.6 2.6 7 2.4-9.4 2.2 6h2.8"/><path d="M19.5 12.5h2"/></svg><span data-i18n>Träning</span><i class="dbadge" aria-hidden="true"></i></a><button class="dtab" data-tab="mer" type="button" aria-haspopup="dialog" aria-controls="moreSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5v14M21 5.5v14"/><g class="dk-wave"><path d="M3 7h18M3 11.3h18M3 15.6h18M7.5 7v8.6M12 7v8.6M16.5 7v8.6"/></g><path class="dk-accent" d="M3 5.5h18"/></svg><span data-i18n>Mer</span><i class="dbadge" aria-hidden="true"></i></button></div>
+    <div class="dkbar" id="dockBar"><svg class="dkcourt" viewBox="0 0 400 68" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1.3" vector-effect="non-scaling-stroke"><rect x="5" y="5" width="390" height="58" rx="3"/><path d="M80 5v58M320 5v58"/><path d="M80 34h240" stroke-opacity=".45"/></g><path class="dknet" d="M200 2v64" stroke="#fff" stroke-width="2.2" vector-effect="non-scaling-stroke"/><path d="M196 2v64M204 2v64" stroke="#fff" stroke-opacity=".35" stroke-width="1" stroke-dasharray="1.5 2.5" vector-effect="non-scaling-stroke"/></svg><span class="dkmarks" id="dockMarks" aria-hidden="true"></span><span class="dblob" id="dockBlob" aria-hidden="true"><i></i></span><a class="dtab" draggable="false" data-tab="spelare" href="#spelare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="4.6" r="2.1"/><path d="M8.6 7.4l-1.2 5.4 2.8 2.2-1.1 5.6M7.4 12.8l-2.6 5.8M8.9 9.2l3.8 1.6"/><g class="dk-swing"><path d="M12.7 10.8l1.6-1.4"/><ellipse class="dk-accent" cx="17.2" cy="7" rx="2.7" ry="3.4" transform="rotate(42 17.2 7)"/></g></svg><span data-i18n>Spelare</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="tavlingar" href="#tavlingar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="dk-draw" d="M3 4.5h4.5v4H3M3 15.5h4.5v4H3M7.5 6.5h3v11h-3M10.5 12h3"/><circle class="dk-accent" cx="17.6" cy="12" r="3.4"/><path d="M15.2 10.6c1.4.4 2.4 1.6 2.6 3.1"/></svg><span data-i18n>Tävlingar</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="idag" href="#/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle class="dk-accent" cx="12" cy="11.5" r="3.6"/><g class="dk-rays"><path d="M12 3.6v1.6M12 17.8v1.6M4.1 11.5h1.6M18.3 11.5h1.6M6.4 5.9l1.1 1.1M16.5 16l1.1 1.1M6.4 17.1l1.1-1.1M16.5 7l1.1-1.1"/></g><path d="M3 21h18"/></svg><span data-i18n>Idag</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="traning" href="#traning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="dk-ecg" d="M1.5 13h4.2l1.4-2.4 1.4 2.4h1.3l1.9-8.5 2.4 14 1.9-8 1.1 2.5h5.4"/><path class="dk-ecg-run dk-accent" pathLength="100" d="M1.5 13h4.2l1.4-2.4 1.4 2.4h1.3l1.9-8.5 2.4 14 1.9-8 1.1 2.5h5.4"/></svg><span data-i18n>Träning</span><i class="dbadge" aria-hidden="true"></i></a><button class="dtab" data-tab="mer" type="button" aria-haspopup="dialog" aria-controls="moreSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5v14M21 5.5v14"/><g class="dk-wave"><path d="M3 7h18M3 11.3h18M3 15.6h18M7.5 7v8.6M12 7v8.6M16.5 7v8.6"/></g><path class="dk-accent" d="M3 5.5h18"/></svg><span data-i18n>Mer</span><i class="dbadge" aria-hidden="true"></i></button></div>
   </nav>
   <div class="sheet" id="moreSheet" role="dialog" aria-modal="true" aria-labelledby="moreH" hidden>
     <div class="sheet-bg" data-close></div>
@@ -2021,6 +2033,32 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Ej betald": "No pagado",
+    "Swishat, väntar på bekräftelse": "Pagado por Swish, pendiente de confirmar",
+    "Dras från MATCHi-kontot": "Se cobra de la cuenta MATCHi",
+    "Betald": "Pagado",
+    "Gratis": "Gratis",
+    "Avgift": "Cuota",
+    "Swisha {n} kr": "Pagar {n} kr por Swish",
+    "Swisha": "Pagar por Swish",
+    "Dra från mitt MATCHi-konto": "Cobrar de mi cuenta MATCHi",
+    "Ångra": "Deshacer",
+    "Öppna Swish och betala till föreningen. Kopiera uppgifterna med knapparna.": "Abre Swish y paga al club. Copia los datos con los botones.",
+    "Swish-nummer": "Número Swish",
+    "Belopp": "Importe",
+    "Meddelande": "Mensaje",
+    "Jag har swishat": "Ya he pagado por Swish",
+    "Kopierat": "Copiado",
+    "Avgifter": "Cuotas",
+    "{n} av {m} klara": "{n} de {m} listos",
+    "Status": "Estado",
+    "Swishat": "Swish",
+    "MATCHi": "MATCHi",
+    "Ny termin": "Nuevo trimestre",
+    "Ska avgiften dras från ditt MATCHi-konto? Tränaren drar den och bekräftar här.": "¿Cobrar la cuota de tu cuenta MATCHi? El entrenador la cobra y lo confirma aquí.",
+    "Ny termin: alla utom de som går gratis blir obetalda igen. Fortsätta?": "Nuevo trimestre: todos menos los gratuitos vuelven a no pagado. ¿Continuar?",
+    "Föreningens Swish-nummer (för avgifter)": "Número Swish del club (para cuotas)",
+    "Swish-numret ska vara 10 siffror": "El número Swish debe tener 10 cifras",
     "Kommande match": "Próximo partido",
     "Akademin": "Academia",
     "Grupper och privatlektioner": "Grupos y clases particulares",
@@ -8209,7 +8247,7 @@
       '<p>' + _("Siffran i mitten är kvoten mellan dem. Under 0,8 är en lugn vecka, 0,8–1,3 lagom, 1,3–1,5 ökar snabbt och över 1,5 risk för överbelastning. Det är snabba ökningar som ökar skaderisken mest, inte mängden i sig.") + '</p>' +
       '<p>' + _("Matcher räknas in uppskattat: en tävlingsdag som 150 minuter på nivå 7, en seriedag som 120 minuter, en klubbseriematch som 90 minuter. Loggar du en match samma dag gäller din siffra.") + '</p></details></section>' +
       '<section><div class="sh"><h2>' + (pid === me.pid ? _("Min vecka") : _("{n}s vecka", {n:P ? P.short || P.name : "#" + pid})) + '</h2><div class="meta">' + esc(trName(pid)) + '</div></div><div class="card trweek">' + trWeek(items, pid) + '</div></section>' +
-      trPlansHtml(pid) + trChart(items) +
+      trPlansHtml(pid) + trFeesHtml(pid) + trChart(items) +
       '<p class="trnote">' + _("Belastning = minuter × hur tungt det kändes (1–10). Matcher från tävlingar, serier och americanos räknas in av sig själva, uppskattat. Loggar du en match samma dag gäller din siffra.") + '</p>' +
       ((me.pid === pid || (me.kids || []).indexOf(pid) >= 0) && data.s.length ? '<p class="trnote"><button type="button" class="linkbtn" data-trclear="1">' + _("Radera all träningshistorik för {n}", {n:trName(pid)}) + '</button></p>' : "");
     box.innerHTML = h;
@@ -8326,7 +8364,7 @@
       h += '<p class="trback"><button type="button" class="linkbtn plain" data-trgrp="">‹ ' + _("Alla grupper") + '</button></p><div class="sh"><h2>' + esc(g.name) + '</h2><div class="meta">' + g.pids.length + " " + _("spelare") + '</div></div>' +
         '<div class="trmem">' + g.pids.map(function(p){ var P = BYPID[p]; return '<button type="button" data-trp="' + p + '"' + (head ? "" : " disabled") + '>' + (P ? avatar(P.name) : "") + '<span>' + esc(P ? P.short || P.name : "#" + p) + '</span></button>'; }).join("") + '</div>' +
         (g.own ? '<div class="amxbar"><button type="button" class="amxsec" data-trgedit="' + esc(g.id) + '">' + _("Ändra gruppen") + '</button></div>' +
-          '<div class="sh"><h2>' + _("Belastning") + '</h2><div class="meta">' + _("senaste 7 dagarna mot vanligt") + '</div></div>' + trGroupLoad(g) : "") +
+          '<div class="sh"><h2>' + _("Belastning") + '</h2><div class="meta">' + _("senaste 7 dagarna mot vanligt") + '</div></div>' + trGroupLoad(g) + trGroupFees(g) : "") +
         '<div class="sh"><h2>' + _("Planerat") + '</h2><div class="meta"><button type="button" class="linkbtn plain" data-trplan="g' + esc(g.id) + '">+ ' + _("Planera pass") + '</button></div></div>';
       var vis = plans.filter(function(p){ return p.day >= trAdd(t, -14); });
       h += vis.length ? vis.map(function(p){
@@ -8488,7 +8526,7 @@
   }
   function ytClose(){ var el = document.getElementById("ytPop"); if (!el) return; el.classList.remove("open"); el.innerHTML = ""; el.hidden = true; }
   function trClick2(ev){
-    if (acadCoachClick(ev)) return true;
+    if (acadCoachClick(ev) || payClick(ev)) return true;
     var tb = ev.target.closest("[data-trthread]");
     if (tb){ trThread(tb.getAttribute("data-trthread")); return true; }
     var yb = ev.target.closest("[data-ytplay]");
@@ -8518,6 +8556,7 @@
   }
   function trChange(ev){
     var s = ev.target;
+    if (s.hasAttribute("data-gpay")){ var gid = s.getAttribute("data-gpay"); authApi("/pay", {gid:gid, pid:+s.getAttribute("data-pid"), status:s.value}).then(function(){ delete TR["gpay" + gid]; renderTraining(); }, function(e){ alert(_("Det gick inte: ") + e.message); }); return; }
     if (s.hasAttribute("data-trassist") && s.value){ var c = TR.coach && TR.coach.d; if (c) authApi("/coach", {op:"assist", users:c.assistants.map(function(a){ return a.id; }).concat([s.value])}).then(function(){ delete TR.coach; renderTraining(); }, function(e){ alert(_("Det gick inte: ") + e.message); }); }
   }
   function trInput(ev){
@@ -8656,9 +8695,11 @@
       trSheetOpen('<h2>' + _("Akademin") + '</h2><div class="trf"><span>' + _("Om akademin") + '</span><textarea id="acIntro" rows="5" maxlength="1500">' + esc(a.intro || "") + '</textarea></div>' +
         '<div class="trf"><span>' + _("Privatlektioner") + '</span><textarea id="acP" rows="3" maxlength="1500" placeholder="' + esc(_("Till exempel 60 minuter, enskilt eller två spelare")) + '">' + esc(a.ptext || "") + '</textarea></div>' +
         '<div class="trf"><span>' + _("Pris privatlektion") + '</span><input id="acPP" maxlength="80" value="' + esc(a.pprice || "") + '" placeholder="' + esc(_("Till exempel 650 kr")) + '"></div>' +
+        '<div class="trf"><span>' + _("Föreningens Swish-nummer (för avgifter)") + '</span><input id="acSw" inputmode="numeric" maxlength="16" value="' + esc(fmtSwish(a.swish || "")) + '" placeholder="123 456 78 90"></div>' +
         '<div class="amxbar"><button type="button" class="amxgo" data-acsave="1">' + _("Spara") + '</button></div>', function(e2){
         var s = e2.target.closest("[data-acsave]"); if (!s) return; s.disabled = true;
-        authApi("/academy", {op:"page", intro:document.getElementById("acIntro").value, ptext:document.getElementById("acP").value, pprice:document.getElementById("acPP").value}).then(done, function(e){ s.disabled = false; trErr2(e); });
+        authApi("/academy", {op:"page", intro:document.getElementById("acIntro").value, ptext:document.getElementById("acP").value, pprice:document.getElementById("acPP").value})
+          .then(function(){ return authApi("/pay", {op:"swish", swish:document.getElementById("acSw").value}); }).then(done, function(e){ s.disabled = false; trErr2(e.message === "swish" ? _("Swish-numret ska vara 10 siffror") : e); });
       });
     } else if (b.hasAttribute("data-acgroup")){
       var g = a.groups.filter(function(x){ return x.id === b.getAttribute("data-acgroup"); })[0];
@@ -8673,6 +8714,65 @@
       });
     } else if (b.hasAttribute("data-acmark")) authApi("/academy/interest/mark", {id:b.getAttribute("data-acmark"), status:b.getAttribute("data-st")}).then(done, function(e){ alert(_("Det gick inte: ") + e.message); });
     else if (b.hasAttribute("data-acdel")){ if (confirm(_("Ta bort anmälan?"))) authApi("/academy/interest/mark", {id:b.getAttribute("data-acdel"), op:"del"}).then(done, function(e){ alert(_("Det gick inte: ") + e.message); }); }
+    return true;
+  }
+  /* ---- Akademin, avgifter: the player's fee per group (swish to the club, or from their MATCHi account); the coach
+     confirms (betald) or lets it go (gratis). The app never sees a payment itself (worker academy.js). ---- */
+  var PAY_TXT = {obetald:"Ej betald", swishad:"Swishat, väntar på bekräftelse", matchi:"Dras från MATCHi-kontot", betald:"Betald", gratis:"Gratis"};
+  function fmtSwish(n){ n = String(n || ""); return n.length === 10 ? n.slice(0, 3) + " " + n.slice(3, 6) + " " + n.slice(6, 8) + " " + n.slice(8) : n; }
+  function trFeesHtml(pid){
+    trGet("fee" + pid, "/pay?pid=" + pid);
+    var x = TR["fee" + pid] && TR["fee" + pid].d;
+    if (!x || !x.fees.length) return "";
+    return '<section><div class="sh"><h2>' + _("Avgift") + '</h2><div class="meta">' + _("Akademin") + '</div></div>' + x.fees.map(function(f){
+      var open = f.status === "obetald", ok = f.status === "betald" || f.status === "gratis";
+      return '<div class="card trfee st-' + f.status + '"><div><b>' + esc(f.gname) + '</b><small>' + esc(f.price) + '</small></div><p class="trfst">' + (ok ? "✓ " : "") + esc(_(PAY_TXT[f.status])) + '</p>' +
+        (open ? '<div class="amxbar">' + (x.swish && f.amount ? '<button type="button" class="amxgo" data-fswish="' + esc(f.gid) + '">' + _("Swisha {n} kr", {n:fmtN(f.amount)}) + '</button>' : x.swish ? '<button type="button" class="amxgo" data-fswish="' + esc(f.gid) + '">' + _("Swisha") + '</button>' : "") +
+          '<button type="button" class="amxsec" data-fset="matchi" data-gid="' + esc(f.gid) + '" data-pid="' + pid + '">' + _("Dra från mitt MATCHi-konto") + '</button></div>' : "") +
+        (f.status === "swishad" || f.status === "matchi" ? '<div class="amxbar"><button type="button" class="amxsec" data-fset="obetald" data-gid="' + esc(f.gid) + '" data-pid="' + pid + '">' + _("Ångra") + '</button></div>' : "") + '</div>';
+    }).join("") + '</section>';
+  }
+  function trSwishSheet(pid, gid){
+    var x = TR["fee" + pid] && TR["fee" + pid].d, f = x && x.fees.filter(function(y){ return y.gid === gid; })[0], P = BYPID[pid];
+    if (!f) return;
+    var msg = ("Akademi " + f.gname + " " + (P ? P.name : "")).slice(0, 50);
+    var row = function(lab, val, copy){ return '<div class="swrow"><span>' + esc(lab) + '</span><b>' + esc(val) + '</b><button type="button" class="amxsec" data-copy="' + esc(copy) + '">' + _("Kopiera") + '</button></div>'; };
+    trSheetOpen('<h2>' + _("Swisha") + '</h2><p class="kdim">' + _("Öppna Swish och betala till föreningen. Kopiera uppgifterna med knapparna.") + '</p>' +
+      row(_("Swish-nummer"), fmtSwish(x.swish), x.swish) + (f.amount ? row(_("Belopp"), fmtN(f.amount) + " kr", String(f.amount)) : "") + row(_("Meddelande"), msg, msg) +
+      '<div class="amxbar"><button type="button" class="amxgo" data-fdone="1">' + _("Jag har swishat") + '</button></div>', function(ev){
+      var c = ev.target.closest("[data-copy]");
+      if (c){ var v = c.getAttribute("data-copy"); try { navigator.clipboard.writeText(v).then(function(){ c.textContent = _("Kopierat"); }, function(){}); } catch (e){} return; }
+      var d = ev.target.closest("[data-fdone]");
+      if (!d) return;
+      d.disabled = true;
+      authApi("/pay", {gid:gid, pid:pid, status:"swishad"}).then(function(){ trSheet2Close(); delete TR["fee" + pid]; renderTraining(); }, function(e){ d.disabled = false; trErr2(e); });
+    });
+  }
+  // the coach: the group's fees
+  function trGroupFees(g){
+    trGet("gpay" + g.id, "/pay?gid=" + g.id);
+    var x = TR["gpay" + g.id] && TR["gpay" + g.id].d;
+    if (!x) return "";
+    var order = {swishad:0, matchi:1, obetald:2, betald:3, gratis:4}, paid = x.fees.filter(function(f){ return f.status === "betald" || f.status === "gratis"; }).length;
+    return '<div class="sh"><h2>' + _("Avgifter") + '</h2><div class="meta">' + esc(_("{n} av {m} klara", {n:paid, m:x.fees.length})) + '</div></div><div class="card trgl">' +
+      x.fees.slice().sort(function(a, b){ return order[a.status] - order[b.status]; }).map(function(f){ var P = BYPID[f.pid];
+        return '<div class="trfeer st-' + f.status + '">' + (P ? avatar(P.name) : "") + '<span><b>' + esc(P ? P.name : "#" + f.pid) + '</b><small>' + esc(_(PAY_TXT[f.status])) + '</small></span>' +
+          '<select data-gpay="' + esc(g.id) + '" data-pid="' + f.pid + '" aria-label="' + esc(_("Status")) + '">' + ["obetald", "swishad", "matchi", "betald", "gratis"].map(function(s){ return '<option value="' + s + '"' + (s === f.status ? " selected" : "") + '>' + esc(_(s === "swishad" ? "Swishat" : s === "matchi" ? "MATCHi" : PAY_TXT[s])) + '</option>'; }).join("") + '</select></div>';
+      }).join("") + '</div><div class="amxbar"><button type="button" class="amxsec" data-gpayreset="' + esc(g.id) + '">' + _("Ny termin") + '</button></div>';
+  }
+  function payClick(ev){
+    var b = ev.target.closest("[data-fswish],[data-fset],[data-gpayreset]");
+    if (!b) return false;
+    if (b.hasAttribute("data-fswish")) trSwishSheet(TR.pid, b.getAttribute("data-fswish"));
+    else if (b.hasAttribute("data-fset")){
+      var pid = +b.getAttribute("data-pid"), st = b.getAttribute("data-fset");
+      if (st === "matchi" && !confirm(_("Ska avgiften dras från ditt MATCHi-konto? Tränaren drar den och bekräftar här."))) return true;
+      authApi("/pay", {gid:b.getAttribute("data-gid"), pid:pid, status:st}).then(function(){ delete TR["fee" + pid]; renderTraining(); }, function(e){ alert(_("Det gick inte: ") + e.message); });
+    } else if (b.hasAttribute("data-gpayreset")){
+      if (!confirm(_("Ny termin: alla utom de som går gratis blir obetalda igen. Fortsätta?"))) return true;
+      var gid = b.getAttribute("data-gpayreset");
+      authApi("/pay", {gid:gid, op:"reset"}).then(function(){ delete TR["gpay" + gid]; renderTraining(); }, function(e){ alert(_("Det gick inte: ") + e.message); });
+    }
     return true;
   }
   function renderAmxHome(){

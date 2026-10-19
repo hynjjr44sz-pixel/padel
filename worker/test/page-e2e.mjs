@@ -145,7 +145,7 @@ async function newPage(opts = {}) {
       return r.fulfill({ status: opts.liveStatus || 200, contentType: "application/json", body: opts.liveStatus ? "{}" : opts.live, headers: h });
     }
     if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
-    if (/^\/(amx|auth|admin|me\/|photo\/|stats$|train|coach|lib|plans|academy)/.test(u.pathname)) {   // the real worker code, its own KV and database
+    if (/^\/(amx|auth|admin|me\/|photo\/|stats$|train|coach|lib|plans|academy|pay$)/.test(u.pathname)) {   // the real worker code, its own KV and database
       const q = r.request(), au = q.headers()["authorization"];
       return worker.fetch(new Request("https://w" + u.pathname + u.search, { method: q.method(), headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", ...(au ? { Authorization: au } : {}) }, body: q.method() === "POST" ? q.postData() : undefined }), AMX_ENV)
         .then(async x => r.fulfill({ status: x.status, contentType: "application/json", body: await x.text(), headers: h }));
