@@ -91,14 +91,18 @@ export async function interestList(env, me) {
     "FROM interest i LEFT JOIN tgroups g ON g.id = i.gid LEFT JOIN interest_pid x ON x.id = i.id WHERE i.org = ? ORDER BY i.created DESC LIMIT 200").bind(ORG).all()).results;
   return { list: l };
 }
-export async function interestMark(env, me, b, t) {
+export async function interestMark(env, me, b, t, byPid) {
   if (!isHead(me)) return { err: "forbidden", status: 403 };
   const r = b && typeof b.id === "string" && await env.DB.prepare("SELECT id FROM interest WHERE id = ? AND org = ?").bind(b.id, ORG).first();
   if (!r) return { err: "not found", status: 404 };
   if (b.op === "add") {
-    // a sign-up with a player: into the group (the coach's own), marked handled
-    const x = await env.DB.prepare("SELECT i.gid, p.pid FROM interest i JOIN interest_pid p ON p.id = i.id JOIN tgroups g ON g.id = i.gid WHERE i.id = ? AND g.owner = ?").bind(r.id, me.id).first();
-    if (!x) return { err: "not found", status: 404 };
+    // into one of the coach's own groups (the one asked for, or another: {gid}), marked handled; the player is the one
+    // signed up from an account, else the club player the coach picked ({pid}: a member of the club)
+    const i = await env.DB.prepare("SELECT i.gid, p.pid FROM interest i LEFT JOIN interest_pid p ON p.id = i.id WHERE i.id = ?").bind(r.id).first();
+    const pid = i.pid || (byPid && byPid.has(Number(b.pid)) ? Number(b.pid) : null), gid = typeof b.gid === "string" ? b.gid : i.gid;
+    const g = pid && gid && await env.DB.prepare("SELECT id FROM tgroups WHERE id = ? AND owner = ?").bind(gid, me.id).first();
+    if (!g) return { err: "not found", status: 404 };
+    const x = { gid, pid };
     await env.DB.batch([env.DB.prepare("INSERT OR IGNORE INTO tgroup_members (gid, pid) VALUES (?, ?)").bind(x.gid, x.pid), env.DB.prepare("UPDATE interest SET status = 'kontaktad' WHERE id = ?").bind(r.id), log(env, t, me.id, "signup-add", { gid: x.gid, pid: x.pid })]);
     return { ok: true };
   }

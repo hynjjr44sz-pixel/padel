@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-wMkK6XJ0//WAzk1xlorR/8fIA87E795WznnO5kLuoC8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-pmbJBIGJdRevUhVd2q1usTAwT4bNjc5GhTPK9mSn8mE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -527,6 +527,19 @@
   .tritem span{ flex:1; } .tritem b{ font-size:14px; } .tritem small{ display:block; font-size:12px; color:var(--dim); margin-top:2px; }
   .trdel{ border:0; background:none; color:var(--dim); font-size:22px; line-height:1; padding:0 4px; }
   .trnote{ margin:12px 4px 0; font-size:12px; color:var(--dim); }
+  .trsrc{ font:500 11px/1.4 "Chivo Mono", monospace; color:var(--dim); }
+  .trbody{ padding:14px 16px; margin-top:12px; }
+  .trbh{ display:flex; justify-content:space-between; align-items:baseline; } .trbh b{ font:800 18px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.03em; } .trbh span{ font:500 11px/1 "Chivo Mono", monospace; color:var(--dim); }
+  .trbn{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-top:10px; }
+  .trbn span{ display:block; font:500 10.5px/1 "Chivo Mono", monospace; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; } .trbn b{ display:block; margin-top:6px; font:900 26px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; } .trbn b small{ font:500 11px/1 "Chivo Mono", monospace; color:var(--dim); }
+  .trbn em{ display:block; margin-top:4px; font:500 11px/1.2 "Chivo Mono", monospace; font-style:normal; color:var(--dim); }
+  .trbw, .trbok{ margin:12px 0 0; padding:9px 12px; border-radius:10px; font-size:13px; } .trbw{ background:color-mix(in srgb, #FFC53D 22%, transparent); } .trbok{ background:color-mix(in srgb, #30A46C 14%, transparent); }
+  .trconn{ padding:6px 16px 14px; } .trconn .kdim{ margin:10px 0 0; font-size:12px; }
+  .trcr{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); } .trcr > span:nth-child(2){ flex:1; min-width:0; } .trcr b{ display:block; font-size:15px; } .trcr small{ display:block; font-size:12px; color:var(--dim); margin-top:2px; }
+  .trci{ flex:none; display:grid; place-items:center; width:36px; height:36px; border-radius:10px; background:var(--surface-2, rgba(127,127,127,.12)); }
+  .trcr button{ flex:none; }
+  .hksteps{ margin:12px 0; padding-left:22px; font-size:14px; line-height:1.45; } .hksteps li{ margin:0 0 8px; }
+  .hklink b{ word-break:break-all; font:500 12px/1.3 "Chivo Mono", monospace; }
   .linkbtn{ border:0; background:none; padding:0; color:#CE2C31; text-decoration:underline; font:inherit; }
   .trintro p{ margin:0 0 10px; } .trintro .amxgo{ display:inline-block; margin-top:6px; text-decoration:none; }
   .trsheet .sheet-in{ touch-action:auto; max-height:88vh; overflow:auto; }
@@ -2048,6 +2061,54 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Lägg i grupp":"Añadir a un grupo",
+    "Skapa en grupp först, under Grupper.":"Crea primero un grupo, en Grupos.",
+    "Vilken spelare är det?":"¿Qué jugador es?",
+    "Välj spelare …":"Elige jugador …",
+    "Grupperna är för klubbens spelare. Finns personen inte i listan behöver hen först spela för klubben i RankedIn.":"Los grupos son para los jugadores del club. Si la persona no está en la lista, primero tiene que jugar por el club en RankedIn.",
+    "välj vilken spelare det är":"elige qué jugador es",
+    "Apple Hälsa":"Apple Salud",
+    "Din länk":"Tu enlace",
+    "Efter Avsluta upprepning: lägg till Kombinera text med Upprepningsresultat och välj Ny rad.":"Después de Fin de repetición: añade Combinar texto con Resultados de repetición y elige Nueva línea.",
+    "En ny länk ersätter den gamla. Genvägen måste få den nya länken.":"Un enlace nuevo reemplaza el anterior. El atajo necesita el enlace nuevo.",
+    "En rad som börjar med dag ger kroppens värden för ett datum: dag;datum;vilopuls;HRV;sömn i timmar. Till exempel dag;2026-10-19;52;61;7,5. Appen varnar när vilopulsen är hög, HRV låg eller sömnen kort.":"Una línea que empieza con dag da los valores del cuerpo de una fecha: dag;fecha;pulso en reposo;HRV;sueño en horas. Por ejemplo dag;2026-10-19;52;61;7,5. La app avisa cuando el pulso en reposo es alto, la HRV baja o el sueño corto.",
+    "Från klockan är det uppskattat. Välj hur det kändes, 1 är mycket lätt och 10 max.":"Desde el reloj es una estimación. Elige cómo te sentiste, 1 es muy fácil y 10 al máximo.",
+    "Garmin, Polar, Suunto, Coros, Android och fler":"Garmin, Polar, Suunto, Coros, Android y más",
+    "HRV är lägre än vanligt":"la HRV está más baja de lo normal",
+    "Hur tungt var det? Uppskattat {n}":"¿Qué tan duro fue? Estimado {n}",
+    "Hur tungt var passet?":"¿Qué tan duro fue el entrenamiento?",
+    "Inget avvikande. Kör som planerat.":"Nada fuera de lo normal. Sigue según el plan.",
+    "Inuti upprepningen: lägg till Text och skriv Upprepningsobjekt Typ, ett semikolon, Startdatum, ett semikolon och Slutdatum. Tryck på Startdatum och Slutdatum och välj datumformat ISO 8601.":"Dentro de la repetición: añade Texto y escribe Elemento de repetición Tipo, un punto y coma, Fecha de inicio, un punto y coma y Fecha de fin. Toca Fecha de inicio y Fecha de fin y elige el formato ISO 8601.",
+    "Klocka och hälsa":"Reloj y salud",
+    "Kommer snart: Garmin, Polar, Suunto och Android via Strava":"Próximamente: Garmin, Polar, Suunto y Android vía Strava",
+    "Koppla":"Conectar",
+    "Koppla från":"Desconectar",
+    "Koppla från Strava? Passen som redan finns ligger kvar.":"¿Desconectar Strava? Los entrenamientos que ya están se quedan.",
+    "Kopplad till {n}":"Conectado a {n}",
+    "Kroppen":"El cuerpo",
+    "Kör genvägen en gång och tillåt åtkomst till Hälsa. Gå sedan till fliken Automatisering, välj Tid på dygnet, till exempel 22:00 varje dag, Kör omedelbart och genvägen Padel.":"Ejecuta el atajo una vez y permite el acceso a Salud. Luego ve a la pestaña Automatización, elige Hora del día, por ejemplo 22:00 cada día, Ejecutar inmediatamente y el atajo Padel.",
+    "Lägg till Hämta innehållet i URL. Klistra in din länk, välj metod POST och begärans innehåll Fil med Kombinerad text.":"Añade Obtener contenido de URL. Pega tu enlace, elige el método POST y el cuerpo de la solicitud Archivo con Texto combinado.",
+    "Lägg till Upprepa med varje, med resultatet från steget innan.":"Añade Repetir con cada, con el resultado del paso anterior.",
+    "Lägg till åtgärden Hitta hälsoexempel. Välj typ Träningspass och lägg till filtret Startdatum är under de senaste 3 dagarna.":"Añade la acción Buscar muestras de salud. Elige el tipo Entrenamientos y añade el filtro Fecha de inicio en los últimos 3 días.",
+    "Länken visas bara när den skapas. Har du tappat den, skapa en ny.":"El enlace solo se muestra al crearlo. Si lo has perdido, crea uno nuevo.",
+    "Länken är personlig, som ett lösenord. Den visas bara nu. Dela den inte.":"El enlace es personal, como una contraseña. Solo se muestra ahora. No lo compartas.",
+    "Mer: puls, vilopuls och sömn":"Más: pulso, pulso en reposo y sueño",
+    "Passen från klockan läggs in av sig själva. Hur tungt det var uppskattas från pulsen, och du kan ändra det. Bara du, dina föräldrar och dina tränare ser det.":"Los entrenamientos del reloj se añaden solos. La dureza se estima a partir del pulso y puedes cambiarla. Solo tú, tus padres y tus entrenadores lo ven.",
+    "På":"Activado",
+    "Skapa ny länk":"Crear enlace nuevo",
+    "Sluta hämta från Apple Hälsa? Passen som redan finns ligger kvar.":"¿Dejar de importar de Apple Salud? Los entrenamientos que ya están se quedan.",
+    "Sömn":"Sueño",
+    "Ta det lite lugnare idag.":"Tómatelo con más calma hoy.",
+    "Varje rad i texten är ett pass: typ;start;slut, och om du vill ;snittpuls;maxpuls;kcal. Med puls blir uppskattningen av hur tungt passet var bättre.":"Cada línea del texto es un entrenamiento: tipo;inicio;fin y, si quieres, ;pulso medio;pulso máximo;kcal. Con el pulso la estimación de la dureza es mejor.",
+    "Vilopuls":"Pulso en reposo",
+    "du har sovit mindre än 6 timmar":"has dormido menos de 6 horas",
+    "iPhone och Apple Watch, via appen Genvägar":"iPhone y Apple Watch, con la app Atajos",
+    "inget hämtat än":"nada importado aún",
+    "senast {d}":"último {d}",
+    "snitt {n}":"media {n}",
+    "vilopulsen är {n} slag över ditt snitt":"el pulso en reposo está {n} latidos por encima de tu media",
+    "{n} pass":"{n} entrenamientos",
+    "Öppna appen Genvägar och tryck på + för en ny genväg. Döp den till Padel.":"Abre la app Atajos y toca + para un atajo nuevo. Llámalo Padel.",
     "Veckodag": "Día",
     "Söndagar": "Domingos",
     "Måndagar": "Lunes",
@@ -8180,7 +8241,7 @@
     var x = TR.data[pid];
     if (!pid || TR.busy[pid] || (!force && x && Date.now() - x.t < 60000)) return;
     TR.busy[pid] = true;
-    authApi("/train?pid=" + pid).then(function(d){ TR.busy[pid] = false; TR.data[pid] = {t:Date.now(), s:d.sessions || []}; renderTraining(); },
+    authApi("/train?pid=" + pid).then(function(d){ TR.busy[pid] = false; TR.data[pid] = {t:Date.now(), s:d.sessions || [], days:d.days || []}; renderTraining(); },
       function(e){ TR.busy[pid] = false; TR.data[pid] = {t:Date.now(), s:[], err:e.message}; renderTraining(); });
   }
   // the matches the app knows, as estimated sessions {day, kind, min, rpe, label, auto}
@@ -8215,7 +8276,7 @@
   }
   function trItems(pid){
     var P = BYPID[pid], s = (TR.data[pid] && TR.data[pid].s) || [], manual = {};
-    s.forEach(function(x){ if (x.kind === "match") manual[x.day] = 1; });
+    s.forEach(function(x){ if (x.kind === "match" || (x.src && x.kind === "padel")) manual[x.day] = 1; });   // the watch's padel that day is the match
     return s.map(function(x){ return Object.assign({}, x); }).concat(trAuto(P).filter(function(x){ return !manual[x.day]; }));
   }
   function trLoadOf(x){ return x.min * x.rpe; }
@@ -8259,7 +8320,9 @@
       var cm = lu.map(function(u){ return '<div class="tritem trcoming"><i style="background:' + TR_KIND.match[1] + '"></i><span><b>' + esc(u.label) + '</b><small>' + esc([_("Kommande match"), u.time].filter(Boolean).join(" · ")) + '</small></span></div>'; }).join("");
       h += '<div class="trlist">' + cm + (l.length ? l.map(function(x){
         return '<div class="tritem' + (x.auto ? " auto" : "") + '"><i style="background:' + TR_KIND[x.kind][1] + '"></i><span><b>' + esc(x.auto ? x.label : _(TR_KIND[x.kind][0])) + '</b><small>' +
-          esc([x.min + " min", "RPE " + x.rpe, _("belastning {n}", {n:fmtN(trLoadOf(x))}), x.auto ? _("uppskattat") : ""].filter(Boolean).join(" · ")) + (x.note ? '<br>' + esc(x.note) : "") + '</small>' + trStars(x.stars) +
+          esc([x.min + " min", "RPE " + x.rpe, _("belastning {n}", {n:fmtN(trLoadOf(x))}), x.auto ? _("uppskattat") : ""].filter(Boolean).join(" · ")) + (x.note ? '<br>' + esc(x.note) : "") +
+          (x.src ? '<br><span class="trsrc">' + esc([HK_SRC[x.src] || x.src, x.hr ? _("puls {n}", {n:x.hr}) : "", x.kcal ? x.kcal + " kcal" : ""].filter(Boolean).join(" · ")) + '</span>' : "") + '</small>' + trStars(x.stars) +
+          (x.src && x.est ? '<button type="button" class="trcom" data-hkrpe="' + esc(x.id) + '">' + _("Hur tungt var det? Uppskattat {n}", {n:x.rpe}) + '</button>' : "") +
           (x.auto ? "" : '<button type="button" class="trcom" data-trthread="' + esc(x.id) + '">' + (x.c ? _("Kommentarer ({n})", {n:x.c}) : _("Kommentera")) + '</button>') + '</span>' +
           (x.auto ? "" : '<button type="button" class="trdel" data-trdel="' + esc(x.id) + '" aria-label="' + esc(_("Ta bort")) + '">×</button>') + '</div>';
       }).join("") : (cm ? "" : '<p class="empty">' + esc(_("Inget den här dagen.")) + '</p>')) + '</div>';
@@ -8301,7 +8364,7 @@
       '<p>' + _("Siffran i mitten är kvoten mellan dem. Under 0,8 är en lugn vecka, 0,8–1,3 lagom, 1,3–1,5 ökar snabbt och över 1,5 risk för överbelastning. Det är snabba ökningar som ökar skaderisken mest, inte mängden i sig.") + '</p>' +
       '<p>' + _("Matcher räknas in uppskattat: en tävlingsdag som 150 minuter på nivå 7, en seriedag som 120 minuter, en klubbseriematch som 90 minuter. Loggar du en match samma dag gäller din siffra.") + '</p></details></section>' +
       '<section><div class="sh"><h2>' + (pid === me.pid ? _("Min vecka") : _("{n}s vecka", {n:P ? P.short || P.name : "#" + pid})) + '</h2><div class="meta">' + esc(trName(pid)) + '</div></div><div class="card trweek">' + trWeek(items, pid) + '</div></section>' +
-      trPlansHtml(pid) + trFeesHtml(pid) + trChart(items) +
+      trBodyHtml(data.days) + trPlansHtml(pid) + trFeesHtml(pid) + trChart(items) + trConnHtml(pid) +
       '<p class="trnote">' + _("Belastning = minuter × hur tungt det kändes (1–10). Matcher från tävlingar, serier och americanos räknas in av sig själva, uppskattat. Loggar du en match samma dag gäller din siffra.") + '</p>' +
       ((me.pid === pid || (me.kids || []).indexOf(pid) >= 0) && data.s.length ? '<p class="trnote"><button type="button" class="linkbtn" data-trclear="1">' + _("Radera all träningshistorik för {n}", {n:trName(pid)}) + '</button></p>' : "");
     box.innerHTML = h;
@@ -8358,6 +8421,93 @@
       if (!confirm(_("Radera all träningshistorik? Det går inte att ångra."))) return;
       authApi("/train/clear", {pid:TR.pid}).then(function(){ trLoad(TR.pid, true); }, function(e){ alert(_("Det gick inte: ") + e.message); });
     }
+  }
+  /* ---- Hälsodata (worker health.js): workouts and a day's resting pulse, HRV and sleep from the player's watch; Apple
+     Hälsa through a Genväg that posts to a personal link, Strava (Garmin, Polar, Suunto ...) with the club's Strava app ---- */
+  var HK_SRC = {apple:"Apple Hälsa", strava:"Strava"};
+  function trBodyHtml(days){
+    if (!days || !days.length) return "";
+    var last = days[days.length - 1], prev = days.slice(0, -1).filter(function(d){ return d.day >= trAdd(last.day, -28); });
+    var avg = function(k){ var v = prev.map(function(d){ return d[k]; }).filter(function(x){ return x != null; }); return v.length >= 3 ? v.reduce(function(a, b){ return a + b; }, 0) / v.length : null; };
+    var ar = avg("rhr"), av = avg("hrv"), as = avg("sleep"), warn = [];
+    if (last.rhr != null && ar != null && last.rhr >= ar + 5) warn.push(_("vilopulsen är {n} slag över ditt snitt", {n:Math.round(last.rhr - ar)}));
+    if (last.hrv != null && av != null && last.hrv <= av * .85) warn.push(_("HRV är lägre än vanligt"));
+    if (last.sleep != null && last.sleep < 6) warn.push(_("du har sovit mindre än 6 timmar"));
+    var dec = function(v){ return String(Math.round(v * 10) / 10).replace(".", ","); };
+    var cell = function(label, v, unit, a){ return v == null ? "" : '<div><span>' + esc(label) + '</span><b>' + dec(v) + '<small> ' + unit + '</small></b><em>' + (a != null ? esc(_("snitt {n}", {n:dec(a)})) : "&nbsp;") + '</em></div>'; };
+    return '<section class="card trbody"><div class="trbh"><b>' + _("Kroppen") + '</b><span>' + esc(last.day === trDay(0) ? _("Idag") : dayMon(last.day)) + '</span></div><div class="trbn">' +
+      cell(_("Vilopuls"), last.rhr, "bpm", ar) + cell("HRV", last.hrv, "ms", av) + cell(_("Sömn"), last.sleep, "h", as) + '</div>' +
+      (warn.length ? '<p class="trbw">' + esc(cap(warn.join(", ")) + ". " + _("Ta det lite lugnare idag.")) + '</p>' : prev.length >= 3 ? '<p class="trbok">' + esc(_("Inget avvikande. Kör som planerat.")) + '</p>' : "") + '</section>';
+  }
+  function trConnHtml(pid){
+    var me = AUTH && AUTH.me;
+    if (!me || !(me.pid === pid || (me.kids || []).indexOf(pid) >= 0)) return "";
+    trGet("hk" + pid, "/hk?pid=" + pid);
+    var c = TR["hk" + pid] && TR["hk" + pid].d;
+    if (!c) return "";
+    var a = c.apple, s = c.strava || {};
+    var when = function(t){ return t ? _("senast {d}", {d:dayMon(dayOf(new Date(t))) + " " + hm(new Date(t))}) : _("inget hämtat än"); };
+    var row = function(ic, name, sub, btn){ return '<div class="trcr"><span class="trci" aria-hidden="true">' + ic + '</span><span><b>' + name + '</b><small>' + esc(sub) + '</small></span>' + btn + '</div>'; };
+    return '<section><div class="sh"><h2>' + _("Klocka och hälsa") + '</h2><div class="meta"></div></div><div class="card trconn">' +
+      row('<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 21s-7-4.4-9.3-9C1 8.6 3 5 6.5 5c2 0 3.5 1.2 5.5 3 2-1.8 3.5-3 5.5-3C21 5 23 8.6 21.3 12 19 16.6 12 21 12 21z" fill="#FF375F"/></svg>', "Apple Hälsa",
+        a ? _("På") + " · " + when(a.last) + (a.n ? " · " + _("{n} pass", {n:a.n}) : "") : _("iPhone och Apple Watch, via appen Genvägar"),
+        '<button type="button" class="' + (a ? "amxsec" : "amxgo") + '" data-hk="' + (a ? "guide" : "on") + '">' + (a ? _("Ändra") : _("Koppla")) + '</button>') +
+      row('<svg viewBox="0 0 24 24" width="20" height="20"><path d="M10 2 4 14h4l2-4 2 4h4L10 2zm6 12-2 4-2-4h-2l4 8 4-8h-2z" fill="#FC4C02"/></svg>', "Strava",
+        s.on ? _("Kopplad till {n}", {n:s.on.name || "Strava"}) + " · " + when(s.on.last) : s.ready ? _("Garmin, Polar, Suunto, Coros, Android och fler") : _("Kommer snart: Garmin, Polar, Suunto och Android via Strava"),
+        s.on ? '<button type="button" class="amxsec" data-hk="soff">' + _("Koppla från") + '</button>' : s.ready ? '<button type="button" class="amxgo" data-hk="son">' + _("Koppla") + '</button>' : "") +
+      '<p class="kdim">' + _("Passen från klockan läggs in av sig själva. Hur tungt det var uppskattas från pulsen, och du kan ändra det. Bara du, dina föräldrar och dina tränare ser det.") + '</p></div></section>';
+  }
+  // The steps for a Genväg that sends the last days' workouts to the personal link (iOS names in Swedish)
+  function hkGuide(link){
+    var st = [
+      _("Öppna appen Genvägar och tryck på + för en ny genväg. Döp den till Padel."),
+      _("Lägg till åtgärden Hitta hälsoexempel. Välj typ Träningspass och lägg till filtret Startdatum är under de senaste 3 dagarna."),
+      _("Lägg till Upprepa med varje, med resultatet från steget innan."),
+      _("Inuti upprepningen: lägg till Text och skriv Upprepningsobjekt Typ, ett semikolon, Startdatum, ett semikolon och Slutdatum. Tryck på Startdatum och Slutdatum och välj datumformat ISO 8601."),
+      _("Efter Avsluta upprepning: lägg till Kombinera text med Upprepningsresultat och välj Ny rad."),
+      _("Lägg till Hämta innehållet i URL. Klistra in din länk, välj metod POST och begärans innehåll Fil med Kombinerad text."),
+      _("Kör genvägen en gång och tillåt åtkomst till Hälsa. Gå sedan till fliken Automatisering, välj Tid på dygnet, till exempel 22:00 varje dag, Kör omedelbart och genvägen Padel.")
+    ];
+    return (link ? '<div class="swrow hklink"><span>' + _("Din länk") + '</span><b>' + esc(link) + '</b><button type="button" class="amxsec" data-copy="' + esc(link) + '">' + _("Kopiera") + '</button></div>' +
+      '<p class="kdim">' + _("Länken är personlig, som ett lösenord. Den visas bara nu. Dela den inte.") + '</p>' : "") +
+      '<ol class="hksteps">' + st.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join("") + '</ol>' +
+      '<details class="trhow"><summary>' + _("Mer: puls, vilopuls och sömn") + '</summary><p>' + esc(_("Varje rad i texten är ett pass: typ;start;slut, och om du vill ;snittpuls;maxpuls;kcal. Med puls blir uppskattningen av hur tungt passet var bättre.")) + '</p>' +
+      '<p>' + esc(_("En rad som börjar med dag ger kroppens värden för ett datum: dag;datum;vilopuls;HRV;sömn i timmar. Till exempel dag;2026-10-19;52;61;7,5. Appen varnar när vilopulsen är hög, HRV låg eller sömnen kort.")) + '</p></details>';
+  }
+  function hkClick(ev){
+    var r = ev.target.closest("[data-hkrpe]");
+    if (r){
+      var id = r.getAttribute("data-hkrpe");
+      trSheetOpen('<h2>' + _("Hur tungt var passet?") + '</h2><p class="kdim">' + _("Från klockan är det uppskattat. Välj hur det kändes, 1 är mycket lätt och 10 max.") + '</p><div class="trrpe">' +
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function(n){ return '<button type="button" data-hkv="' + n + '" style="--h:' + (130 - n * 13) + '">' + n + '</button>'; }).join("") + '</div>', function(e2){
+        var v = e2.target.closest("[data-hkv]");
+        if (!v) return;
+        authApi("/train", {op:"rpe", id:id, rpe:+v.getAttribute("data-hkv")}).then(function(){ trSheet2Close(); trLoad(TR.pid, true); }, trErr2);
+      });
+      return true;
+    }
+    var b = ev.target.closest("[data-hk]");
+    if (!b) return false;
+    var k = b.getAttribute("data-hk"), pid = TR.pid, again = function(){ delete TR["hk" + pid]; renderTraining(); };
+    var sheetClick = function(e2){
+      var c = e2.target.closest("[data-copy]");
+      if (c){ try { navigator.clipboard.writeText(c.getAttribute("data-copy")).then(function(){ c.textContent = _("Kopierat"); }, function(){}); } catch (er){} return; }
+      var x = e2.target.closest("[data-hk2]");
+      if (!x) return;
+      if (x.getAttribute("data-hk2") === "new"){ if (confirm(_("En ny länk ersätter den gamla. Genvägen måste få den nya länken."))) newKey(); }
+      else if (confirm(_("Sluta hämta från Apple Hälsa? Passen som redan finns ligger kvar."))) authApi("/hk/key", {pid:pid, op:"off"}).then(function(){ trSheet2Close(); again(); }, trErr2);
+    };
+    var newKey = function(){
+      authApi("/hk/key", {pid:pid}).then(function(d){
+        trSheetOpen('<h2>' + _("Apple Hälsa") + '</h2>' + hkGuide(PUSH_API + "/hk/" + d.key), sheetClick); again();
+      }, function(e){ alert(_("Det gick inte: ") + e.message); });
+    };
+    if (k === "on") newKey();
+    else if (k === "guide") trSheetOpen('<h2>' + _("Apple Hälsa") + '</h2><p class="kdim">' + _("Länken visas bara när den skapas. Har du tappat den, skapa en ny.") + '</p>' + hkGuide(null) +
+      '<div class="amxbar"><button type="button" class="amxsec" data-hk2="new">' + _("Skapa ny länk") + '</button><button type="button" class="amxsec del" data-hk2="off">' + _("Stäng av") + '</button></div>', sheetClick);
+    else if (k === "son") authApi("/strava/start", {pid:pid}).then(function(d){ location.href = d.url; }, function(e){ alert(_("Det gick inte: ") + e.message); });
+    else if (k === "soff"){ if (confirm(_("Koppla från Strava? Passen som redan finns ligger kvar."))) authApi("/strava/off", {pid:pid}).then(again, function(e){ alert(_("Det gick inte: ") + e.message); }); }
+    return true;
   }
   /* ---- Träning, fas 2: plans (a group's or one player's), groups and assistants, the exercise library (worker coach.js) ---- */
   var TR_CAT = {slag:"Slag", ovningar:"Övningar", strategi:"Strategi & spelförståelse", fys:"Fys"};
@@ -8587,7 +8737,7 @@
   }
   function ytClose(){ var el = document.getElementById("ytPop"); if (!el) return; el.classList.remove("open"); el.innerHTML = ""; el.hidden = true; }
   function trClick2(ev){
-    if (acadCoachClick(ev) || payClick(ev)) return true;
+    if (acadCoachClick(ev) || payClick(ev) || hkClick(ev)) return true;
     var tb = ev.target.closest("[data-trthread]");
     if (tb){ trThread(tb.getAttribute("data-trthread")); return true; }
     var yb = ev.target.closest("[data-ytplay]");
@@ -8753,7 +8903,7 @@
       '<div class="sh"><h2>' + _("Anmälningar") + '</h2><div class="meta">' + (nyc ? esc(_("{n} nya", {n:nyc})) : "") + '</div></div>' +
       (l.length ? l.map(function(x){ return '<div class="card acadi' + (x.status === "ny" ? " ny" : "") + '"><b>' + esc(x.name) + '</b> <small>' + esc((x.kind === "privat" ? _("Privatlektion") : x.kind === "anmalan" ? _("Anmälan") + ": " + (x.gname || "") : x.gname || _("Gruppträning")) + " · " + dayMonD(new Date(x.created))) + '</small>' +
         '<p>' + (/@/.test(x.contact) || /^[\d\s+()-]{6,}$/.test(x.contact) ? '<a href="' + esc(/@/.test(x.contact) ? "mailto:" + x.contact : "tel:" + x.contact.replace(/[^\d+]/g, "")) + '">' + esc(x.contact) + '</a>' : esc(x.contact)) + (x.age ? " · " + esc(x.age) : "") + '</p>' + (x.msg ? '<p class="kdim">' + esc(x.msg) + '</p>' : "") +
-        '<div class="amxbar">' + (x.pid && !x.member ? '<button type="button" class="amxgo" data-acadd="' + esc(x.id) + '">' + _("Lägg till i gruppen") + '</button>' : x.pid ? '<span class="trdone">✓ ' + _("I gruppen") + '</span>' : "") + '<button type="button" class="amxsec" data-acmark="' + esc(x.id) + '" data-st="' + (x.status === "ny" ? "kontaktad" : "ny") + '">' + (x.status === "ny" ? _("Markera kontaktad") : _("Markera ny")) + '</button><button type="button" class="amxsec del" data-acdel="' + esc(x.id) + '">' + _("Ta bort") + '</button></div></div>'; }).join("")
+        '<div class="amxbar">' + (x.member ? '<span class="trdone">✓ ' + _("I gruppen") + '</span>' : '<button type="button" class="amxgo" data-acadd="' + esc(x.id) + '">' + _("Lägg i grupp") + '</button>') + '<button type="button" class="amxsec" data-acmark="' + esc(x.id) + '" data-st="' + (x.status === "ny" ? "kontaktad" : "ny") + '">' + (x.status === "ny" ? _("Markera kontaktad") : _("Markera ny")) + '</button><button type="button" class="amxsec del" data-acdel="' + esc(x.id) + '">' + _("Ta bort") + '</button></div></div>'; }).join("")
         : '<p class="empty">' + _("Inga anmälningar än.") + '</p>');
   }
   function acadCoachClick(ev){
@@ -8784,7 +8934,25 @@
         authApi("/academy", {op:"group", gid:g.id, shown:document.getElementById("acShown").checked, dow:document.getElementById("acDow").value, time:document.getElementById("acTime").value, min:+document.getElementById("acMin").value || null, open:document.getElementById("acOpen").checked, sched:g.sched || "", level:document.getElementById("acLvl").value, max:+document.getElementById("acMax").value || null, price:document.getElementById("acPrice").value, info:document.getElementById("acInfo").value}).then(done, function(e){ s.disabled = false; trErr2(e); });
       });
     } else if (b.hasAttribute("data-acmark")) authApi("/academy/interest/mark", {id:b.getAttribute("data-acmark"), status:b.getAttribute("data-st")}).then(done, function(e){ alert(_("Det gick inte: ") + e.message); });
-    else if (b.hasAttribute("data-acadd")) authApi("/academy/interest/mark", {id:b.getAttribute("data-acadd"), op:"add"}).then(function(){ delete TR.coach; Object.keys(TR).forEach(function(k){ if (/^(gm|gpay)/.test(k)) delete TR[k]; }); authCheck(true); done(); }, function(e){ alert(_("Det gick inte: ") + e.message); });
+    else if (b.hasAttribute("data-acadd")){
+      // which of the coach's groups (the one asked for first), and, without an account, which club player it is
+      var it = ((TR.acadi && TR.acadi.d && TR.acadi.d.list) || []).filter(function(x){ return x.id === b.getAttribute("data-acadd"); })[0], gs = ((TR.coach && TR.coach.d && TR.coach.d.groups) || []).filter(function(g){ return g.mine !== false; });
+      if (!it) return true;
+      if (!gs.length){ alert(_("Skapa en grupp först, under Grupper.")); return true; }
+      var nm = String(it.name || "").toLowerCase().trim(), guess = it.pid || (ROSTER.filter(function(P){ return P.name.toLowerCase() === nm; })[0] || ROSTER.filter(function(P){ return nm && P.name.toLowerCase().indexOf(nm) === 0; })[0] || {}).pid;
+      trSheetOpen('<h2>' + _("Lägg i grupp") + '</h2><p class="kdim">' + esc(it.name) + '</p>' +
+        '<div class="trf"><span>' + _("Grupp") + '</span><select id="aaG">' + gs.map(function(g){ return '<option value="' + esc(g.id) + '"' + (g.id === it.gid ? " selected" : "") + '>' + esc(g.name) + '</option>'; }).join("") + '</select></div>' +
+        (it.pid ? "" : '<div class="trf"><span>' + _("Vilken spelare är det?") + '</span><select id="aaP"><option value="">' + esc(_("Välj spelare …")) + '</option>' +
+          ROSTER.slice().sort(function(p, q){ return p.name.localeCompare(q.name, "sv"); }).map(function(P){ return '<option value="' + P.pid + '"' + (P.pid === guess ? " selected" : "") + '>' + esc(P.name) + '</option>'; }).join("") + '</select>' +
+          '<small class="kdim">' + _("Grupperna är för klubbens spelare. Finns personen inte i listan behöver hen först spela för klubben i RankedIn.") + '</small></div>') +
+        '<div class="amxbar"><button type="button" class="amxgo" data-aaok="1">' + _("Lägg till") + '</button></div>', function(e2){
+        var ok = e2.target.closest("[data-aaok]"); if (!ok) return;
+        var ps = document.getElementById("aaP");
+        if (ps && !ps.value){ trErr2(_("välj vilken spelare det är")); return; }
+        ok.disabled = true;
+        authApi("/academy/interest/mark", {id:it.id, op:"add", gid:document.getElementById("aaG").value, pid:ps ? +ps.value : undefined}).then(function(){ delete TR.coach; Object.keys(TR).forEach(function(k){ if (/^(gm|gpay)/.test(k)) delete TR[k]; }); authCheck(true); done(); }, function(e){ ok.disabled = false; trErr2(e); });
+      });
+    }
     else if (b.hasAttribute("data-acplans")){
       // the group's fixed slot every week of the term: the plan sheet filled in, "every week" on
       var gp = a && a.groups.filter(function(x){ return x.id === b.getAttribute("data-acplans"); })[0];

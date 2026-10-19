@@ -13,6 +13,7 @@ import { academyGet, academyPost, interestPost, interestList, interestMark, payG
 import { canTrain } from "./train.js";
 import { linkSub, notifyAdmins, notifyUsers } from "./notify.js";
 import { trainGet, trainPost, trainClear, threadGet, threadPost, trainMany } from "./train.js";
+import { hkKey, hkImport, stravaStart, stravaBack, stravaOff, stravaRun, connOf } from "./health.js";
 import { coachGet, coachPost, libGet, libPost, plansGet, plansPost } from "./coach.js";
 import { pkOptions, pkAdd, pkLogin, pkClear } from "./passkey.js";
 import { sha, authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
@@ -135,6 +136,22 @@ async function handle(req, env) {
       return json({ ok: true, targets: tg.map(x => x.n), starts: Object.keys((await loadTvStarts(env)) || {}).length, streams: Object.fromEntries(Object.entries((v && v.clubs) || {}).map(([k, c]) => [c.n, c.s.length])) }, 200, {});
     } catch (e) { return json({ ok: false, error: String(e && e.message) }, 200, {}); }
   }
+  // Hälsodata (health.js): a Genväg on the player's iPhone posts workouts with the personal key in the path (no Origin,
+  // no login: the key is the secret); Strava sends the browser back after the player allowed the club's app
+  const hk = /^\/hk\/([A-Za-z0-9_-]{43})$/.exec(url.pathname);
+  if (hk && req.method === "POST") {
+    if (await limited(env.API_RL, req)) return json({ error: "too many requests" }, 429, { "Retry-After": "60" });
+    if (Number(req.headers.get("Content-Length") || 0) > 65536) return json({ error: "too large" }, 413, {});
+    const raw = await req.text();
+    if (raw.length > 65536) return json({ error: "too large" }, 413, {});
+    const r = await hkImport(env, hk[1], raw, +now(env));
+    return r.err ? json({ error: r.err }, r.status, {}) : json(r, 200, {});
+  }
+  if (req.method === "GET" && url.pathname === "/strava/back") {
+    let to = env.ORIGIN + "/#traning";
+    try { to = await stravaBack(env, url.searchParams, +now(env)); } catch (e) { console.warn("strava back", e.message); }
+    return new Response(null, { status: 302, headers: { Location: to, ...SEC } });
+  }
   // Internal: a batch of pushes from this worker's own cron tick (service binding SELF). Secret FANOUT_KEY; off without it.
   if (url.pathname === "/fanout") {
     if (req.method !== "POST" || !env.FANOUT_KEY || !sameSecret(req.headers.get("X-Fanout-Key"), env.FANOUT_KEY)) return json({ error: "forbidden" }, 403, {});
@@ -147,7 +164,7 @@ async function handle(req, env) {
   // the per-IP rate limits and the cap on subscriptions are what keep KV (1000 writes, 100k reads a day) safe.
   if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
   // americano results come several a minute from one phone: the API limit, not the subscribe one
-  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" && url.pathname !== "/auth/request/poll" && !/^\/(train|coach|lib|plans|academy$|academy\/interest\/mark|pay$)/.test(url.pathname) ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
+  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" && url.pathname !== "/auth/request/poll" && !/^\/(train|coach|lib|plans|academy$|academy\/interest\/mark|pay$|hk\/key|strava\/)/.test(url.pathname) ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
   const route = req.method + " " + url.pathname;
   if (route === "GET /health") {
     const rec = await loadRecord(env);
@@ -259,6 +276,16 @@ async function handle(req, env) {
     const r = route === "POST /train" ? await trainPost(env, me, b, +now(env)) : route === "POST /train/comment" ? await threadPost(env, me, b, +now(env)) : await trainClear(env, me, b);
     return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
+  // Hälsodata: what is connected; an Apple Hälsa key; Strava on and off
+  if (route === "GET /hk" || route === "POST /hk/key" || route === "POST /strava/start" || route === "POST /strava/off") {
+    const me = await authUser(env, req, +now(env));
+    if (!me) return json({ error: "login" }, 401, h);
+    let b = {};
+    if (req.method === "POST") try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    const r = route === "GET /hk" ? await connOf(env, me, Number(url.searchParams.get("pid"))) : route === "POST /hk/key" ? await hkKey(env, me, b, +now(env))
+      : route === "POST /strava/start" ? await stravaStart(env, me, b, url.origin) : await stravaOff(env, me, b);
+    return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
+  }
   // Träning, fas 2 (coach.js): groups and assistants, the exercise library, plans
   if (route === "GET /coach" || route === "GET /lib" || route === "GET /plans") {
     const me = await authUser(env, req, +now(env));
@@ -300,7 +327,7 @@ async function handle(req, env) {
       req.headers.get("Authorization") ? await authUser(env, req, t) : null, canTrain);
     else {
       const me = await authUser(env, req, t);
-      r = route === "POST /academy" ? await academyPost(env, me, b, t) : await interestMark(env, me, b, t);
+      r = route === "POST /academy" ? await academyPost(env, me, b, t) : await interestMark(env, me, b, t, BY_PID);
     }
     return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
@@ -1135,6 +1162,8 @@ export async function tick(env, events) {
   }
   // På centret: Nynäshamn Padelcenter's activities on MATCHi (center.js), once an hour at minute 37
   if (!events && env.CENTER_OFF !== "1" && mm === 37) try { await centerRun(env, t, budget); } catch (e) { console.warn("centret", e.message); }   // CENTER_OFF: local tests only
+  // Strava: the connected players' new activities, once an hour at minute 23 (health.js)
+  if (!events && mm === 23) try { await stravaRun(env, +t, budget); } catch (e) { console.warn("strava", e.message); }
   // Own profile pictures: a cut-out the GitHub Action has committed (every 5 min, minute 4, 9, ...)
   if (!events && env.PHOTO_OFF !== "1" && mm % 5 === 4) try { const dr = await loadRecord(env); await photosCheck(env, budget, (dr && dr.photos) || null, isMember); } catch (e) { console.warn("photos", e.message); }   // PHOTO_OFF: local tests only
   // Americano / Mexicano: notiser queued by the organiser's phone (amx.js), sent with this tick's

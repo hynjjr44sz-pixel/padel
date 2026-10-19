@@ -104,9 +104,13 @@ test("akademin: a group's fixed slot, open for sign-ups; a logged-in player sign
   const k = l.find(x => x.pid === 1680004);
   assert.deepEqual([k.kind, k.name, k.member], ["anmalan", "Kian Borgström", 0]);
   assert.equal((await call(env, "POST", "/academy/interest/mark", { id: l.find(x => !x.pid).id, op: "add" }, B(javier.tok))).status, 404);   // no player to add
+  assert.equal((await call(env, "POST", "/academy/interest/mark", { id: l.find(x => !x.pid).id, op: "add", pid: 999 }, B(javier.tok))).status, 404);   // not a club player
   assert.equal((await call(env, "POST", "/academy/interest/mark", { id: k.id, op: "add" }, B(javier.tok))).status, 200);
   a = (await (await call(env, "GET", "/academy")).json()).groups[0];
   assert.equal(a.n, 2);
+  // without an account: the coach picks the club player it is
+  assert.equal((await call(env, "POST", "/academy/interest/mark", { id: l.find(x => !x.pid).id, op: "add", pid: 1849853 }, B(javier.tok))).status, 200);
+  assert.equal((await (await call(env, "GET", "/academy")).json()).groups[0].n, 3);
   l = (await (await call(env, "GET", "/academy/interest", null, B(javier.tok))).json()).list;
   assert.deepEqual([l.find(x => x.pid === 1680004).member, l.find(x => x.pid === 1680004).status], [1, "kontaktad"]);
   assert.equal((await call(env, "POST", "/academy/interest", { kind: "anmalan", gid: g.id, pid: 1680004 }, B(kian.tok))).status, 400);   // already in it

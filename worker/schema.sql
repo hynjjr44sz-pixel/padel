@@ -247,3 +247,50 @@ CREATE TABLE IF NOT EXISTS interest_pid (
   id TEXT PRIMARY KEY,
   pid INTEGER NOT NULL
 );
+-- Träning, hälsodata (health.js): an Apple Hälsa import link (only its SHA-256), Strava tokens, imported sessions
+-- (to not import one twice; est = the RPE is estimated), a day's resting pulse, HRV and sleep, the highest pulse seen
+CREATE TABLE IF NOT EXISTS hkeys (
+  hash TEXT PRIMARY KEY,
+  user TEXT NOT NULL,
+  pid INTEGER NOT NULL,
+  created INTEGER NOT NULL,
+  last INTEGER,
+  n INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS hkeys_pid ON hkeys(pid, user);
+CREATE TABLE IF NOT EXISTS strava (
+  pid INTEGER PRIMARY KEY,
+  user TEXT NOT NULL,
+  athlete INTEGER NOT NULL,
+  name TEXT,
+  access TEXT NOT NULL,
+  refresh TEXT NOT NULL,
+  exp INTEGER NOT NULL,                         -- seconds
+  after INTEGER NOT NULL,                       -- seconds: activities after this are read
+  last INTEGER,
+  polled INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS sess_ext (
+  session TEXT PRIMARY KEY,
+  pid INTEGER NOT NULL,
+  src TEXT NOT NULL,                            -- apple, strava
+  ext TEXT NOT NULL,
+  hr INTEGER,
+  hrmax INTEGER,
+  kcal INTEGER,
+  est INTEGER NOT NULL DEFAULT 0,
+  UNIQUE (pid, src, ext)
+);
+CREATE TABLE IF NOT EXISTS health_day (
+  pid INTEGER NOT NULL,
+  day TEXT NOT NULL,
+  rhr INTEGER,
+  hrv INTEGER,
+  sleep REAL,                                   -- hours
+  src TEXT,
+  PRIMARY KEY (pid, day)
+);
+CREATE TABLE IF NOT EXISTS hrmax (
+  pid INTEGER PRIMARY KEY,
+  bpm INTEGER NOT NULL
+);

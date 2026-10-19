@@ -145,7 +145,7 @@ async function newPage(opts = {}) {
       return r.fulfill({ status: opts.liveStatus || 200, contentType: "application/json", body: opts.liveStatus ? "{}" : opts.live, headers: h });
     }
     if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
-    if (/^\/(amx|auth|admin|me\/|photo\/|stats$|train|coach|lib|plans|academy|pay$)/.test(u.pathname)) {   // the real worker code, its own KV and database
+    if (/^\/(amx|auth|admin|me\/|photo\/|stats$|train|coach|lib|plans|academy|pay$|hk|strava\/)/.test(u.pathname)) {   // the real worker code, its own KV and database
       const q = r.request(), au = q.headers()["authorization"];
       return worker.fetch(new Request("https://w" + u.pathname + u.search, { method: q.method(), headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", ...(au ? { Authorization: au } : {}) }, body: q.method() === "POST" ? q.postData() : undefined }), AMX_ENV)
         .then(async x => r.fulfill({ status: x.status, contentType: "application/json", body: await x.text(), headers: h }));
@@ -366,6 +366,33 @@ try {
     const row = AMX_ENV.DB.db.prepare("SELECT pid, kind, min, rpe, note FROM sessions").get();
     ok("Träning: in the menu bar; a note before the account is linked; a gym session logged, in the week and the load", t0[0] === true && /inte kopplat/.test(t0[1] || "") && /315/.test(prev || "") &&
       /Gym.*45 min · RPE 7 · belastning 315.*Ben och bål.*Järfälla Padel Open no 11.*uppskattat/.test(t1[0] || "") && /Senaste 7 dagarna\s*3\s465/.test(t1[1] || "") && row && row.pid === 1849853 && row.kind === "gym" && row.min === 45 && row.rpe === 7, { t0, prev, t1, row });
+  }
+  { // Hälsodata: Apple Hälsa linked from Träning; a Genväg posts a workout and the body's days; the session, its source, the estimate changed
+    await page.waitForSelector('#traning [data-hk="on"]', { timeout: 8000 }).catch(() => {});
+    await page.waitForSelector("#trSheet", { state: "hidden", timeout: 8000 }).catch(() => {});
+    await page.click('#traning [data-hk="on"]');
+    await page.waitForSelector("#trSheet2 .hklink b", { timeout: 8000 }).catch(() => {});
+    const link = await page.evaluate(() => document.querySelector("#trSheet2 .hklink b")?.textContent || "");
+    const key = (/\/hk\/([A-Za-z0-9_-]{43})$/.exec(link) || [])[1];
+    const steps = await page.evaluate(() => document.querySelectorAll("#trSheet2 .hksteps li").length);
+    const t = Date.parse(T), day = d => new Date(t - d * 864e5).toISOString().slice(0, 10);
+    const body = "Padel;" + new Date(t - 2 * 3600e3).toISOString() + ";" + new Date(t - 3600e3).toISOString() + ";165;190\n" + [6, 5, 4, 3, 2, 1].map(d => "dag;" + day(d) + ";50;70;8").join("\n") + "\ndag;" + day(0) + ";58;55;5,5";
+    const imp = key ? await (await worker.fetch(new Request("https://w/hk/" + key, { method: "POST", body }), AMX_ENV)).json() : null;
+    await page.click('#trSheet2 .shx').catch(() => {});
+    await page.waitForSelector("#trSheet2", { state: "hidden", timeout: 8000 }).catch(() => {});
+    await page.goto(url("#traning")); await page.reload();
+    await page.waitForSelector("#traning .trtoday", { timeout: 8000 }).catch(() => {});
+    await page.click("#traning .trtoday").catch(() => {});
+    await page.waitForSelector("#traning .trsrc", { timeout: 8000 }).catch(() => {});
+    const h1 = await page.evaluate(() => [document.querySelector("#traning .trlist")?.textContent.replace(/\s+/g, " "), document.querySelector("#traning .trbody")?.textContent.replace(/\s+/g, " "), document.querySelector("#traning .trconn")?.textContent.replace(/\s+/g, " ")]);
+    await page.click("#traning [data-hkrpe]").catch(() => {});
+    await page.waitForSelector('#trSheet2 [data-hkv="9"]', { timeout: 8000 }).catch(() => {});
+    await page.click('#trSheet2 [data-hkv="9"]').catch(() => {});
+    await page.waitForFunction(() => /RPE 9/.test(document.querySelector("#traning .trlist")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    const h2 = await page.evaluate(() => [document.querySelector("#traning .trlist")?.textContent.replace(/\s+/g, " "), !!document.querySelector("#traning [data-hkrpe]")]);
+    ok("Hälsodata: an Apple Hälsa link with the steps; a Genväg's workout and days in Träning; the estimated effort changed", steps === 7 && imp && imp.added === 1 && imp.days === 7 &&
+      /Padelträning60 min · RPE 8 .*Apple Hälsa · puls 165.*Uppskattat 8/.test(h1[0] || "") && /Vilopuls58 bpmsnitt 50.*vilopulsen är 8 slag över ditt snitt, HRV är lägre än vanligt, du har sovit mindre än 6 timmar/i.test(h1[1] || "") &&
+      /Apple HälsaPå · senast/.test(h1[2] || "") && /RPE 9/.test(h2[0] || "") && h2[1] === false, { link, steps, imp, h1, h2 });
   }
   { // Träning, fas 2: Mikael as head coach: a group with Cassandra (himself here), a planned session with an exercise; done as the player -> feedback
     const uid = AMX_ENV.DB.db.prepare("SELECT id FROM users WHERE name = 'Mikael Holmberg'").get().id;

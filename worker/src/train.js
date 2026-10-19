@@ -21,9 +21,11 @@ export async function trainGet(env, me, pid, from, t) {
   if (!env.DB) return { err: "no database", status: 503 };
   if (!canTrain(me, pid)) return { err: "forbidden", status: 403 };
   const min = dayOf(t - BACK_DAYS * 864e5), f = DAY_RE.test(from || "") && from > min ? from : min;
-  const rows = (await env.DB.prepare("SELECT s.id, s.day, s.kind, s.min, s.rpe, s.note, s.by, r.stars, (SELECT count(*) FROM tcomments c WHERE c.session = s.id) AS c FROM sessions s LEFT JOIN srate r ON r.session = s.id " +
-    "WHERE s.org = ? AND s.pid = ? AND s.day >= ? ORDER BY s.day DESC, s.created DESC LIMIT 400").bind(ORG, pid, f).all()).results;
-  return { pid, sessions: rows.map(r => ({ ...r, mine: r.by === me.id })) };
+  const rows = (await env.DB.prepare("SELECT s.id, s.day, s.kind, s.min, s.rpe, s.note, s.by, r.stars, x.src, x.hr, x.kcal, x.est, (SELECT count(*) FROM tcomments c WHERE c.session = s.id) AS c FROM sessions s LEFT JOIN srate r ON r.session = s.id " +
+    "LEFT JOIN sess_ext x ON x.session = s.id WHERE s.org = ? AND s.pid = ? AND s.day >= ? ORDER BY s.day DESC, s.created DESC LIMIT 400").bind(ORG, pid, f).all()).results;
+  // the watch's days (resting pulse, HRV, sleep), the last 6 weeks
+  const days = (await env.DB.prepare("SELECT day, rhr, hrv, sleep FROM health_day WHERE pid = ? AND day >= ? ORDER BY day").bind(pid, dayOf(t - 42 * 864e5)).all()).results;
+  return { pid, sessions: rows.map(r => ({ ...r, mine: r.by === me.id })), days };
 }
 
 // POST /train {pid, day, kind, min, rpe, note, plan?, stars? (1-5, how the session was)} -> {ok, id}; {op: "del", id} removes one (whoever may see the player)
@@ -35,6 +37,15 @@ export async function trainPost(env, me, b, t) {
     if (!r) return { err: "not found", status: 404 };
     if (!canTrain(me, r.pid)) return { err: "forbidden", status: 403 };
     await env.DB.batch(["plan_done", "tcomments", "srate"].map(tb => env.DB.prepare("DELETE FROM " + tb + " WHERE session = ?").bind(b.id)).concat([env.DB.prepare("DELETE FROM sessions WHERE id = ?").bind(b.id)]));
+    return { ok: true };
+  }
+  // {op: "rpe", id, rpe}: how hard it was, changed (an imported session's estimate, or one's own)
+  if (b && b.op === "rpe") {
+    const r = typeof b.id === "string" && await env.DB.prepare("SELECT pid FROM sessions WHERE id = ? AND org = ?").bind(b.id, ORG).first(), v = Math.round(Number(b.rpe));
+    if (!r) return { err: "not found", status: 404 };
+    if (!canTrain(me, r.pid)) return { err: "forbidden", status: 403 };
+    if (!(v >= 1 && v <= 10)) return { err: "bad session", status: 400 };
+    await env.DB.batch([env.DB.prepare("UPDATE sessions SET rpe = ? WHERE id = ?").bind(v, b.id), env.DB.prepare("UPDATE sess_ext SET est = 0 WHERE session = ?").bind(b.id)]);
     return { ok: true };
   }
   const pid = Number(b && b.pid), day = String(b && b.day || ""), kind = String(b && b.kind || ""), mins = Math.round(Number(b && b.min)), rpe = Math.round(Number(b && b.rpe));
@@ -62,7 +73,8 @@ export async function trainClear(env, me, b) {
   const pid = Number(b && b.pid);
   if (!me || !(me.pid === pid || (me.kids || []).includes(pid))) return { err: "forbidden", status: 403 };
   await env.DB.batch([env.DB.prepare("DELETE FROM srate WHERE session IN (SELECT id FROM sessions WHERE pid = ?)").bind(pid), env.DB.prepare("DELETE FROM tcomments WHERE pid = ?").bind(pid),
-    env.DB.prepare("DELETE FROM plan_done WHERE pid = ?").bind(pid), env.DB.prepare("DELETE FROM sessions WHERE org = ? AND pid = ?").bind(ORG, pid)]);
+    env.DB.prepare("DELETE FROM plan_done WHERE pid = ?").bind(pid), env.DB.prepare("DELETE FROM sessions WHERE org = ? AND pid = ?").bind(ORG, pid),
+    ...["sess_ext", "health_day", "hrmax"].map(tb => env.DB.prepare("DELETE FROM " + tb + " WHERE pid = ?").bind(pid))]);
   return { ok: true };
 }
 
