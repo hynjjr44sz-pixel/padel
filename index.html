@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-uhobDxlTc1kp7nLcJaYwOKcffbHBiAOfUoEQ4+8SC0c='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-gql0JVN38EGJIpW+B60WTDuyjnzTtTTLESJndS1EJH8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -396,6 +396,56 @@
   .ctrp{ display:inline-block; margin-right:7px; font:600 10.5px/1 "Chivo Mono", monospace; letter-spacing:.03em; padding:4px 7px; border-radius:999px; background:var(--surface-2); color:var(--ink, inherit); white-space:nowrap; }
   .ctrp.few{ background:#ffe08a; color:#3d2e00; } .ctrp.full{ background:transparent; border:1px solid var(--line); color:var(--dim); }
   .ctrnote{ margin:10px 2px 0; font-size:12px; color:var(--dim); }
+  /* ---- Träning ---- */
+  .trhero{ padding:16px 16px 18px; text-align:center; }
+  .trgw{ position:relative; width:min(300px, 86%); margin:0 auto; }
+  .trg{ display:block; width:100%; height:auto; }
+  .trneedle{ transform-origin:100px 100px; transform-box:view-box; transition:transform 1.1s cubic-bezier(.2,1.5,.4,1); }
+  .trval{ display:flex; flex-direction:column; align-items:center; margin-top:4px; }
+  .trval b{ font:800 44px/1 "Big Shoulders Display", sans-serif; letter-spacing:.01em; }
+  .trval span{ font:700 11px/1.2 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.08em; margin-top:6px; }
+  .z-ok .trval span{ color:#218358; } .z-up .trval span{ color:#AB6400; } .z-hi .trval span{ color:#CE2C31; } .z-low .trval span{ color:#0D74CE; } .z-new .trval span{ color:var(--dim); }
+  .trz{ margin:14px 6px 12px !important; font-size:14px; color:var(--dim); }
+  .trnums{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+  .trnums div{ padding:10px; border-radius:14px; background:var(--surface-2); }
+  .trnums span{ display:block; font:600 10px/1.2 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); }
+  .trnums b{ font:800 24px/1.1 "Big Shoulders Display", sans-serif; }
+  .trlog{ width:100%; }
+  .trwho{ display:flex; gap:8px; overflow-x:auto; margin:0 0 12px; padding-bottom:4px; }
+  .trwho button{ display:flex; align-items:center; gap:6px; padding:4px 12px 4px 4px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 13px/1 inherit; white-space:nowrap; }
+  .trwho button[aria-pressed="true"]{ background:var(--ink); color:var(--surface); border-color:var(--ink); }
+  .trweek{ padding:12px; }
+  .trwh{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .trwh b{ font:800 18px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; } .trwh span{ flex:1; font-size:12px; color:var(--dim); }
+  .trnav{ width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-size:20px; line-height:1; }
+  .trnav:disabled{ opacity:.3; }
+  .trstrip{ display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:4px; }
+  .trd{ min-width:0; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 0 7px; border-radius:14px; border:1px solid transparent; background:var(--surface-2); color:var(--ink); }
+  .trd b{ font:700 11px/1 "Chivo Mono", monospace; text-transform:uppercase; } .trd small{ font-size:11px; color:var(--dim); }
+  .trd.trtoday{ border-color:var(--ink); } .trd.trsel{ background:var(--ink); color:var(--surface); } .trd.trsel small{ color:inherit; opacity:.7; } .trd.trfut{ opacity:.5; }
+  .trbars{ display:flex; flex-direction:column-reverse; justify-content:flex-start; gap:2px; width:62%; height:64px; margin-bottom:4px; }
+  .trbars i{ display:block; border-radius:4px; transform-origin:bottom; animation:tr-grow .6s cubic-bezier(.2,1.4,.4,1) both; }
+  @keyframes tr-grow{ from{ transform:scaleY(0); } to{ transform:none; } }
+  .trlist{ margin-top:12px; display:flex; flex-direction:column; gap:6px; }
+  .tritem{ display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border-radius:14px; background:var(--surface-2); }
+  .tritem > i{ flex:0 0 10px; height:10px; margin-top:5px; border-radius:50%; } .tritem.auto > i{ opacity:.55; }
+  .tritem span{ flex:1; } .tritem b{ font-size:14px; } .tritem small{ display:block; font-size:12px; color:var(--dim); margin-top:2px; }
+  .trdel{ border:0; background:none; color:var(--dim); font-size:22px; line-height:1; padding:0 4px; }
+  .trnote{ margin:12px 4px 0; font-size:12px; color:var(--dim); }
+  .linkbtn{ border:0; background:none; padding:0; color:#CE2C31; text-decoration:underline; font:inherit; }
+  .trintro p{ margin:0 0 10px; } .trintro .amxgo{ display:inline-block; margin-top:6px; text-decoration:none; }
+  .trsheet .sheet-in{ touch-action:auto; max-height:88vh; overflow:auto; }
+  .trf{ margin:0 0 14px; } .trf > span{ display:flex; justify-content:space-between; font:600 11px/1 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); margin:0 2px 8px; }
+  .trf > span b{ color:var(--ink); text-transform:none; letter-spacing:0; font-size:12px; }
+  .trf input{ width:100%; padding:12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; }
+  .trcs{ display:flex; flex-wrap:wrap; gap:6px; }
+  .trc{ padding:9px 12px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 13px/1 inherit; }
+  .trc[aria-pressed="true"]{ background:var(--c, var(--ink)); border-color:var(--c, var(--ink)); color:#fff; }
+  .trrpe{ display:grid; grid-template-columns:repeat(10, 1fr); gap:4px; }
+  .trrpe button{ height:40px; border-radius:10px; border:0; background:hsl(var(--h) 65% 88%); color:hsl(var(--h) 70% 25%); font:700 14px/1 inherit; transition:transform .2s; }
+  .trrpe button[aria-pressed="true"]{ background:hsl(var(--h) 70% 45%); color:#fff; transform:scale(1.12); }
+  .trsave{ display:flex; align-items:center; gap:12px; } .trprev{ flex:1; font:600 12px/1.2 "Chivo Mono", monospace; color:var(--dim); }
+  @media (prefers-reduced-motion: reduce){ .trneedle{ transition:none; } .trbars i{ animation:none; } }
   .amxrow{ display:grid; grid-template-columns:auto 1fr; gap:2px 10px; align-items:center; margin-top:8px; padding:11px 14px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:inherit; text-decoration:none; }
   .amxallk{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding:12px 14px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-weight:600; font-size:14.5px; text-decoration:none; }
   .amxallk i{ font-style:normal; color:var(--dim); }
@@ -436,6 +486,9 @@
   .kmseg button[aria-pressed="true"]{ background:var(--solid); color:var(--solid-ink); }
   .kleft{ margin:6px 0 12px !important; padding:10px 12px; border-radius:12px; border:1px dashed var(--line); font-size:14px !important; color:var(--dim); }
   .kbtns{ display:flex; flex-direction:column; gap:6px; flex-shrink:0; } .kbtns button{ width:100%; margin:0 !important; }
+  .kcoach{ margin:8px 0; padding:10px; border-radius:12px; background:var(--surface-2); } .kcoach > span{ display:block; font:600 11px/1 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); margin-bottom:8px; }
+  .kcoachl{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; } .kcp{ padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 13px/1 inherit; } .kcp i{ font-style:normal; color:var(--dim); margin-left:2px; }
+  .kcoach select{ width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; }
   .kvis{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:6px 0 12px; padding:10px 12px; border-radius:12px; background:var(--surface-2); } .kvis p{ margin:0 !important; font-size:14px !important; } .kvis small{ color:var(--dim); }
 
   .amxgo.pfile{ position:relative; display:inline-flex; align-items:center; justify-content:center; width:auto; padding:0 18px; overflow:hidden; }
@@ -1826,6 +1879,7 @@
     <a class="missing" href="#konto"><b data-i18n>Saknas du eller ditt barn?</b><span data-i18n>Juniorer under 18 syns först efter ett ja. Begär konto, så kopplas spelaren in när det är godkänt.</span><i aria-hidden="true">→</i></a>
   </main>
   <main class="view" id="tavlingar" tabindex="-1" aria-labelledby="h-tav" hidden></main>
+  <main class="view" id="traning" tabindex="-1" hidden></main>
   <main class="view" id="amxtv" tabindex="-1" hidden></main>
   <main class="view" id="americano" tabindex="-1" aria-labelledby="h-amxv" hidden>
     <div class="phead"><div class="pt"><h1 id="h-amxv">Americano</h1><div class="pm" data-i18n>Spela med klubben</div></div></div>
@@ -1841,7 +1895,7 @@
     <span class="dball-sh" id="dockBallSh" aria-hidden="true"></span>
     <span class="dball-ring" id="dockRing" aria-hidden="true"></span>
     <span class="dball" id="dockBall" aria-hidden="true"><i></i></span>
-    <div class="dkbar" id="dockBar"><svg class="dkcourt" viewBox="0 0 400 68" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1.3" vector-effect="non-scaling-stroke"><rect x="5" y="5" width="390" height="58" rx="3"/><path d="M80 5v58M320 5v58"/><path d="M80 34h240" stroke-opacity=".45"/></g><path class="dknet" d="M200 2v64" stroke="#fff" stroke-width="2.2" vector-effect="non-scaling-stroke"/><path d="M196 2v64M204 2v64" stroke="#fff" stroke-opacity=".35" stroke-width="1" stroke-dasharray="1.5 2.5" vector-effect="non-scaling-stroke"/></svg><span class="dkmarks" id="dockMarks" aria-hidden="true"></span><span class="dblob" id="dockBlob" aria-hidden="true"><i></i></span><a class="dtab" draggable="false" data-tab="spelare" href="#spelare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="4.6" r="2.1"/><path d="M8.6 7.4l-1.2 5.4 2.8 2.2-1.1 5.6M7.4 12.8l-2.6 5.8M8.9 9.2l3.8 1.6"/><g class="dk-swing"><path d="M12.7 10.8l1.6-1.4"/><ellipse class="dk-accent" cx="17.2" cy="7" rx="2.7" ry="3.4" transform="rotate(42 17.2 7)"/></g></svg><span data-i18n>Spelare</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="tavlingar" href="#tavlingar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="dk-draw" d="M3 4.5h4.5v4H3M3 15.5h4.5v4H3M7.5 6.5h3v11h-3M10.5 12h3"/><circle class="dk-accent" cx="17.6" cy="12" r="3.4"/><path d="M15.2 10.6c1.4.4 2.4 1.6 2.6 3.1"/></svg><span data-i18n>Tävlingar</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="idag" href="#/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle class="dk-accent" cx="12" cy="11.5" r="3.6"/><g class="dk-rays"><path d="M12 3.6v1.6M12 17.8v1.6M4.1 11.5h1.6M18.3 11.5h1.6M6.4 5.9l1.1 1.1M16.5 16l1.1 1.1M6.4 17.1l1.1-1.1M16.5 7l1.1-1.1"/></g><path d="M3 21h18"/></svg><span data-i18n>Idag</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="americano" href="#americano"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="dk-spin"><circle cx="7" cy="7" r="2.2"/><circle class="dk-accent" cx="17" cy="7" r="2.2"/><circle class="dk-accent" cx="7" cy="17" r="2.2"/><circle cx="17" cy="17" r="2.2"/><path d="M10.4 4.9a7.5 7.5 0 0 1 3.2 0M19.1 10.4a7.5 7.5 0 0 1 0 3.2M13.6 19.1a7.5 7.5 0 0 1-3.2 0M4.9 13.6a7.5 7.5 0 0 1 0-3.2"/></g></svg><span data-i18n>Americano</span><i class="dbadge" aria-hidden="true"></i></a><button class="dtab" data-tab="mer" type="button" aria-haspopup="dialog" aria-controls="moreSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5v14M21 5.5v14"/><g class="dk-wave"><path d="M3 7h18M3 11.3h18M3 15.6h18M7.5 7v8.6M12 7v8.6M16.5 7v8.6"/></g><path class="dk-accent" d="M3 5.5h18"/></svg><span data-i18n>Mer</span><i class="dbadge" aria-hidden="true"></i></button></div>
+    <div class="dkbar" id="dockBar"><svg class="dkcourt" viewBox="0 0 400 68" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1.3" vector-effect="non-scaling-stroke"><rect x="5" y="5" width="390" height="58" rx="3"/><path d="M80 5v58M320 5v58"/><path d="M80 34h240" stroke-opacity=".45"/></g><path class="dknet" d="M200 2v64" stroke="#fff" stroke-width="2.2" vector-effect="non-scaling-stroke"/><path d="M196 2v64M204 2v64" stroke="#fff" stroke-opacity=".35" stroke-width="1" stroke-dasharray="1.5 2.5" vector-effect="non-scaling-stroke"/></svg><span class="dkmarks" id="dockMarks" aria-hidden="true"></span><span class="dblob" id="dockBlob" aria-hidden="true"><i></i></span><a class="dtab" draggable="false" data-tab="spelare" href="#spelare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="4.6" r="2.1"/><path d="M8.6 7.4l-1.2 5.4 2.8 2.2-1.1 5.6M7.4 12.8l-2.6 5.8M8.9 9.2l3.8 1.6"/><g class="dk-swing"><path d="M12.7 10.8l1.6-1.4"/><ellipse class="dk-accent" cx="17.2" cy="7" rx="2.7" ry="3.4" transform="rotate(42 17.2 7)"/></g></svg><span data-i18n>Spelare</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="tavlingar" href="#tavlingar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="dk-draw" d="M3 4.5h4.5v4H3M3 15.5h4.5v4H3M7.5 6.5h3v11h-3M10.5 12h3"/><circle class="dk-accent" cx="17.6" cy="12" r="3.4"/><path d="M15.2 10.6c1.4.4 2.4 1.6 2.6 3.1"/></svg><span data-i18n>Tävlingar</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="idag" href="#/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle class="dk-accent" cx="12" cy="11.5" r="3.6"/><g class="dk-rays"><path d="M12 3.6v1.6M12 17.8v1.6M4.1 11.5h1.6M18.3 11.5h1.6M6.4 5.9l1.1 1.1M16.5 16l1.1 1.1M6.4 17.1l1.1-1.1M16.5 7l1.1-1.1"/></g><path d="M3 21h18"/></svg><span data-i18n>Idag</span><i class="dbadge" aria-hidden="true"></i></a><a class="dtab" draggable="false" data-tab="traning" href="#traning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18.5a8.5 8.5 0 0 1 16 0"/><path class="dk-draw dk-accent" d="M2.5 12.5h3.2l1.8-3.6 2.6 7 2.4-9.4 2.2 6h2.8"/><path d="M19.5 12.5h2"/></svg><span data-i18n>Träning</span><i class="dbadge" aria-hidden="true"></i></a><button class="dtab" data-tab="mer" type="button" aria-haspopup="dialog" aria-controls="moreSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5v14M21 5.5v14"/><g class="dk-wave"><path d="M3 7h18M3 11.3h18M3 15.6h18M7.5 7v8.6M12 7v8.6M16.5 7v8.6"/></g><path class="dk-accent" d="M3 5.5h18"/></svg><span data-i18n>Mer</span><i class="dbadge" aria-hidden="true"></i></button></div>
   </nav>
   <div class="sheet" id="moreSheet" role="dialog" aria-modal="true" aria-labelledby="moreH" hidden>
     <div class="sheet-bg" data-close></div>
@@ -1851,6 +1905,7 @@
       <div class="mtiles">
         <a class="mtile" href="#regler" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5a2 2 0 0 1 2-2h12v15H7a2 2 0 0 0-2 2z"/><path d="M5 20a2 2 0 0 0 2 2h12M9 7.5h6M9 11h4"/></svg><b data-i18n>Regler</b><span data-i18n>Officiella regler, sökbara</span></a>
         <a class="mtile" href="#konto" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20.5c.9-3.8 3.6-5.8 7-5.8s6.1 2 7 5.8"/></svg><b data-i18n>Konto</b><span id="moreAcct" data-i18n>Logga in, begär konto</span></a>
+        <a class="mtile" href="#americano" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="2.2"/><circle cx="17" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/><circle cx="17" cy="17" r="2.2"/><path d="M10.4 4.9a7.5 7.5 0 0 1 3.2 0M19.1 10.4a7.5 7.5 0 0 1 0 3.2M13.6 19.1a7.5 7.5 0 0 1-3.2 0M4.9 13.6a7.5 7.5 0 0 1 0-3.2"/></svg><b>Americano</b><span data-i18n>Starta och följ</span></a>
         <a class="mtile" href="#amx/alla" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M7 20v-6M12 20V9M17 20v-9"/></svg><b data-i18n>Alla americanos</b><span data-i18n>Vinnare och tabeller</span></a>
         <a class="mtile" id="morePriv" href="integritet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.4-3 7.9-7 9.5-4-1.6-7-5.1-7-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg><b data-i18n>Integritet</b><span data-i18n>Vad som sparas</span></a>
       </div>
@@ -1891,6 +1946,72 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Annat": "Otro",
+    "Anteckning (valfritt)": "Nota (opcional)",
+    "Bara du, dina föräldrar och de tränare du kopplas till ser din träning.": "Solo tú, tus padres y los entrenadores vinculados ven tu entrenamiento.",
+    "Belastning = minuter × hur tungt det kändes (1–10). Matcher från tävlingar, serier och americanos räknas in av sig själva, uppskattat. Loggar du en match samma dag gäller din siffra.": "Carga = minutos × lo duro que se sintió (1–10). Los partidos de torneos, ligas y americanos se suman solos, estimados. Si registras un partido el mismo día, vale tu cifra.",
+    "Belastning {n}": "Carga {n}",
+    "Belastning, pass och matcher": "Carga, sesiones y partidos",
+    "Belastningen ligger i linje med de senaste veckorna.": "La carga está en línea con las últimas semanas.",
+    "Betydligt mer än de senaste veckorna. Överväg att stryka eller lätta ett pass.": "Mucho más que las últimas semanas. Considera quitar o aligerar una sesión.",
+    "Bygger upp underlag": "Reuniendo datos",
+    "Ditt konto är inte kopplat till någon spelare än. Be klubbens admin koppla det till din spelarprofil.": "Tu cuenta aún no está vinculada a ningún jugador. Pide al admin del club que la vincule a tu perfil.",
+    "Fys": "Físico",
+    "Förra veckan": "Semana anterior",
+    "Gym": "Gimnasio",
+    "Hur länge": "Cuánto tiempo",
+    "Hur tungt": "Qué tan duro",
+    "Håll koll på din belastning": "Controla tu carga",
+    "Igår": "Ayer",
+    "Inga spelare än.": "Aún no hay jugadores.",
+    "Inget den här dagen.": "Nada este día.",
+    "Jag": "Yo",
+    "Lagom": "Adecuada",
+    "Logga in eller begär konto": "Inicia sesión o solicita cuenta",
+    "Logga några pass till, så räknar appen ut din nivå.": "Registra algunas sesiones más y la app calculará tu nivel.",
+    "Logga pass": "Registrar sesión",
+    "Logga träning, gym, löpning och PT-pass med ett par tryck. Dina matcher räknas in av sig själva, och mätaren visar om du tränar lagom, för lite eller riskerar att bli överbelastad.": "Registra entrenamiento, gimnasio, carrera y sesiones con PT en un par de toques. Tus partidos se suman solos y el indicador muestra si entrenas lo adecuado, poco o te arriesgas a sobrecargarte.",
+    "Lugn vecka": "Semana tranquila",
+    "Lägg till spelare …": "Añadir jugador …",
+    "Löpning": "Carrera",
+    "Mer än vanligt. Håll koll på kroppen och sömnen.": "Más de lo habitual. Vigila el cuerpo y el sueño.",
+    "Min vecka": "Mi semana",
+    "Mindre än vanligt. Bra för återhämtning, eller dags att öka lite.": "Menos de lo habitual. Bien para recuperar, o hora de subir un poco.",
+    "När": "Cuándo",
+    "Nästa vecka": "Semana siguiente",
+    "PT": "PT",
+    "PT, extern, ser bara de spelare du kopplar": "PT externo, solo ve a los jugadores que vincules",
+    "PT-pass": "Sesión con PT",
+    "Padelträning": "Entrenamiento de pádel",
+    "Radera all träningshistorik för {n}": "Borrar todo el historial de entrenamiento de {n}",
+    "Radera all träningshistorik? Det går inte att ångra.": "¿Borrar todo el historial de entrenamiento? No se puede deshacer.",
+    "Risk för överbelastning": "Riesgo de sobrecarga",
+    "Senaste 7 dagarna": "Últimos 7 días",
+    "Snitt per vecka, 4 veckor": "Media semanal, 4 semanas",
+    "Ta bort passet?": "¿Eliminar la sesión?",
+    "Ta bort {n}": "Quitar {n}",
+    "Till exempel övningar, hur kroppen kändes": "Por ejemplo ejercicios, cómo se sintió el cuerpo",
+    "Tränar": "Entrena",
+    "Tränare": "Entrenador",
+    "Tränare, ser och planerar träning för sina spelare": "Entrenador, ve y planifica el entrenamiento de sus jugadores",
+    "Träning": "Entrenamiento",
+    "Tävling": "Torneo",
+    "Vad": "Qué",
+    "Vecka {n}": "Semana {n}",
+    "belastning {n}": "carga {n}",
+    "inget loggat": "nada registrado",
+    "uppskattat": "estimado",
+    "{n}s vecka": "La semana de {n}",
+    "Ökar snabbt": "Sube rápido",
+    "Mycket lätt": "Muy fácil",
+    "Lätt": "Fácil",
+    "Måttligt": "Moderado",
+    "Ganska tungt": "Bastante duro",
+    "Tungt": "Duro",
+    "Mycket tungt": "Muy duro",
+    "Nästan max": "Casi máximo",
+    "Max": "Máximo",
+    "Starta och följ": "Crear y seguir",
     "Klubbserien": "Liga del club",
     "1 vinst": "1 victoria",
     "{n} vinster": "{n} victorias",
@@ -7745,6 +7866,174 @@
     host.innerHTML = first.map(row).join("") + (rest.length ? '<details class="sgmore"><summary>' + _("Visa alla {n}", {n:l.length}) + '</summary>' + rest.map(row).join("") + '</details>' : "") +
       '<p class="ctrnote">' + _("Från MATCHi. Tryck på en aktivitet för att anmäla dig där.") + '</p>';
   }
+  /* ================= Träning: logged sessions (worker /train) + the matches the app already knows = the load ================= */
+  // Load = minutes x how hard it felt (RPE 1-10). The gauge: the last 7 days against the weekly average of the last 4 weeks
+  // (acute:chronic). Matches count by themselves: tournament days, SPL days, Klubbserien, americanos (an estimate; a
+  // "Match" logged the same day replaces it). Private: the player, their parents, linked coaches/PT (worker/src/train.js).
+  var TR = {pid:null, data:{}, busy:{}, wk:0, day:null, f:{kind:"padel", day:0, min:60, rpe:5, note:""}};
+  var TR_KIND = {padel:["Padelträning", "#2156CB"], match:["Match", "#E5484D"], gym:["Gym", "#8E4EC6"], lop:["Löpning", "#12A594"], pt:["PT-pass", "#F76B15"], fys:["Fys", "#0D74CE"], annat:["Annat", "#8B8D98"]};
+  var TR_RPE = ["", "Mycket lätt", "Lätt", "Måttligt", "Ganska tungt", "Tungt", "Tungt", "Mycket tungt", "Mycket tungt", "Nästan max", "Max"];
+  function trDay(off){ return dayOf(new Date(+now() + off * 864e5)); }
+  function trAdd(day, n){ var d = new Date(day + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function trPids(){
+    var me = AUTH && AUTH.me, out = [];
+    if (!me) return out;
+    [me.pid].concat(me.kids || [], me.coach || []).forEach(function(p){ if (p && out.indexOf(+p) < 0) out.push(+p); });
+    return out;
+  }
+  function trName(pid){ var P = BYPID[pid]; return P ? P.name : "#" + pid; }
+  function trLoad(pid, force){
+    var x = TR.data[pid];
+    if (!pid || TR.busy[pid] || (!force && x && Date.now() - x.t < 60000)) return;
+    TR.busy[pid] = true;
+    authApi("/train?pid=" + pid).then(function(d){ TR.busy[pid] = false; TR.data[pid] = {t:Date.now(), s:d.sessions || []}; renderTraining(); },
+      function(e){ TR.busy[pid] = false; TR.data[pid] = {t:Date.now(), s:[], err:e.message}; renderTraining(); });
+  }
+  // the matches the app knows, as estimated sessions {day, kind, min, rpe, label, auto}
+  function trAuto(P){
+    var out = [], today = trDay(0), from = trAdd(today, -35), seen = {};
+    if (!P) return out;
+    var push = function(day, min, rpe, label){ if (day >= from && day <= today) out.push({day:day, kind:"match", min:min, rpe:rpe, label:label, auto:1}); };
+    var evs = []; try { evs = pastEvents(P.key).concat(playerEvents(P)); } catch (e){}
+    evs.forEach(function(e){
+      if (!e || !e.windowFrom || seen[e.key]) return;
+      seen[e.key] = 1;
+      var d = dayOf(new Date(e.windowFrom)), end = dayOf(new Date(e.windowTo || e.windowFrom));
+      for (var i = 0; i < 7 && d <= end; i++, d = trAdd(d, 1)) push(d, e.kind === "tournament" ? 150 : 120, 7, e.name || (e.kind === "tournament" ? _("Tävling") : _("Seriespel")));
+    });
+    try { bhsGroups(P).forEach(function(g){ (g.res || []).forEach(function(r){ if (bhsIn(P, r.a) || bhsIn(P, r.b)) push(String(r.d).slice(0, 10), 90, 7, _("Klubbserien")); }); }); } catch (e){}
+    try { amxArch(P).forEach(function(x){ if (x.d) push(String(x.d).slice(0, 10), Math.max(30, ((x.w || 0) + (x.l || 0)) * 12), 6, "Americano"); }); } catch (e){}
+    return out;
+  }
+  function trItems(pid){
+    var P = BYPID[pid], s = (TR.data[pid] && TR.data[pid].s) || [], manual = {};
+    s.forEach(function(x){ if (x.kind === "match") manual[x.day] = 1; });
+    return s.map(function(x){ return Object.assign({}, x); }).concat(trAuto(P).filter(function(x){ return !manual[x.day]; }));
+  }
+  function trLoadOf(x){ return x.min * x.rpe; }
+  function trSum(items, from, to){ return items.reduce(function(a, x){ return a + (x.day >= from && x.day <= to ? trLoadOf(x) : 0); }, 0); }
+  // {acute, chronic (weekly average), r, zone, enough}
+  function trRatio(items){
+    var t = trDay(0), a = trSum(items, trAdd(t, -6), t), c = trSum(items, trAdd(t, -27), t) / 4;
+    var days = {}; items.forEach(function(x){ if (x.day >= trAdd(t, -27)) days[x.day] = 1; });
+    var enough = Object.keys(days).length >= 6 && c >= 300, r = c > 0 ? a / c : 0;
+    var zone = !enough ? "new" : r < .8 ? "low" : r <= 1.3 ? "ok" : r <= 1.5 ? "up" : "hi";
+    return {a:Math.round(a), c:Math.round(c), r:r, zone:zone, enough:enough};
+  }
+  var TR_ZONE = {new:["Bygger upp underlag", "Logga några pass till, så räknar appen ut din nivå."], low:["Lugn vecka", "Mindre än vanligt. Bra för återhämtning, eller dags att öka lite."],
+    ok:["Lagom", "Belastningen ligger i linje med de senaste veckorna."], up:["Ökar snabbt", "Mer än vanligt. Håll koll på kroppen och sömnen."], hi:["Risk för överbelastning", "Betydligt mer än de senaste veckorna. Överväg att stryka eller lätta ett pass."]};
+  function trGauge(R){
+    // a half circle 0..2.0; the needle at the ratio
+    var ang = function(v){ return Math.PI * (1 - Math.min(2, Math.max(0, v)) / 2); };
+    var pt = function(v, rad){ var a = ang(v); return (100 + rad * Math.cos(a)).toFixed(1) + " " + (100 - rad * Math.sin(a)).toFixed(1); };
+    var arc = function(v1, v2, col){ return '<path d="M' + pt(v1, 80) + ' A80 80 0 0 1 ' + pt(v2, 80) + '" stroke="' + col + '" />'; };
+    var deg = R.enough ? (Math.min(2, R.r) / 2) * 180 - 90 : -90;
+    return '<svg class="trg" viewBox="0 0 200 116" aria-hidden="true"><g fill="none" stroke-width="16" stroke-linecap="butt">' +
+      arc(0, .8, "#7FB2F0") + arc(.8, 1.3, "#30A46C") + arc(1.3, 1.5, "#FFC53D") + arc(1.5, 2, "#E5484D") + '</g>' +
+      '<g class="trneedle" style="transform:rotate(' + deg.toFixed(1) + 'deg)"><path d="M100 100 L100 44" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/></g><circle cx="100" cy="100" r="7" fill="var(--ink)"/></svg>';
+  }
+  function trWeek(items, pid){
+    var t = trDay(0), d0 = new Date(t + "T12:00:00Z"), mon = trAdd(t, -((d0.getUTCDay() + 6) % 7) + TR.wk * 7), days = [], max = 600;
+    for (var i = 0; i < 7; i++){ var d = trAdd(mon, i), l = items.filter(function(x){ return x.day === d; }); days.push({d:d, l:l, sum:l.reduce(function(a, x){ return a + trLoadOf(x); }, 0)}); }
+    days.forEach(function(x){ max = Math.max(max, x.sum); });
+    var wsum = days.reduce(function(a, x){ return a + x.sum; }, 0), sel = TR.day && days.some(function(x){ return x.d === TR.day; }) ? TR.day : (TR.wk === 0 ? t : null);
+    var wn = isoWeek(new Date(mon + "T12:00:00Z"));
+    var h = '<div class="trwh"><button type="button" class="trnav" data-trw="-1" aria-label="' + esc(_("Förra veckan")) + '">‹</button><b>' + esc(_("Vecka {n}", {n:wn})) + '</b><span>' + esc(wsum ? _("belastning {n}", {n:fmtN(wsum)}) : _("inget loggat")) + '</span>' +
+      '<button type="button" class="trnav" data-trw="1" aria-label="' + esc(_("Nästa vecka")) + '"' + (TR.wk >= 0 ? " disabled" : "") + '>›</button></div><div class="trstrip">' +
+      days.map(function(x){
+        var dd = new Date(x.d + "T12:00:00Z"), bars = x.l.map(function(y){ return '<i style="height:' + Math.max(4, Math.round(100 * trLoadOf(y) / max)) + '%;background:' + TR_KIND[y.kind][1] + (y.auto ? ';opacity:.55' : '') + '"></i>'; }).join("");
+        return '<button type="button" class="trd' + (x.d === t ? " trtoday" : "") + (x.d === sel ? " trsel" : "") + (x.d > t ? " trfut" : "") + '" data-trd="' + x.d + '"><span class="trbars">' + bars + '</span><b>' + esc(DOW[dd.getUTCDay()]) + '</b><small>' + dd.getUTCDate() + '</small></button>';
+      }).join("") + '</div>';
+    if (sel){
+      var l = items.filter(function(x){ return x.day === sel; });
+      h += '<div class="trlist">' + (l.length ? l.map(function(x){
+        return '<div class="tritem' + (x.auto ? " auto" : "") + '"><i style="background:' + TR_KIND[x.kind][1] + '"></i><span><b>' + esc(x.auto ? x.label : _(TR_KIND[x.kind][0])) + '</b><small>' +
+          esc([x.min + " min", "RPE " + x.rpe, _("belastning {n}", {n:fmtN(trLoadOf(x))}), x.auto ? _("uppskattat") : ""].filter(Boolean).join(" · ")) + (x.note ? '<br>' + esc(x.note) : "") + '</small></span>' +
+          (x.auto ? "" : '<button type="button" class="trdel" data-trdel="' + esc(x.id) + '" aria-label="' + esc(_("Ta bort")) + '">×</button>') + '</div>';
+      }).join("") : '<p class="empty">' + esc(_("Inget den här dagen.")) + '</p>') + '</div>';
+    }
+    return h;
+  }
+  function isoWeek(d){ var x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())), n = (x.getUTCDay() + 6) % 7; x.setUTCDate(x.getUTCDate() - n + 3); var y = new Date(Date.UTC(x.getUTCFullYear(), 0, 4)); return 1 + Math.round(((x - y) / 864e5 - 3 + ((y.getUTCDay() + 6) % 7)) / 7); }
+  function fmtN(n){ return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+  function renderTraining(){
+    var box = document.getElementById("traning");
+    if (!box) return;
+    box.onclick = trClick;
+    var me = AUTH && AUTH.me, h = '<div class="phead"><div class="pt"><h1>' + _("Träning") + '</h1><div class="pm">' + esc(_("Belastning, pass och matcher")) + '</div></div></div>';
+    if (!me){
+      box.innerHTML = h + '<div class="card ktxt trintro"><p><b>' + _("Håll koll på din belastning") + '</b></p><p>' + _("Logga träning, gym, löpning och PT-pass med ett par tryck. Dina matcher räknas in av sig själva, och mätaren visar om du tränar lagom, för lite eller riskerar att bli överbelastad.") + '</p>' +
+        '<p class="kdim">' + _("Bara du, dina föräldrar och de tränare du kopplas till ser din träning.") + '</p><a class="amxgo" href="#konto">' + _("Logga in eller begär konto") + '</a></div>';
+      return;
+    }
+    var pids = trPids();
+    if (!pids.length){ box.innerHTML = h + '<div class="card ktxt"><p>' + _("Ditt konto är inte kopplat till någon spelare än. Be klubbens admin koppla det till din spelarprofil.") + '</p></div>'; return; }
+    if (!TR.pid || pids.indexOf(TR.pid) < 0) TR.pid = pids[0];
+    var pid = TR.pid, P = BYPID[pid], data = TR.data[pid];
+    trLoad(pid);
+    if (P) try { loadAmxArch(P); } catch (e){}
+    if (pids.length > 1) h += '<div class="trwho" role="group" aria-label="' + esc(_("Spelare")) + '">' + pids.map(function(p){ var Q = BYPID[p];
+      return '<button type="button" data-trp="' + p + '" aria-pressed="' + (p === pid) + '">' + (Q ? avatar(Q.name) : "") + '<span>' + esc(p === me.pid ? _("Jag") : Q ? Q.short || Q.name : "#" + p) + '</span></button>'; }).join("") + '</div>';
+    if (!data){ box.innerHTML = h + '<p class="empty">' + _("Hämtar …") + '</p>'; return; }
+    var items = trItems(pid), R = trRatio(items), Z = TR_ZONE[R.zone];
+    h += '<section class="card trhero z-' + R.zone + '"><div class="trgw">' + trGauge(R) + '<div class="trval"><b>' + (R.enough ? R.r.toFixed(2).replace(".", ",") : "–") + '</b><span>' + esc(_(Z[0])) + '</span></div></div>' +
+      '<p class="trz">' + esc(_(Z[1])) + '</p><div class="trnums"><div><span>' + _("Senaste 7 dagarna") + '</span><b>' + fmtN(R.a) + '</b></div><div><span>' + _("Snitt per vecka, 4 veckor") + '</span><b>' + fmtN(R.c) + '</b></div></div>' +
+      '<button type="button" class="amxgo trlog" data-trlog="1">' + _("Logga pass") + '</button></section>' +
+      '<section><div class="sh"><h2>' + (pid === me.pid ? _("Min vecka") : _("{n}s vecka", {n:P ? P.short || P.name : "#" + pid})) + '</h2><div class="meta">' + esc(trName(pid)) + '</div></div><div class="card trweek">' + trWeek(items, pid) + '</div></section>' +
+      '<p class="trnote">' + _("Belastning = minuter × hur tungt det kändes (1–10). Matcher från tävlingar, serier och americanos räknas in av sig själva, uppskattat. Loggar du en match samma dag gäller din siffra.") + '</p>' +
+      ((me.pid === pid || (me.kids || []).indexOf(pid) >= 0) && data.s.length ? '<p class="trnote"><button type="button" class="linkbtn" data-trclear="1">' + _("Radera all träningshistorik för {n}", {n:trName(pid)}) + '</button></p>' : "");
+    box.innerHTML = h;
+  }
+  function trSheet(){
+    var f = TR.f, el = document.getElementById("trSheet");
+    if (!el){ el = document.createElement("div"); el.className = "sheet trsheet"; el.id = "trSheet"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); document.body.appendChild(el); el.addEventListener("click", trSheetClick); }
+    var chip = function(k, v, label, on, col){ return '<button type="button" class="trc" data-tf="' + k + '" data-v="' + v + '" aria-pressed="' + !!on + '"' + (col ? ' style="--c:' + col + '"' : "") + '>' + esc(label) + '</button>'; };
+    el.innerHTML = '<div class="sheet-bg" data-trx="1"></div><div class="sheet-in"><i class="sheet-grab" aria-hidden="true"></i><h2>' + _("Logga pass") + '</h2>' +
+      '<div class="trf"><span>' + _("Vad") + '</span><div class="trcs">' + Object.keys(TR_KIND).map(function(k){ return chip("kind", k, _(TR_KIND[k][0]), f.kind === k, TR_KIND[k][1]); }).join("") + '</div></div>' +
+      '<div class="trf"><span>' + _("När") + '</span><div class="trcs">' + [0, -1, -2].map(function(o){ return chip("day", o, o === 0 ? _("Idag") : o === -1 ? _("Igår") : cap(dayLabel(new Date(trDay(o) + "T12:00:00Z"))), f.day === o); }).join("") + '</div></div>' +
+      '<div class="trf"><span>' + _("Hur länge") + ' <b id="trMinV">' + f.min + ' min</b></span><div class="trcs">' + [30, 45, 60, 75, 90, 120].map(function(m){ return chip("min", m, m + " min", f.min === m); }).join("") + '</div></div>' +
+      '<div class="trf"><span>' + _("Hur tungt") + ' <b id="trRpeV">' + f.rpe + ' · ' + esc(_(TR_RPE[f.rpe])) + '</b></span><div class="trrpe">' +
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function(n){ return '<button type="button" data-tf="rpe" data-v="' + n + '" aria-pressed="' + (f.rpe === n) + '" style="--h:' + (130 - n * 13) + '">' + n + '</button>'; }).join("") + '</div></div>' +
+      '<div class="trf"><span>' + _("Anteckning (valfritt)") + '</span><input id="trNote" maxlength="200" autocomplete="off" value="' + esc(f.note || "") + '" placeholder="' + esc(_("Till exempel övningar, hur kroppen kändes")) + '"></div>' +
+      '<div class="trf trsave"><span class="trprev" id="trPrev">' + esc(_("Belastning {n}", {n:fmtN(f.min * f.rpe)})) + '</span><button type="button" class="amxgo" data-trsave="1">' + _("Spara") + '</button></div><p class="amxerr" id="trErr"></p></div>';
+    el.hidden = false;
+    requestAnimationFrame(function(){ el.classList.add("open"); });
+  }
+  function trSheetClose(){ var el = document.getElementById("trSheet"); if (!el) return; el.classList.remove("open"); setTimeout(function(){ el.hidden = true; }, 250); }
+  function trSheetClick(ev){
+    var b = ev.target.closest("[data-tf],[data-trsave],[data-trx]"), f = TR.f;
+    if (!b) return;
+    if (b.hasAttribute("data-trx")){ trSheetClose(); return; }
+    var note = document.getElementById("trNote"); if (note) f.note = note.value;
+    if (b.hasAttribute("data-tf")){
+      var k = b.getAttribute("data-tf"), v = b.getAttribute("data-v");
+      f[k] = k === "kind" ? v : +v;
+      [].forEach.call(b.parentNode.children, function(x){ x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      document.getElementById("trMinV").textContent = f.min + " min";
+      document.getElementById("trRpeV").textContent = f.rpe + " · " + _(TR_RPE[f.rpe]);
+      document.getElementById("trPrev").textContent = _("Belastning {n}", {n:fmtN(f.min * f.rpe)});
+      return;
+    }
+    b.disabled = true;
+    authApi("/train", {pid:TR.pid, day:trDay(f.day), kind:f.kind, min:f.min, rpe:f.rpe, note:f.note || ""}).then(function(){
+      f.note = ""; TR.day = trDay(f.day); TR.wk = 0; trSheetClose(); trLoad(TR.pid, true);
+    }, function(e){ b.disabled = false; var er = document.getElementById("trErr"); if (er) er.textContent = _("Det gick inte: ") + e.message; });
+  }
+  function trClick(ev){
+    var b = ev.target.closest("[data-trp],[data-trw],[data-trd],[data-trdel],[data-trlog],[data-trclear]");
+    if (!b) return;
+    if (b.hasAttribute("data-trp")){ TR.pid = +b.getAttribute("data-trp"); TR.day = null; TR.wk = 0; renderTraining(); }
+    else if (b.hasAttribute("data-trw")){ TR.wk = Math.min(0, TR.wk + +b.getAttribute("data-trw")); TR.day = null; renderTraining(); }
+    else if (b.hasAttribute("data-trd")){ TR.day = b.getAttribute("data-trd"); renderTraining(); }
+    else if (b.hasAttribute("data-trlog")) trSheet();
+    else if (b.hasAttribute("data-trdel")){
+      if (!confirm(_("Ta bort passet?"))) return;
+      authApi("/train", {op:"del", id:b.getAttribute("data-trdel")}).then(function(){ trLoad(TR.pid, true); }, function(e){ alert(_("Det gick inte: ") + e.message); });
+    } else if (b.hasAttribute("data-trclear")){
+      if (!confirm(_("Radera all träningshistorik? Det går inte att ångra."))) return;
+      authApi("/train/clear", {pid:TR.pid}).then(function(){ trLoad(TR.pid, true); }, function(e){ alert(_("Det gick inte: ") + e.message); });
+    }
+  }
   function renderAmxHome(){
     var host = document.getElementById("amxHome");
     if (!host) return;
@@ -8093,7 +8382,7 @@
      the phone it logs that phone in (a token here, only its hash at the worker). Roles: admin, arr (arrangör: starts
      americanos). Without a login everything is read-only as before. ---- */
   var AUTH_KEY = "padel.auth.v1", AUTH = store.json(AUTH_KEY), KONTO = {msg:"", adm:null, inv:null};
-  function authSave(a){ AUTH = a; store.set(AUTH_KEY, a ? JSON.stringify(a) : "null"); renderAcct(); }
+  function authSave(a){ AUTH = a; store.set(AUTH_KEY, a ? JSON.stringify(a) : "null"); renderAcct(); try { if (VIEW.name === "traning") renderTraining(); } catch (e){} }
   function authCan(role){ var r = (AUTH && AUTH.me && AUTH.me.roles) || []; return r.indexOf("admin") >= 0 || r.indexOf(role) >= 0; }
   function authHdr(){ return AUTH && AUTH.token ? {Authorization:"Bearer " + AUTH.token} : {}; }
   function authApi(path, body){
@@ -8158,7 +8447,7 @@
     var a = document.getElementById("acct");
     if (a) a.textContent = AUTH && AUTH.me ? _("Konto") + ": " + AUTH.me.name.split(" ")[0] + (AUTH.me.reqs ? " (" + AUTH.me.reqs + ")" : "") : _("Konto");
   }
-  var ROLE_TXT = {admin:"Admin", arr:"Arrangör"};
+  var ROLE_TXT = {admin:"Admin", arr:"Arrangör", tranare:"Tränare", pt:"PT"};
   function roleText(r){ return r.length ? r.map(function(x){ return _(ROLE_TXT[x] || x); }).join(", ") : _("Spelare"); }
   function renderKonto(){
     var box = document.getElementById("konto");
@@ -8199,7 +8488,8 @@
     }
     box.innerHTML = h;
     box.onclick = konClick;
-    box.onchange = function(ev){ var c = ev.target; if (c.hasAttribute("data-role")) konRole(c); else if (c.hasAttribute("data-link")) konOp({op:"link", id:c.getAttribute("data-link"), pid:c.value ? +c.value : null}, function(){ authCheck(true); }); };
+    box.onchange = function(ev){ var c = ev.target; if (c.hasAttribute("data-role")) konRole(c); else if (c.hasAttribute("data-coach") && c.value){ var cu = KONTO.adm && KONTO.adm.users.filter(function(x){ return x.id === c.getAttribute("data-coach"); })[0]; if (cu) konOp({op:"coach", id:cu.id, pids:(cu.coach || []).concat([+c.value])}); }
+      else if (c.hasAttribute("data-link")) konOp({op:"link", id:c.getAttribute("data-link"), pid:c.value ? +c.value : null}, function(){ authCheck(true); }); };
     box.oninput = function(ev){
       if (ev.target.id !== "kMemQ") return;
       KONTO.mq = ev.target.value;
@@ -8293,7 +8583,8 @@
     h += '<div class="card amxset"><label class="amxf"><span>' + _("Klubbspelare") + '</span><select id="kPid"><option value="">' + _("Ingen, skriv namn nedan") + '</option>' +
       opts.map(function(p){ return '<option value="' + p.pid + '">' + esc(p.name) + '</option>'; }).join("") + '</select></label>' +
       '<label class="amxf"><span>' + _("Eller namn") + '</span><input id="kName" maxlength="60" autocomplete="off" placeholder="' + esc(_("Till exempel en förälder eller tränare")) + '"></label>' +
-      '<div class="amxf"><span>' + _("Roll") + '</span><label class="kchk"><input type="checkbox" id="kArr"> ' + _("Arrangör, får starta americanos") + '</label><label class="kchk"><input type="checkbox" id="kAdm"> ' + _("Admin, får hantera konton") + '</label></div>' +
+      '<div class="amxf"><span>' + _("Roll") + '</span><label class="kchk"><input type="checkbox" id="kArr"> ' + _("Arrangör, får starta americanos") + '</label><label class="kchk"><input type="checkbox" id="kAdm"> ' + _("Admin, får hantera konton") + '</label>' +
+        '<label class="kchk"><input type="checkbox" id="kTr"> ' + _("Tränare, ser och planerar träning för sina spelare") + '</label><label class="kchk"><input type="checkbox" id="kPt"> ' + _("PT, extern, ser bara de spelare du kopplar") + '</label></div>' +
       '<div class="amxf"><button type="button" class="amxgo" data-k="add">' + _("Skapa inbjudan") + '</button><p class="amxerr" id="kErr"></p></div></div>';
     if (KONTO.inv) h += konInvHtml();
     h += '<div class="sh"><h2>' + _("Konton") + '</h2><div class="meta">' + (A ? A.users.length : "") + '</div></div>';
@@ -8307,6 +8598,9 @@
       return '<details class="krow"><summary><span class="kn"><b>' + esc(u.name) + '</b><small>' + esc(roleText(u.roles) + (kids.length ? " · " + _("förälder till ") + kids.join(", ") : "") + " · " + st) + '</small></span><i aria-hidden="true"></i></summary><div class="kact">' +
         '<label class="kchk"><input type="checkbox" data-role="arr" data-id="' + esc(u.id) + '"' + (u.roles.indexOf("arr") >= 0 ? " checked" : "") + '> ' + _("Arrangör") + '</label>' +
         '<label class="kchk"><input type="checkbox" data-role="admin" data-id="' + esc(u.id) + '"' + (u.roles.indexOf("admin") >= 0 ? " checked" : "") + (self ? " disabled" : "") + '> ' + _("Admin") + '</label>' +
+        '<label class="kchk"><input type="checkbox" data-role="tranare" data-id="' + esc(u.id) + '"' + (u.roles.indexOf("tranare") >= 0 ? " checked" : "") + '> ' + _("Tränare") + '</label>' +
+        '<label class="kchk"><input type="checkbox" data-role="pt" data-id="' + esc(u.id) + '"' + (u.roles.indexOf("pt") >= 0 ? " checked" : "") + '> ' + _("PT") + '</label>' +
+        (u.roles.indexOf("tranare") >= 0 || u.roles.indexOf("pt") >= 0 ? konCoachHtml(u) : "") +
         '<label class="amxf kpl"><span>' + _("Spelarprofil") + '</span><select data-link="' + esc(u.id) + '"><option value="">' + _("Ingen") + '</option>' +
           ROSTER.filter(function(p){ return p.pid === u.pid || used.indexOf(p.pid) < 0; }).slice().sort(function(a, b){ return a.name.localeCompare(b.name, "sv"); })
             .map(function(p){ return '<option value="' + p.pid + '"' + (p.pid === u.pid ? " selected" : "") + '>' + esc(p.name) + '</option>'; }).join("") + '</select></label>' +
@@ -8351,6 +8645,13 @@
       KONTO.adm = null; renderKonto();
     });
   }
+  // Träning: the players a coach or PT is linked to (they see and log their training, nobody else's)
+  function konCoachHtml(u){
+    var cur = u.coach || [], opts = ROSTER.filter(function(p){ return cur.indexOf(p.pid) < 0; }).slice().sort(function(a, b){ return a.name.localeCompare(b.name, "sv"); });
+    return '<div class="kcoach"><span>' + _("Tränar") + '</span><div class="kcoachl">' + (cur.length ? cur.map(function(p){ var P = BYPID[p];
+        return '<button type="button" class="kcp" data-uncoach="' + p + '" data-id="' + esc(u.id) + '" aria-label="' + esc(_("Ta bort {n}", {n:P ? P.name : p})) + '">' + esc(P ? P.name : "#" + p) + ' <i aria-hidden="true">×</i></button>'; }).join("") : '<small>' + _("Inga spelare än.") + '</small>') + '</div>' +
+      '<select data-coach="' + esc(u.id) + '"><option value="">' + _("Lägg till spelare …") + '</option>' + opts.map(function(p){ return '<option value="' + p.pid + '">' + esc(p.name) + '</option>'; }).join("") + '</select></div>';
+  }
   function konRole(c){
     var u = KONTO.adm && KONTO.adm.users.filter(function(x){ return x.id === c.getAttribute("data-id"); })[0];
     if (!u) return;
@@ -8365,6 +8666,12 @@
       [].forEach.call(mv.parentNode.children, function(x){ x.setAttribute("aria-pressed", x === mv ? "true" : "false"); });
       authApi("/admin", {op:"member", pid:+mv.getAttribute("data-pid"), vis:v === "auto" ? null : v}).then(function(){ KONTO.adm = null; renderKonto(); try { loadEvents(); } catch (e){} },
         function(er){ alert(_("Det gick inte: ") + er.message); KONTO.adm = null; renderKonto(); });
+      return;
+    }
+    var uc = ev.target.closest("button[data-uncoach]");
+    if (uc){
+      var cu2 = KONTO.adm && KONTO.adm.users.filter(function(x){ return x.id === uc.getAttribute("data-id"); })[0], rm = +uc.getAttribute("data-uncoach");
+      if (cu2) konOp({op:"coach", id:cu2.id, pids:(cu2.coach || []).filter(function(p){ return p !== rm; })});
       return;
     }
     var b = ev.target.closest("button[data-k]");
@@ -8423,7 +8730,7 @@
       authSave(null); KONTO.adm = null; KONTO.inv = null; KONTO.msg = ""; AMX.list = null; renderKonto();
     } else if (k === "add"){
       var pid = +document.getElementById("kPid").value || null, name = document.getElementById("kName").value.trim();
-      var roles = [].concat(document.getElementById("kArr").checked ? ["arr"] : [], document.getElementById("kAdm").checked ? ["admin"] : []);
+      var roles = [].concat(document.getElementById("kArr").checked ? ["arr"] : [], document.getElementById("kAdm").checked ? ["admin"] : [], document.getElementById("kTr").checked ? ["tranare"] : [], document.getElementById("kPt").checked ? ["pt"] : []);
       if (!pid && !name){ document.getElementById("kErr").textContent = _("Välj en spelare eller skriv ett namn."); return; }
       var nm = pid && BYPID[pid] ? BYPID[pid].name : name;
       b.disabled = true;
@@ -8548,10 +8855,10 @@
   /* ---- Menyraden: Idag · Spelare · Tävlingar · Americano · Mer. A spring-driven blob (it stretches as it travels and follows
      the finger when you slide along the bar: let go on a tab to open it), the active icon pops and draws itself, the dock
      pulls in while you scroll down, and a live capsule rises out of it for what is on right now. ---- */
-  var DOCK_TABS = ["spelare", "tavlingar", "idag", "americano", "mer"];
+  var DOCK_TABS = ["spelare", "tavlingar", "idag", "traning", "mer"];
   function dockTabOf(v){
     return v === "home" ? "idag" : v === "player" || v === "team" || v === "spelare" ? "spelare" : v === "tour" || v === "tavlingar" || v === "match" ? "tavlingar"
-      : v === "amx" || v === "americano" ? "americano" : "mer";
+      : v === "traning" ? "traning" : "mer";
   }
   var DOCK = (function(){
     var dock = document.getElementById("dock"), bar = document.getElementById("dockBar"), blob = document.getElementById("dockBlob");
@@ -8745,7 +9052,7 @@
       items = list || [];
       tabEl("idag").classList.toggle("badge", items.some(function(x){ return x.kind === "now"; }));
       tabEl("idag").classList.toggle("live", items.some(function(x){ return x.kind === "now"; }));
-      tabEl("americano").classList.toggle("badge", items.some(function(x){ return x.kind === "amx"; }));
+      tabEl("idag").classList.toggle("badge", items.some(function(x){ return x.kind === "now" || x.kind === "amx"; }));
       clearInterval(timer);
       if (!items.length){ cap.classList.remove("show"); setTimeout(function(){ if (!items.length) cap.hidden = true; }, 400); return; }
       cap.hidden = false; idx = 0; showItem();
@@ -8933,7 +9240,7 @@
     if (sk) return {view:"stats", key:sk[1] || null};
     var sm = /^#serie\/(\d+)\/([a-z0-9]+)$/.exec(h);
     if (sm) return {view:"match", gid:sm[1], key:sm[2]};
-    if (h === "#spelare" || h === "#tavlingar" || h === "#americano") return {view:h.slice(1)};
+    if (h === "#spelare" || h === "#tavlingar" || h === "#americano" || h === "#traning") return {view:h.slice(1)};
     var ki = /^#in\/([a-z2-9]{20})$/.exec(h);
     if (ki || h === "#konto") return {view:"konto", code:ki ? ki[1] : null};
     var kb = /^#konto\/begar\/(\d+)$/.exec(h);
@@ -8951,7 +9258,7 @@
     return P ? {view:"player", who:P.key, P:P, mid:m[2] || null} : {view:"home"};
   }
   function showView(id){
-    ["home", "team", "stats", "match", "tour", "rules", "amx", "konto", "spelare", "tavlingar", "americano", "amxtv"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
+    ["home", "team", "stats", "match", "tour", "rules", "amx", "konto", "spelare", "tavlingar", "americano", "traning", "amxtv"].concat(Object.keys(PANELS).map(function(k){ return "p-" + k; })).forEach(function(v){
       var el = document.getElementById(v);
       if (el) el.hidden = v !== id;
     });
@@ -9037,13 +9344,14 @@
       VIEW = {name:"amxtv", who:null, team:"amxtv" + x.id};
       tvOpen(x.id);
       document.title = _("Storbild") + " · Nynäs Padel";
-    } else if (x.view === "spelare" || x.view === "tavlingar" || x.view === "americano"){
+    } else if (x.view === "spelare" || x.view === "tavlingar" || x.view === "americano" || x.view === "traning"){
       if (x.view === "spelare"){ try { renderTeams(); } catch (e){} renderPlayerList(); }
       else if (x.view === "tavlingar") renderTav();
+      else if (x.view === "traning"){ TR.data = {}; renderTraining(); }
       else renderAmxHome();
       showView(x.view);
       VIEW = {name:x.view, who:null, team:x.view};
-      document.title = _(x.view === "spelare" ? "Spelare" : x.view === "tavlingar" ? "Tävlingar" : "Americano") + " · Nynäs Padel";
+      document.title = _(x.view === "spelare" ? "Spelare" : x.view === "tavlingar" ? "Tävlingar" : x.view === "traning" ? "Träning" : "Americano") + " · Nynäs Padel";
     } else if (x.view === "konto"){
       // the code leaves the address bar; logging in waits for a tap (the link may have opened in the wrong browser)
       if (x.code){ history.replaceState(null, "", "#konto"); KONTO.code = x.code; KONTO.msg = ""; renderKonto(); }
@@ -9071,7 +9379,7 @@
       VIEW = {name:"home", who:null};
       document.title = "Nynäs Padel";
     }
-    if (nav) nav.hidden = ["home", "spelare", "tavlingar", "americano", "konto", "rules", "amx", "stats"].indexOf(VIEW.name) >= 0;
+    if (nav) nav.hidden = ["home", "spelare", "tavlingar", "americano", "traning", "konto", "rules", "amx", "stats"].indexOf(VIEW.name) >= 0;
     // the dock follows; a view opened from another tab slides in from that side
     var tabNow = dockTabOf(VIEW.name), tabWas = DOCK_PREV;
     DOCK.set(tabNow, !tabWas);

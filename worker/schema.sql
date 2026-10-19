@@ -88,3 +88,23 @@ CREATE TABLE IF NOT EXISTS pkchal (
   user TEXT,
   at INTEGER NOT NULL
 );
+-- Träning: a coach (tranare) or an external PT sees and plans for the players the admin links them to
+CREATE TABLE IF NOT EXISTS coaching (
+  user TEXT NOT NULL,
+  pid INTEGER NOT NULL,
+  PRIMARY KEY (user, pid)
+);
+-- a training session logged by the player (or a parent, a coach): minutes x RPE (1-10) = the session's load
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  org TEXT NOT NULL,
+  pid INTEGER NOT NULL,
+  day TEXT NOT NULL,                            -- YYYY-MM-DD
+  kind TEXT NOT NULL,                           -- padel, match, gym, lop, pt, fys, annat
+  min INTEGER NOT NULL,
+  rpe INTEGER NOT NULL,
+  note TEXT,
+  by TEXT,                                      -- the account that logged it
+  created INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sessions_pid ON sessions(pid, day);

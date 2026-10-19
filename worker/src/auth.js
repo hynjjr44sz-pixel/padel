@@ -1,10 +1,10 @@
 // Club accounts without passwords (D1 binding DB, schema.sql). The admin makes a person and gets a one-time invite link
 // (#in/<code>, 7 days); opening it on the phone gives that phone a random token (Authorization: Bearer). Only SHA-256
 // hashes of codes and tokens are stored. Losing the phone: the admin revokes its devices and sends a new link.
-// Roles: admin (everything), arr (arrangör: may start americanos). Without a login the app is read-only as before.
+// Roles: admin (everything), arr (arrangör: may start americanos), tranare and pt (Träning: the players linked to them). Without a login the app is read-only as before.
 import { goneOf } from "./members.js";
 export const ORG = "nynas";
-export const ROLES = ["admin", "arr"];
+export const ROLES = ["admin", "arr", "tranare", "pt"];   // tranare: club coach; pt: an external personal trainer (Träning)
 const INVITE_MS = 7 * 86400e3, MAX_DEVICES = 5, SEEN_MS = 3600e3, IDLE_MS = 180 * 86400e3, REQ_MS = 14 * 86400e3, REQ_OPEN = 40, REQ_TRIES = 5, REQ_PER_IP = 3;
 // the code a requesting phone shows (no 0/O, 1/I/L): "K7Q 42X"
 const REQ_ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -41,7 +41,8 @@ export async function authUser(env, req, t) {
 // {id, name, pid, roles, kids (the juniors a parent looks after), pk (passkeys), reqs (open requests, for an admin)}
 export async function meOf(env, u) {
   const roles = await rolesOf(env, u.id), kids = (await env.DB.prepare("SELECT pid FROM guardians WHERE user = ?").bind(u.id).all()).results.map(r => r.pid);
-  const me = { id: u.id, name: u.name, pid: u.pid || null, roles, kids };
+  const coach = roles.includes("tranare") || roles.includes("pt") ? (await env.DB.prepare("SELECT pid FROM coaching WHERE user = ?").bind(u.id).all()).results.map(r => r.pid) : [];
+  const me = { id: u.id, name: u.name, pid: u.pid || null, roles, kids, coach };
   if (u.pid && goneOf(u.pid)) me.left = goneOf(u.pid).at;   // left the club on RankedIn
   me.pk = (await env.DB.prepare("SELECT count(*) AS n FROM passkeys WHERE user = ?").bind(u.id).first()).n;
   if (roles.includes("admin")) me.reqs = (await env.DB.prepare("SELECT count(*) AS n FROM requests WHERE org = ? AND status = 'open' AND created > ?").bind(ORG, Date.now() - REQ_MS).first()).n;
@@ -141,8 +142,9 @@ export async function adminUsers(env, t) {
   const ds = (await env.DB.prepare("SELECT d.user, d.label, d.seen FROM devices d JOIN users u ON u.id = d.user WHERE u.org = ? ORDER BY d.seen DESC").bind(ORG).all()).results;
   const is = (await env.DB.prepare("SELECT i.user, i.expires FROM invites i JOIN users u ON u.id = i.user WHERE u.org = ? AND i.used IS NULL AND i.expires > ?").bind(ORG, t).all()).results;
   const gs = (await env.DB.prepare("SELECT g.user, g.pid FROM guardians g JOIN users u ON u.id = g.user WHERE u.org = ?").bind(ORG).all()).results;
+  const cs = (await env.DB.prepare("SELECT c.user, c.pid FROM coaching c JOIN users u ON u.id = c.user WHERE u.org = ?").bind(ORG).all()).results;
   const rq = (await env.DB.prepare("SELECT id, pid, name, parent, msg, label, created, tries FROM requests WHERE org = ? AND status = 'open' AND created > ? ORDER BY created DESC").bind(ORG, t - REQ_MS).all()).results;
-  return { requests: rq.map(r => ({ ...r, parent: !!r.parent })), users: us.map(u => ({ id: u.id, name: u.name, pid: u.pid || null, created: u.created, disabled: !!u.disabled, kids: gs.filter(g => g.user === u.id).map(g => g.pid),
+  return { requests: rq.map(r => ({ ...r, parent: !!r.parent })), users: us.map(u => ({ id: u.id, name: u.name, pid: u.pid || null, created: u.created, disabled: !!u.disabled, kids: gs.filter(g => g.user === u.id).map(g => g.pid), coach: cs.filter(c => c.user === u.id).map(c => c.pid),
     roles: rs.filter(r => r.user === u.id).map(r => r.role).sort(),
     devices: ds.filter(d => d.user === u.id).map(d => ({ label: d.label, seen: d.seen })),
     left: u.pid && goneOf(u.pid) ? goneOf(u.pid).at : null,
@@ -157,7 +159,7 @@ async function newInvite(env, id, t) {
   return { code, expires: t + INVITE_MS };
 }
 const validRoles = r => [...new Set((Array.isArray(r) ? r : []).filter(x => ROLES.includes(x)))];
-// POST /admin {op, ...}: add {name, pid, roles} | invite {id} | roles {id, roles} | link {id, pid} | revoke {id} | disable {id, on} | remove {id}
+// POST /admin {op, ...}: add {name, pid, roles} | invite {id} | roles {id, roles} | link {id, pid} | coach {id, pids} | revoke {id} | disable {id, on} | remove {id}
 export async function adminOp(env, me, b, t, byPid) {
   const op = b && b.op, who = me ? me.id : "admin-key";
   if (op === "add") {
@@ -215,6 +217,13 @@ export async function adminOp(env, me, b, t, byPid) {
     ]);
     return { ok: true, roles };
   }
+  // Träning: the players a coach or PT sees (replaces the list)
+  if (op === "coach") {
+    const pids = [...new Set((Array.isArray(b.pids) ? b.pids : []).map(Number))].slice(0, 60);
+    if (pids.some(p => !byPid.has(p))) return { err: "unknown player", status: 400 };
+    await env.DB.batch([env.DB.prepare("DELETE FROM coaching WHERE user = ?").bind(u.id), ...pids.map(p => env.DB.prepare("INSERT INTO coaching (user, pid) VALUES (?, ?)").bind(u.id, p)), log(env, t, who, "coach", { id: u.id, pids })]);
+    return { ok: true, pids };
+  }
   // the account's own player profile (a club player or member shown in the app), or none
   if (op === "link") {
     const pid = b.pid == null || b.pid === "" ? null : Number(b.pid);
@@ -232,7 +241,7 @@ export async function adminOp(env, me, b, t, byPid) {
     return { ok: true };
   }
   if (op === "remove") {
-    await env.DB.batch(["devices", "invites", "roles", "guardians", "passkeys"].map(tb => env.DB.prepare("DELETE FROM " + tb + " WHERE user = ?").bind(u.id))
+    await env.DB.batch(["devices", "invites", "roles", "guardians", "passkeys", "coaching"].map(tb => env.DB.prepare("DELETE FROM " + tb + " WHERE user = ?").bind(u.id))
       .concat([env.DB.prepare("DELETE FROM users WHERE id = ?").bind(u.id), log(env, t, who, "remove", { id: u.id, name: u.name })]));
     return { ok: true };
   }

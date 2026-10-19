@@ -204,7 +204,7 @@ try {
   ok("home: Kommande has SPL per team (no duplicates per player) and Vista", spl.length >= 1 && new Set(spl).size === spl.length && agenda.some(x => /Vista/.test(x)) && agenda.some(x => /SPL Herrar/.test(x)), agenda);
   // Menyraden: Idag active on the home view; Spelare (teams, players, search) from the dock
   const dk0 = await page.evaluate(() => [[...document.querySelectorAll("#dock .dtab")].map(t => t.getAttribute("data-tab")).join(), document.querySelector("#dock .dtab.on")?.getAttribute("data-tab")]);
-  ok("Menyraden: five tabs, Idag active on the home view", dk0[0] === "spelare,tavlingar,idag,americano,mer" && dk0[1] === "idag", dk0);
+  ok("Menyraden: five tabs, Idag active on the home view", dk0[0] === "spelare,tavlingar,idag,traning,mer" && dk0[1] === "idag", dk0);
   await page.click('#dock .dtab[data-tab="spelare"]');
   await page.waitForSelector("#spelare:not([hidden]) #plist li", { timeout: 8000 }).catch(() => {});
   const dk1 = await page.evaluate(() => [location.hash, document.querySelector("#dock .dtab.on")?.getAttribute("data-tab"), document.getElementById("home").hidden, document.getElementById("dockBlob").style.width]);
@@ -234,7 +234,7 @@ try {
   await page.click('#moreSheet .mtile[href="#regler"]');
   await page.waitForSelector("#rules:not([hidden])", { timeout: 8000 }).catch(() => {});
   const more2 = await page.evaluate(() => [document.getElementById("moreSheet").classList.contains("open"), document.querySelector("#dock .dtab.on")?.getAttribute("data-tab")]);
-  ok("Mer: a sheet with Regler, Konto, Alla americanos, Integritet and the language; Regler opens and the sheet closes", more[0] && more[1] === "Regler,Konto,Alla americanos,Integritet" && more[2] && !more2[0] && more2[1] === "mer", { more, more2 });
+  ok("Mer: a sheet with Regler, Konto, Americano, Alla americanos, Integritet and the language; Regler opens and the sheet closes", more[0] && more[1] === "Regler,Konto,Americano,Alla americanos,Integritet" && more[2] && !more2[0] && more2[1] === "mer", { more, more2 });
   await page.click('#dock .dtab[data-tab="idag"]');
   await page.waitForSelector("#home:not([hidden])", { timeout: 8000 }).catch(() => {});
   ok("home: no horizontal scroll at 390", await noHScroll(page));
@@ -342,6 +342,30 @@ try {
     await page.waitForFunction(() => /Telefoner/.test(document.getElementById("stats")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
     const st = await page.evaluate(() => [location.hash, document.getElementById("stats")?.textContent.slice(0, 80)]);
     ok("Statistik: the admin opens it from Konto without the owner's key", st[0] === "#stats" && /Telefoner/.test(st[1] || ""), st);
+  }
+  { // Träning: not linked to a player -> a note; linked (Cassandra) -> log a gym session, it shows in the week and the gauge
+    await page.goto(url("#traning"));
+    await page.waitForSelector("#traning .card", { timeout: 8000 }).catch(() => {});
+    const t0 = await page.evaluate(() => [document.querySelector('#dock [data-tab="traning"]')?.classList.contains("on"), document.getElementById("traning").textContent]);
+    const uid = AMX_ENV.DB.db.prepare("SELECT id FROM users WHERE name = 'Mikael Holmberg'").get().id;
+    await worker.fetch(new Request("https://w/admin", { method: "POST", headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", "X-Admin-Key": AMX_ENV.ADMIN_KEY }, body: JSON.stringify({ op: "link", id: uid, pid: 1849853 }) }), AMX_ENV);
+    await page.goto(url("#konto"));
+    await page.waitForFunction(() => /Din spelarsida/.test(document.getElementById("konto").textContent), null, { timeout: 8000 }).catch(() => {});
+    await page.goto(url("#traning"));
+    await page.waitForSelector("#traning [data-trlog]", { timeout: 8000 }).catch(() => {});
+    await page.click("#traning [data-trlog]");
+    await page.waitForSelector('#trSheet [data-tf="kind"][data-v="gym"]', { timeout: 8000 }).catch(() => {});
+    await page.click('#trSheet [data-tf="kind"][data-v="gym"]');
+    await page.click('#trSheet [data-tf="min"][data-v="45"]');
+    await page.click('#trSheet [data-tf="rpe"][data-v="7"]');
+    await page.fill("#trNote", "Ben och bål");
+    const prev = await page.textContent("#trPrev");
+    await page.click("#trSheet [data-trsave]");
+    await page.waitForFunction(() => /Gym/.test(document.querySelector("#traning .trlist")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    const t1 = await page.evaluate(() => [document.querySelector("#traning .trlist")?.textContent.replace(/\s+/g, " "), document.querySelector("#traning .trnums")?.textContent.replace(/\s+/g, " ")]);
+    const row = AMX_ENV.DB.db.prepare("SELECT pid, kind, min, rpe, note FROM sessions").get();
+    ok("Träning: in the menu bar; a note before the account is linked; a gym session logged, in the week and the load", t0[0] === true && /inte kopplat/.test(t0[1] || "") && /315/.test(prev || "") &&
+      /Gym.*45 min · RPE 7 · belastning 315.*Ben och bål/.test(t1[0] || "") && /Senaste 7 dagarna\s*315/.test(t1[1] || "") && row && row.pid === 1849853 && row.kind === "gym" && row.min === 45 && row.rpe === 7, { t0, prev, t1, row });
   }
   { // Profilbild: the admin (logged in above) on Thea's page: upload, crop, shown on the card at once; removed again
     await page.goto(url("#thea"));
