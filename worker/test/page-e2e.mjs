@@ -372,6 +372,9 @@ try {
     const AK = { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", "X-Admin-Key": AMX_ENV.ADMIN_KEY };
     await worker.fetch(new Request("https://w/admin", { method: "POST", headers: AK, body: JSON.stringify({ op: "roles", id: uid, roles: ["admin", "tranare"] }) }), AMX_ENV);
     AMX_ENV.DB.db.prepare("INSERT INTO exercises (id, org, cat, topic, title, body, yt, level, min, by, created, updated) VALUES ('yt-test', 'nynas', 'slag', 'Bandeja', 'Bandeja grunder', 'Sidled.', 'dQw4w9WgXcQ', 'alla', 15, 'seed', 1, 1)").run();
+    await page.goto(url("#konto"));
+    await page.waitForFunction(() => /Tränare/.test(document.querySelector("#konto .ktxt")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    const roleTxt = await page.evaluate(() => document.querySelector("#konto .ktxt")?.textContent.replace(/\s+/g, " "));
     await page.goto(url("#traning"));
     await page.waitForSelector('#traning [data-trtab="grp"]', { timeout: 8000 }).catch(() => {});
     await page.click('#traning [data-trtab="grp"]');
@@ -404,7 +407,7 @@ try {
     await page.waitForFunction(() => /1\/1/.test(document.querySelector("#traning .trfbn")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
     const fb = await page.evaluate(() => document.querySelector("#traning .trfbn")?.textContent);
     const done = AMX_ENV.DB.db.prepare("SELECT count(*) n FROM plan_done").get().n;
-    ok("Träning fas 2: a group, a planned session with an exercise from the library; the player marks it done, the coach sees 1/1", /Damlaget onsdagar/.test(g1) && /Volley och bandeja/.test(g1) && ex === "Bandeja grunder" && fb === "1/1" && done === 1, { g1: g1.slice(0, 300), ex, fb, done });
+    ok("Träning fas 2: a group, a planned session with an exercise from the library; the player marks it done, the coach sees 1/1", /Damlaget onsdagar/.test(g1) && /Volley och bandeja/.test(g1) && ex === "Bandeja grunder" && fb === "1/1" && done === 1, { roleTxt, g1: g1.slice(0, 300), ex, fb, done });
   }
   { // Profilbild: the admin (logged in above) on Thea's page: upload, crop, shown on the card at once; removed again
     await page.goto(url("#thea"));
