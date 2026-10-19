@@ -316,7 +316,7 @@ try {
     const used = await (await worker.fetch(new Request("https://w/auth/redeem", { method: "POST", headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json" }, body: JSON.stringify({ code: boot.code }) }), AMX_ENV)).status;
     ok("Konto: the admin invites Thea as arrangör (a one-time link), the admin's own link is used up", /#in\/[a-z2-9]{20}$/.test(k2[0] || "") && /Thea Holmberg LövingArrangör · Inbjudan gäller till/.test(k2[1] || "") && used === 410, { k2, used });
   }
-  { // Face ID (a virtual authenticator): the admin adds a passkey, logs out, logs in again with it, no link
+  if (!/^http:\/\/[\d.]+[:/]/.test(BASE)) { // Face ID (a virtual authenticator; needs a domain, not an IP): the admin adds a passkey, logs out, logs in again with it, no link
     const cdp = await page.context().newCDPSession(page);
     await cdp.send("WebAuthn.enable");
     await cdp.send("WebAuthn.addVirtualAuthenticator", { options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true } });
