@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hXXd9Ryep5mTvQZpRfBO4czAuG6vCyrMtwle8KOLoSg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-LrM3VMdIGy4zziWp5qdvvILfjNgK9LZD23U9KuLcDkQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -8238,8 +8238,11 @@
   function trSheet2Close(){ var el = document.getElementById("trSheet2"); if (!el) return; el.classList.remove("open"); setTimeout(function(){ el.hidden = true; }, 250); }
   function trErr2(e){ var er = document.getElementById("trErr2"); if (er) er.textContent = _("Det gick inte: ") + (e && e.message || e); }
   function trPlanSheet(target, p){
-    // target: "p<pid>" | "g<gid>"; p: the plan when changing one
-    trGet("lib", "/lib");
+    // target: "p<pid>" | "g<gid>"; p: the plan when changing one. The library first (the exercises to pick from)
+    if (!(TR.lib && TR.lib.d)){
+      authApi("/lib").then(function(d){ TR.lib = {t:Date.now(), d:d}; trPlanSheet(target, p); }, function(){ TR.lib = {t:Date.now(), d:{ex:[]}}; trPlanSheet(target, p); });
+      return;
+    }
     p = p || {kind:"padel", min:90, day:trDay(1), time:"", title:"", note:"", ex:[]};
     var sel = (p.ex || []).map(function(x){ return typeof x === "string" ? x : x.id; }), lib = (TR.lib && TR.lib.d && TR.lib.d.ex) || [];
     var kinds = Object.keys(TR_KIND).map(function(k){ return '<button type="button" class="trc" data-pk="' + k + '" aria-pressed="' + (p.kind === k) + '" style="--c:' + TR_KIND[k][1] + '">' + esc(_(TR_KIND[k][0])) + '</button>'; }).join("");
