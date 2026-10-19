@@ -365,7 +365,7 @@ try {
     const t1 = await page.evaluate(() => [document.querySelector("#traning .trlist")?.textContent.replace(/\s+/g, " "), document.querySelector("#traning .trnums")?.textContent.replace(/\s+/g, " ")]);
     const row = AMX_ENV.DB.db.prepare("SELECT pid, kind, min, rpe, note FROM sessions").get();
     ok("Träning: in the menu bar; a note before the account is linked; a gym session logged, in the week and the load", t0[0] === true && /inte kopplat/.test(t0[1] || "") && /315/.test(prev || "") &&
-      /Gym.*45 min · RPE 7 · belastning 315.*Ben och bål.*Järfälla Padel Open no 11.*uppskattat/.test(t1[0] || "") && /Senaste 7 dagarna 3 465/.test(t1[1] || "") && row && row.pid === 1849853 && row.kind === "gym" && row.min === 45 && row.rpe === 7, { t0, prev, t1, row });
+      /Gym.*45 min · RPE 7 · belastning 315.*Ben och bål.*Järfälla Padel Open no 11.*uppskattat/.test(t1[0] || "") && /Senaste 7 dagarna\s*3\s465/.test(t1[1] || "") && row && row.pid === 1849853 && row.kind === "gym" && row.min === 45 && row.rpe === 7, { t0, prev, t1, row });
   }
   { // Profilbild: the admin (logged in above) on Thea's page: upload, crop, shown on the card at once; removed again
     await page.goto(url("#thea"));
