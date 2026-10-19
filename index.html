@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-jYLQHsihciYx2/mfM3ite9W6aW2NHHoxZcse3o3oFOI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-wMkK6XJ0//WAzk1xlorR/8fIA87E795WznnO5kLuoC8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -301,6 +301,7 @@
   .sbside .avs{ flex:none; display:flex; } .sbside .avs > *{ width:1.8em !important; height:1.8em !important; font-size:.7em; }
   .sbf{ display:flex; align-items:center; gap:2vw; padding-top:.6vh; border-top:1px solid rgba(255,255,255,.1); }
   .sbtick{ flex:1; min-width:0; display:flex; gap:2.4em; overflow:hidden; white-space:nowrap; -webkit-mask-image:linear-gradient(90deg, #000 85%, transparent); mask-image:linear-gradient(90deg, #000 85%, transparent); font:500 .85em/1.2 "Instrument Sans", sans-serif; color:#C9D3EC; text-transform:none; letter-spacing:0; }
+  .sblab{ flex:none; font:600 .7em/1 "Chivo Mono", monospace; letter-spacing:.1em; text-transform:uppercase; color:#FFD84A; }
   .sbtick span{ font:inherit; color:inherit; text-transform:none; letter-spacing:0; } .sbtick b{ font:700 1em/1.2 "Instrument Sans", sans-serif; color:#fff; text-transform:none; letter-spacing:0; }
   @media (max-aspect-ratio: 1/1){ .sbgrid{ grid-template-columns:1fr; grid-template-rows:minmax(0,1.3fr) minmax(0,1fr); } #amxtv{ font-size:clamp(14px, 2.4vw, 30px); } }
   /* ---------- Menyraden som padelbana: the bar is a court seen from above (lines, glass at the ends, the net in the
@@ -2334,7 +2335,8 @@
     "Slutställning":"Clasificación final",
     "Sista rundan":"Última ronda",
     "Runda {n}":"Ronda {n}",
-    "Resultaten visas här när de rapporteras in.":"Los resultados aparecen aquí cuando se introducen.",
+    "Föregående runda:":"Ronda anterior:",
+    "Föregående rundas resultat visas här.":"Aquí aparecen los resultados de la ronda anterior.",
     "Visa på storbild":"Ver en pantalla grande",
     "Den här americanon finns inte längre.":"Este americano ya no existe.",
     "Tabellen":"La clasificación",
@@ -10018,9 +10020,8 @@
     var rows = team ? t.teams.map(function(p){ var o = st.filter(function(x){ return x.i === p[0]; })[0]; return {pair:p, o:o, k:"p" + p[0]}; }).sort(function(a, b){ return st.indexOf(a.o) - st.indexOf(b.o); })
       : st.map(function(o){ return {pair:[o.i], o:o, k:"p" + o.i}; });
     var pts = t.mode && t.mode !== "pts" ? _("Game") : _("Poäng");
-    var done = [];
-    t.rounds.forEach(function(r, ri){ r.forEach(function(x, mi){ if (x.s) done.push({x:x, r:ri, m:mi}); }); });
-    var latest = done.slice(-6).reverse();
+    // the foot: the previous round's results (the current round is on the courts)
+    var latest = R > 1 ? t.rounds[R - 2].filter(function(x){ return !!x.s; }).map(function(x){ return {x:x}; }) : [];
     var h = '<header class="sbh"><img src="img/nynas-logo.png" alt="" width="54" height="69"><div><h1>' + esc(t.name) + '</h1><p>' + esc(amxKind(t.fmt) + " · " + amxHow(t) + " · " + t.players.length + _(" spelare")) + '</p></div>' +
       '<div class="sbround"><span>' + _("Runda") + '</span><b>' + R + '</b></div>' +
       '<div class="sbtools"><button type="button" data-tv="fs" aria-label="' + esc(_("Helskärm")) + '">⛶</button><a href="#amx/' + esc(t.id) + '" aria-label="' + esc(_("Stäng storbild")) + '">×</a></div></header>' +
@@ -10038,7 +10039,7 @@
         var side = function(sd, i){ return '<div class="sbside' + (won === sd ? " w" : "") + '">' + amxAvs(t, x[sd]) + '<b>' + esc(amxSide(t, x[sd])) + '</b><em>' + (s ? s[i] : "") + '</em></div>'; };
         return '<div class="sbcourt' + (s ? " done" : " live") + (fresh ? " fresh" : "") + '"><div class="sbc"><span>' + _("Bana ") + (x.c || m + 1) + '</span><i>' + (s ? _("Klar") : _("Pågår")) + '</i></div>' + side("a", 0) + side("b", 1) + '</div>';
       }).join("") + '</section></div>' +
-      '<div class="sbf"><div class="sbtick">' + (latest.length ? latest.map(function(d){ var x = d.x; return '<span><b>' + esc(amxSide(t, x.a)) + '</b> ' + x.s[0] + "–" + x.s[1] + ' <b>' + esc(amxSide(t, x.b)) + '</b></span>'; }).join("") : '<span>' + _("Resultaten visas här när de rapporteras in.") + '</span>') + '</div></div>';
+      '<div class="sbf">' + (latest.length ? '<span class="sblab">' + _("Föregående runda:") + '</span>' : "") + '<div class="sbtick">' + (latest.length ? latest.map(function(d){ var x = d.x; return '<span><b>' + esc(amxSide(t, x.a)) + '</b> ' + x.s[0] + "–" + x.s[1] + ' <b>' + esc(amxSide(t, x.b)) + '</b></span>'; }).join("") : '<span>' + _("Föregående rundas resultat visas här.") + '</span>') + '</div></div>';
     // FLIP: rows that changed place slide from where they were
     var before = {};
     [].forEach.call(box.querySelectorAll(".sbrow[data-k]"), function(el){ before[el.getAttribute("data-k")] = el.getBoundingClientRect().top; });
