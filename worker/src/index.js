@@ -10,6 +10,7 @@ import { loadMembers, membersDue, membersRun, membersOut, setVisibility, findMem
 import { loadCenter, centerRun } from "./center.js";
 import { photoIndex, photoSet, photoGet, photosPending, photosCheck, canPhoto, riIndex, riOut } from "./photos.js";
 import { trainGet, trainPost, trainClear } from "./train.js";
+import { coachGet, coachPost, libGet, libPost, plansGet, plansPost } from "./coach.js";
 import { pkOptions, pkAdd, pkLogin, pkClear } from "./passkey.js";
 import { sha, authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
 import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, amxAll, publicOf } from "./amx.js";
@@ -143,7 +144,7 @@ async function handle(req, env) {
   // the per-IP rate limits and the cap on subscriptions are what keep KV (1000 writes, 100k reads a day) safe.
   if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
   // americano results come several a minute from one phone: the API limit, not the subscribe one
-  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" && url.pathname !== "/auth/request/poll" && !url.pathname.startsWith("/train") ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
+  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" && url.pathname !== "/auth/request/poll" && !/^\/(train|coach|lib|plans)/.test(url.pathname) ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
   const route = req.method + " " + url.pathname;
   if (route === "GET /health") {
     const rec = await loadRecord(env);
@@ -247,6 +248,21 @@ async function handle(req, env) {
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
     const r = route === "POST /train" ? await trainPost(env, me, b, +now(env)) : await trainClear(env, me, b);
+    return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
+  }
+  // Träning, fas 2 (coach.js): groups and assistants, the exercise library, plans
+  if (route === "GET /coach" || route === "GET /lib" || route === "GET /plans") {
+    const me = await authUser(env, req, +now(env));
+    if (!me) return json({ error: "login" }, 401, h);
+    const r = route === "GET /coach" ? await coachGet(env, me) : route === "GET /lib" ? await libGet(env, me) : await plansGet(env, me, Object.fromEntries(url.searchParams), +now(env));
+    return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
+  }
+  if (route === "POST /coach" || route === "POST /lib" || route === "POST /plans") {
+    const me = await authUser(env, req, +now(env));
+    if (!me) return json({ error: "login" }, 401, h);
+    let b;
+    try { b = await readBody(req, 12000); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    const t = +now(env), r = route === "POST /coach" ? await coachPost(env, me, b, t, BY_PID) : route === "POST /lib" ? await libPost(env, me, b, t) : await plansPost(env, me, b, t);
     return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
   // Passkeys (passkey.js): the admin adds one when logged in, and logs in with it later

@@ -145,7 +145,7 @@ async function newPage(opts = {}) {
       return r.fulfill({ status: opts.liveStatus || 200, contentType: "application/json", body: opts.liveStatus ? "{}" : opts.live, headers: h });
     }
     if (u.pathname === "/events") return opts.workerDown ? r.fulfill({ status: 503, body: "{}", headers: h }) : r.fulfill({ contentType: "application/json", body: JSON.stringify(opts.events || EVENTS), headers: h });
-    if (/^\/(amx|auth|admin|me\/|photo\/|stats$|train)/.test(u.pathname)) {   // the real worker code, its own KV and database
+    if (/^\/(amx|auth|admin|me\/|photo\/|stats$|train|coach|lib|plans)/.test(u.pathname)) {   // the real worker code, its own KV and database
       const q = r.request(), au = q.headers()["authorization"];
       return worker.fetch(new Request("https://w" + u.pathname + u.search, { method: q.method(), headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", ...(au ? { Authorization: au } : {}) }, body: q.method() === "POST" ? q.postData() : undefined }), AMX_ENV)
         .then(async x => r.fulfill({ status: x.status, contentType: "application/json", body: await x.text(), headers: h }));
@@ -366,6 +366,45 @@ try {
     const row = AMX_ENV.DB.db.prepare("SELECT pid, kind, min, rpe, note FROM sessions").get();
     ok("Träning: in the menu bar; a note before the account is linked; a gym session logged, in the week and the load", t0[0] === true && /inte kopplat/.test(t0[1] || "") && /315/.test(prev || "") &&
       /Gym.*45 min · RPE 7 · belastning 315.*Ben och bål.*Järfälla Padel Open no 11.*uppskattat/.test(t1[0] || "") && /Senaste 7 dagarna\s*3\s465/.test(t1[1] || "") && row && row.pid === 1849853 && row.kind === "gym" && row.min === 45 && row.rpe === 7, { t0, prev, t1, row });
+  }
+  { // Träning, fas 2: Mikael as head coach: a group with Cassandra (himself here), a planned session with an exercise; done as the player -> feedback
+    const uid = AMX_ENV.DB.db.prepare("SELECT id FROM users WHERE name = 'Mikael Holmberg'").get().id;
+    const AK = { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json", "X-Admin-Key": AMX_ENV.ADMIN_KEY };
+    await worker.fetch(new Request("https://w/admin", { method: "POST", headers: AK, body: JSON.stringify({ op: "roles", id: uid, roles: ["admin", "tranare"] }) }), AMX_ENV);
+    AMX_ENV.DB.db.prepare("INSERT INTO exercises (id, org, cat, topic, title, body, yt, level, min, by, created, updated) VALUES ('yt-test', 'nynas', 'slag', 'Bandeja', 'Bandeja grunder', 'Sidled.', 'dQw4w9WgXcQ', 'alla', 15, 'seed', 1, 1)").run();
+    await page.goto(url("#traning"));
+    await page.waitForSelector('#traning [data-trtab="grp"]', { timeout: 8000 }).catch(() => {});
+    await page.click('#traning [data-trtab="grp"]');
+    await page.waitForSelector('#traning [data-trgedit=""]', { timeout: 8000 }).catch(() => {});
+    await page.click('#traning [data-trgedit=""]');
+    await page.waitForSelector("#gName", { timeout: 8000 }).catch(() => {});
+    await page.fill("#gName", "Damlaget onsdagar");
+    await page.check('#trSheet2 [data-gp="1849853"]');
+    await page.click("#trSheet2 [data-gsave]");
+    await page.waitForSelector("#traning .trback", { timeout: 8000 }).catch(() => {});
+    await page.click('#traning [data-trplan^="g"]');
+    await page.waitForSelector("#pTitle", { timeout: 8000 }).catch(() => {});
+    await page.fill("#pTitle", "Volley och bandeja");
+    await page.fill("#pDay", "2026-09-27");
+    await page.click("#trSheet2 .trpick summary");
+    await page.check('#trSheet2 [data-pex="yt-test"]');
+    await page.click("#trSheet2 [data-psave]");
+    await page.waitForFunction(() => /Volley och bandeja/.test(document.querySelector("#traning")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    const g1 = await page.evaluate(() => document.getElementById("traning").textContent.replace(/\s+/g, " "));
+    // as the player (Mikael is linked to Cassandra): the plan, done
+    await page.click('#traning [data-trtab="me"]');
+    await page.waitForSelector("#traning [data-trdo]", { timeout: 8000 }).catch(() => {});
+    await page.click("#traning .trplan summary").catch(() => {});
+    const ex = await page.evaluate(() => document.querySelector("#traning .trplan .trex b")?.textContent);
+    await page.click("#traning [data-trdo]");
+    await page.waitForSelector("#trSheet.open [data-trsave]", { timeout: 8000 }).catch(() => {});
+    await page.click("#trSheet [data-trsave]");
+    await page.waitForFunction(() => /✓ Klart/.test(document.querySelector("#traning")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    await page.click('#traning [data-trtab="grp"]');
+    await page.waitForFunction(() => /1\/1/.test(document.querySelector("#traning .trfbn")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    const fb = await page.evaluate(() => document.querySelector("#traning .trfbn")?.textContent);
+    const done = AMX_ENV.DB.db.prepare("SELECT count(*) n FROM plan_done").get().n;
+    ok("Träning fas 2: a group, a planned session with an exercise from the library; the player marks it done, the coach sees 1/1", /Damlaget onsdagar/.test(g1) && /Volley och bandeja/.test(g1) && ex === "Bandeja grunder" && fb === "1/1" && done === 1, { g1: g1.slice(0, 300), ex, fb, done });
   }
   { // Profilbild: the admin (logged in above) on Thea's page: upload, crop, shown on the card at once; removed again
     await page.goto(url("#thea"));

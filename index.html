@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-4mVY+iI5vfN2qdEPBVlZSICKR6oQiDqw7WYz4WrZnxw='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hXXd9Ryep5mTvQZpRfBO4czAuG6vCyrMtwle8KOLoSg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -411,6 +411,34 @@
   .trnums span{ display:block; font:600 10px/1.2 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); }
   .trnums b{ font:800 24px/1.1 "Big Shoulders Display", sans-serif; }
   .trlog{ width:100%; }
+  .trtabs{ margin:0 0 14px; } .trcats{ margin:0 0 10px; flex-wrap:wrap; } .trtopics{ margin:10px 0; }
+  .linkbtn.plain{ color:var(--accent, #2156CB); text-decoration:none; font:600 13px/1 inherit; }
+  .trex{ margin:8px 0 0; border-radius:14px; background:var(--surface); border:1px solid var(--line); overflow:hidden; }
+  .trex > summary{ display:flex; gap:12px; align-items:center; padding:8px; cursor:pointer; list-style:none; } .trex > summary::-webkit-details-marker{ display:none; }
+  .trex > summary img, .trexi{ flex:0 0 96px; width:96px; height:54px; border-radius:8px; object-fit:cover; background:var(--surface-2); }
+  .trexi{ display:flex; align-items:center; justify-content:center; font:800 22px/1 "Big Shoulders Display", sans-serif; color:var(--dim); }
+  .trex > summary b{ display:block; font-size:14px; line-height:1.25; } .trex > summary small{ display:block; font-size:12px; color:var(--dim); margin-top:3px; }
+  .trex p{ margin:0 12px 10px !important; font-size:13.5px; line-height:1.45; } .trex .amxsec{ margin:0 12px 12px; }
+  .trexyt{ display:inline-block; margin:0 12px 12px; font-weight:600; }
+  .card.trplan{ padding:0; margin:0 0 8px; overflow:hidden; }
+  .trplan > summary{ display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; list-style:none; } .trplan > summary::-webkit-details-marker{ display:none; }
+  .trplan > summary > i{ flex:0 0 10px; height:10px; border-radius:50%; } .trplan > summary > span{ flex:1; }
+  .trplan > summary b{ display:block; font-size:15px; } .trplan > summary small{ display:block; font-size:12px; color:var(--dim); margin-top:2px; }
+  .trplan > .trex, .trplan > .trpn, .trplan > .trfb, .trplan > .amxbar{ margin-left:14px; margin-right:14px; } .trplan > .amxbar{ margin-bottom:14px; }
+  .trpn{ font-size:14px; } .trok{ font-style:normal; color:#218358; font-weight:700; } .trfbn{ font:700 12px/1 "Chivo Mono", monospace; font-style:normal; color:var(--dim); }
+  .trdone{ font-weight:700; color:#218358; align-self:center; }
+  .trfb{ margin-top:10px; padding:10px 12px; border-radius:12px; background:var(--surface-2); font-size:13.5px; } .trfb ul{ margin:6px 0 0; padding-left:18px; } .trfb li{ margin:4px 0; }
+  .trgrp{ display:flex; align-items:center; gap:12px; width:100%; margin:0 0 8px; padding:14px; text-align:left; color:var(--ink); }
+  .trgrp > span:first-child{ flex:1; } .trgrp b{ display:block; font-size:16px; } .trgrp small{ display:block; font-size:12px; color:var(--dim); margin-top:2px; } .trgrp > i{ font-style:normal; font-size:22px; color:var(--dim); }
+  .trmem{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px; }
+  .trmem button{ display:flex; align-items:center; gap:6px; padding:4px 10px 4px 4px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 13px/1 inherit; }
+  .trmem button:disabled{ opacity:1; }
+  .trpick{ margin:6px 0; padding:8px 10px; border-radius:12px; background:var(--surface-2); } .trpick summary{ cursor:pointer; font-weight:700; } .trpick .kchk{ display:flex; margin:8px 0; font-size:14px; }
+  .trrow{ display:grid; grid-template-columns:minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, .8fr); gap:8px; } .trrow input{ min-width:0; }
+  .trback{ margin:0 0 6px; } .trrow label > span{ display:block; font:600 11px/1 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); margin:0 2px 8px; }
+  .trf textarea{ width:100%; padding:12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; resize:vertical; }
+  .trgpick{ max-height:40vh; overflow:auto; margin-top:8px; } .trgpick .kchk{ display:flex; margin:8px 2px; } .trgpick .kchk[hidden]{ display:none; }
+  .trbars{ position:relative; } .trpdot{ position:absolute; top:-2px; left:50%; width:8px; height:8px; margin-left:-4px; border-radius:50%; border:2px solid #F76B15; background:var(--surface); }
   .trhow{ margin-top:12px; text-align:left; } .trhow summary{ cursor:pointer; font:600 12px/1 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); padding:6px 0; }
   .trhow p{ margin:8px 0 0 !important; font-size:13.5px; line-height:1.45; }
   .trwho{ display:flex; gap:8px; overflow-x:auto; margin:0 0 12px; padding-bottom:4px; }
@@ -1948,6 +1976,59 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Strategi": "Estrategia",
+    "Alla": "Todos",
+    "Alla grupper": "Todos los grupos",
+    "Alla nivåer": "Todos los niveles",
+    "Anteckning till spelarna": "Nota para los jugadores",
+    "Avancerad": "Avanzado",
+    "Beskrivning": "Descripción",
+    "Bibliotek": "Biblioteca",
+    "Biblioteket är tomt än.": "La biblioteca aún está vacía.",
+    "Dag": "Día",
+    "Feedback": "Comentarios",
+    "Hjälptränare": "Entrenadores asistentes",
+    "Hjälptränare får använda och fylla på övningsbiblioteket och se gruppernas planer, men inte spelarnas egen träning.": "Los asistentes pueden usar y ampliar la biblioteca de ejercicios y ver los planes de los grupos, pero no el entrenamiento propio de los jugadores.",
+    "Inga grupper än.": "Aún no hay grupos.",
+    "Inga än.": "Ninguno aún.",
+    "Inga övningar här än.": "Aún no hay ejercicios aquí.",
+    "Ingen har loggat passet än.": "Nadie ha registrado la sesión aún.",
+    "Inget planerat.": "Nada planificado.",
+    "Kategori": "Categoría",
+    "Klar, logga passet": "Hecho, registrar la sesión",
+    "Lägg till hjälptränare …": "Añadir asistente …",
+    "Medel": "Medio",
+    "Minuter": "Minutos",
+    "Moment": "Elemento",
+    "Nivå": "Nivel",
+    "Ny grupp": "Nuevo grupo",
+    "Ny övning": "Nuevo ejercicio",
+    "Nybörjare": "Principiante",
+    "Planera pass": "Planificar sesión",
+    "Planerat": "Planificado",
+    "Rubrik": "Título",
+    "Se klippet på YouTube": "Ver el vídeo en YouTube",
+    "Slag": "Golpes",
+    "Strategi & spelförståelse": "Estrategia y lectura del juego",
+    "Sök övning": "Buscar ejercicio",
+    "Ta bort gruppen": "Eliminar el grupo",
+    "Ta bort gruppen och dess planerade pass?": "¿Eliminar el grupo y sus sesiones planificadas?",
+    "Ta bort övningen?": "¿Eliminar el ejercicio?",
+    "Tid": "Hora",
+    "Till exempel Bandeja": "Por ejemplo Bandeja",
+    "Till exempel Damlaget onsdagar": "Por ejemplo Equipo femenino miércoles",
+    "Till exempel Volley och bandeja": "Por ejemplo Volea y bandeja",
+    "Typ": "Tipo",
+    "YouTube-länk (valfritt)": "Enlace de YouTube (opcional)",
+    "länken känns inte igen som ett YouTube-klipp": "el enlace no se reconoce como un vídeo de YouTube",
+    "skriv en rubrik": "escribe un título",
+    "skriv ett namn": "escribe un nombre",
+    "som hjälptränare": "como asistente",
+    "spelare": "jugadores",
+    "Ändra gruppen": "Editar el grupo",
+    "Ändra pass": "Editar sesión",
+    "Ändra övning": "Editar ejercicio",
+    "Övningar": "Ejercicios",
     "Så räknas det": "Cómo se calcula",
     "Varje pass ger belastning = minuter × hur tungt det kändes (1–10). 60 minuter på nivå 6 blir 360.": "Cada sesión da una carga = minutos × lo duro que se sintió (1–10). 60 minutos a nivel 6 son 360.",
     "Senaste 7 dagarna är summan den senaste veckan. Snitt per vecka är de senaste 4 veckorna delat med 4, alltså en vanlig vecka.": "Últimos 7 días es la suma de la última semana. Media semanal es las últimas 4 semanas dividido entre 4, una semana normal.",
@@ -7949,7 +8030,8 @@
       '<button type="button" class="trnav" data-trw="1" aria-label="' + esc(_("Nästa vecka")) + '"' + (TR.wk >= 0 ? " disabled" : "") + '>›</button></div><div class="trstrip">' +
       days.map(function(x){
         var dd = new Date(x.d + "T12:00:00Z"), bars = x.l.map(function(y){ return '<i style="height:' + Math.max(4, Math.round(100 * trLoadOf(y) / max)) + '%;background:' + TR_KIND[y.kind][1] + (y.auto ? ';opacity:.55' : '') + '"></i>'; }).join("");
-        return '<button type="button" class="trd' + (x.d === t ? " trtoday" : "") + (x.d === sel ? " trsel" : "") + (x.d > t ? " trfut" : "") + '" data-trd="' + x.d + '"><span class="trbars">' + bars + '</span><b>' + esc(DOW[dd.getUTCDay()]) + '</b><small>' + dd.getUTCDate() + '</small></button>';
+        var planned = trPlans(pid).some(function(p){ return p.day === x.d && !p.done; });
+        return '<button type="button" class="trd' + (x.d === t ? " trtoday" : "") + (x.d === sel ? " trsel" : "") + (x.d > t ? " trfut" : "") + '" data-trd="' + x.d + '"><span class="trbars">' + bars + (planned ? '<em class="trpdot" title="' + esc(_("Planerat")) + '"></em>' : "") + '</span><b>' + esc(DOW[dd.getUTCDay()]) + '</b><small>' + dd.getUTCDate() + '</small></button>';
       }).join("") + '</div>';
     if (sel){
       var l = items.filter(function(x){ return x.day === sel; });
@@ -7966,7 +8048,7 @@
   function renderTraining(){
     var box = document.getElementById("traning");
     if (!box) return;
-    box.onclick = trClick;
+    box.onclick = trClick; box.onchange = trChange; box.oninput = trInput;
     var me = AUTH && AUTH.me, h = '<div class="phead"><div class="pt"><h1>' + _("Träning") + '</h1><div class="pm">' + esc(_("Belastning, pass och matcher")) + '</div></div></div>';
     if (!me){
       box.innerHTML = h + '<div class="card ktxt trintro"><p><b>' + _("Håll koll på din belastning") + '</b></p><p>' + _("Logga träning, gym, löpning och PT-pass med ett par tryck. Dina matcher räknas in av sig själva, och mätaren visar om du tränar lagom, för lite eller riskerar att bli överbelastad.") + '</p>' +
@@ -7974,6 +8056,11 @@
       return;
     }
     var pids = trPids();
+    if (!trIsLib()) TR.tab = "me";
+    else if (!TR.tab) TR.tab = pids.length ? "me" : trIsHead() ? "grp" : "lib";
+    h += trTabs();
+    if (TR.tab === "grp"){ box.innerHTML = h + trGroupsHtml(); return; }
+    if (TR.tab === "lib"){ box.innerHTML = h + trLibHtml(); return; }
     if (!pids.length){ box.innerHTML = h + '<div class="card ktxt"><p>' + _("Ditt konto är inte kopplat till någon spelare än. Be klubbens admin koppla det till din spelarprofil.") + '</p></div>'; return; }
     if (!TR.pid || pids.indexOf(TR.pid) < 0) TR.pid = pids[0];
     var pid = TR.pid, P = BYPID[pid], data = TR.data[pid];
@@ -7991,6 +8078,7 @@
       '<p>' + _("Siffran i mitten är kvoten mellan dem. Under 0,8 är en lugn vecka, 0,8–1,3 lagom, 1,3–1,5 ökar snabbt och över 1,5 risk för överbelastning. Det är snabba ökningar som ökar skaderisken mest, inte mängden i sig.") + '</p>' +
       '<p>' + _("Matcher räknas in uppskattat: en tävlingsdag som 150 minuter på nivå 7, en seriedag som 120 minuter, en klubbseriematch som 90 minuter. Loggar du en match samma dag gäller din siffra.") + '</p></details></section>' +
       '<section><div class="sh"><h2>' + (pid === me.pid ? _("Min vecka") : _("{n}s vecka", {n:P ? P.short || P.name : "#" + pid})) + '</h2><div class="meta">' + esc(trName(pid)) + '</div></div><div class="card trweek">' + trWeek(items, pid) + '</div></section>' +
+      trPlansHtml(pid) +
       '<p class="trnote">' + _("Belastning = minuter × hur tungt det kändes (1–10). Matcher från tävlingar, serier och americanos räknas in av sig själva, uppskattat. Loggar du en match samma dag gäller din siffra.") + '</p>' +
       ((me.pid === pid || (me.kids || []).indexOf(pid) >= 0) && data.s.length ? '<p class="trnote"><button type="button" class="linkbtn" data-trclear="1">' + _("Radera all träningshistorik för {n}", {n:trName(pid)}) + '</button></p>' : "");
     box.innerHTML = h;
@@ -8026,14 +8114,16 @@
       return;
     }
     b.disabled = true;
-    authApi("/train", {pid:TR.pid, day:trDay(f.day), kind:f.kind, min:f.min, rpe:f.rpe, note:f.note || ""}).then(function(){
-      f.note = ""; TR.day = trDay(f.day); TR.wk = 0; trSheetClose(); trLoad(TR.pid, true);
+    var day = f.plan && f.planDay && f.planDay <= trDay(0) && f.planDay >= trDay(-60) ? f.planDay : trDay(f.day);
+    authApi("/train", {pid:TR.pid, day:day, kind:f.kind, min:f.min, rpe:f.rpe, note:f.note || "", plan:f.plan || undefined}).then(function(){
+      f.note = ""; f.plan = null; f.planDay = null; delete TR["pl" + TR.pid]; TR.day = day; TR.wk = 0; trSheetClose(); trLoad(TR.pid, true);
     }, function(e){ b.disabled = false; var er = document.getElementById("trErr"); if (er) er.textContent = _("Det gick inte: ") + e.message; });
   }
   function trClick(ev){
+    if (trClick2(ev)) return;
     var b = ev.target.closest("[data-trp],[data-trw],[data-trd],[data-trdel],[data-trlog],[data-trclear]");
     if (!b) return;
-    if (b.hasAttribute("data-trp")){ TR.pid = +b.getAttribute("data-trp"); TR.day = null; TR.wk = 0; renderTraining(); }
+    if (b.hasAttribute("data-trp")){ TR.pid = +b.getAttribute("data-trp"); TR.day = null; TR.wk = 0; TR.tab = "me"; renderTraining(); }
     else if (b.hasAttribute("data-trw")){ TR.wk = Math.min(0, TR.wk + +b.getAttribute("data-trw")); TR.day = null; renderTraining(); }
     else if (b.hasAttribute("data-trd")){ TR.day = b.getAttribute("data-trd"); renderTraining(); }
     else if (b.hasAttribute("data-trlog")) trSheet();
@@ -8044,6 +8134,214 @@
       if (!confirm(_("Radera all träningshistorik? Det går inte att ångra."))) return;
       authApi("/train/clear", {pid:TR.pid}).then(function(){ trLoad(TR.pid, true); }, function(e){ alert(_("Det gick inte: ") + e.message); });
     }
+  }
+  /* ---- Träning, fas 2: plans (a group's or one player's), groups and assistants, the exercise library (worker coach.js) ---- */
+  var TR_CAT = {slag:"Slag", ovningar:"Övningar", strategi:"Strategi & spelförståelse", fys:"Fys"};
+  var TR_LVL = {alla:"Alla nivåer", nyborjare:"Nybörjare", medel:"Medel", avancerad:"Avancerad"};
+  function trIsLib(){ var me = AUTH && AUTH.me; return !!me && (me.roles.indexOf("tranare") >= 0 || me.roles.indexOf("pt") >= 0 || (me.assist || []).length > 0); }
+  function trIsHead(){ var me = AUTH && AUTH.me; return !!me && me.roles.indexOf("tranare") >= 0; }
+  function trCanPlan(pid){ var me = AUTH && AUTH.me; return !!me && (me.roles.indexOf("tranare") >= 0 || me.roles.indexOf("pt") >= 0) && (me.coach || []).indexOf(pid) >= 0; }
+  function trGet(key, path, force){
+    var x = TR[key];
+    if (TR["b_" + key] || (!force && x && Date.now() - x.t < 60000)) return;
+    TR["b_" + key] = true;
+    authApi(path).then(function(d){ TR["b_" + key] = false; TR[key] = {t:Date.now(), d:d}; renderTraining(); }, function(e){ TR["b_" + key] = false; TR[key] = {t:Date.now(), d:null, err:e.message}; renderTraining(); });
+  }
+  function trPlans(pid){ var x = TR["pl" + pid]; return (x && x.d && x.d.plans) || []; }
+  function ytThumb(id){ return "https://i.ytimg.com/vi/" + encodeURIComponent(id) + "/mqdefault.jpg"; }
+  function ytUrl(id){ return "https://www.youtube.com/watch?v=" + encodeURIComponent(id); }
+  function trExHtml(x, open){
+    return '<details class="trex"' + (open ? " open" : "") + '><summary>' + (x.yt ? '<img src="' + esc(ytThumb(x.yt)) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="trexi">' + esc(_(TR_CAT[x.cat] || "").charAt(0)) + '</span>') +
+      '<span><b>' + esc(x.title) + '</b><small>' + esc([_(TR_CAT[x.cat] || ""), x.topic, x.level && x.level !== "alla" ? _(TR_LVL[x.level]) : "", x.min ? x.min + " min" : ""].filter(Boolean).join(" · ")) + '</small></span></summary>' +
+      (x.body ? '<p>' + esc(x.body).replace(/\n/g, "<br>") + '</p>' : "") + (x.yt ? '<a class="trexyt" href="' + esc(ytUrl(x.yt)) + '" target="_blank" rel="noopener">' + _("Se klippet på YouTube") + ' ↗︎</a>' : "") +
+      (x.id && trIsLib() && (x.mine || trIsHead()) ? '<button type="button" class="amxsec" data-trexed="' + esc(x.id) + '">' + _("Ändra") + '</button>' : "") + '</details>';
+  }
+  // the player's plans: coming (and the last week's not done), each with its exercises; done -> logged
+  function trPlansHtml(pid){
+    trGet("pl" + pid, "/plans?pid=" + pid + "&from=" + trAdd(trDay(0), -21));
+    var t = trDay(0), l = trPlans(pid).filter(function(p){ return p.day >= trAdd(t, -7) && (p.day >= t || !p.done); }), can = trCanPlan(pid);
+    if (!l.length && !can) return "";
+    return '<section><div class="sh"><h2>' + _("Planerat") + '</h2><div class="meta">' + (can ? '<button type="button" class="linkbtn plain" data-trplan="p' + pid + '">+ ' + _("Planera pass") + '</button>' : "") + '</div></div>' +
+      (l.length ? l.map(function(p){ return trPlanCard(p, pid); }).join("") : '<p class="empty">' + _("Inget planerat.") + '</p>') + '</section>';
+  }
+  function trPlanCard(p, pid, fb){
+    var d = new Date(p.day + "T12:00:00Z"), t = trDay(0), K = TR_KIND[p.kind] || TR_KIND.annat;
+    var when = (p.day === t ? _("Idag") : cap(dayLabel(d))) + (p.time ? " " + p.time : "");
+    var act = pid ? (p.done ? '<span class="trdone">✓ ' + _("Klart") + '</span>' : p.day <= t ? '<button type="button" class="amxgo" data-trdo="' + esc(p.id) + '" data-pid="' + pid + '">' + _("Klar, logga passet") + '</button>' : "") : "";
+    var edit = (pid ? trCanPlan(pid) && !p.gid : true) ? '<button type="button" class="amxsec" data-trplanned="' + esc(p.id) + '">' + _("Ändra") + '</button>' : "";
+    return '<details class="card trplan"><summary><i style="background:' + K[1] + '"></i><span><b>' + esc(p.title) + '</b><small>' + esc([when, p.min + " min", _(K[0]), p.gname || ""].filter(Boolean).join(" · ")) + '</small></span>' +
+      (fb ? '<em class="trfbn">' + fb + '</em>' : p.done ? '<em class="trok">✓</em>' : "") + '</summary>' +
+      (p.note ? '<p class="trpn">' + esc(p.note).replace(/\n/g, "<br>") + '</p>' : "") + (p.ex || []).map(function(x){ return trExHtml(x); }).join("") +
+      (p.feedback || "") + '<div class="amxbar">' + act + edit + '</div></details>';
+  }
+  // coach's tabs: Spelare | Grupper | Bibliotek
+  function trTabs(){
+    if (!trIsLib()) return "";
+    var tb = function(k, l){ return '<button type="button" data-trtab="' + k + '" aria-pressed="' + (TR.tab === k) + '">' + esc(l) + '</button>'; };
+    return '<div class="seg trtabs" role="group">' + tb("me", _("Spelare")) + (trIsHead() || (AUTH.me.assist || []).length ? tb("grp", _("Grupper")) : "") + tb("lib", _("Bibliotek")) + '</div>';
+  }
+  function trGroupsHtml(){
+    trGet("coach", "/coach");
+    var c = TR.coach && TR.coach.d;
+    if (!c) return '<p class="empty">' + _("Hämtar …") + '</p>';
+    var h = "", head = c.head;
+    if (TR.grp){
+      var g = c.groups.filter(function(x){ return x.id === TR.grp; })[0];
+      if (!g){ TR.grp = null; return trGroupsHtml(); }
+      trGet("gp" + g.id, "/plans?gid=" + g.id + "&from=" + trAdd(trDay(0), -21));
+      var gp = TR["gp" + g.id] && TR["gp" + g.id].d, plans = (gp && gp.plans) || [], t = trDay(0);
+      h += '<p class="trback"><button type="button" class="linkbtn plain" data-trgrp="">‹ ' + _("Alla grupper") + '</button></p><div class="sh"><h2>' + esc(g.name) + '</h2><div class="meta">' + g.pids.length + " " + _("spelare") + '</div></div>' +
+        '<div class="trmem">' + g.pids.map(function(p){ var P = BYPID[p]; return '<button type="button" data-trp="' + p + '"' + (head ? "" : " disabled") + '>' + (P ? avatar(P.name) : "") + '<span>' + esc(P ? P.short || P.name : "#" + p) + '</span></button>'; }).join("") + '</div>' +
+        (g.own ? '<div class="amxbar"><button type="button" class="amxsec" data-trgedit="' + esc(g.id) + '">' + _("Ändra gruppen") + '</button></div>' : "") +
+        '<div class="sh"><h2>' + _("Planerat") + '</h2><div class="meta"><button type="button" class="linkbtn plain" data-trplan="g' + esc(g.id) + '">+ ' + _("Planera pass") + '</button></div></div>';
+      var vis = plans.filter(function(p){ return p.day >= trAdd(t, -14); });
+      h += vis.length ? vis.map(function(p){
+        var fb = (p.done || []).map(function(d){ var P = BYPID[d.pid]; return '<li><b>' + esc(P ? P.short || P.name : "#" + d.pid) + '</b> ' + esc(d.min + " min · RPE " + d.rpe) + (d.note ? '<br><small>' + esc(d.note) + '</small>' : "") + '</li>'; }).join("");
+        return trPlanCard(Object.assign({}, p, {done:null, feedback:p.day <= t ? '<div class="trfb"><b>' + _("Feedback") + '</b>' + (fb ? '<ul>' + fb + '</ul>' : '<p class="kdim">' + _("Ingen har loggat passet än.") + '</p>') + '</div>' : ""}), null, p.day <= t ? (p.done || []).length + "/" + g.pids.length : "");
+      }).join("") : '<p class="empty">' + _("Inget planerat.") + '</p>';
+      return h;
+    }
+    h += c.groups.length ? c.groups.map(function(g){
+      return '<button type="button" class="card trgrp" data-trgrp="' + esc(g.id) + '"><span><b>' + esc(g.name) + '</b><small>' + g.pids.length + " " + _("spelare") + (g.own ? "" : " · " + _("som hjälptränare")) + '</small></span><span class="avs sm">' +
+        g.pids.slice(0, 5).map(function(p){ var P = BYPID[p]; return P ? avatar(P.name) : ""; }).join("") + '</span><i aria-hidden="true">›</i></button>';
+    }).join("") : '<p class="empty">' + _("Inga grupper än.") + '</p>';
+    if (head){
+      h += '<div class="amxbar"><button type="button" class="amxgo" data-trgedit="">' + _("Ny grupp") + '</button></div>' +
+        '<div class="sh"><h2>' + _("Hjälptränare") + '</h2><div class="meta"></div></div><div class="card amxset"><p class="kdim">' + _("Hjälptränare får använda och fylla på övningsbiblioteket och se gruppernas planer, men inte spelarnas egen träning.") + '</p>' +
+        '<div class="kcoachl">' + (c.assistants.length ? c.assistants.map(function(a){ return '<button type="button" class="kcp" data-trunassist="' + esc(a.id) + '">' + esc(a.name) + ' <i aria-hidden="true">×</i></button>'; }).join("") : '<small>' + _("Inga än.") + '</small>') + '</div>' +
+        '<select data-trassist="1"><option value="">' + _("Lägg till hjälptränare …") + '</option>' + c.accounts.filter(function(a){ return !c.assistants.some(function(x){ return x.id === a.id; }); }).map(function(a){ return '<option value="' + esc(a.id) + '">' + esc(a.name) + '</option>'; }).join("") + '</select></div>';
+    }
+    return h;
+  }
+  function trLibHtml(){
+    trGet("lib", "/lib");
+    var L = TR.lib && TR.lib.d;
+    if (!L) return '<p class="empty">' + _("Hämtar …") + '</p>';
+    var cat = TR.cat || "slag", q = norm(TR.lq || ""), all = L.ex.filter(function(x){ return x.cat === cat; });
+    var topics = []; all.forEach(function(x){ if (x.topic && topics.indexOf(x.topic) < 0) topics.push(x.topic); });
+    var l = all.filter(function(x){ return (!TR.topic || x.topic === TR.topic) && (!q || norm(x.title + " " + (x.topic || "") + " " + (x.body || "")).indexOf(q) >= 0); });
+    return '<div class="seg trcats" role="group">' + Object.keys(TR_CAT).map(function(k){ return '<button type="button" data-trcat="' + k + '" aria-pressed="' + (k === cat) + '">' + esc(_(k === "strategi" ? "Strategi" : TR_CAT[k])) + '</button>'; }).join("") + '</div>' +
+      '<label class="search"><input type="search" id="trLq" autocomplete="off" placeholder="' + esc(_("Sök övning")) + '" value="' + esc(TR.lq || "") + '"></label>' +
+      (topics.length > 1 ? '<div class="trcs trtopics">' + ['<button type="button" class="trc" data-trtopic="" aria-pressed="' + !TR.topic + '">' + _("Alla") + '</button>'].concat(topics.map(function(tp){ return '<button type="button" class="trc" data-trtopic="' + esc(tp) + '" aria-pressed="' + (TR.topic === tp) + '">' + esc(tp) + '</button>'; })).join("") + '</div>' : "") +
+      '<div class="amxbar"><button type="button" class="amxsec" data-trexed="">+ ' + _("Ny övning") + '</button></div>' +
+      (l.length ? l.map(function(x){ return trExHtml(x); }).join("") : '<p class="empty">' + _("Inga övningar här än.") + '</p>');
+  }
+  // sheets: a plan, an exercise, a group
+  function trSheetOpen(html, onclick){
+    var el = document.getElementById("trSheet2");
+    if (!el){ el = document.createElement("div"); el.className = "sheet trsheet"; el.id = "trSheet2"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); document.body.appendChild(el); }
+    el.innerHTML = '<div class="sheet-bg" data-trx2="1"></div><div class="sheet-in"><i class="sheet-grab" aria-hidden="true"></i>' + html + '<p class="amxerr" id="trErr2"></p></div>';
+    el.onclick = function(ev){ if (ev.target.closest("[data-trx2]")){ trSheet2Close(); return; } onclick(ev); };
+    el.hidden = false;
+    requestAnimationFrame(function(){ el.classList.add("open"); });
+  }
+  function trSheet2Close(){ var el = document.getElementById("trSheet2"); if (!el) return; el.classList.remove("open"); setTimeout(function(){ el.hidden = true; }, 250); }
+  function trErr2(e){ var er = document.getElementById("trErr2"); if (er) er.textContent = _("Det gick inte: ") + (e && e.message || e); }
+  function trPlanSheet(target, p){
+    // target: "p<pid>" | "g<gid>"; p: the plan when changing one
+    trGet("lib", "/lib");
+    p = p || {kind:"padel", min:90, day:trDay(1), time:"", title:"", note:"", ex:[]};
+    var sel = (p.ex || []).map(function(x){ return typeof x === "string" ? x : x.id; }), lib = (TR.lib && TR.lib.d && TR.lib.d.ex) || [];
+    var kinds = Object.keys(TR_KIND).map(function(k){ return '<button type="button" class="trc" data-pk="' + k + '" aria-pressed="' + (p.kind === k) + '" style="--c:' + TR_KIND[k][1] + '">' + esc(_(TR_KIND[k][0])) + '</button>'; }).join("");
+    var exl = Object.keys(TR_CAT).map(function(c){ var l = lib.filter(function(x){ return x.cat === c; }); return l.length ? '<details class="trpick"' + (l.some(function(x){ return sel.indexOf(x.id) >= 0; }) ? " open" : "") + '><summary>' + esc(_(TR_CAT[c])) + '</summary>' +
+      l.map(function(x){ return '<label class="kchk"><input type="checkbox" data-pex="' + esc(x.id) + '"' + (sel.indexOf(x.id) >= 0 ? " checked" : "") + '> ' + esc((x.topic ? x.topic + ": " : "") + x.title) + '</label>'; }).join("") + '</details>' : ""; }).join("");
+    trSheetOpen('<h2>' + (p.id ? _("Ändra pass") : _("Planera pass")) + '</h2>' +
+      '<div class="trf"><span>' + _("Rubrik") + '</span><input id="pTitle" maxlength="80" value="' + esc(p.title) + '" placeholder="' + esc(_("Till exempel Volley och bandeja")) + '"></div>' +
+      '<div class="trf trrow"><label><span>' + _("Dag") + '</span><input type="date" id="pDay" value="' + esc(p.day) + '"></label><label><span>' + _("Tid") + '</span><input type="time" id="pTime" value="' + esc(p.time || "") + '"></label><label><span>' + _("Minuter") + '</span><input type="number" id="pMin" min="5" max="360" value="' + esc(p.min) + '"></label></div>' +
+      '<div class="trf"><span>' + _("Typ") + '</span><div class="trcs" id="pKinds">' + kinds + '</div></div>' +
+      '<div class="trf"><span>' + _("Övningar") + '</span>' + (exl || '<p class="kdim">' + _("Biblioteket är tomt än.") + '</p>') + '</div>' +
+      '<div class="trf"><span>' + _("Anteckning till spelarna") + '</span><textarea id="pNote" rows="3" maxlength="1000">' + esc(p.note || "") + '</textarea></div>' +
+      '<div class="amxbar"><button type="button" class="amxgo" data-psave="1">' + _("Spara") + '</button>' + (p.id ? '<button type="button" class="amxsec del" data-pdel="1">' + _("Ta bort") + '</button>' : "") + '</div>', function(ev){
+      var k = ev.target.closest("[data-pk]");
+      if (k){ p.kind = k.getAttribute("data-pk"); [].forEach.call(k.parentNode.children, function(x){ x.setAttribute("aria-pressed", x === k ? "true" : "false"); }); return; }
+      var b = ev.target.closest("[data-psave],[data-pdel]");
+      if (!b) return;
+      if (b.hasAttribute("data-pdel")){ if (!confirm(_("Ta bort passet?"))) return; b.disabled = true; authApi("/plans", {op:"del", id:p.id}).then(trPlanDone, function(e){ b.disabled = false; trErr2(e); }); return; }
+      var body = {title:document.getElementById("pTitle").value.trim(), day:document.getElementById("pDay").value, time:document.getElementById("pTime").value || "", min:+document.getElementById("pMin").value, kind:p.kind, note:document.getElementById("pNote").value,
+        ex:[].map.call(document.querySelectorAll("#trSheet2 [data-pex]:checked"), function(x){ return x.getAttribute("data-pex"); })};
+      if (!body.title){ trErr2(_("skriv en rubrik")); return; }
+      if (p.id) body.id = p.id; else if (target[0] === "g") body.gid = target.slice(1); else body.pid = +target.slice(1);
+      b.disabled = true;
+      authApi("/plans", body).then(trPlanDone, function(e){ b.disabled = false; trErr2(e); });
+    });
+  }
+  function trPlanDone(){ trSheet2Close(); Object.keys(TR).forEach(function(k){ if (/^(pl|gp)/.test(k)) delete TR[k]; }); renderTraining(); }
+  function trExSheet(x){
+    x = x || {cat:TR.cat || "slag", level:"alla"};
+    trSheetOpen('<h2>' + (x.id ? _("Ändra övning") : _("Ny övning")) + '</h2>' +
+      '<div class="trf"><span>' + _("Kategori") + '</span><div class="trcs">' + Object.keys(TR_CAT).map(function(k){ return '<button type="button" class="trc" data-ec="' + k + '" aria-pressed="' + (x.cat === k) + '">' + esc(_(TR_CAT[k])) + '</button>'; }).join("") + '</div></div>' +
+      '<div class="trf"><span>' + _("Rubrik") + '</span><input id="eTitle" maxlength="80" value="' + esc(x.title || "") + '"></div>' +
+      '<div class="trf trrow"><label><span>' + _("Moment") + '</span><input id="eTopic" maxlength="40" value="' + esc(x.topic || "") + '" placeholder="' + esc(_("Till exempel Bandeja")) + '"></label><label><span>' + _("Minuter") + '</span><input type="number" id="eMin" min="1" max="180" value="' + esc(x.min || "") + '"></label></div>' +
+      '<div class="trf"><span>' + _("Nivå") + '</span><div class="trcs">' + Object.keys(TR_LVL).map(function(k){ return '<button type="button" class="trc" data-el="' + k + '" aria-pressed="' + (x.level === k) + '">' + esc(_(TR_LVL[k])) + '</button>'; }).join("") + '</div></div>' +
+      '<div class="trf"><span>' + _("Beskrivning") + '</span><textarea id="eBody" rows="4" maxlength="2000">' + esc(x.body || "") + '</textarea></div>' +
+      '<div class="trf"><span>' + _("YouTube-länk (valfritt)") + '</span><input id="eYt" inputmode="url" autocomplete="off" value="' + esc(x.yt ? ytUrl(x.yt) : "") + '" placeholder="https://youtu.be/…"></div>' +
+      '<div class="amxbar"><button type="button" class="amxgo" data-esave="1">' + _("Spara") + '</button>' + (x.id ? '<button type="button" class="amxsec del" data-edel="1">' + _("Ta bort") + '</button>' : "") + '</div>', function(ev){
+      var c = ev.target.closest("[data-ec],[data-el]");
+      if (c){ if (c.hasAttribute("data-ec")) x.cat = c.getAttribute("data-ec"); else x.level = c.getAttribute("data-el"); [].forEach.call(c.parentNode.children, function(y){ y.setAttribute("aria-pressed", y === c ? "true" : "false"); }); return; }
+      var b = ev.target.closest("[data-esave],[data-edel]");
+      if (!b) return;
+      var done = function(){ trSheet2Close(); delete TR.lib; renderTraining(); };
+      if (b.hasAttribute("data-edel")){ if (!confirm(_("Ta bort övningen?"))) return; authApi("/lib", {op:"del", id:x.id}).then(done, trErr2); return; }
+      var body = {cat:x.cat, level:x.level, title:document.getElementById("eTitle").value.trim(), topic:document.getElementById("eTopic").value.trim(), body:document.getElementById("eBody").value, yt:document.getElementById("eYt").value.trim(), min:+document.getElementById("eMin").value || null};
+      if (x.id) body.id = x.id;
+      if (!body.title){ trErr2(_("skriv en rubrik")); return; }
+      b.disabled = true;
+      authApi("/lib", body).then(done, function(e){ b.disabled = false; trErr2(e.message === "youtube" ? _("länken känns inte igen som ett YouTube-klipp") : e); });
+    });
+  }
+  function trGroupSheet(g){
+    g = g || {name:"", pids:[]};
+    var opts = ROSTER.slice().sort(function(a, b){ return a.name.localeCompare(b.name, "sv"); });
+    trSheetOpen('<h2>' + (g.id ? _("Ändra gruppen") : _("Ny grupp")) + '</h2>' +
+      '<div class="trf"><span>' + _("Namn") + '</span><input id="gName" maxlength="60" value="' + esc(g.name) + '" placeholder="' + esc(_("Till exempel Damlaget onsdagar")) + '"></div>' +
+      '<div class="trf"><span>' + _("Spelare") + '</span><label class="search"><input type="search" id="gQ" autocomplete="off" placeholder="' + esc(_("Sök spelare")) + '"></label><div class="trgpick">' +
+      opts.map(function(P){ return '<label class="kchk" data-gn="' + esc(norm(P.name)) + '"><input type="checkbox" data-gp="' + P.pid + '"' + (g.pids.indexOf(P.pid) >= 0 ? " checked" : "") + '> ' + esc(P.name) + '</label>'; }).join("") + '</div></div>' +
+      '<div class="amxbar"><button type="button" class="amxgo" data-gsave="1">' + _("Spara") + '</button>' + (g.id ? '<button type="button" class="amxsec del" data-gdel="1">' + _("Ta bort gruppen") + '</button>' : "") + '</div>', function(ev){
+      var b = ev.target.closest("[data-gsave],[data-gdel]");
+      if (!b) return;
+      var done = function(){ trSheet2Close(); delete TR.coach; TR.grp = g.id && !b.hasAttribute("data-gdel") ? g.id : null; authCheck(true); renderTraining(); };
+      if (b.hasAttribute("data-gdel")){ if (!confirm(_("Ta bort gruppen och dess planerade pass?"))) return; authApi("/coach", {op:"group-del", id:g.id}).then(done, trErr2); return; }
+      var body = {op:"group", name:document.getElementById("gName").value.trim(), pids:[].map.call(document.querySelectorAll("#trSheet2 [data-gp]:checked"), function(x){ return +x.getAttribute("data-gp"); })};
+      if (g.id) body.id = g.id;
+      if (!body.name){ trErr2(_("skriv ett namn")); return; }
+      b.disabled = true;
+      authApi("/coach", body).then(function(r){ g.id = g.id || r.id; done(); }, function(e){ b.disabled = false; trErr2(e); });
+    });
+    var q = document.getElementById("gQ");
+    if (q) q.oninput = function(){ var v = norm(q.value); [].forEach.call(document.querySelectorAll("#trSheet2 [data-gn]"), function(l){ l.hidden = !!v && l.getAttribute("data-gn").indexOf(v) < 0; }); };
+  }
+  function trClick2(ev){
+    var b = ev.target.closest("[data-trtab],[data-trgrp],[data-trgedit],[data-trplan],[data-trplanned],[data-trdo],[data-trexed],[data-trcat],[data-trtopic],[data-trunassist]");
+    if (!b) return false;
+    if (b.hasAttribute("data-trtab")){ TR.tab = b.getAttribute("data-trtab"); renderTraining(); }
+    else if (b.hasAttribute("data-trgrp")){ TR.grp = b.getAttribute("data-trgrp") || null; renderTraining(); }
+    else if (b.hasAttribute("data-trgedit")){ var gid = b.getAttribute("data-trgedit"), c = TR.coach && TR.coach.d; trGroupSheet(gid && c ? c.groups.filter(function(x){ return x.id === gid; })[0] : null); }
+    else if (b.hasAttribute("data-trplan")) trPlanSheet(b.getAttribute("data-trplan"));
+    else if (b.hasAttribute("data-trplanned")){
+      var id = b.getAttribute("data-trplanned"), all = [];
+      Object.keys(TR).forEach(function(k){ if (/^(pl|gp)/.test(k) && TR[k] && TR[k].d) all = all.concat(TR[k].d.plans || []); });
+      var p = all.filter(function(x){ return x.id === id; })[0];
+      if (p) trPlanSheet(p.gid ? "g" + p.gid : "p" + p.pid, JSON.parse(JSON.stringify(p)));
+    } else if (b.hasAttribute("data-trdo")){
+      var pid = +b.getAttribute("data-pid"), pl = trPlans(pid).filter(function(x){ return x.id === b.getAttribute("data-trdo"); })[0];
+      if (!pl) return true;
+      var off = Math.round((Date.parse(pl.day + "T12:00:00Z") - Date.parse(trDay(0) + "T12:00:00Z")) / 864e5);
+      TR.pid = pid; TR.f = {kind:pl.kind, day:Math.max(-2, Math.min(0, off)), min:pl.min, rpe:5, note:"", plan:pl.id, planDay:pl.day};
+      trSheet();
+    } else if (b.hasAttribute("data-trexed")){ var eid = b.getAttribute("data-trexed"), L = TR.lib && TR.lib.d; trExSheet(eid && L ? JSON.parse(JSON.stringify(L.ex.filter(function(x){ return x.id === eid; })[0] || null)) : null); }
+    else if (b.hasAttribute("data-trcat")){ TR.cat = b.getAttribute("data-trcat"); TR.topic = null; renderTraining(); }
+    else if (b.hasAttribute("data-trtopic")){ TR.topic = b.getAttribute("data-trtopic") || null; renderTraining(); }
+    else if (b.hasAttribute("data-trunassist")){ var c2 = TR.coach && TR.coach.d, rm = b.getAttribute("data-trunassist"); if (c2) authApi("/coach", {op:"assist", users:c2.assistants.map(function(a){ return a.id; }).filter(function(x){ return x !== rm; })}).then(function(){ delete TR.coach; renderTraining(); }, function(e){ alert(_("Det gick inte: ") + e.message); }); }
+    return true;
+  }
+  function trChange(ev){
+    var s = ev.target;
+    if (s.hasAttribute("data-trassist") && s.value){ var c = TR.coach && TR.coach.d; if (c) authApi("/coach", {op:"assist", users:c.assistants.map(function(a){ return a.id; }).concat([s.value])}).then(function(){ delete TR.coach; renderTraining(); }, function(e){ alert(_("Det gick inte: ") + e.message); }); }
+  }
+  function trInput(ev){
+    if (ev.target.id !== "trLq") return;
+    TR.lq = ev.target.value; var pos = ev.target.selectionStart; renderTraining();
+    var q = document.getElementById("trLq"); if (q){ q.focus(); try { q.setSelectionRange(pos, pos); } catch (e){} }
   }
   function renderAmxHome(){
     var host = document.getElementById("amxHome");

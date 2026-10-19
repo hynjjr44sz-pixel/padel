@@ -108,3 +108,61 @@ CREATE TABLE IF NOT EXISTS sessions (
   created INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sessions_pid ON sessions(pid, day);
+-- Träning, fas 2: a head coach's (tranare) training groups, assistant coaches, the shared exercise library, plans
+CREATE TABLE IF NOT EXISTS tgroups (
+  id TEXT PRIMARY KEY,
+  org TEXT NOT NULL,
+  owner TEXT NOT NULL,                          -- the coach who made it
+  name TEXT NOT NULL,
+  created INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS tgroup_members (
+  gid TEXT NOT NULL,
+  pid INTEGER NOT NULL,
+  PRIMARY KEY (gid, pid)
+);
+-- a coach's assistants (e.g. older players): the library and the groups' plans, not the players' own training
+CREATE TABLE IF NOT EXISTS assistants (
+  coach TEXT NOT NULL,
+  user TEXT NOT NULL,
+  PRIMARY KEY (coach, user)
+);
+CREATE TABLE IF NOT EXISTS exercises (
+  id TEXT PRIMARY KEY,
+  org TEXT NOT NULL,
+  cat TEXT NOT NULL,                            -- slag, ovningar, strategi, fys
+  topic TEXT,
+  title TEXT NOT NULL,
+  body TEXT,
+  yt TEXT,                                      -- a YouTube video id
+  level TEXT,                                   -- alla, nyborjare, medel, avancerad
+  min INTEGER,
+  by TEXT,
+  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL
+);
+-- a planned session for a group or one player; ex: JSON list of exercise ids
+CREATE TABLE IF NOT EXISTS plans (
+  id TEXT PRIMARY KEY,
+  org TEXT NOT NULL,
+  gid TEXT,
+  pid INTEGER,
+  day TEXT NOT NULL,
+  time TEXT,
+  kind TEXT NOT NULL,
+  min INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  note TEXT,
+  ex TEXT,
+  by TEXT,
+  created INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS plans_gid ON plans(gid, day);
+CREATE INDEX IF NOT EXISTS plans_pid ON plans(pid, day);
+-- a planned session done: the player's logged session (its minutes, RPE and note are the feedback)
+CREATE TABLE IF NOT EXISTS plan_done (
+  plan TEXT NOT NULL,
+  pid INTEGER NOT NULL,
+  session TEXT NOT NULL,
+  PRIMARY KEY (plan, pid)
+);

@@ -38,11 +38,15 @@ export async function authUser(env, req, t) {
   if (t - r.seen > SEEN_MS) await env.DB.prepare("UPDATE devices SET seen = ? WHERE hash = ?").bind(t, hash).run();
   return meOf(env, r);
 }
-// {id, name, pid, roles, kids (the juniors a parent looks after), pk (passkeys), reqs (open requests, for an admin)}
+// {id, name, pid, roles, kids (the juniors a parent looks after), coach (players coached), assist (coaches assisted), pk (passkeys),
+// reqs (open requests, for an admin)}
 export async function meOf(env, u) {
   const roles = await rolesOf(env, u.id), kids = (await env.DB.prepare("SELECT pid FROM guardians WHERE user = ?").bind(u.id).all()).results.map(r => r.pid);
-  const coach = roles.includes("tranare") || roles.includes("pt") ? (await env.DB.prepare("SELECT pid FROM coaching WHERE user = ?").bind(u.id).all()).results.map(r => r.pid) : [];
-  const me = { id: u.id, name: u.name, pid: u.pid || null, roles, kids, coach };
+  // the players a coach or PT sees: linked by the admin, and (a head coach) the members of their training groups
+  const coach = roles.includes("tranare") || roles.includes("pt") ? [...new Set((await env.DB.prepare("SELECT pid FROM coaching WHERE user = ? UNION SELECT m.pid FROM tgroup_members m JOIN tgroups g ON g.id = m.gid WHERE g.owner = ?").bind(u.id, u.id).all()).results.map(r => r.pid))] : [];
+  // assistant coaches: the library and their coaches' groups' plans
+  const assist = (await env.DB.prepare("SELECT coach FROM assistants WHERE user = ?").bind(u.id).all()).results.map(r => r.coach);
+  const me = { id: u.id, name: u.name, pid: u.pid || null, roles, kids, coach, ...(assist.length ? { assist } : {}) };
   if (u.pid && goneOf(u.pid)) me.left = goneOf(u.pid).at;   // left the club on RankedIn
   me.pk = (await env.DB.prepare("SELECT count(*) AS n FROM passkeys WHERE user = ?").bind(u.id).first()).n;
   if (roles.includes("admin")) me.reqs = (await env.DB.prepare("SELECT count(*) AS n FROM requests WHERE org = ? AND status = 'open' AND created > ?").bind(ORG, Date.now() - REQ_MS).first()).n;
@@ -241,7 +245,8 @@ export async function adminOp(env, me, b, t, byPid) {
     return { ok: true };
   }
   if (op === "remove") {
-    await env.DB.batch(["devices", "invites", "roles", "guardians", "passkeys", "coaching"].map(tb => env.DB.prepare("DELETE FROM " + tb + " WHERE user = ?").bind(u.id))
+    await env.DB.batch(["devices", "invites", "roles", "guardians", "passkeys", "coaching", "assistants"].map(tb => env.DB.prepare("DELETE FROM " + tb + " WHERE user = ?").bind(u.id))
+      .concat([env.DB.prepare("DELETE FROM assistants WHERE coach = ?").bind(u.id)])
       .concat([env.DB.prepare("DELETE FROM users WHERE id = ?").bind(u.id), log(env, t, who, "remove", { id: u.id, name: u.name })]));
     return { ok: true };
   }
