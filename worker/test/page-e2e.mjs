@@ -20,7 +20,7 @@ const { chromium } = require("playwright");
 const BASE = process.env.PAGE_URL || "http://localhost:19021/";   // localhost, not an IP: passkeys need a domain
 const T = "2026-09-27T13:52:00+02:00";   // Järfälla no 11, Damer C on (Thea and Cassandra), Kian's SPL next Saturday
 const PUSH_API = "https://padel-push.holmberg-padel.workers.dev";
-const AMX_KV = new Map(), AMX_ENV = { ORIGIN: "https://padel.holmberg.st", PUSH: { get: async k => AMX_KV.has(k) ? AMX_KV.get(k) : null, put: async (k, v) => { AMX_KV.set(k, v); }, delete: async k => { AMX_KV.delete(k); }, list: async () => ({ keys: [], list_complete: true }) }, DB: fakeD1(), ADMIN_KEY: "a".repeat(32), RP_ID: "localhost", ALLOW_LOCALHOST: "1" };   // passkeys: the page runs on localhost
+const AMX_KV = new Map(), AMX_ENV = { ORIGIN: "https://padel.holmberg.st", PUSH: { get: async k => AMX_KV.has(k) ? AMX_KV.get(k) : null, put: async (k, v) => { AMX_KV.set(k, v); }, delete: async k => { AMX_KV.delete(k); }, list: async () => ({ keys: [], list_complete: true }) }, DB: fakeD1(), ADMIN_KEY: "a".repeat(32) };
 const SHOTS = process.env.SHOTS || "";
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
@@ -317,6 +317,7 @@ try {
     ok("Konto: the admin invites Thea as arrangör (a one-time link), the admin's own link is used up", /#in\/[a-z2-9]{20}$/.test(k2[0] || "") && /Thea Holmberg LövingArrangör · Inbjudan gäller till/.test(k2[1] || "") && used === 410, { k2, used });
   }
   if (!/^http:\/\/[\d.]+[:/]/.test(BASE)) { // Face ID (a virtual authenticator; needs a domain, not an IP): the admin adds a passkey, logs out, logs in again with it, no link
+    Object.assign(AMX_ENV, { RP_ID: "localhost", ALLOW_LOCALHOST: "1" });   // passkeys: the page runs on localhost (this block only)
     const cdp = await page.context().newCDPSession(page);
     await cdp.send("WebAuthn.enable");
     await cdp.send("WebAuthn.addVirtualAuthenticator", { options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true } });
@@ -335,6 +336,7 @@ try {
     const keys = AMX_ENV.DB.db.prepare("SELECT count(*) n FROM passkeys").get().n;
     ok("Face ID: the admin adds a passkey, logs out, and logs in again with it (no link)", /Nästa gång kan du logga in med passkey/.test(pk1[0] || "") && /passkey utan länk\./.test(pk1[1] || "") && out !== "Konto: Mikael" && /Välkommen, Mikael/.test(pk2[0] || "") && pk2[1] === "Konto: Mikael" && keys === 1, { pk1, out, pk2, keys });
     await cdp.detach().catch(() => {});
+    delete AMX_ENV.RP_ID; delete AMX_ENV.ALLOW_LOCALHOST;
     // Statistik from Konto: an admin needs no key
     await page.click('#konto .kstat a');
     await page.waitForFunction(() => /Telefoner/.test(document.getElementById("stats")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
