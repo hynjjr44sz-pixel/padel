@@ -61,3 +61,34 @@ test("profilbild: own, a parent's junior or the admin; served at once; the cut-o
   assert.equal(r.up[1675246], undefined);
   assert.equal((await call(env, "GET", "/photo/1675246.jpg?v=" + v)).status, 404);
 });
+
+test("profilbild: the club members' RankedIn photos are cut out too (not the roster's, not with an own photo, not a placeholder)", async () => {
+  _resetMemory();
+  const env = { PUSH: kv(), DB: fakeD1(), NOW: "2026-10-18T10:00:00Z", ORIGIN };
+  const CDN = "https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net/images/upload/player/";
+  const photos = { 900001: { url: CDN + "1.png" }, 900002: { url: CDN + "2.png", placeholder: true }, 900003: { url: "https://evil.example/x.png" }, 900004: { url: CDN + "4.png" }, 1675246: { url: CDN + "t.png" } };
+  const member = p => [900001, 900002, 900003, 900004].includes(Number(p));
+  env.PUSH.m.set("photo:index", JSON.stringify({ 900004: { v: "abcd", cut: 0 } }));   // 900004 has uploaded their own
+  const real = globalThis.fetch;
+  globalThis.fetch = async (u, o) => /\/photos\/r900001-[0-9a-f]{10}(-av)?\.webp$/.test(String(u)) ? new Response(o && o.method === "HEAD" ? null : "WEBP", { status: 200 }) : new Response("", { status: 404 });
+  try {
+    await photosCheck(env, { left: 50 }, photos, member);   // the index made; the cut-out not committed yet... found at once by the fake
+  } finally { globalThis.fetch = real; }
+  const ri = JSON.parse(env.PUSH.m.get("photo:ri"));
+  assert.deepEqual(Object.keys(ri), ["900001"]);
+  assert.match(ri[900001].v, /^[0-9a-f]{10}$/);
+  assert.equal(ri[900001].cut, 1);
+  const ev = await (await call(env, "GET", "/events")).json();
+  assert.deepEqual(ev.ri, { 900001: ri[900001].v });
+  globalThis.fetch = async u => /\/photos\/r900001-/.test(String(u)) ? new Response("WEBP", { status: 200 }) : new Response("", { status: 404 });
+  try {
+    const g = await call(env, "GET", "/photo/900001-rcutav.webp?v=" + ri[900001].v);
+    assert.deepEqual([g.status, g.headers.get("Content-Type")], [200, "image/webp"]);
+  } finally { globalThis.fetch = real; }
+  assert.equal((await call(env, "GET", "/photo/900001-rcut.jpg?v=" + ri[900001].v)).status, 404);
+  // a new photo on RankedIn: a new version, to be cut out again (listed for the Action with its URL)
+  await photosCheck(env, { left: 0 }, { ...photos, 900001: { url: CDN + "1b.png" } }, member);
+  const pend = await (await call(env, "GET", "/photos/pending")).json();
+  assert.deepEqual(pend.ri.map(x => [x.pid, x.url]), [[900001, CDN + "1b.png"]]);
+  assert.equal(pend.current["r900001"], pend.ri[0].v);
+});

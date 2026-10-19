@@ -1,4 +1,5 @@
-# Uploaded profile pictures -> cut-outs without background, every 10 minutes: the worker's GET /photos/pending,
+# Uploaded profile pictures, and the club members' RankedIn photos (r<pid>-...), -> cut-outs without background, every
+# 10 minutes: the worker's GET /photos/pending,
 # worker/photo-cut.py (rembg), committed to the branch "photos" as <pid>-<v>.webp and <pid>-<v>-av.webp (only those
 # files; the app's branches are untouched). The worker's cron sees them there and the app switches to the cut-out.
 # Nothing pending: the run stops after one request.
@@ -19,7 +20,7 @@ jobs:
         id: q
         run: |
           curl -fsS https://padel-push.holmberg-padel.workers.dev/photos/pending > "$RUNNER_TEMP/pending.json"
-          echo "n=$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["pending"]))' "$RUNNER_TEMP/pending.json")" >> "$GITHUB_OUTPUT"
+          echo "n=$(python3 -c 'import json,sys; d = json.load(open(sys.argv[1])); print(len(d["pending"]) + len(d.get("ri") or []))' "$RUNNER_TEMP/pending.json")" >> "$GITHUB_OUTPUT"
       - if: steps.q.outputs.n != '0'
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
       - if: steps.q.outputs.n != '0'
@@ -60,7 +61,7 @@ jobs:
           import json, os, re, sys
           cur = json.load(open(sys.argv[1]))["current"]
           for f in os.listdir("."):
-              m = re.match(r"^(\d+)-([a-z0-9]+)(-av)?\.webp$", f)
+              m = re.match(r"^(r?\d+)-([a-z0-9]+)(-av)?\.webp$", f)
               if m and cur.get(m.group(1)) != m.group(2):
                   os.remove(f)
           PY

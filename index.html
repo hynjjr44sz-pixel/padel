@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-dxaZ5uCnCcZXsj71IPDzd1s7DcOdblfOHtFUy+50v/4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-eDd3mYf4B2zxhRvGcfFwCgo3FsHxB2LV/LaUawsZ8x8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -1879,6 +1879,7 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Soffläge": "Modo sofá",
     "Du står inte längre som medlem i Nynäs Padel Club på RankedIn (sedan {d}). Din spelarsida visas inte i appen. Kontot finns kvar, och kommer du tillbaka till klubben syns du igen av sig själv.": "Ya no figuras como miembro de Nynäs Padel Club en RankedIn (desde {d}). Tu página de jugador no se muestra en la app. La cuenta sigue activa y, si vuelves al club, aparecerás de nuevo automáticamente.",
     "Har lämnat klubben": "Ha dejado el club",
     "Öppna": "Abrir",
@@ -2576,7 +2577,6 @@
     "PF":"FP",
     "Par":"Pareja",
     "Partners":"Parejas",
-    "Paus":"Pausa",
     "Placering":"Posición",
     "Placering ":"Puesto ",
     "Placering i gruppen per omgång, 1 överst. Guld = gruppseger.":"Puesto en el grupo por jornada, el 1 arriba. Oro = grupo ganado.",
@@ -4857,7 +4857,7 @@
       o.next = nextBlock(D, false);
       o.sub = (e.kind === "teamleague" ? e.name : e.cls) + " · " + dayLabel(s0);
     } else {
-      o.link = W.name; o.url = RI_WEB; o.pill = _("Paus"); o.pcls = "done"; o.round = _("Inget inbokat"); o.big = "–";
+      o.link = W.name; o.url = RI_WEB; o.pill = _("Soffläge"); o.pcls = "done"; o.round = _("Inget inbokat"); o.big = "–";
       o.txt = _("Inget inbokat just nu. Nya anmälningar dyker upp här av sig själva."); o.sub = _("Inget inbokat");
     }
     // MATCHi TV: the latest event's recordings (own matches found once its draw is loaded), else the next event's hall
@@ -5862,6 +5862,7 @@
     d.events = dropReserved(d.events);
     DISC = d;
     try { renderDataAt(); } catch (e){}
+    RIC = d.ri || {};
     try { applyUp(d.up || {}); } catch (e){ warn("Egna bilder", e); }
     try { rinHeroes(); } catch (e){ warn("Profilbilder", e); }
     if (d.src === "worker"){
@@ -6792,6 +6793,7 @@
   // made it; removed -> the club's or RankedIn's photo again. Heroes already built are redrawn.
   var UP = {};
   function upUrl(pid, kind, v){ return PUSH_API + "/photo/" + pid + kind + "?v=" + encodeURIComponent(v); }
+  var RIC = {};   // the members' RankedIn photos cut out {pid: v} (GET /events "ri")
   function applyUp(up){
     if (!PUSH_API) return;
     UP = up || {};
@@ -6802,6 +6804,9 @@
         P.img = upUrl(P.pid, ".jpg", x.v); P.imgW = 800; P.imgH = 1000;
         P.cut = x.cut ? upUrl(P.pid, "-cut.webp", x.v) : null;
         P.avatar = x.cut ? upUrl(P.pid, "-cutav.webp", x.v) : upUrl(P.pid, "-av.jpg", x.v);
+      } else if (!P._orig.img && !P._orig.cut && RIC[P.pid] && /^[a-z0-9]{4,12}$/.test(RIC[P.pid])){
+        // a club member's RankedIn photo, cut out by the worker's Action
+        P.img = null; P.cut = upUrl(P.pid, "-rcut.webp", RIC[P.pid]); P.avatar = upUrl(P.pid, "-rcutav.webp", RIC[P.pid]);
       } else Object.keys(P._orig).forEach(function(k){ P[k] = P._orig[k]; });
       if (was !== P.img + "|" + P.cut && PANELS[P.key]) [].forEach.call(PANELS[P.key].querySelectorAll(".hero"), function(h){
         var box = h.querySelector(".pmed");
