@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-EsMGq5ZeBMNqF0u0Iwr+NLZHDjWXf9/RCbi1hgRUOdM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-jYLQHsihciYx2/mfM3ite9W6aW2NHHoxZcse3o3oFOI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -302,7 +302,6 @@
   .sbf{ display:flex; align-items:center; gap:2vw; padding-top:.6vh; border-top:1px solid rgba(255,255,255,.1); }
   .sbtick{ flex:1; min-width:0; display:flex; gap:2.4em; overflow:hidden; white-space:nowrap; -webkit-mask-image:linear-gradient(90deg, #000 85%, transparent); mask-image:linear-gradient(90deg, #000 85%, transparent); font:500 .85em/1.2 "Instrument Sans", sans-serif; color:#C9D3EC; text-transform:none; letter-spacing:0; }
   .sbtick span{ font:inherit; color:inherit; text-transform:none; letter-spacing:0; } .sbtick b{ font:700 1em/1.2 "Instrument Sans", sans-serif; color:#fff; text-transform:none; letter-spacing:0; }
-  .sburl{ flex:none; font:500 .75em/1 "Chivo Mono", monospace; color:#A6B2D2; text-transform:none; letter-spacing:0; } .sburl b{ font:600 1em/1 "Chivo Mono", monospace; color:#FFD84A; text-transform:none; letter-spacing:0; }
   @media (max-aspect-ratio: 1/1){ .sbgrid{ grid-template-columns:1fr; grid-template-rows:minmax(0,1.3fr) minmax(0,1fr); } #amxtv{ font-size:clamp(14px, 2.4vw, 30px); } }
   /* ---------- Menyraden som padelbana: the bar is a court seen from above (lines, glass at the ends, the net in the
      middle with Idag on it); the active zone is lit by a court lamp; the ball crosses the net higher and leaves a
@@ -2333,7 +2332,6 @@
     "Sista rundan":"Última ronda",
     "Runda {n}":"Ronda {n}",
     "Resultaten visas här när de rapporteras in.":"Los resultados aparecen aquí cuando se introducen.",
-    "Följ på mobilen":"Síguelo en el móvil",
     "Visa på storbild":"Ver en pantalla grande",
     "Den här americanon finns inte längre.":"Este americano ya no existe.",
     "Tabellen":"La clasificación",
@@ -6465,8 +6463,15 @@
       }
     });
     rows.sort(function(a, b){ return (b.fol ? 1 : 0) - (a.fol ? 1 : 0) || (b.s.pcls === "live" ? 1 : 0) - (a.s.pcls === "live" ? 1 : 0); });
-    DOCK_NOW = rows; try { dockLive(); } catch (e){}
-    var np = rows.reduce(function(a, r){ return a + (r.team ? r.players.length : 1); }, 0);
+    DOCK_NOW = rows.slice();
+    // americanos on now (the same as the dock's capsule), one row each, after the matches
+    // the list again after a minute, so an americano that started or ended shows here
+    if (AMX && PUSH_API && (!AMX.list || Date.now() - (AMX.listAt || 0) > 60000)){ AMX.listAt = Date.now(); amxApi("/amx").then(function(d){ AMX.list = d.list || []; try { renderNow(); renderAmxHome(); } catch (e){} }, function(){}); }
+    amxOnNow().forEach(function(x){
+      var ps = (x.pids || []).map(function(p){ return BYPID[p]; }).filter(Boolean);
+      rows.push({amx:x, players:ps, fol:ps.some(function(P){ return f.indexOf(P.pid) >= 0; }), s:{pill:_("Pågår"), pcls:"live"}});
+    }); try { dockLive(); } catch (e){}
+    var np = rows.reduce(function(a, r){ return a + (r.amx ? r.amx.n || r.players.length : r.team ? r.players.length : 1); }, 0);
     if (meta) meta.textContent = np ? np + (np === 1 ? _(" spelare") : _(" spelare ")) : "";
     if (!rows.length){
       host.innerHTML = '<p class="empty">' + _("Ingen spelar just nu.") + '</p>';   // what comes next: Kommande, right below
@@ -6474,6 +6479,11 @@
     }
     host.innerHTML = rows.map(function(r){
       var e = r.e, P = r.P;
+      if (r.amx){
+        return '<a class="nowrow team' + (r.fol ? " fol" : "") + '" href="#amx/' + esc(r.amx.id) + '">' + (r.players.length ? avatarsOf(r.players.slice(0, 3), "") : '<span class="avs"></span>') +
+          '<span><b>' + esc(r.amx.name) + '</b><span class="ne">' + esc(_("Americano") + (r.amx.n ? " · " + r.amx.n + _(" spelare") : "")) + '</span></span>' +
+          '<span class="pill live"><i></i>' + esc(r.s.pill) + '</span></a>';
+      }
       if (r.team){
         var x = DISC.live && r.players.map(function(p){ return DISC.live[p.pid]; }).filter(function(v){ return v && v.key === e.key && v.sc; })[0];
         var vs = (e.ties || []).map(function(t){ return t.opp; }).join(_(" och "));
@@ -9873,6 +9883,7 @@
   })();
   // What the capsule says: followed players on court now (else anyone from the club), americanos on now
   var DOCK_NOW = [], DOCK_PREV = null;
+  function amxOnNow(){ return (AMX && AMX.list || []).filter(function(x){ return !x.done && Date.now() - x.at < 12 * 3600e3; }); }
   function dockLive(){
     var out = [], f = follows();
     var now = DOCK_NOW.filter(function(r){ return r.s && r.s.pcls === "live"; });
@@ -9882,7 +9893,7 @@
       out.push({kind:"now", t:(r.team ? who + _(" spelar nu") : _("{n} spelar nu", {n:who})) + (r.s.line ? " · " + r.s.line : ""), href:r.team ? "#/" : r.href || "#" + r.P.key});
     });
     if (now.length > 3 && !mine.length) out.push({kind:"now", t:_("{n} från klubben spelar nu", {n:now.length}), href:"#/"});
-    (AMX.list || []).filter(function(x){ return !x.done && Date.now() - x.at < 12 * 3600e3; }).slice(0, 2).forEach(function(x){
+    amxOnNow().slice(0, 2).forEach(function(x){
       var fol = (x.pids || []).some(function(p){ return f.indexOf(Number(p)) >= 0; });
       out.push({kind:"amx", t:(fol ? _("Americano pågår") : _("Americano")) + " · " + x.name, href:"#amx/" + x.id});
     });
@@ -10007,7 +10018,6 @@
     var done = [];
     t.rounds.forEach(function(r, ri){ r.forEach(function(x, mi){ if (x.s) done.push({x:x, r:ri, m:mi}); }); });
     var latest = done.slice(-6).reverse();
-    var url = location.host + location.pathname.replace(/index\.html$/, "") + "#amx/" + t.id;
     var h = '<header class="sbh"><img src="img/nynas-logo.png" alt="" width="54" height="69"><div><h1>' + esc(t.name) + '</h1><p>' + esc(amxKind(t.fmt) + " · " + amxHow(t) + " · " + t.players.length + _(" spelare")) + '</p></div>' +
       '<div class="sbround"><span>' + _("Runda") + '</span><b>' + R + '</b></div>' +
       '<div class="sbtools"><button type="button" data-tv="fs" aria-label="' + esc(_("Helskärm")) + '">⛶</button><a href="#amx/' + esc(t.id) + '" aria-label="' + esc(_("Stäng storbild")) + '">×</a></div></header>' +
@@ -10025,8 +10035,7 @@
         var side = function(sd, i){ return '<div class="sbside' + (won === sd ? " w" : "") + '">' + amxAvs(t, x[sd]) + '<b>' + esc(amxSide(t, x[sd])) + '</b><em>' + (s ? s[i] : "") + '</em></div>'; };
         return '<div class="sbcourt' + (s ? " done" : " live") + (fresh ? " fresh" : "") + '"><div class="sbc"><span>' + _("Bana ") + (x.c || m + 1) + '</span><i>' + (s ? _("Klar") : _("Pågår")) + '</i></div>' + side("a", 0) + side("b", 1) + '</div>';
       }).join("") + '</section></div>' +
-      '<div class="sbf"><div class="sbtick">' + (latest.length ? latest.map(function(d){ var x = d.x; return '<span><b>' + esc(amxSide(t, x.a)) + '</b> ' + x.s[0] + "–" + x.s[1] + ' <b>' + esc(amxSide(t, x.b)) + '</b></span>'; }).join("") : '<span>' + _("Resultaten visas här när de rapporteras in.") + '</span>') + '</div>' +
-      '<div class="sburl">' + _("Följ på mobilen") + ' <b>' + esc(url) + '</b></div></div>';
+      '<div class="sbf"><div class="sbtick">' + (latest.length ? latest.map(function(d){ var x = d.x; return '<span><b>' + esc(amxSide(t, x.a)) + '</b> ' + x.s[0] + "–" + x.s[1] + ' <b>' + esc(amxSide(t, x.b)) + '</b></span>'; }).join("") : '<span>' + _("Resultaten visas här när de rapporteras in.") + '</span>') + '</div></div>';
     // FLIP: rows that changed place slide from where they were
     var before = {};
     [].forEach.call(box.querySelectorAll(".sbrow[data-k]"), function(el){ before[el.getAttribute("data-k")] = el.getBoundingClientRect().top; });
