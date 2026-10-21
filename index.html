@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+WJExUTYB4Mf87rLjCq3cxn/2s8UzIP4Ion+1nCS430='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-t3buiw0nYXAjYFAOtvp0fxKL97GjYde3e1UKlajTQ1k='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -269,9 +269,9 @@
   .sbh p{ margin:.25em 0 0; font:500 .8em/1.2 "Chivo Mono", monospace; color:#A6B2D2; }
   .sbside.sbfour b{ white-space:normal; line-height:1.25; }
   .tvparade{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
-  .tvcard.hero{ position:absolute; left:100%; margin:0; padding:0; background:none; overflow:visible; animation:tv-sail linear both; }
+  .tvcard.hero{ position:absolute; left:100%; margin:0; padding:0; background:none; overflow:visible; transform-origin:0 0; animation:tv-sail linear both; }
   .tvcard .cardwrap{ width:100%; animation:tv-bob 3.2s ease-in-out infinite alternate; } .tvcard .pfol{ display:none; }
-  @keyframes tv-sail{ from{ transform:translateX(0) rotate(var(--tilt)); } to{ transform:translateX(calc(-100vw - 120%)) rotate(calc(var(--tilt) * -1)); } }
+  @keyframes tv-sail{ from{ transform:translateX(0) rotate(var(--tilt)) scale(var(--sc)); } to{ transform:translateX(calc(-100vw - 360px)) rotate(calc(var(--tilt) * -1)) scale(var(--sc)); } }
   @keyframes tv-bob{ from{ transform:translateY(0); } to{ transform:translateY(var(--bob)); } }
   .tvlobby{ position:relative; z-index:1; padding:1.4em 2em; border-radius:28px; background:radial-gradient(closest-side, rgba(3,8,22,.92), rgba(3,8,22,.6) 70%, transparent); }
   #amxtv.parading .tvlobby{ position:absolute; left:50%; bottom:3vh; transform:translateX(-50%); flex-direction:row; gap:1em; padding:.6em 1.4em; font-size:.7em; background:rgba(3,8,22,.82); border:1px solid rgba(255,255,255,.12); white-space:nowrap; transition:all .8s; }
@@ -10902,7 +10902,10 @@
     if (!pool.length) return;
     var P = pool[Math.floor(Math.random() * pool.length)], el = document.createElement("div"), sz = 11 + Math.random() * 4, top = 3 + Math.random() * 30, dur = 15 + Math.random() * 7;
     el.className = "tvcard " + heroCls(P);
-    el.style.cssText = "width:" + sz.toFixed(1) + "vw;top:" + top.toFixed(1) + "vh;animation-duration:" + dur.toFixed(1) + "s;--tilt:" + (Math.random() * 16 - 8).toFixed(1) + "deg;--bob:" + (2 + Math.random() * 3).toFixed(1) + "vh";
+    // drawn at the card's own size (330 px: its text is sized for that) and scaled down as a whole, so it looks the same
+    // on a phone as on the TV
+    var sc = Math.max(.25, Math.max(sz / 100 * window.innerWidth, (sz + 20) / 100 * window.innerHeight) / 330);
+    el.style.cssText = "width:330px;top:" + top.toFixed(1) + "vh;animation-duration:" + dur.toFixed(1) + "s;--sc:" + sc.toFixed(3) + ";--tilt:" + (Math.random() * 16 - 8).toFixed(1) + "deg;--bob:" + (2 + Math.random() * 3).toFixed(1) + "vh";
     el.innerHTML = cardHtml(P);
     el.addEventListener("animationend", function(e){ if (e.target === el) el.remove(); });
     host.appendChild(el);
