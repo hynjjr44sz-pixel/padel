@@ -613,7 +613,7 @@ try {
   const RT = ROSTER.find(x => x.key === "thea"), ptsTxt = v => v.toFixed(v >= 20 ? 1 : 2);
   await page.waitForFunction(() => /150/.test(document.querySelector("#p-thea .pstats [data-st=rnk] dd")?.textContent || "") && document.querySelector("#p-thea .pstats [data-st=form]"), null, { timeout: 8000 }).catch(() => {});
   { const c = await cardOf("thea");
-    ok("card Thea: gold tier (skill 15.94), rating 15.9 as 15 + .9, class B (Damer rank 150)", /\bt-gold\b/.test(c.cls) && c.ovr === "15.9" && c.klass === "B" && /Skill 15,94, får spela B-klass, ranking 150/.test(c.sr), c);
+    ok("card Thea: gold tier (ranking points), rating 15.9 as 15 + .9, class B (Damer rank 150)", /\bt-gold\b/.test(c.cls) && c.ovr === "15.9" && c.klass === "B" && /Skill 15,94, får spela B-klass, ranking 150/.test(c.sr), c);
     ok("card Thea: stats row RNK/PTS/SKL/VIN%/TIT/FORM from the data (labels above the values)", c.labels.join() === "RNK,PTS,SKL,VIN%,TIT,FORM" &&
       /^#150/.test(c.st.rnk) && c.st.pts.startsWith(ptsTxt(RT.points)) && c.st.skl.startsWith("15.94") && /^89\b/.test(c.st.vin) && /^\d+$/.test(c.st.tit), c);
     ok("card Thea: form pips W L W W L with a text alternative", c.pips === "wlwwl" && /Form: V F V V F \(3 vinster, 2 förluster\)/.test(c.st.form), c);
@@ -627,7 +627,7 @@ try {
   ok("Lisa: back to Nynäs idag", await page.isVisible("#pnav .back"));
   await page.waitForFunction(() => document.querySelector("#p-lisa .pstats [data-st=form]"), null, { timeout: 8000 }).catch(() => {});
   { const c = await cardOf("lisa");
-    ok("card Lisa: silver tier (13.14), initials fallback, class C (Damer rank 691), no TIT slot without titles (no TÄV)", /\bt-silver\b/.test(c.cls) && /\bnoimg\b/.test(c.cls) && c.ini === "LB" && c.ovr === "13.1" && c.klass === "C" &&
+    ok("card Lisa: silver tier (ranking points), initials fallback, class C (Damer rank 691), no TIT slot without titles (no TÄV)", /\bt-silver\b/.test(c.cls) && /\bnoimg\b/.test(c.cls) && c.ini === "LB" && c.ovr === "13.1" && c.klass === "C" &&
       c.labels.join() === "RNK,PTS,SKL,VIN%,FORM", c); }
   const broken = await page.$$eval("img", im => im.filter(i => i.complete && i.naturalWidth === 0 && i.getAttribute("src")).map(i => i.getAttribute("src")));
   ok("no broken images", broken.length === 0, broken);
@@ -675,7 +675,7 @@ try {
   await page.waitForSelector("#p-kian:not([hidden]) .hero .pmed img");
   ok("old #kian link opens Kian", (await page.title()).startsWith("Kian Borgström"));
   { const c = await cardOf("kian");
-    ok("card Kian: bronze tier (11.56), rating cut to 11.5 (not rounded), class C (Herrar rank 789)", /\bt-bronze\b/.test(c.cls) && c.ovr === "11.5" && c.klass === "C" && c.ln === "Borgström" && c.lnFits, c); }
+    ok("card Kian: silver tier (11.99 ranking points), rating cut to 11.5 (not rounded), class C (Herrar rank 789)", /\bt-silver\b/.test(c.cls) && c.ovr === "11.5" && c.klass === "C" && c.ln === "Borgström" && c.lnFits, c); }
 
   // ---- Förslag på tävlingar (worker GET /cal; no RankedIn calls for it) ----
   {
@@ -903,7 +903,7 @@ try {
     ok("week after: Cassandra's card is the champion variant too", /\bt-champ\b/.test((await cardOf("cassandra")).cls));
     await page.goto(url("#kian", "", "2026-09-29T10:00:00+02:00"));
     await page.waitForSelector("#p-kian:not([hidden]) .hero");
-    { const c = await cardOf("kian"); ok("week after: Kian (no win) keeps bronze", /\bt-bronze\b/.test(c.cls) && !c.win && c.tip === "Nynäs Padel Club", c); }
+    { const c = await cardOf("kian"); ok("week after: Kian (no win) keeps silver", /\bt-silver\b/.test(c.cls) && !c.win && c.tip === "Nynäs Padel Club", c); }
     ok("week after " + (dark ? "dark" : "light") + ": no console errors", errors.length === 0, errors);
     await ctx.close();
   }

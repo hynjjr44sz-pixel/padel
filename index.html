@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-IoeEfL6+LV1IoaQcqF1+rNyOr3OGi+C6RUPWimOPpBI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AsvnzesmXjeXopLkNwjDR3Bm9NPC+2sTuxmpB19I16U='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -981,6 +981,12 @@
     --c-ink:#0C1631; --c-lab:#1F2A44; --c-line:rgba(12,22,49,.42); --c-mesh:rgba(12,22,49,.1); --c-hi:rgba(255,255,255,.8);
     --c-up:#11522F; --c-dn:#8A1F12; --c-w:#0C1631; --c-l:#A0463A; --c-none:rgba(12,22,49,.38);
     --ini1:#1C2A4E; --ini2:#8C97AB; --pill:rgba(255,255,255,.82); --pill-ink:#0C1631;
+  }
+  .hero.t-white{
+    --m1:#FFFFFF; --m2:#F3F5F8; --m3:#DFE4EB; --m4:#FFFFFF; --glow:rgba(255,255,255,.1);
+    --c-ink:#0C1631; --c-lab:#1F2A44; --c-line:rgba(12,22,49,.3); --c-mesh:rgba(12,22,49,.07); --c-hi:rgba(255,255,255,.9);
+    --c-up:#11522F; --c-dn:#8A1F12; --c-w:#0C1631; --c-l:#A0463A; --c-none:rgba(12,22,49,.38);
+    --ini1:#1C2A4E; --ini2:#8C97AB; --pill:rgba(255,255,255,.88); --pill-ink:#0C1631;
   }
   .hero.t-bronze{
     --m1:#F8DEC2; --m2:#E6B88C; --m3:#C98A58; --m4:#F2CCA6; --glow:rgba(214,150,100,.15);
@@ -7407,11 +7413,11 @@
       (WATCHING ? ' loading="lazy"' : ' fetchpriority="high"') + '>';
     return '<div class="ini-big" aria-hidden="true">' + esc(initials(P.name)) + '</div>';
   }
-  /* ---- the player card: rating (skill), class, crest, photo, name, official stats; tier by skill ---- */
-  // Tier: gold from skill 15.5 (the top fifth of the club, which spans about 11.3 to 16.2), silver from 13, bronze
-  // below. A class won in the last seven days (from the day of the final) turns the card blue, whatever the skill;
-  // without the worker's wins the card simply keeps its metal.
-  var CARD_GOLD = 15.5, CARD_SILVER = 13, CHAMP_DAYS = 7;   // same week as "Veckans vinnare" (WIN_DAYS)
+  /* ---- the player card: rating (skill), class, crest, photo, name, official stats; tier by ranking points ---- */
+  // Tier by the SPF ranking points: gold from 50 (about the club's top five), silver from 10, bronze below, white
+  // when not ranked. A class won in the last seven days (from the day of the final) turns the card blue, whatever the
+  // points; without the worker's wins the card simply keeps its colour.
+  var CARD_GOLD = 50, CARD_SILVER = 10, CHAMP_DAYS = 7;   // same week as "Veckans vinnare" (WIN_DAYS)
   function cardSkill(P){ var s = trendOf(P).skill[0], b = boardOf(P); return num(s) != null ? s : num(b.sk) != null ? b.sk : num(P.skill); }
   function cardChamp(P){
     var today = dayOf(now());
@@ -7420,7 +7426,7 @@
         (w.pids || []).map(Number).indexOf(P.pid) >= 0;
     }).sort(function(a, b){ return String(b.date).localeCompare(String(a.date)); })[0] || null;
   }
-  function cardTier(P){ var s = cardSkill(P); return cardChamp(P) ? "champ" : s == null ? "bronze" : s >= CARD_GOLD ? "gold" : s >= CARD_SILVER ? "silver" : "bronze"; }
+  function cardTier(P){ var r = sgPoints(P); return cardChamp(P) ? "champ" : r.rank == null || r.pts == null ? "white" : r.pts >= CARD_GOLD ? "gold" : r.pts >= CARD_SILVER ? "silver" : "bronze"; }
   // SPF: the ranking decides the lowest class a player may enter (Bra att veta, Klasser). Not ranked: D.
   function classOf(P, rank){
     if (rank == null) return "D";
@@ -7498,7 +7504,7 @@
     if (!P || !m) return;
     var tier = "t-" + cardTier(P), face = cardFace(P);
     [].forEach.call(m.querySelectorAll(".hero"), function(h){
-      ["t-gold", "t-silver", "t-bronze", "t-champ"].forEach(function(c){ h.classList.toggle(c, c === tier); });
+      ["t-gold", "t-silver", "t-bronze", "t-white", "t-champ"].forEach(function(c){ h.classList.toggle(c, c === tier); });
       var f = h.querySelector(".pface");
       if (f && f._h !== face){ f.innerHTML = face; f._h = face; }
     });
