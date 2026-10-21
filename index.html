@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-MfQGDKXGuvMnMQJUuK7TzbDv0rR3PSm4eOtUY7rnQ2Y='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+WJExUTYB4Mf87rLjCq3cxn/2s8UzIP4Ion+1nCS430='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -268,6 +268,14 @@
   .sbh h1{ margin:0; font:800 2.6em/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.01em; }
   .sbh p{ margin:.25em 0 0; font:500 .8em/1.2 "Chivo Mono", monospace; color:#A6B2D2; }
   .sbside.sbfour b{ white-space:normal; line-height:1.25; }
+  .tvparade{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
+  .tvcard.hero{ position:absolute; left:100%; margin:0; padding:0; background:none; overflow:visible; animation:tv-sail linear both; }
+  .tvcard .cardwrap{ width:100%; animation:tv-bob 3.2s ease-in-out infinite alternate; } .tvcard .pfol{ display:none; }
+  @keyframes tv-sail{ from{ transform:translateX(0) rotate(var(--tilt)); } to{ transform:translateX(calc(-100vw - 120%)) rotate(calc(var(--tilt) * -1)); } }
+  @keyframes tv-bob{ from{ transform:translateY(0); } to{ transform:translateY(var(--bob)); } }
+  .tvlobby{ position:relative; z-index:1; padding:1.4em 2em; border-radius:28px; background:radial-gradient(closest-side, rgba(3,8,22,.92), rgba(3,8,22,.6) 70%, transparent); }
+  #amxtv.parading .tvlobby{ position:absolute; left:50%; bottom:3vh; transform:translateX(-50%); flex-direction:row; gap:1em; padding:.6em 1.4em; font-size:.7em; background:rgba(3,8,22,.82); border:1px solid rgba(255,255,255,.12); white-space:nowrap; transition:all .8s; }
+  #amxtv.parading .tvlobby img{ width:2.6em; height:auto; } #amxtv.parading .tvlobby span{ max-width:none; }
   .tvlobby{ display:flex; flex-direction:column; align-items:center; gap:.6em; text-align:center; } .tvlobby b{ font:800 2.4em/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; } .tvlobby span{ font-size:.9em; color:#A6B2D2; max-width:28em; }
   .sbclock b{ font-size:2em; color:#fff; } .sbclock.ring{ background:#E5484D; animation:vin-ring 1s steps(2) infinite; } .sbclock.ring b{ font-size:1.1em; }
   .sbround{ display:flex; flex-direction:column; align-items:center; padding:.3em 1em; border-radius:16px; background:rgba(255,255,255,.06); }
@@ -10843,6 +10851,7 @@
      place), this round's courts (a new score flashes), the latest results; updated every 8 s, the screen kept awake. ---- */
   var TV = {poll:0, lock:null, pos:{}, seen:{}, id:null};
   function tvOpen(id){
+    clearTimeout(TV.idle); clearInterval(TV.parade); var bx1 = document.getElementById("amxtv"); if (bx1) bx1.classList.remove("parading");
     document.body.classList.add("tvmode");
     TV.id = id;
     if (AMX.id !== id){ AMX.id = id; AMX.t = null; AMX.tab = "m"; AMX.edit = {}; }
@@ -10874,9 +10883,32 @@
   }
   function tvWait(){
     var box = document.getElementById("amxtv");
-    if (box) box.innerHTML = '<div class="sbwait tvlobby"><img src="img/nynas-logo.png" alt="" width="108" height="138"><b>' + _("Storbilden är redo") + '</b><span>' + _("Starta en americano eller vinnarbana på telefonen, så visas den här av sig själv.") + '</span></div>';
+    if (!box || box.querySelector(".tvlobby")) return;
+    box.innerHTML = '<div class="tvparade" id="tvParade" aria-hidden="true"></div><div class="sbwait tvlobby"><img src="img/nynas-logo.png" alt="" width="108" height="138"><b>' + _("Storbilden är redo") + '</b><span>' + _("Starta en americano eller vinnarbana på telefonen, så visas den här av sig själv.") + '</span></div>';
+    // nothing going on for a minute: the club's player cards (those with a photo) sail past, at random
+    clearTimeout(TV.idle); clearInterval(TV.parade);
+    TV.idle = setTimeout(function(){
+      var reduce = false; try { reduce = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e){}
+      if (reduce || !document.getElementById("tvParade")) return;
+      var bx = document.getElementById("amxtv"); if (bx) bx.classList.add("parading");
+      tvCard(); TV.parade = setInterval(tvCard, 3800);
+    }, (function(){ var q = /[?&]idle=(\d+)/.exec(location.search); return q ? +q[1] * 1000 : 60000; })());   // ?idle=<seconds>: sooner (a look at it)
   }
-  function tvClose(){ TV.lobby = false; clearInterval(TV.lpoll); document.body.classList.remove("tvmode"); clearInterval(TV.poll); TV.id = null; try { if (TV.lock) TV.lock.release(); } catch (e){} TV.lock = null; }
+  function tvCard(){
+    var host = document.getElementById("tvParade");
+    if (!host){ clearInterval(TV.parade); return; }
+    if (document.visibilityState === "hidden" || host.children.length >= 6) return;
+    var pool = ROSTER.filter(function(P){ return P.cut || P.img || rinPhoto(P); });
+    if (!pool.length) return;
+    var P = pool[Math.floor(Math.random() * pool.length)], el = document.createElement("div"), sz = 11 + Math.random() * 4, top = 3 + Math.random() * 30, dur = 15 + Math.random() * 7;
+    el.className = "tvcard " + heroCls(P);
+    el.style.cssText = "width:" + sz.toFixed(1) + "vw;top:" + top.toFixed(1) + "vh;animation-duration:" + dur.toFixed(1) + "s;--tilt:" + (Math.random() * 16 - 8).toFixed(1) + "deg;--bob:" + (2 + Math.random() * 3).toFixed(1) + "vh";
+    el.innerHTML = cardHtml(P);
+    el.addEventListener("animationend", function(e){ if (e.target === el) el.remove(); });
+    host.appendChild(el);
+    try { fitNames(el); } catch (e){}
+  }
+  function tvClose(){ var bx0 = document.getElementById("amxtv"); if (bx0) bx0.classList.remove("parading"); TV.lobby = false; clearInterval(TV.lpoll); clearTimeout(TV.idle); clearInterval(TV.parade); document.body.classList.remove("tvmode"); clearInterval(TV.poll); TV.id = null; try { if (TV.lock) TV.lock.release(); } catch (e){} TV.lock = null; }
   function tvWake(){ try { if (navigator.wakeLock && !TV.lock) navigator.wakeLock.request("screen").then(function(l){ TV.lock = l; l.addEventListener("release", function(){ TV.lock = null; }); }, function(){}); } catch (e){} }
   document.addEventListener("visibilitychange", function(){ if (document.visibilityState === "visible" && TV.id) tvWake(); });
   function renderAmxTv(){
