@@ -10,7 +10,7 @@ const bearer = t => ({ Authorization: "Bearer " + t });
 const mkEnv = () => ({ PUSH: kv(), DB: fakeD1(), NOW: "2026-10-18T10:00:00Z", ORIGIN, ADMIN_KEY: "k".repeat(32) });
 const round = [{ a: [0, 1], b: [2, 3] }], players = [{ pid: 1675246 }, { n: "B B" }, { n: "C C" }, { n: "D D" }];
 
-test("konto: the first admin from the admin key, invite once, me, roles, americano needs arrangör", async () => {
+test("konto: the first admin from the admin key, invite once, me, roles, americano open to anyone", async () => {
   _resetMemory();
   const env = mkEnv();
   assert.equal((await call(env, "GET", "/admin")).status, 403);
@@ -40,10 +40,12 @@ test("konto: the first admin from the admin key, invite once, me, roles, america
   const list = (await (await call(env, "GET", "/admin", null, bearer(token))).json()).users;
   assert.deepEqual(list.map(u => [u.name, u.roles.join(), u.devices.length]), [["Kian Borgström", "", 1], ["Mikael Holmberg", "admin", 1], ["Thea Holmberg Löving", "arr", 1]]);
   assert.equal((await call(env, "GET", "/admin", null, bearer(tt))).status, 403);   // arrangör is not admin
-  // americano: no login 401, a player 403, arrangör 200 (and it says who started it)
+  // americano: anyone may start one; without an account at most 5 a day from one network; with one, no limit
   const amx = { name: "A", fmt: "americano", pts: 16, courts: 1, players, round };
-  assert.equal((await call(env, "POST", "/amx", amx)).status, 401);
-  assert.equal((await call(env, "POST", "/amx", amx, bearer(kt))).status, 403);
+  const ip = { "CF-Connecting-IP": "10.9.9.9" };
+  for (let i = 0; i < 5; i++) assert.equal((await call(env, "POST", "/amx", amx, ip)).status, 200);
+  assert.equal((await call(env, "POST", "/amx", amx, ip)).status, 429);
+  assert.equal((await call(env, "POST", "/amx", amx, bearer(kt))).status, 200);
   r = await call(env, "POST", "/amx", amx, bearer(tt));
   assert.equal(r.status, 200);
   assert.deepEqual((await r.json()).t.by.n, "Thea Holmberg Löving");

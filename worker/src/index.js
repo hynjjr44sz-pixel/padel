@@ -235,12 +235,19 @@ async function handle(req, env) {
     return t ? json(publicOf(t), 200, { ...h, "Cache-Control": "no-store" }) : json({ error: "not found" }, 404, h);
   }
   if (route === "POST /amx" || (am && req.method === "POST")) {
-    // starting one takes a login with the role arrangör (or admin); running it takes the americano's own key
-    const me = await authUser(env, req, +now(env));   // null at once without an Authorization header
-    if (!am && !can(me, "arr")) return json({ error: me ? "role" : "login" }, me ? 403 : 401, h);
+    // anyone may start one (without an account at most AMX_PER_IP a day from one network: notiser reach the players'
+    // followers, and the admin removes any americano); running it takes the americano's own key
+    const me = await authUser(env, req, +now(env)), t0 = +now(env);   // me: null at once without an Authorization header
+    let ipHash = null;
+    if (!am && !me && env.DB) {
+      ipHash = await sha("amx:" + (req.headers.get("CF-Connecting-IP") || "local") + ":" + (env.FANOUT_KEY || env.ADMIN_KEY || ""));
+      await env.DB.prepare("DELETE FROM reqlimit WHERE at < ?").bind(t0 - 86400e3).run();
+      if ((await env.DB.prepare("SELECT count(*) AS n FROM reqlimit WHERE ip = ? AND at > ?").bind(ipHash, t0 - 86400e3).first()).n >= AMX_PER_IP) return json({ error: "limit" }, 429, h);
+    }
     let b;
     try { b = await readBody(req, 800000); } catch (e) { return json({ error: "bad json" }, 400, h); }   // guests' photos (about 10 kB each)
-    const r = am ? await amxUpdate(env, am[1], b, +now(env), !!me && me.roles.includes("admin")) : await amxCreate(env, b, BY_PID, +now(env), me);
+    const r = am ? await amxUpdate(env, am[1], b, t0, !!me && me.roles.includes("admin")) : await amxCreate(env, b, BY_PID, t0, me);
+    if (!r.err && ipHash) await env.DB.prepare("INSERT INTO reqlimit (ip, at) VALUES (?, ?)").bind(ipHash, t0).run();
     return r.err ? json({ error: r.err }, r.status || 400, h) : json(r, 200, h);
   }
   // Club accounts (auth.js): the invite link, who am I, log out; the admin's list and changes
@@ -460,7 +467,7 @@ export function localize(m, lang) {
 }
 const RULES_URL = "https://raw.githubusercontent.com/hynjjr44sz-pixel/padel/tvdata/rules.json";
 const now = env => env.NOW ? new Date(env.NOW) : new Date();   // NOW: local tests only
-const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8;
+const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8, AMX_PER_IP = 5;
 
 /* ---- discovered events: KV "disc" = {at, events, ended, none, past, photos, board}. Read at most every 5 min per isolate. ---- */
 let MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 };

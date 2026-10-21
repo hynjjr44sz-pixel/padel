@@ -278,7 +278,7 @@ try {
   { // Konto: without a login americano is locked; the first admin's link (made with the admin key) logs the phone in;
     // the admin invites Thea as arrangör
     await page.goto(url("#amx/ny"));
-    await page.waitForSelector("#amx .ktxt", { timeout: 8000 }).catch(() => {});
+    await page.waitForSelector("#amxGuest", { timeout: 8000 }).catch(() => {});
     const locked = await page.evaluate(() => [document.querySelector("#amx .ktxt")?.textContent || "", !!document.getElementById("amxGuest")]);
     // Begär konto from Kian's page: the code on the phone, the admin types it in, "Kolla nu" logs the phone in
     await page.goto(url("#kian"));
@@ -306,7 +306,7 @@ try {
     await page.waitForFunction(() => /Välkommen, Mikael/.test(document.querySelector("#konto .kmsg")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
     await page.waitForSelector("#konto .klist", { timeout: 8000 }).catch(() => {});
     const k1 = await page.evaluate(() => [location.hash, document.querySelector("#konto .kmsg")?.textContent, document.getElementById("acct").textContent, document.querySelector("#konto .klist")?.textContent.replace(/\s+/g, " ")]);
-    ok("Konto: americano locked without a login; the invite link logs the phone in, leaves the address bar, admin sees the list", /arrangörer/.test(locked[0]) && !locked[1] && k1[0] === "#konto" && /Välkommen, Mikael/.test(k1[1] || "") && k1[2] === "Konto: Mikael" && /Mikael HolmbergAdmin · Inloggad/.test(k1[3] || ""), { locked, k1 });
+    ok("Konto: americano open without a login; the invite link logs the phone in, leaves the address bar, admin sees the list", locked[1] && k1[0] === "#konto" && /Välkommen, Mikael/.test(k1[1] || "") && k1[2] === "Konto: Mikael" && /Mikael HolmbergAdmin · Inloggad/.test(k1[3] || ""), { locked, k1 });
     await page.selectOption("#kPid", "1675246");
     await page.check("#kArr");
     await page.click('[data-k="add"]');

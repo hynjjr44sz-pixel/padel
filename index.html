@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-gNRc9zELunH42LbTjyis8qgLFkNxI5TIyOihA5/0Xx8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-h4oO4++vUo01J2XcEADqYJPTD0SqK8flBoN6agRMzbM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -2071,6 +2071,7 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Många americanos har startats härifrån idag. Logga in under Konto för att starta fler.":"Se han empezado muchos americanos desde aquí hoy. Inicia sesión en Cuenta para empezar más.",
     "Används för att uppskatta maxpulsen och för råden för unga spelare. Syns bara för spelaren, föräldrar och tränare.":"Se usa para estimar el pulso máximo y para los consejos a jugadores jóvenes. Solo lo ven el jugador, los padres y los entrenadores.",
     "Bara spelaren, föräldrar och kopplade tränare ser det. Inte klubbens admin.":"Solo lo ven el jugador, los padres y los entrenadores vinculados. No el admin del club.",
     "Dagsform":"Forma del día",
@@ -9190,9 +9191,8 @@
     // the list knows whether one is ended; "Mina" takes that from it when it is there
     var pub = AMX.list || [], st = {}; pub.forEach(function(x){ st[x.id] = x; });
     var others = pub.filter(function(x){ return ids.indexOf(x.id) < 0; }).slice(0, 6);
-    // starting one takes the role arrangör (given by the admin under Konto)
-    host.innerHTML = (authCan("arr") ? '<a class="amxnew" href="#amx/ny"><b>' + _("Starta en americano") + '</b><span>' + _("Americano, Mexicano eller Lagamericano med klubbens spelare och gäster. Resultat och tabell i appen.") + '</span><i aria-hidden="true">→</i></a>'
-      : '<a class="amxlock" href="#konto"><b>' + _("Americano, Mexicano och Lagamericano") + '</b><span>' + _("Startas av klubbens arrangörer. Vill du arrangera? Be klubben om behörighet.") + '</span></a>') +
+    // anyone may start one
+    host.innerHTML = '<a class="amxnew" href="#amx/ny"><b>' + _("Starta en americano") + '</b><span>' + _("Americano, Mexicano eller Lagamericano med klubbens spelare och gäster. Resultat och tabell i appen.") + '</span><i aria-hidden="true">→</i></a>' +
       (mine.length ? '<div class="amxh">' + _("Mina") + '</div>' + mine.slice(0, 8).map(function(x){ return row(st[x.id] ? Object.assign({}, x, {done:st[x.id].done, pids:st[x.id].pids}) : x, true); }).join("") : "") +
       (others.length ? '<div class="amxh">' + _("Senaste veckan") + '</div>' + others.map(function(x){ return row(x, false); }).join("") : "") +
       '<a class="amxallk" href="#amx/alla">' + _("Alla americanos") + ' <i aria-hidden="true">→</i></a>';
@@ -9227,11 +9227,6 @@
   function renderAmxNew(){
     var box = document.getElementById("amx");
     if (!box) return;
-    if (!authCan("arr")){
-      box.innerHTML = '<div class="phead"><div class="pt"><h1>' + _("Ny americano") + '</h1></div></div><div class="card ktxt"><p>' + _("Americanos startas av klubbens arrangörer.") + '</p><p>' +
-        (AUTH ? _("Ditt konto har inte rollen arrangör. Be klubben om behörighet.") : _("Logga in med din personliga länk från klubben. Har du ingen, be klubben om en.")) + '</p><a class="amxsec" href="#konto">' + _("Konto") + '</a></div>';
-      return;
-    }
     var d = AMX.draft = AMX.draft || {name:"", fmt:"americano", mode:"pts", pts:24, courts:2, players:[]};
     var team = d.fmt === "lag", maxC = Math.max(1, Math.floor(d.players.length / 4)), useC = Math.min(d.courts, maxC);   // the choice stays as more players come
     var chip = function(k, v, lab, on){ return '<button type="button" data-set="' + k + '" data-v="' + esc(v) + '" aria-pressed="' + (on ? "true" : "false") + '">' + esc(lab) + '</button>'; };
@@ -9301,7 +9296,7 @@
           players:d.players.map(function(p){ return p.pid ? {pid:p.pid} : {n:p.n, img:p.img, fig:p.fig}; })}).then(function(r){
           AMX.busy = false; amxSetKey(r.id, r.key); amxRemember(r.t); AMX.draft = null; AMX.list = null; AMX.t = r.t; AMX.id = r.id; AMX.tab = "m";
           location.hash = "#amx/" + r.id;
-        }, function(er){ AMX.busy = false; b.disabled = false; document.getElementById("amxErr").textContent = er.message === "login" || er.message === "role" ? _("Du behöver vara inloggad som arrangör. Se Konto.") : _("Kunde inte starta: ") + er.message; });
+        }, function(er){ AMX.busy = false; b.disabled = false; document.getElementById("amxErr").textContent = er.message === "limit" ? _("Många americanos har startats härifrån idag. Logga in under Konto för att starta fler.") : _("Kunde inte starta: ") + er.message; });
       }
     };
   }
