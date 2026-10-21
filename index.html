@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-oP+qcMm0c2lDvGVHgmIk37QGqA2zmGRG4dWIln8AA90='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-3dYj3YfWjcxPcWjr7vI+JV8xr4sBx1ZJCtJDu6hLGaw='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -554,7 +554,7 @@
   .hksteps{ margin:12px 0; padding-left:22px; font-size:14px; line-height:1.45; } .hksteps li{ margin:0 0 8px; }
   .hklink b{ word-break:break-all; font:500 12px/1.3 "Chivo Mono", monospace; }
   .linkbtn{ border:0; background:none; padding:0; color:#CE2C31; text-decoration:underline; font:inherit; }
-  .trintro p{ margin:0 0 10px; } .trintro .amxgo{ display:inline-block; margin-top:6px; text-decoration:none; }
+  .trintro p{ margin:0 0 10px; } .trintro .amxgo{ display:flex; align-items:center; justify-content:center; margin-top:6px; text-decoration:none; color:#0A1733; }
   .trsheet .sheet-in{ touch-action:auto; max-height:88vh; overflow:auto; }
   .trf{ margin:0 0 14px; } .trf > span{ display:flex; justify-content:space-between; font:600 11px/1 "Chivo Mono", monospace; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); margin:0 2px 8px; }
   .trf > span b{ color:var(--ink); text-transform:none; letter-spacing:0; font-size:12px; }
@@ -675,6 +675,7 @@
   .hallon{ margin:8px 0 0; } .hallcode{ font:900 40px/1 "Big Shoulders Display", sans-serif; letter-spacing:.08em; margin:4px 0 8px !important; } .khall{ border:2px solid #FFD84A; }
   .homemode{ margin:14px 0 4px; } .hmnone{ margin:12px 0 0; }
   #home.hm-mine #secWeek, #home.hm-mine #secWin, #home.hm-mine #secCtr, #home.hm-mine #acadCard, #home.hm-mine #secTop{ display:none !important; }
+  #home.hm-club #secWin, #home.hm-club #secTop, #home.hm-spt #secWeek, #home.hm-spt #secCtr, #home.hm-spt #acadCard{ display:none !important; }
   .radsel{ appearance:none; padding:6px 28px 6px 10px; border-radius:99px; border:1px solid var(--line); background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238B8D98' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center; color:var(--ink); font:600 12px/1 "Instrument Sans", sans-serif; }
   .tavf .radsel{ margin-right:8px; }
   .pcdeal{ margin:10px 0 14px; padding:12px; border-radius:16px; background:linear-gradient(160deg, #0F5132, #0A3B24); color:#fff; overflow:hidden; }
@@ -1967,7 +1968,7 @@
       <img src="img/nynas-logo.png" width="78" height="100" alt="Nynäs Padel Club">
       <div><h1 id="h-home" data-i18n>Nynäs idag</h1><p id="clubMeta">Nynäs Padel Club</p></div>
     </div>
-    <div class="seg homemode" role="group" aria-label="Vy" id="homeMode"><button type="button" data-hm="club" aria-pressed="true" data-i18n>Klubben</button><button type="button" data-hm="mine" aria-pressed="false" data-i18n>Mitt padel</button></div>
+    <div class="seg homemode" role="group" aria-label="Vy" id="homeMode"><button type="button" data-hm="club" aria-pressed="true" data-i18n>Klubben</button><button type="button" data-hm="spt" aria-pressed="false" data-i18n>SPT</button><button type="button" data-hm="mine" aria-pressed="false" data-i18n>Mitt padel</button></div>
     <p class="empty hmnone" id="hmNone" hidden></p>
 
     <section aria-labelledby="h-now" id="secNow">
@@ -2033,16 +2034,16 @@
   <!-- ================= MENYRADENS VYER ================= -->
   <main class="view" id="spelare" tabindex="-1" aria-labelledby="h-spv" hidden>
     <div class="phead"><div class="pt"><h1 id="h-spv" data-i18n>Spelare</h1><div class="pm" id="spvMeta">Nynäs Padel Club</div></div></div>
+    <section aria-labelledby="h-lag">
+      <div class="sh"><h2 id="h-lag" data-i18n>Lagen</h2><div class="meta">SPL 2026-27</div></div>
+      <div class="teams" id="teams"></div>
+    </section>
     <section aria-labelledby="h-sp">
       <div class="sh"><h2 id="h-sp" data-i18n>Alla spelare</h2><div class="meta" id="plMeta"></div></div>
       <div class="seg plf" role="group" aria-label="Visa" id="plFilter"><button type="button" data-plf="all" aria-pressed="true" data-i18n>Alla</button><button type="button" data-plf="F" aria-pressed="false" data-i18n>Damer</button><button type="button" data-plf="M" aria-pressed="false" data-i18n>Herrar</button><button type="button" data-plf="fol" aria-pressed="false" data-i18n>Följer</button></div>
       <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input type="search" id="q" placeholder="Sök spelare" aria-label="Sök spelare" autocomplete="off" enterkeyhint="search"></label>
       <ul class="plist" id="plist"></ul>
       <p class="empty" id="plEmpty" hidden data-i18n>Ingen spelare matchar.</p>
-    </section>
-    <section aria-labelledby="h-lag">
-      <div class="sh"><h2 id="h-lag" data-i18n>Lagen</h2><div class="meta">SPL 2026-27</div></div>
-      <div class="teams" id="teams"></div>
     </section>
     <a class="missing" href="#konto"><b data-i18n>Saknas du eller ditt barn?</b><span data-i18n>Juniorer under 18 syns först efter ett ja. Begär konto, så kopplas spelaren in när det är godkänt.</span><i aria-hidden="true">→</i></a>
   </main>
@@ -2077,6 +2078,7 @@
         <a class="mtile" href="#akademin" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 9 12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.5c1.6 1.6 3.4 2.4 5.5 2.4s3.9-.8 5.5-2.4V11M21.5 9v5.5"/></svg><b data-i18n>Akademin</b><span data-i18n>Grupper och privatlektioner</span></a>
         <a class="mtile" href="#americano" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="2.2"/><circle cx="17" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/><circle cx="17" cy="17" r="2.2"/><path d="M10.4 4.9a7.5 7.5 0 0 1 3.2 0M19.1 10.4a7.5 7.5 0 0 1 0 3.2M13.6 19.1a7.5 7.5 0 0 1-3.2 0M4.9 13.6a7.5 7.5 0 0 1 0-3.2"/></svg><b>Americano</b><span data-i18n>Starta och följ</span></a>
         <a class="mtile" href="#amx/alla" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M7 20v-6M12 20V9M17 20v-9"/></svg><b data-i18n>Alla americanos</b><span data-i18n>Vinnare och tabeller</span></a>
+        <a class="mtile" href="#tv" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg><b data-i18n>Storbild</b><span data-i18n>För TV:n i hallen</span></a>
         <a class="mtile" id="morePriv" href="integritet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.4-3 7.9-7 9.5-4-1.6-7-5.1-7-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg><b data-i18n>Integritet</b><span data-i18n>Vad som sparas</span></a>
       </div>
       <div class="mrow"><span data-i18n>Språk</span><div class="lang" id="lang" role="group" aria-label="Språk"><button type="button" data-lang="sv" aria-pressed="true" lang="sv" aria-label="Svenska">Svenska</button><button type="button" data-lang="es" aria-pressed="false" lang="es" aria-label="Español">Español</button></div></div>
@@ -2116,6 +2118,7 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "För TV:n i hallen":"Para la tele del club",
     "Storbilden är redo":"La pantalla grande está lista",
     "Starta en americano eller vinnarbana på telefonen, så visas den här av sig själv.":"Empieza un americano o una pista de ganadores en el móvil y aparecerá aquí sola.",
     "I hallen: öppna padel.holmberg.st/#tv på TV-datorn en gång. Den visar alltid den americano som startades senast.":"En el club: abre padel.holmberg.st/#tv en el ordenador de la tele una vez. Siempre muestra el último americano empezado.",
@@ -6636,9 +6639,13 @@
     if (!x) return "";
     return dayOf(x) === dayOf(now()) ? hm(x) : DOW[loc(x).getUTCDay()] + " " + hm(x);
   }
-  // Startsidan: Klubben (all the club's) or Mitt padel (only the players one follows, whatever the event: tournaments,
-  // SPL, series, americanos); chosen on this device
-  function homeMine(){ return store.get("padel.home.mode") === "mine"; }
+  // Startsidan, three tabs chosen on this device: Klubben (the club's own: americanos, Klubbserien, the centre, the
+  // academy), SPT (sanctioned play: tournaments, SPL, the winners, the ranking), Mitt padel (only the players one
+  // follows, whatever the event)
+  function homeTab(){ var v = store.get("padel.home.mode"); return v === "spt" || v === "mine" || v === "all" ? v : "club"; }   // "all": everything (the page tests)
+  function homeMine(){ return homeTab() === "mine"; }
+  // a row of Spelar nu / Kommande / Senaste resultat is sanctioned play (RankedIn: tournaments, SPL) or the club's own
+  function homeKeep(spt, fol){ var t = homeTab(); return t === "all" ? true : t === "mine" ? !!fol : t === "spt" ? spt : !spt; }
   document.addEventListener("click", function(e){
     var b = e.target.closest && e.target.closest("#homeMode button[data-hm]");
     if (!b) return;
@@ -6646,10 +6653,10 @@
     renderHome();
   });
   function homeMode(){
-    var mine = homeMine(), home = document.getElementById("home"), none = document.getElementById("hmNone");
+    var tab = homeTab(), mine = tab === "mine", home = document.getElementById("home"), none = document.getElementById("hmNone");
     if (!home) return;
-    home.classList.toggle("hm-mine", mine);
-    [].forEach.call(document.querySelectorAll("#homeMode button"), function(x){ x.setAttribute("aria-pressed", String((x.getAttribute("data-hm") === "mine") === mine)); });
+    ["club", "spt", "mine"].forEach(function(k){ home.classList.toggle("hm-" + k, tab === k); });
+    [].forEach.call(document.querySelectorAll("#homeMode button"), function(x){ x.setAttribute("aria-pressed", String(x.getAttribute("data-hm") === tab)); });
     if (none){ none.hidden = !mine || follows().length > 0; none.innerHTML = _("Du följer ingen än. Tryck på stjärnan på en spelares sida, så visas bara deras matcher och tävlingar här.") + ' <a href="#spelare">' + _("Spelare") + '</a>'; }
   }
   function renderHome(){
@@ -6732,14 +6739,14 @@
     });
     rows.sort(function(a, b){ return (b.fol ? 1 : 0) - (a.fol ? 1 : 0) || (b.s.pcls === "live" ? 1 : 0) - (a.s.pcls === "live" ? 1 : 0); });
     DOCK_NOW = rows.slice();
-    if (homeMine()) rows = rows.filter(function(r){ return r.fol; });
+    rows = rows.filter(function(r){ return homeKeep(!!(r.team || (r.e && r.e.kind)), r.fol); });
     // americanos on now (the same as the dock's capsule), one row each, after the matches
     // the list again after a minute, so an americano that started or ended shows here
     if (AMX && PUSH_API && (!AMX.list || Date.now() - (AMX.listAt || 0) > 60000)){ AMX.listAt = Date.now(); amxApi("/amx").then(function(d){ AMX.list = d.list || []; try { renderNow(); renderAmxHome(); } catch (e){} }, function(){}); }
     amxOnNow().forEach(function(x){
       var ps = (x.pids || []).map(function(p){ return BYPID[p]; }).filter(Boolean);
       var fo = ps.some(function(P){ return f.indexOf(P.pid) >= 0; });
-      if (!homeMine() || fo) rows.push({amx:x, players:ps, fol:fo, s:{pill:_("Pågår"), pcls:"live"}});
+      if (homeKeep(false, fo)) rows.push({amx:x, players:ps, fol:fo, s:{pill:_("Pågår"), pcls:"live"}});
     }); try { dockLive(); } catch (e){}
     var np = rows.reduce(function(a, r){ return a + (r.amx ? r.amx.n || r.players.length : r.team ? r.players.length : 1); }, 0);
     if (meta) meta.textContent = np ? np + (np === 1 ? _(" spelare") : _(" spelare ")) : "";
@@ -6773,8 +6780,8 @@
     var sec = document.getElementById("secRes"), host = document.getElementById("homeRecent");
     if (!sec || !host) return;
     // RankedIn (the worker's live monitoring) and the club's series (Backhandsmash, the last two weeks), newest first
-    var list = ((DISC && DISC.latest) || []).filter(function(x){ return x && x.mid && x.win; }).map(function(x){ return {x:x, at:+(riDate(x.d) || 0)}; })
-      .concat(bhsLatest()).sort(function(a, b){ return b.at - a.at; }).filter(function(y){ return !homeMine() || (y.x.pids || []).some(function(p){ return follows().indexOf(Number(p)) >= 0; }); }).slice(0, 8).map(function(y){ return y.x; }), f = follows();
+    var list = ((DISC && DISC.latest) || []).filter(function(x){ return x && x.mid && x.win; }).map(function(x){ return {x:x, at:+(riDate(x.d) || 0), spt:true}; })
+      .concat(bhsLatest()).sort(function(a, b){ return b.at - a.at; }).filter(function(y){ return homeKeep(!!y.spt, (y.x.pids || []).some(function(p){ return follows().indexOf(Number(p)) >= 0; })); }).slice(0, 8).map(function(y){ return y.x; }), f = follows();
     sec.hidden = !list.length;
     if (!list.length){ host.innerHTML = ""; return; }
     host.innerHTML = RNAV + '<ol aria-label="' + _("Senaste resultat") + '">' + list.map(function(x){
@@ -7060,8 +7067,8 @@
       if (r.kind === "tl"){ if (teamSeen[r.e.teamId]) return false; teamSeen[r.e.teamId] = 1; return true; }   // the next round per team
       return +r.at < lim;
     }).concat(bhsAgenda(lim)).filter(function(r){
-      if (!homeMine()) return true;   // Mitt padel: the followed players' (and followed teams')
-      var fo = follows();
+      if (!homeMine()) return homeKeep(r.kind === "t" || r.kind === "tl", true);   // Klubben: Klubbserien; SPT: tournaments, SPL
+      var fo = follows();   // Mitt padel: the followed players' (and followed teams')
       return (r.players || []).some(function(P){ return fo.indexOf(P.pid) >= 0; }) || (r.kind === "tl" && r.e && (followsTeams().indexOf(Number(r.e.teamId)) >= 0 || TEAMS.some(function(T){ return T.id === r.e.teamId && T.players.some(function(p){ return fo.indexOf(p.pid) >= 0; }); })));
     }).sort(function(a, b){ return a.at - b.at; }).slice(0, 10), days = [], by = {};
     rows.forEach(function(r){ var d = dayOf(r.at); if (!by[d]){ by[d] = []; days.push(d); } by[d].push(r); });
@@ -8526,7 +8533,8 @@
       var pill = free === 0 ? _("Fullt") : free === 1 ? _("1 plats kvar") : _("{n} platser kvar", {n:free});
       // MATCHi's own landing for one occasion: it opens the booking box for exactly that one (where MATCHi sends you after
       // logging in); not via the login page, which went blank on phones. Without the occasion: the activity on the facility page
-      var href = x.oid ? "https://www.matchi.se/activities/search?id=" + (+x.oid) + "&comeback=true" : x.id ? CENTER_URL.replace(/#.*$/, "") + "#ClassActivity-" + (+x.id) : CENTER_URL;
+      // MATCHi's own link (its log-in first, then the occasion's booking box): the direct one fails for someone logged out
+      var href = x.oid ? "https://www.matchi.se/login/auth?returnUrl=" + encodeURIComponent("/activities/search?id=" + (+x.oid) + "&comeback=true") : x.id ? CENTER_URL.replace(/#.*$/, "") + "#ClassActivity-" + (+x.id) : CENTER_URL;
       return '<a class="ctrrow" href="' + esc(href) + '" target="_blank" rel="noopener"><span class="ctrd"><b>' + esc(x.d === today ? _("Idag") : cap(dayLabel(d))) + '</b><small>' + esc(x.t1 + "–" + x.t2) + '</small></span>' +
         '<span class="ctrn"><b>' + esc(x.name) + '</b><small><span class="ctrp' + (free === 0 ? " full" : free <= 2 ? " few" : "") + '">' + esc(pill) + '</span>' +
         esc((x.price != null ? x.price + " kr · " : "") + x.n + "/" + x.max) + '</small></span></a>';

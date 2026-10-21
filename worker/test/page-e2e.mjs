@@ -161,6 +161,7 @@ async function newPage(opts = {}) {
   // Push without a push service: a fake subscription, so the page's /subscribe calls can be checked.
   await page.addInitScript(() => {
     // the tests were written when Thea and Kian were followed by default (the page now starts with nobody)
+    if (localStorage.getItem("padel.home.mode") === null) localStorage.setItem("padel.home.mode", "all");   // every home section (the tabs: their own test)
     if (localStorage.getItem("padel.follow.v1") === null && !window.__noFollow){ localStorage.setItem("padel.follow.v1", "[1675246,1680004]"); localStorage.setItem("padel.follow.mig1", "1"); }
     window.__notes = [];
     window.__csp = [];
@@ -236,7 +237,7 @@ try {
   await page.click('#moreSheet .mtile[href="#regler"]');
   await page.waitForSelector("#rules:not([hidden])", { timeout: 8000 }).catch(() => {});
   const more2 = await page.evaluate(() => [document.getElementById("moreSheet").classList.contains("open"), document.querySelector("#dock .dtab.on")?.getAttribute("data-tab")]);
-  ok("Mer: a sheet with Regler, Konto, Akademin, Americano, Alla americanos, Integritet and the language; Regler opens and the sheet closes", more[0] && more[1] === "Regler,Konto,Akademin,Americano,Alla americanos,Integritet" && more[2] && !more2[0] && more2[1] === "mer", { more, more2 });
+  ok("Mer: a sheet with Regler, Konto, Akademin, Americano, Alla americanos, Storbild, Integritet and the language; Regler opens and the sheet closes", more[0] && more[1] === "Regler,Konto,Akademin,Americano,Alla americanos,Storbild,Integritet" && more[2] && !more2[0] && more2[1] === "mer", { more, more2 });
   await page.click('#dock .dtab[data-tab="idag"]');
   await page.waitForSelector("#home:not([hidden])", { timeout: 8000 }).catch(() => {});
   ok("home: no horizontal scroll at 390", await noHScroll(page));
@@ -521,10 +522,17 @@ try {
     await page.waitForSelector("#homeMode", { timeout: 8000 }).catch(() => {});
     await page.waitForTimeout(500);
     const m2 = await page.evaluate(() => [document.getElementById("hmNone").hidden, document.getElementById("hmNone").textContent, document.querySelectorAll("#agenda .arow").length]);
-    await page.evaluate(k => { localStorage.setItem("padel.follow.v1", k); localStorage.setItem("padel.home.mode", "club"); }, keep);
+    await page.evaluate(k => { localStorage.setItem("padel.follow.v1", k); localStorage.setItem("padel.home.mode", "all"); }, keep);
     await page.reload();
     await page.waitForTimeout(300);
     const m3 = await page.evaluate(() => getComputedStyle(document.getElementById("secTop")).display);
+    // Klubben: the club's own (no ranking, no tournament winners); SPT: sanctioned play (no centre, no Veckan i klubben)
+    await page.evaluate(() => localStorage.setItem("padel.home.mode", "club")); await page.reload(); await page.waitForTimeout(500);
+    const cl = await page.evaluate(() => [getComputedStyle(document.getElementById("secTop")).display, getComputedStyle(document.getElementById("secWin")).display, [...document.querySelectorAll("#agenda .arow")].every(a => !/#tavling\/|#lag\//.test(a.getAttribute("href")))]);
+    await page.click('#homeMode [data-hm="spt"]'); await page.waitForTimeout(300);
+    const sp = await page.evaluate(() => [getComputedStyle(document.getElementById("secTop")).display, getComputedStyle(document.getElementById("secCtr")).display, getComputedStyle(document.getElementById("secWeek")).display, [...document.querySelectorAll("#agenda .arow")].every(a => /#tavling\/|#lag\//.test(a.getAttribute("href")))]);
+    await page.evaluate(() => localStorage.setItem("padel.home.mode", "all")); await page.reload(); await page.waitForTimeout(300);
+    ok("Startsidan: Klubben without the ranking and tournament winners; SPT without the centre and Veckan i klubben, its Kommande only sanctioned play", cl[0] === "none" && cl[1] === "none" && cl[2] && sp[0] !== "none" && sp[1] === "none" && sp[2] === "none" && sp[3], { cl, sp });
     ok("Startsidan: Mitt padel hides the club-wide sections and keeps the followed; following nobody: a hint; Klubben again", m1[0] === "none" && m1[1] === true && m1[3] && m2[0] === false && /Du följer ingen än/.test(m2[1]) && m2[2] === 0 && m3 !== "none", { m1, m2, m3 });
   }
   { // Americano: set up with a club player and guests, a result (the other side filled in), a new round, the table
