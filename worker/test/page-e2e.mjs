@@ -498,6 +498,11 @@ try {
     const tv = await page.evaluate(() => [document.querySelectorAll("#amxtv .sbcourt").length, document.querySelectorAll("#amxtv .sbrow:not(.sbhd)").length, document.getElementById("tvClock")?.textContent, document.querySelector("#amxtv .sbround b")?.textContent]);
     ok("Vinnarbana: 12 on 3 courts, match 1 in pairs, winners up and losers down, two taps for match 2, the clock out, the big screen", startOk && c1 === 3 && moved && four === 4 && vt.rounds[1][0].w && vt.rounds[1][0].w.length === 2 &&
       /Tiden är ute/.test(clock) && tv[0] === 3 && tv[1] === 12 && /Tiden är ute/.test(tv[2] || "") && tv[3] === "2/7", { startOk, c1, moved, four, w: vt && vt.rounds[1][0].w, clock, tv });
+    // the hall's fixed address #tv: finds the americano started last by itself
+    await page.goto(url("#tv"));
+    await page.waitForSelector("#amxtv .sbcourt, #amxtv .pcdeal", { timeout: 12000 }).catch(() => {});
+    const lobby = await page.evaluate(() => [document.body.classList.contains("tvmode"), document.querySelector("#amxtv .sbh h1")?.textContent || "", document.querySelectorAll("#amxtv .sbcourt").length]);
+    ok("Storbild #tv: shows the americano started last without its address", lobby[0] && /Vinnarbana/i.test(lobby[1]) && lobby[2] === 3, lobby);
     // gone again, so the americano tests below see only theirs
     const vkey = await page.evaluate(id => JSON.parse(localStorage.getItem("padel.amx.keys") || "{}")[id], vid);
     await worker.fetch(new Request("https://w/amx/" + vid, { method: "POST", headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json" }, body: JSON.stringify({ key: vkey, op: "delete" }) }), AMX_ENV);
