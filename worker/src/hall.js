@@ -5,12 +5,13 @@
 import { sha, can, log } from "./auth.js";
 import qrcode from "./vendor/qrcode.js";
 
-const REQ_TTL = 600, HALL_TTL = 12 * 3600, CODE_RE = /^[a-z2-9]{10}$/, SECRET_RE = /^[a-f0-9]{32}$/;
+const REQ_TTL = 600, HALL_TTL = 12 * 3600, CODE_RE = /^[a-z2-9]{8}(?:[a-z2-9]{2})?$/, SECRET_RE = /^[a-f0-9]{32}$/;
 const rnd = (n, abc) => [...crypto.getRandomValues(new Uint8Array(n))].map(b => abc[b % abc.length]).join("");
 
 // POST /auth/hall/start -> {code, secret}
 export async function hallStart(env) {
-  const code = rnd(10, "abcdefghijkmnpqrstuvwxyz23456789"), secret = rnd(32, "0123456789abcdef");
+  // the code is also typed in the app (shown as ABCD-EFGH)
+  const code = rnd(8, "abcdefghijkmnpqrstuvwxyz23456789"), secret = rnd(32, "0123456789abcdef");
   await env.PUSH.put("hall:req:" + code, JSON.stringify({ sh: await sha(secret), ok: null }), { expirationTtl: REQ_TTL });
   return { code, secret, ttl: REQ_TTL };
 }

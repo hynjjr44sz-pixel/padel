@@ -59,7 +59,7 @@ test("due only 03:23-03:38 local, never on a discovery minute", () => {
   assert.equal(calendarDue(new Date("2026-11-02T02:23:00Z")), true, "winter time: 03:23 CET");
 });
 
-test("nightly build: 22 events within 200 km, over two ticks of at most 45 calls; KV written only on change", async () => {
+test("nightly build: all of Sweden (45 events, each with its distance), over three ticks of at most 45 calls; KV written only on change", async () => {
   const state = install({}), PUSH = kv();
   PUSH.m.set("disc", JSON.stringify(DISC));
   const env = { PUSH, ORIGIN: "x", RANK_OFF: "1", MEMBERS_OFF: "1" };
@@ -72,14 +72,14 @@ test("nightly build: 22 events within 200 km, over two ticks of at most 45 calls
     perTick.push(state.calls.length - n0);
     if (PUSH.m.has("cal")) break;
   }
-  assert.deepEqual(perTick, [40, 20], "list 1 + 22 x (info + classes) + 9 radius bands + 6 caps = 60 calls, 40 + 20");
+  assert.deepEqual(perTick, [40, 40, 31], "list 1 + 45 x (info + classes) + 14 radius bands + 6 caps = 111 calls, 40 + 40 + 31");
   assert.ok(perTick.every(n => n <= 45));
-  assert.equal(state.calls.filter(c => /GetOrganisationEventsAsync/.test(c) && !/radiusKm=200/.test(c)).length, 9, "radius bands");
+  assert.equal(state.calls.filter(c => /GetOrganisationEventsAsync/.test(c) && !/radiusKm=1600/.test(c)).length, 14, "radius bands");
   assert.ok(state.calls.every(c => !/GetPlayersForClassAsync|ParticipatedEventsAsync/.test(c)), "no per-player calls");
   const cal = JSON.parse(PUSH.m.get("cal"));
-  assert.equal(cal.events.length, 22);
-  assert.ok(cal.events.every(e => e.km <= 200 && kmFromHome(e.id) <= 200));
-  assert.ok(!cal.events.some(e => [73041, 74476, 73759].includes(e.id)), "Karlstad, Göteborg, Växjö: too far");
+  assert.equal(cal.events.length, 45);
+  assert.equal(cal.events.filter(e => e.km <= 200).length, 22, "the 22 within 20 mil as before");
+  assert.deepEqual([73041, 74476, 73759].map(id => cal.events.find(e => e.id === id).km), [300, 450, 291], "Karlstad, Göteborg, Växjö: further away, now in");
   assert.deepEqual(cal.events.map(e => e.start), cal.events.map(e => e.start).slice().sort(), "sorted by start");
   const by = id => cal.events.find(e => e.id === id);
   assert.deepEqual([by(73554).km, by(73554).approx, by(73468).km, by(73468).approx, by(73829).km, by(71858).km, by(71858).approx], [36, undefined, 30, 1, 40, 200, 1],
@@ -89,8 +89,8 @@ test("nightly build: 22 events within 200 km, over two ticks of at most 45 calls
     ["Padelverket Fall Open", "Padelverket Haninge Sportklubb", "Jordbro", "2026-10-13T23:55:00", 1, "https://www.rankedin.com/sv/tournament/73468/padelverket-fall-open-sanktionerade-b-c-d-och-mix-klasser"]);
   assert.deepEqual(by(73554).regs, [{ pid: 1675246, classId: 173729 }, { pid: 1849853, classId: 173729 }], "Thea and Cassandra entered (from the discovery)");
   assert.deepEqual(cal.caps, { d: "2026-09-28", M: { B: 386.84, C: 126.85, D: 12.3 }, F: { B: 420.27, C: 132.13, D: 21 } });
-  assert.ok(JSON.stringify(cal).length < 25000, "compact: " + JSON.stringify(cal).length);
-  assert.ok(PUSH.puts.filter(k => k === "cal").length === 1 && PUSH.puts.filter(k => k === "calw").length === 2);
+  assert.ok(JSON.stringify(cal).length < 50000, "compact: " + JSON.stringify(cal).length);
+  assert.ok(PUSH.puts.filter(k => k === "cal").length === 1 && PUSH.puts.filter(k => k === "calw").length === 3);
 
   // Done for the night: the later minutes do nothing (one KV read)
   const c0 = state.calls.length, p0 = PUSH.ops.put;
@@ -102,9 +102,9 @@ test("nightly build: 22 events within 200 km, over two ticks of at most 45 calls
   const n1 = state.calls.length, puts1 = PUSH.puts.length;
   for (let i = 0; i < 3; i++) { _resetMemory(); await tick({ ...env, NOW: at("2026-09-29T01:23:00Z", i) }); }
   const night2 = state.calls.slice(n1);
-  assert.equal(night2.length, 45, "1 list + 44");
-  assert.ok(!night2.some(c => /radiusKm=(?!200)/.test(c) || /SearchRankingPlayersAsync/.test(c)));
-  assert.deepEqual(PUSH.puts.slice(puts1), ["calw", "calw"], "no cal write");
+  assert.equal(night2.length, 91, "1 list + 45 x 2");
+  assert.ok(!night2.some(c => /radiusKm=(?!1600)/.test(c) || /SearchRankingPlayersAsync/.test(c)));
+  assert.deepEqual(PUSH.puts.slice(puts1), ["calw", "calw", "calw"], "no cal write");
 
   // A new entry in a class: written
   state.over = { "/tournament/GetClassesSectionAsync?tournamentId=73468": { Classes: CF("classes_73468").Classes.map(c => c.ClassId === 173514 ? { ...c, PlayersCount: 2 } : c) } };
@@ -132,7 +132,7 @@ test("the day's other work keeps its share: a step never takes the last 5 subreq
   const budgeted = async path => { if (n >= 7) { const e = new Error("subrequest budget"); e.budget = true; throw e; } n++; return route(path); };
   const r1 = await calendarStep(budgeted, new Date(NIGHT), null, null, DISC);
   assert.equal(r1.cal, null); assert.equal(n, 7);
-  assert.equal(r1.w.list.length, 22); assert.equal(Object.keys(r1.w.info).length, 3, "resumes where it stopped");
+  assert.equal(r1.w.list.length, 45); assert.equal(Object.keys(r1.w.info).length, 3, "resumes where it stopped");
   // index.js: budget.left 12 -> the calendar gets 7
   const { runCalendar } = await import("../src/index.js");
   const budget = { left: 12 }, log = {};

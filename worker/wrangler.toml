@@ -38,7 +38,7 @@ simple = { limit = 5, period = 60 }
 [[ratelimits]]
 name = "API_RL"
 namespace_id = "1002"
-simple = { limit = 60, period = 60 }
+simple = { limit = 300, period = 60 }   # a venue: many phones and the big screen behind one address
 
 # GET /live (the live relay): polled once a minute by every open app during an event. Many phones at one venue can
 # share an IP (the club's wifi), so this limit is higher. Each call costs at most one KV read per isolate per 25 s.

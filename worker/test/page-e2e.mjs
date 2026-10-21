@@ -54,7 +54,7 @@ for (const m of ["01:23", "01:24", "01:25"]) { _resetMemory(); await tick({ PUSH
 _resetMemory();
 const CAL = await (await worker.fetch(new Request("https://w/cal"), { PUSH, NOW: "2026-09-28T08:00:00Z", ORIGIN: "x" })).json();
 globalThis.fetch = realFetch;
-assert.equal(CAL.events.length, 22, "calendar built");
+assert.equal(CAL.events.length, 45, "calendar built (all of Sweden)");
 assert.ok(CAL.events.find(e => e.id === 73554).regs.some(r => r.pid === 1675246), "Thea entered at Vista (discovery)");
 assert.deepEqual(EVENTS.wins, [], "no winner during the day");
 assert.deepEqual(EVENTS_WEEK.wins.map(w => w.id + " " + w.s), ["164681:1 6-1 6-4"], "worker wins the week after");
@@ -160,6 +160,8 @@ async function newPage(opts = {}) {
   });
   // Push without a push service: a fake subscription, so the page's /subscribe calls can be checked.
   await page.addInitScript(() => {
+    // the tests were written when Thea and Kian were followed by default (the page now starts with nobody)
+    if (localStorage.getItem("padel.follow.v1") === null && !window.__noFollow){ localStorage.setItem("padel.follow.v1", "[1675246,1680004]"); localStorage.setItem("padel.follow.mig1", "1"); }
     window.__notes = [];
     window.__csp = [];
     document.addEventListener("securitypolicyviolation", e => window.__csp.push(e.violatedDirective + " " + e.blockedURI));
@@ -306,7 +308,7 @@ try {
     await page.waitForFunction(() => /Välkommen, Mikael/.test(document.querySelector("#konto .kmsg")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
     await page.waitForSelector("#konto .klist", { timeout: 8000 }).catch(() => {});
     const k1 = await page.evaluate(() => [location.hash, document.querySelector("#konto .kmsg")?.textContent, document.getElementById("acct").textContent, document.querySelector("#konto .klist")?.textContent.replace(/\s+/g, " ")]);
-    ok("Konto: americano without a login shows the hall QR code; the invite link logs the phone in, leaves the address bar, admin sees the list", /Skanna koden/.test(locked[0]) && !locked[1] && /\/auth\/hall\/qr\?code=[a-z2-9]{10}$/.test(locked[2]) && k1[0] === "#konto" && /Välkommen, Mikael/.test(k1[1] || "") && k1[2] === "Konto: Mikael" && /Mikael HolmbergAdmin · Inloggad/.test(k1[3] || ""), { locked, k1 });
+    ok("Konto: americano without a login shows the hall QR code; the invite link logs the phone in, leaves the address bar, admin sees the list", /Skanna koden/.test(locked[0]) && !locked[1] && /\/auth\/hall\/qr\?code=[a-z2-9]{8}$/.test(locked[2]) && k1[0] === "#konto" && /Välkommen, Mikael/.test(k1[1] || "") && k1[2] === "Konto: Mikael" && /Mikael HolmbergAdmin · Inloggad/.test(k1[3] || ""), { locked, k1 });
     await page.selectOption("#kPid", "1675246");
     await page.check("#kArr");
     await page.click('[data-k="add"]');
@@ -502,6 +504,24 @@ try {
     await page.evaluate(id => { const m = JSON.parse(localStorage.getItem("padel.amx.mine") || "[]").filter(x => x.id !== id); localStorage.setItem("padel.amx.mine", JSON.stringify(m)); }, vid);
     await page.goto(url("#/"));
   }
+  { // Startsidan: Klubben or Mitt padel (only the followed: club-wide sections gone); following nobody: a hint
+    await page.goto(url("#/"));
+    await page.waitForSelector('#homeMode [data-hm="mine"]', { timeout: 8000 }).catch(() => {});
+    await page.click('#homeMode [data-hm="mine"]');
+    await page.waitForTimeout(300);
+    const m1 = await page.evaluate(() => [getComputedStyle(document.getElementById("secTop")).display, document.getElementById("hmNone").hidden, [...document.querySelectorAll("#agenda .arow")].length, [...document.querySelectorAll("#agenda .arow")].every(a => /Thea|Kian|Holmberg|Borgström/.test(a.innerHTML) || /Lag/.test(a.textContent))]);
+    const keep = await page.evaluate(() => localStorage.getItem("padel.follow.v1"));
+    await page.evaluate(() => localStorage.setItem("padel.follow.v1", "[]"));
+    await page.reload();
+    await page.waitForSelector("#homeMode", { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    const m2 = await page.evaluate(() => [document.getElementById("hmNone").hidden, document.getElementById("hmNone").textContent, document.querySelectorAll("#agenda .arow").length]);
+    await page.evaluate(k => { localStorage.setItem("padel.follow.v1", k); localStorage.setItem("padel.home.mode", "club"); }, keep);
+    await page.reload();
+    await page.waitForTimeout(300);
+    const m3 = await page.evaluate(() => getComputedStyle(document.getElementById("secTop")).display);
+    ok("Startsidan: Mitt padel hides the club-wide sections and keeps the followed; following nobody: a hint; Klubben again", m1[0] === "none" && m1[1] === true && m1[3] && m2[0] === false && /Du följer ingen än/.test(m2[1]) && m2[2] === 0 && m3 !== "none", { m1, m2, m3 });
+  }
   { // Americano: set up with a club player and guests, a result (the other side filled in), a new round, the table
     await page.goto(url("#amx/ny"));
     await page.waitForSelector("#amxGuest");
@@ -660,10 +680,18 @@ try {
       await page.waitForFunction(k => /#\d+/.test(document.getElementById("tv-" + k + "-rank")?.textContent || ""), k, { timeout: 8000 }).catch(() => {});
       await page.waitForTimeout(300);
       const list = await sugg(k), R = ROSTER.find(x => x.key === k);
-      const want = suggestFor(CAL, { pid, gender: g, pts: R.points, rank: R.rank }, new Date(T), taken(pid), 99).map(x => x.id);
+      const want = suggestFor({ ...CAL, events: CAL.events.filter(e => e.km <= 200) }, { pid, gender: g, pts: R.points, rank: R.rank }, new Date(T), taken(pid), 99).map(x => x.id);   // 20 mil: the default radius
       const shown = await page.$$eval("#sgList-" + k + " > .sg", c => c.length), more = await page.$eval("#sgList-" + k + " .sgmore summary", e => e.textContent).catch(() => null);
       ok(k + ": Förslag på tävlingar lists every suggestion within 20 mil (same rules as calendar.js), by date; six first, the rest under Visa alla", list.length > 0 &&
         JSON.stringify(list.map(x => x.id)) === JSON.stringify(want) && shown === Math.min(6, want.length) && (want.length > 6 ? more === "Visa alla " + want.length + " tävlingar" : more === null), { page: list.map(x => x.id), want, shown, more });
+      if (k === "thea") {   // the radius: all of Sweden lists the far ones too; back to 20 mil
+        await page.selectOption("#rad-thea", "0");
+        await page.waitForTimeout(300);
+        const all = (await sugg(k)).map(x => x.id), wantAll = suggestFor(CAL, { pid, gender: g, pts: R.points, rank: R.rank }, new Date(T), taken(pid), 99).map(x => x.id);
+        ok("Förslag: Hela Sverige lists the tournaments further away too", wantAll.length > want.length && JSON.stringify(all) === JSON.stringify(wantAll), { all, wantAll });
+        await page.selectOption("#rad-thea", "200");
+        await page.waitForTimeout(300);
+      }
       ok(k + ": every card: date, name, club/town, distance in mil, class chips, Sista anmälan, RankedIn button (new tab, noopener)", list.every(x => x.h && / mil$/.test(x.what) && x.chips.length &&
         /^Sista anmälan (mån|tis|ons|tor|fre|lör|sön) \d+ \w+/.test(x.facts) && x.btn && x.btn.t.startsWith("Anmäl på RankedIn") && /^https:\/\/www\.rankedin\.com\/sv\/tournament\/\d+/.test(x.btn.href) &&
         x.btn.rel === "noopener" && x.btn.target === "_blank"), list);

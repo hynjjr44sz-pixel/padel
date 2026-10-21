@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-nSlK/4+VQAYDNQD9MLkadZXb4Ujyq2Qm3oDGAdKRMXs='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-NwfzImw6F16hgOsNPB/XzWvg0Gi2tTbaxsZXL7ohcHM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -671,7 +671,11 @@
   .vinpick{ padding:12px 14px; margin-top:10px; } .vinpick p{ margin:0 0 6px; font-weight:700; } .vinpick .amxsec[aria-pressed="true"]{ background:var(--solid); color:var(--solid-ink); border-color:var(--solid); }
   .vinres{ padding:14px 16px; margin-top:12px; font-size:16px; }
   .hallbox{ display:flex; flex-wrap:wrap; gap:16px; align-items:center; } .hallbox > div{ flex:1; min-width:220px; } .hallqr{ flex:none; width:220px; height:220px; border-radius:12px; background:#fff; }
-  .hallon{ margin:8px 0 0; } .khall{ border:2px solid #FFD84A; }
+  .hallon{ margin:8px 0 0; } .hallcode{ font:900 40px/1 "Big Shoulders Display", sans-serif; letter-spacing:.08em; margin:4px 0 8px !important; } .khall{ border:2px solid #FFD84A; }
+  .homemode{ margin:14px 0 4px; } .hmnone{ margin:12px 0 0; }
+  #home.hm-mine #secWeek, #home.hm-mine #secWin, #home.hm-mine #secCtr, #home.hm-mine #acadCard, #home.hm-mine #secTop{ display:none !important; }
+  .radsel{ appearance:none; padding:6px 28px 6px 10px; border-radius:99px; border:1px solid var(--line); background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238B8D98' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center; color:var(--ink); font:600 12px/1 "Instrument Sans", sans-serif; }
+  .tavf .radsel{ margin-right:8px; }
   .amxpts{ width:100px; height:40px; margin-top:8px; padding:0 12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 16px/1 "Instrument Sans", sans-serif; }
   .amxbar{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 14px; } .amxbar .amxgo{ margin:0; }
   .amxerr{ color:var(--loss); font-size:13.5px; margin:8px 0 0; }
@@ -1945,6 +1949,8 @@
       <img src="img/nynas-logo.png" width="78" height="100" alt="Nynäs Padel Club">
       <div><h1 id="h-home" data-i18n>Nynäs idag</h1><p id="clubMeta">Nynäs Padel Club</p></div>
     </div>
+    <div class="seg homemode" role="group" aria-label="Vy" id="homeMode"><button type="button" data-hm="club" aria-pressed="true" data-i18n>Klubben</button><button type="button" data-hm="mine" aria-pressed="false" data-i18n>Mitt padel</button></div>
+    <p class="empty hmnone" id="hmNone" hidden></p>
 
     <section aria-labelledby="h-now" id="secNow">
       <div class="sh"><h2 id="h-now" data-i18n>Spelar nu</h2><div class="meta" id="nowMeta"></div></div>
@@ -2092,6 +2098,22 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Klubben":"El club",
+    "Mitt padel":"Mi pádel",
+    "Du följer ingen än. Tryck på stjärnan på en spelares sida, så visas bara deras matcher och tävlingar här.":"Aún no sigues a nadie. Toca la estrella en la página de un jugador y aquí solo verás sus partidos y torneos.",
+    "Avstånd från Nynäshamn":"Distancia desde Nynäshamn",
+    "Inom {m}":"A menos de {m}",
+    "Hela Sverige":"Toda Suecia",
+    "{n} tävlingar inom {m}, kommande 8 veckor":"{n} torneos a menos de {m}, próximas 8 semanas",
+    "{n} tävlingar i hela Sverige, kommande 8 veckor":"{n} torneos en toda Suecia, próximas 8 semanas",
+    "Många anrop från den här uppkopplingen just nu. Vänta en halv minut och försök igen.":"Muchas peticiones desde esta conexión ahora mismo. Espera medio minuto y vuelve a intentarlo.",
+    "Eller i appen: Konto, Godkänn dator, skriv koden":"O en la app: Cuenta, Aprobar ordenador, escribe el código",
+    "Logga in först, med ett konto som får starta americanos.":"Inicia sesión primero con una cuenta que pueda empezar americanos.",
+    "Öppnades sidan i webbläsaren i stället för appen? Öppna appen, gå till Konto, Godkänn dator och skriv koden som står på datorn.":"¿Se abrió la página en el navegador en vez de en la app? Abre la app, ve a Cuenta, Aprobar ordenador y escribe el código que sale en el ordenador.",
+    "Godkänn dator":"Aprobar ordenador",
+    "Skriv koden som visas på datorn i hallen, så får den starta americanos i ditt namn i 12 timmar.":"Escribe el código que aparece en el ordenador del club y podrá empezar americanos a tu nombre durante 12 horas.",
+    "Koden ska vara 8 tecken, till exempel ABCD-EFGH.":"El código tiene 8 caracteres, por ejemplo ABCD-EFGH.",
+    "Koden finns inte eller har gått ut. Ta fram en ny på datorn.":"El código no existe o ha caducado. Muestra uno nuevo en el ordenador.",
     "final":"final",
     "match {r}":"partido {r}",
     "Arrangören startar tiden och får ett larm när den är ute. Finalen spelas utan tid.":"El organizador inicia el tiempo y recibe una alarma cuando se acaba. La final se juega sin tiempo.",
@@ -3526,9 +3548,12 @@
   var FOLLOW_KEY = "padel.follow.v1", FOLLOW_MEM = null;
   function follows(){
     var f = FOLLOW_MEM || store.json(FOLLOW_KEY);
-    if (!Array.isArray(f)){
-      f = [LEGACY.thea, LEGACY.kian].filter(function(pid){ return BYPID[pid]; });
-      if (!store.set(FOLLOW_KEY, JSON.stringify(f))) FOLLOW_MEM = f;
+    if (!Array.isArray(f)){ f = []; if (!store.set(FOLLOW_KEY, "[]")) FOLLOW_MEM = f; }   // nobody until one picks
+    // once: the old default (Thea and Kian, from before the app was the club's) gone on phones that never changed it
+    if (!store.get("padel.follow.mig1")){
+      store.set("padel.follow.mig1", "1");
+      var old = [LEGACY.thea, LEGACY.kian].map(Number), kids = (AUTH && AUTH.me && AUTH.me.kids) || [];
+      if (f.length === 2 && old.every(function(p){ return f.map(Number).indexOf(p) >= 0; }) && !old.some(function(p){ return kids.indexOf(p) >= 0; })){ f = []; store.set(FOLLOW_KEY, "[]"); FOLLOW_MEM = null; }
     }
     return f.map(Number).filter(function(pid){ return BYPID[pid]; });
   }
@@ -6236,6 +6261,19 @@
       if (VIEW.name === "tavlingar") try { renderTav(); } catch (e){ warn("Tävlingar", e); }
     });
   }
+  // the radius for suggestions and Tävlingar (km from Nynäshamn; 0: all of Sweden), chosen on this device
+  var RAD_OPTS = [[50, "5 mil"], [100, "10 mil"], [200, "20 mil"], [400, "40 mil"], [0, "Hela Sverige"]];
+  function radius(){ var v = store.get("padel.radius"); return v === null || v === "" || isNaN(+v) ? 200 : +v; }
+  function inRadius(e){ var r = radius(); return !r || typeof e.km !== "number" || e.km <= r; }
+  function radSelect(id){ var r = radius(); return '<select class="radsel" id="' + id + '" aria-label="' + esc(_("Avstånd från Nynäshamn")) + '">' + RAD_OPTS.map(function(o){ return '<option value="' + o[0] + '"' + (o[0] === r ? " selected" : "") + '>' + esc(o[0] ? _("Inom {m}", {m:o[1]}) : _(o[1])) + '</option>'; }).join("") + '</select>'; }
+  document.addEventListener("change", function(e){
+    var sl = e.target && e.target.classList && e.target.classList.contains("radsel") ? e.target : null;
+    if (!sl) return;
+    store.set("padel.radius", sl.value);
+    Object.keys(PANELS).forEach(function(w){ try { var hh = document.getElementById("sgList-" + w); if (hh) hh._h = null; renderSugg(w); } catch (er){} });
+    [].forEach.call(document.querySelectorAll(".radsel"), function(x){ if (x !== sl) x.value = sl.value; });
+    if (VIEW.name === "tavlingar") try { renderTav(); } catch (er){}
+  });
   var SG_ORDER = ["D", "C", "B", "A"], SG_POS = {M:{A:60, B:200, C:1200}, F:{A:50, B:160, C:700}};
   function sgBase(caps, g, pts, rank){
     if (g !== "M" && g !== "F") return null;
@@ -6271,7 +6309,7 @@
     if (!el || !CAL) return {el:el, list:[]};
     var taken = playerEvents(P).filter(function(x){ return x.kind === "tournament"; }).map(function(x){ return +x.tournamentId; });
     (CAL.events || []).slice().sort(function(a, b){ return String(a.start).localeCompare(String(b.start)); }).forEach(function(e){
-      if (out.length >= (n || 6) || !sgOpen(e, t) || taken.indexOf(+e.id) >= 0) return;
+      if (out.length >= (n || 6) || !sgOpen(e, t) || taken.indexOf(+e.id) >= 0 || !inRadius(e)) return;
       var mates = sgMates(e);
       if (mates.indexOf(P.pid) >= 0) return;
       var cls = (e.classes || []).filter(function(c){ return c.gender === P.gender && el.levels.indexOf(c.level) >= 0; })
@@ -6576,8 +6614,25 @@
     if (!x) return "";
     return dayOf(x) === dayOf(now()) ? hm(x) : DOW[loc(x).getUTCDay()] + " " + hm(x);
   }
+  // Startsidan: Klubben (all the club's) or Mitt padel (only the players one follows, whatever the event: tournaments,
+  // SPL, series, americanos); chosen on this device
+  function homeMine(){ return store.get("padel.home.mode") === "mine"; }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("#homeMode button[data-hm]");
+    if (!b) return;
+    store.set("padel.home.mode", b.getAttribute("data-hm"));
+    renderHome();
+  });
+  function homeMode(){
+    var mine = homeMine(), home = document.getElementById("home"), none = document.getElementById("hmNone");
+    if (!home) return;
+    home.classList.toggle("hm-mine", mine);
+    [].forEach.call(document.querySelectorAll("#homeMode button"), function(x){ x.setAttribute("aria-pressed", String((x.getAttribute("data-hm") === "mine") === mine)); });
+    if (none){ none.hidden = !mine || follows().length > 0; none.innerHTML = _("Du följer ingen än. Tryck på stjärnan på en spelares sida, så visas bara deras matcher och tävlingar här.") + ' <a href="#spelare">' + _("Spelare") + '</a>'; }
+  }
   function renderHome(){
     if (!ROSTER.length) return;
+    try { homeMode(); } catch (e){ warn("Startsidan", e); }
     try { renderNow(); } catch (e){ warn("Spelar nu", e); }
     try { renderWeek(); } catch (e){ warn("Veckan i klubben", e); }
     try { renderWins(); } catch (e){ warn("Veckans vinnare", e); }
@@ -6655,12 +6710,14 @@
     });
     rows.sort(function(a, b){ return (b.fol ? 1 : 0) - (a.fol ? 1 : 0) || (b.s.pcls === "live" ? 1 : 0) - (a.s.pcls === "live" ? 1 : 0); });
     DOCK_NOW = rows.slice();
+    if (homeMine()) rows = rows.filter(function(r){ return r.fol; });
     // americanos on now (the same as the dock's capsule), one row each, after the matches
     // the list again after a minute, so an americano that started or ended shows here
     if (AMX && PUSH_API && (!AMX.list || Date.now() - (AMX.listAt || 0) > 60000)){ AMX.listAt = Date.now(); amxApi("/amx").then(function(d){ AMX.list = d.list || []; try { renderNow(); renderAmxHome(); } catch (e){} }, function(){}); }
     amxOnNow().forEach(function(x){
       var ps = (x.pids || []).map(function(p){ return BYPID[p]; }).filter(Boolean);
-      rows.push({amx:x, players:ps, fol:ps.some(function(P){ return f.indexOf(P.pid) >= 0; }), s:{pill:_("Pågår"), pcls:"live"}});
+      var fo = ps.some(function(P){ return f.indexOf(P.pid) >= 0; });
+      if (!homeMine() || fo) rows.push({amx:x, players:ps, fol:fo, s:{pill:_("Pågår"), pcls:"live"}});
     }); try { dockLive(); } catch (e){}
     var np = rows.reduce(function(a, r){ return a + (r.amx ? r.amx.n || r.players.length : r.team ? r.players.length : 1); }, 0);
     if (meta) meta.textContent = np ? np + (np === 1 ? _(" spelare") : _(" spelare ")) : "";
@@ -6695,7 +6752,7 @@
     if (!sec || !host) return;
     // RankedIn (the worker's live monitoring) and the club's series (Backhandsmash, the last two weeks), newest first
     var list = ((DISC && DISC.latest) || []).filter(function(x){ return x && x.mid && x.win; }).map(function(x){ return {x:x, at:+(riDate(x.d) || 0)}; })
-      .concat(bhsLatest()).sort(function(a, b){ return b.at - a.at; }).slice(0, 8).map(function(y){ return y.x; }), f = follows();
+      .concat(bhsLatest()).sort(function(a, b){ return b.at - a.at; }).filter(function(y){ return !homeMine() || (y.x.pids || []).some(function(p){ return follows().indexOf(Number(p)) >= 0; }); }).slice(0, 8).map(function(y){ return y.x; }), f = follows();
     sec.hidden = !list.length;
     if (!list.length){ host.innerHTML = ""; return; }
     host.innerHTML = RNAV + '<ol aria-label="' + _("Senaste resultat") + '">' + list.map(function(x){
@@ -6980,7 +7037,11 @@
     var lim = +now() + 45 * 864e5, teamSeen = {}, rows = upcomingRows().filter(function(r){
       if (r.kind === "tl"){ if (teamSeen[r.e.teamId]) return false; teamSeen[r.e.teamId] = 1; return true; }   // the next round per team
       return +r.at < lim;
-    }).concat(bhsAgenda(lim)).sort(function(a, b){ return a.at - b.at; }).slice(0, 10), days = [], by = {};
+    }).concat(bhsAgenda(lim)).filter(function(r){
+      if (!homeMine()) return true;   // Mitt padel: the followed players' (and followed teams')
+      var fo = follows();
+      return (r.players || []).some(function(P){ return fo.indexOf(P.pid) >= 0; }) || (r.kind === "tl" && r.e && (followsTeams().indexOf(Number(r.e.teamId)) >= 0 || TEAMS.some(function(T){ return T.id === r.e.teamId && T.players.some(function(p){ return fo.indexOf(p.pid) >= 0; }); })));
+    }).sort(function(a, b){ return a.at - b.at; }).slice(0, 10), days = [], by = {};
     rows.forEach(function(r){ var d = dayOf(r.at); if (!by[d]){ by[d] = []; days.push(d); } by[d].push(r); });
     if (meta) meta.textContent = rows.length ? cap(days.slice(0, 3).map(function(d){ return MON[+d.slice(5, 7) - 1]; }).filter(function(m, i, a){ return a.indexOf(m) === i; }).join(" · ")) : "";
     host.innerHTML = days.length ? days.map(function(d){
@@ -7251,7 +7312,7 @@
       '<section class="t-off" aria-labelledby="h-hist-' + k + '" id="hs-' + k + '" hidden><div class="sh"><h2 id="h-hist-' + k + '">' + _("Senaste matcher") + '</h2><div class="meta" id="histMeta-' + k + '"></div></div><div class="card hist" id="hist-' + k + '"></div></section>' +
       '<section class="t-off" aria-labelledby="h-up-' + k + '"><div class="sh"><h2 id="h-up-' + k + '">' + _("Kommande") + '</h2><div class="meta" id="' + k + 'UpMeta"></div></div><div class="ups" id="' + k + 'Up"></div>' +
         '<p class="calrow">' + calLink([P.pid], _("{name} i kalendern", {name:P.short})) + '</p></section>' +
-      '<section class="t-off" aria-labelledby="h-sg-' + k + '" id="sg-' + k + '"><div class="sh"><h2 id="h-sg-' + k + '">' + _("Förslag på tävlingar") + '</h2><div class="meta">' + _("Inom&nbsp;20&nbsp;mil") + '</div></div>' +
+      '<section class="t-off" aria-labelledby="h-sg-' + k + '" id="sg-' + k + '"><div class="sh"><h2 id="h-sg-' + k + '">' + _("Förslag på tävlingar") + '</h2><div class="meta">' + radSelect("rad-" + k) + '</div></div>' +
         '<p class="sgnote" id="sgNote-' + k + '" hidden></p><div class="ups" id="sgList-' + k + '"><p class="empty">' + _("Hämtar förslag …") + '</p></div></section>' +
       '<section class="t-off" aria-labelledby="h-info-' + k + '"><div class="sh"><h2 id="h-info-' + k + '">' + _("Bra att veta") + '</h2><div class="meta">Svenska Padelförbundet</div></div><div class="info" id="' + k + 'Info"></div></section>' +
       '<section class="t-loc" aria-labelledby="h-bup-' + k + '" id="bup-' + k + '" hidden><div class="sh"><h2 id="h-bup-' + k + '">' + _("Kommande seriematcher") + '</h2><div class="meta">Backhandsmash</div></div><div class="ups" id="bhsUp-' + k + '"></div></section>' +
@@ -9412,8 +9473,10 @@
     }
     box.innerHTML = h + '<div class="card ktxt hallbox">' + (HALLREQ.code ? '<img class="hallqr" src="' + esc(PUSH_API + "/auth/hall/qr?code=" + HALLREQ.code) + '" width="220" height="220" alt="' + esc(_("QR-kod")) + '">' : '<div class="hallqr"></div>') +
       '<div><p><b>' + _("Starta americanos på den här datorn") + '</b></p><p>' + _("Skanna koden med telefonen. Den som får starta americanos godkänner, och sedan kan datorn starta americanos i 12 timmar.") + '</p>' +
+      (HALLREQ.code ? '<p>' + _("Eller i appen: Konto, Godkänn dator, skriv koden") + '</p><p class="hallcode">' + esc(hallFmt(HALLREQ.code)) + '</p>' : "") +
       '<p class="kdim">' + _("Har du ett konto kan du också logga in här under Konto.") + ' <a href="#konto">' + _("Konto") + '</a></p></div></div>';
   }
+  function hallFmt(c){ c = String(c || "").toUpperCase(); return c.length === 8 ? c.slice(0, 4) + "-" + c.slice(4) : c; }
   function hallPoll(){
     var r = HALLREQ;
     if (!r || !r.code || r.polling) return;
@@ -9422,10 +9485,10 @@
       if (HALLREQ !== r || r.exp < Date.now() || !(location.hash === "#amx/ny")){ r.polling = false; if (HALLREQ === r && r.exp < Date.now() && location.hash === "#amx/ny") renderAmxNew(); return; }
       amxApi("/auth/hall/poll", {code:r.code, secret:r.secret}).then(function(d){
         if (d.token){ HALL = {token:d.token, by:d.by, exp:d.exp}; store.set(HALL_KEY, JSON.stringify(HALL)); HALLREQ = null; r.polling = false; renderAmxNew(); return; }
-        setTimeout(step, 2500);
+        setTimeout(step, 4000);
       }, function(e){ r.polling = false; if (/expired/.test(e.message)){ HALLREQ = null; renderAmxNew(); } else setTimeout(step, 5000); });
     };
-    setTimeout(step, 2500);
+    setTimeout(step, 4000);
   }
   function hallEnd(){
     if (HALL && HALL.token) fetch(PUSH_API + "/auth/hall/end", {method:"POST", headers:{"Content-Type":"application/json", "X-Hall":HALL.token}, body:"{}", credentials:"omit"}).catch(function(){});
@@ -9462,7 +9525,9 @@
         '<label class="amxf"><span>' + _("Namn") + '</span><input id="amxName" maxlength="60" value="' + esc(d.name) + '" placeholder="' + esc(_("t.ex. Söndagsamericano")) + '"></label>' +
         '<div class="amxf"><span>' + _("Format") + '</span><div class="seg">' + chip("fmt", "americano", "Americano", d.fmt === "americano") + chip("fmt", "mexicano", "Mexicano", d.fmt === "mexicano") + chip("fmt", "lag", _("Lagamericano"), team) + chip("fmt", "vinnar", _("Vinnarbana"), vin) + '</div><small>' + esc(fmtNote) + '</small></div>' +
         (vin ? '<div class="amxf"><span>' + _("Matcher") + '</span><div class="seg">' + [5, 6, 7, 8, 9].map(function(v){ return chip("vn", v, String(v), d.vn === v); }).join("") + '</div><small>' + esc(_("Sedan en final.")) + '</small></div>' +
-          '<div class="amxf"><span>' + _("Minuter per match") + '</span><div class="seg">' + [8, 10, 12, 15, 20].map(function(v){ return chip("vmin", v, String(v), d.vmin === v); }).join("") + '</div><small>' + esc(_("Arrangören startar tiden och får ett larm när den är ute. Finalen spelas utan tid.")) + '</small></div>' +
+          '<div class="amxf"><span>' + _("Minuter per match") + '</span><div class="seg">' + [8, 10, 12, 15, 20].map(function(v){ return chip("vmin", v, String(v), !d.ownMin && d.vmin === v); }).join("") +
+            '<button type="button" data-ownmin="1" aria-pressed="' + !!d.ownMin + '">' + _("Eget") + '</button></div>' +
+            (d.ownMin ? '<input id="amxMin" class="amxpts" type="number" inputmode="numeric" min="3" max="60" value="' + d.vmin + '" aria-label="' + esc(_("Minuter per match")) + '">' : "") + '<small>' + esc(_("Arrangören startar tiden och får ett larm när den är ute. Finalen spelas utan tid.")) + '</small></div>' +
           '<div class="amxf"><span>' + _("Banor") + '</span><div class="seg">' + [2, 3].map(function(v){ return chip("courts", v, String(v), d.courts === v); }).join("") + '</div><small>' + esc(_("Exakt {n} spelare.", {n:4 * d.courts})) + '</small></div>' : "") +
         (vin ? "" : '<div class="amxf"><span>' + _("Räkning") + '</span><div class="seg">' + chip("mode", "pts", _("Poäng"), d.mode === "pts") + chip("mode", "games", _("Game"), d.mode === "games") + chip("mode", "free", _("Fritt"), d.mode === "free") + '</div>' +
           (vals.length ? '<div class="seg amxvals">' + vals.map(function(v){ return chip("pts", v, String(v), !ownPts && d.pts === v); }).join("") +
@@ -9491,6 +9556,8 @@
     box.querySelector("#amxName").oninput = function(e){ d.name = e.target.value; };
     var ptsIn = box.querySelector("#amxPts");
     if (ptsIn) ptsIn.oninput = function(){ var v = Math.round(+ptsIn.value); if (v >= 8 && v <= 64) d.pts = v; };
+    var minIn = box.querySelector("#amxMin");
+    if (minIn) minIn.oninput = function(){ var v = Math.round(+minIn.value); if (v >= 3 && v <= 60) d.vmin = v; };
     var addG = function(){ var g = box.querySelector("#amxGuest"), v = g.value.replace(/\s+/g, " ").trim(); if (!v || d.players.length >= 32) return; if (d.players.some(function(p){ return p.n.toLowerCase() === v.toLowerCase(); })) return; d.players.push({n:v, fig:Math.floor(Math.random() * 99991)}); renderAmxNew(); var g2 = document.getElementById("amxGuest"); if (g2) g2.focus(); };
     box.querySelector("#amxAddG").onclick = addG;
     box.querySelector("#amxGuest").onkeydown = function(e){ if (e.key === "Enter"){ e.preventDefault(); addG(); } };
@@ -9502,7 +9569,8 @@
     box.onclick = function(e){
       var b = e.target.closest && e.target.closest("button");
       if (!b) return;
-      if (b.hasAttribute("data-set")){ var k = b.getAttribute("data-set"), v = b.getAttribute("data-v"); d[k] = k === "fmt" || k === "mode" ? v : +v; if (k === "pts") d.ownPts = false; renderAmxNew(); }
+      if (b.hasAttribute("data-set")){ var k = b.getAttribute("data-set"), v = b.getAttribute("data-v"); d[k] = k === "fmt" || k === "mode" ? v : +v; if (k === "pts") d.ownPts = false; if (k === "vmin") d.ownMin = false; renderAmxNew(); }
+      else if (b.hasAttribute("data-ownmin")){ d.ownMin = true; renderAmxNew(); var mi = document.getElementById("amxMin"); if (mi){ mi.focus(); mi.select(); } }
       else if (b.hasAttribute("data-ownpts")){ d.ownPts = true; renderAmxNew(); var pi = document.getElementById("amxPts"); if (pi){ pi.focus(); pi.select(); } }
       else if (b.hasAttribute("data-add")){ var P = BYPID[+b.getAttribute("data-add")]; if (P && d.players.length < 32){ d.players.push({n:P.name, pid:P.pid}); var keep = (document.getElementById("amxQ") || {}).value || ""; renderAmxNew(); var qq = document.getElementById("amxQ"); if (qq && keep){ qq.value = keep; qq.oninput(); } } }
       else if (b.hasAttribute("data-rm")){ d.players.splice(+b.getAttribute("data-rm"), 1); AMX.look = null; renderAmxNew(); }
@@ -9523,7 +9591,7 @@
           players:d.players.map(function(p){ return p.pid ? {pid:p.pid} : {n:p.n, img:p.img, fig:p.fig}; })}).then(function(r){
           AMX.busy = false; amxSetKey(r.id, r.key); amxRemember(r.t); AMX.draft = null; AMX.list = null; AMX.t = r.t; AMX.id = r.id; AMX.tab = "m";
           location.hash = "#amx/" + r.id;
-        }, function(er){ AMX.busy = false; b.disabled = false; document.getElementById("amxErr").textContent = er.message === "limit" ? _("Många americanos har startats härifrån idag. Logga in under Konto för att starta fler.") : _("Kunde inte starta: ") + er.message; });
+        }, function(er){ AMX.busy = false; b.disabled = false; document.getElementById("amxErr").textContent = /too many/.test(er.message) ? _("Många anrop från den här uppkopplingen just nu. Vänta en halv minut och försök igen.") : _("Kunde inte starta: ") + er.message; });
       }
     };
   }
@@ -9956,7 +10024,13 @@
     // a hall computer's QR code scanned: an arrangör says yes
     if (KONTO.hall) h += '<div class="card ktxt khall"><p><b>' + _("Godkänn datorn i hallen") + '</b></p>' + (authCan("arr") ?
       '<p>' + _("Datorn får starta americanos i ditt namn i 12 timmar. Den kommer inte åt något annat i ditt konto.") + '</p><div class="amxbar"><button type="button" class="amxgo" data-hallok="1">' + _("Godkänn") + '</button><button type="button" class="amxsec" data-hallno="1">' + _("Avbryt") + '</button></div>' :
-      '<p>' + esc(me ? _("Ditt konto har inte behörighet att starta americanos. Be klubben om rollen arrangör.") : _("Logga in först, med ett konto som får starta americanos. Skanna sedan koden igen.")) + '</p><div class="amxbar"><button type="button" class="amxsec" data-hallno="1">' + _("Stäng") + '</button></div>') + '</div>';
+      '<p>' + esc(me ? _("Ditt konto har inte behörighet att starta americanos. Be klubben om rollen arrangör.") : _("Logga in först, med ett konto som får starta americanos.")) + '</p>' +
+      (!me && window.PublicKeyCredential ? '<div class="amxbar"><button type="button" class="amxgo" data-k="pklogin">' + esc(_("Logga in med {m}", {m:pkName()})) + '</button></div><p class="amxerr" id="pkErr"></p>' : "") +
+      (!me ? '<p class="kdim">' + _("Öppnades sidan i webbläsaren i stället för appen? Öppna appen, gå till Konto, Godkänn dator och skriv koden som står på datorn.") + '</p>' : "") +
+      '<div class="amxbar"><button type="button" class="amxsec" data-hallno="1">' + _("Stäng") + '</button></div>') + '</div>';
+    // an arrangör types the code the hall computer shows
+    if (!KONTO.hall && authCan("arr")) h += '<div class="card ktxt khallin"><p><b>' + _("Godkänn dator") + '</b><br><small>' + _("Skriv koden som visas på datorn i hallen, så får den starta americanos i ditt namn i 12 timmar.") + '</small></p>' +
+      '<div class="amxguest"><input id="hallCode" maxlength="11" autocomplete="off" autocapitalize="characters" placeholder="ABCD-EFGH" inputmode="text"><button type="button" class="amxsec" data-hallcode="1">' + _("Godkänn") + '</button></div></div>';
     if (KONTO.code){
       // iPhone: Safari and the app on the home screen keep separate logins
       var ios = /iPhone|iPad/.test(navigator.userAgent || "") && !(navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches));
@@ -10161,6 +10235,15 @@
     konOp({op:"roles", id:u.id, roles:r});
   }
   function konClick(ev){
+    var hc = ev.target.closest("button[data-hallcode]");
+    if (hc){
+      var cv = String((document.getElementById("hallCode") || {}).value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!/^[a-z2-9]{8}$/.test(cv)){ KONTO.msg = _("Koden ska vara 8 tecken, till exempel ABCD-EFGH."); renderKonto(); return; }
+      hc.disabled = true;
+      authApi("/auth/hall/ok", {code:cv}).then(function(){ KONTO.msg = _("Klart. Datorn kan nu starta americanos."); renderKonto(); },
+        function(e){ hc.disabled = false; KONTO.msg = e.message === "expired" ? _("Koden finns inte eller har gått ut. Ta fram en ny på datorn.") : _("Det gick inte: ") + e.message; renderKonto(); });
+      return;
+    }
     var hb = ev.target.closest("button[data-hallok],button[data-hallno]");
     if (hb){
       if (hb.hasAttribute("data-hallno")){ KONTO.hall = null; renderKonto(); return; }
@@ -10637,13 +10720,13 @@
     if (!box) return;
     if (!CAL){ box.innerHTML = '<div class="phead"><div class="pt"><h1 id="h-tav">' + _("Tävlingar") + '</h1><div class="pm">' + _("Inom 20 mil, kommande 8 veckor") + '</div></div></div><p class="empty">' + _("Hämtar …") + '</p>'; loadCal(); return; }
     var t = now(), seg = function(id, cur, opts){ return '<div class="seg" role="group" id="' + id + '">' + opts.map(function(o){ return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (cur === o[0]) + '">' + esc(o[1]) + '</button>'; }).join("") + '</div>'; };
-    var list = (CAL.events || []).filter(function(e){ return (riDate(e.end) || riDate(e.start) || t) >= t; }).slice().sort(function(a, b){ return String(a.start).localeCompare(String(b.start)); }).map(function(e){
+    var list = (CAL.events || []).filter(function(e){ return (riDate(e.end) || riDate(e.start) || t) >= t && inRadius(e); }).slice().sort(function(a, b){ return String(a.start).localeCompare(String(b.start)); }).map(function(e){
       var cls = (e.classes || []).filter(function(c){ var lv = tavLevel(c); return (TAV.g === "all" || c.gender === TAV.g || (c.gender === "mixed" && TAV.lv === "all")) && (TAV.lv === "all" || lv === TAV.lv); });
       return {e:e, cls:cls};
     }).filter(function(x){ return x.cls.length; });
     var club = list.filter(function(x){ return (x.e.regs || []).length; });
-    var h = '<div class="phead"><div class="pt"><h1 id="h-tav">' + _("Tävlingar") + '</h1><div class="pm">' + esc(list.length + _(" tävlingar inom 20 mil, kommande 8 veckor")) + '</div></div></div>' +
-      '<div class="tavf">' + seg("tavG", TAV.g, [["all", _("Alla")], ["F", _("Dam")], ["M", _("Herr")]]) + seg("tavL", TAV.lv, [["all", _("Alla klasser")], ["A", "A"], ["B", "B"], ["C", "C"], ["D", "D"], ["J", _("Junior")]]) + '</div>';
+    var h = '<div class="phead"><div class="pt"><h1 id="h-tav">' + _("Tävlingar") + '</h1><div class="pm">' + esc(radius() ? _("{n} tävlingar inom {m}, kommande 8 veckor", {n:list.length, m:(RAD_OPTS.filter(function(o){ return o[0] === radius(); })[0] || [0, ""])[1]}) : _("{n} tävlingar i hela Sverige, kommande 8 veckor", {n:list.length})) + '</div></div></div>' +
+      '<div class="tavf">' + radSelect("radTav") + seg("tavG", TAV.g, [["all", _("Alla")], ["F", _("Dam")], ["M", _("Herr")]]) + seg("tavL", TAV.lv, [["all", _("Alla klasser")], ["A", "A"], ["B", "B"], ["C", "C"], ["D", "D"], ["J", _("Junior")]]) + '</div>';
     if (club.length) h += '<div class="sh"><h2>' + _("Nynäs är anmälda") + '</h2><div class="meta">' + club.length + '</div></div><div class="tavlist">' + club.map(function(x){ return tavCard(x, true); }).join("") + '</div>';
     var wk = null;
     list.forEach(function(x){
@@ -10783,7 +10866,7 @@
     var sm = /^#serie\/(\d+)\/([a-z0-9]+)$/.exec(h);
     if (sm) return {view:"match", gid:sm[1], key:sm[2]};
     if (h === "#spelare" || h === "#tavlingar" || h === "#americano" || h === "#traning" || h === "#akademin") return {view:h.slice(1)};
-    var kh = /^#hall\/([a-z2-9]{10})$/.exec(h);
+    var kh = /^#hall\/([a-z2-9]{8}(?:[a-z2-9]{2})?)$/.exec(h);
     if (kh) return {view:"konto", code:null, hall:kh[1]};
     var ki = /^#in\/([a-z2-9]{20})$/.exec(h);
     if (ki || h === "#konto") return {view:"konto", code:ki ? ki[1] : null};

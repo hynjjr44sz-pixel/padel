@@ -1,15 +1,15 @@
-// "Förslag på tävlingar": a compact calendar of SPF-sanctioned tournaments starting in the next 8 weeks within
-// 200 km of Nynäshamn, built once a night (03:23 local, spread over a few ticks) from RankedIn's SPF organisation
+// "Förslag på tävlingar": a compact calendar of SPF-sanctioned tournaments starting in the next 8 weeks in all of
+// Sweden, each with its distance from Nynäshamn (the page filters by the radius the player chose), built once a night (03:23 local, spread over a few ticks) from RankedIn's SPF organisation
 // calendar. The page suggests classes a player may enter from it (SPF rules: the pair's summed points against the
 // class cap, 2 x the points of the top player allowed in the class; the caps are read from the ranking list).
 // KV "calw": the night's work in progress (a few writes a night); KV "cal": the result, written only when it changed.
 import { dayOf, localToDate, offsetAt } from "./tz.js";
 import { cleanName, BY_PID } from "./discover.js";
 
-const HOME = { lat: 58.903, lon: 17.947 }, RADIUS = 200, DAYS = 56, SPF = 1917, RI = "https://www.rankedin.com";
+const HOME = { lat: 58.903, lon: 17.947 }, RADIUS = 1600, DAYS = 56, SPF = 1917, RI = "https://www.rankedin.com";
 // Server-side radius filters (km) for events without coordinates of their own (about half): the smallest one that
 // lists the event is its distance band. Asked in order, only until every such event has its band.
-const BANDS = [20, 30, 40, 50, 60, 80, 100, 130, 160];
+const BANDS = [20, 30, 40, 50, 60, 80, 100, 130, 160, 200, 300, 450, 700, 1000];
 // Boundary rows of the SPF list: the top player allowed in B, C, D (men 61/201/1201, women 51/161/701).
 const CAP_ROWS = { M: { B: 61, C: 201, D: 1201 }, F: { B: 51, C: 161, D: 701 } };
 const LIST = { M: [3, 82], F: [4, 83] };   // rankingType, ageGroup
