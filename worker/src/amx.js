@@ -161,7 +161,7 @@ export async function amxCreate(env, b, byPid, now, by) {
     const pid = Number(p && p.pid), P = pid && byPid.get(pid);
     return P ? { n: P.me, pid } : { n: clean(p && p.n).slice(0, 40), ...look(p || {}) };
   }).filter(p => p.n);
-  if (!fmt || (mode === "pts" && !PTS.has(pts)) || (mode === "games" && !GAMES.has(pts)) || players.length < 4 || players.length > MAX_P) return { err: "bad americano" };
+  if (!fmt || (mode === "pts" && !(Number.isInteger(pts) && pts >= 8 && pts <= 64)) || (mode === "games" && !GAMES.has(pts)) || players.length < 4 || players.length > MAX_P) return { err: "bad americano" };
   if (new Set(players.map(p => p.pid || p.n.toLowerCase())).size !== players.length) return { err: "same player twice" };
   let teams = null;
   if (fmt === "lag") {   // fixed pairs: every player in exactly one

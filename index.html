@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-h4oO4++vUo01J2XcEADqYJPTD0SqK8flBoN6agRMzbM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-uW8HHzWaLeOpdlWcFjsXYP55trwGmZLT08CusvqQmBc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -652,6 +652,7 @@
   .amxgo{ appearance:none; display:block; width:100%; height:52px; margin:14px 0 6px; border:0; border-radius:14px; background:#FFD84A; color:#0A1733; font:800 20px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.03em; cursor:pointer; }
   .amxgo:disabled{ opacity:.45; }
   .amxsec{ appearance:none; height:44px; padding:0 16px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 14px/1 "Instrument Sans", sans-serif; cursor:pointer; }
+  .amxpts{ width:100px; height:40px; margin-top:8px; padding:0 12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 16px/1 "Instrument Sans", sans-serif; }
   .amxbar{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 14px; } .amxbar .amxgo{ margin:0; }
   .amxerr{ color:var(--loss); font-size:13.5px; margin:8px 0 0; }
   .amxtabs{ display:flex; gap:6px; margin:12px 0 4px; }
@@ -2071,6 +2072,10 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Americano: ny partner varje runda. Aldrig samma medspelare två gånger, och högst två möten mot samma spelare.":"Americano: compañero nuevo cada ronda. Nunca el mismo compañero dos veces, y como máximo dos enfrentamientos contra el mismo jugador.",
+    "Eget":"Propio",
+    "Poäng per match":"Puntos por partido",
+    "Alla rundor som följer reglerna är spelade (aldrig samma medspelare, högst två möten). Nästa runda bryter mot dem. Lotta ändå?":"Ya se han jugado todas las rondas que cumplen las reglas (nunca el mismo compañero, como máximo dos enfrentamientos). La siguiente ronda las rompe. ¿Sortear igualmente?",
     "Många americanos har startats härifrån idag. Logga in under Konto för att starta fler.":"Se han empezado muchos americanos desde aquí hoy. Inicia sesión en Cuenta para empezar más.",
     "Används för att uppskatta maxpulsen och för råden för unga spelare. Syns bara för spelaren, föräldrar och tränare.":"Se usa para estimar el pulso máximo y para los consejos a jugadores jóvenes. Solo lo ven el jugador, los padres y los entrenadores.",
     "Bara spelaren, föräldrar och kopplade tränare ser det. Inte klubbens admin.":"Solo lo ven el jugador, los padres y los entrenadores vinculados. No el admin del club.",
@@ -8096,6 +8101,11 @@
     }); });
     return h;
   }
+  // the club's rules for one match: neither pair has played together, no one meets an opponent a third time
+  function amxKeeps(h, a, b){
+    var k = h.k2;
+    return !h.part[k(a[0], a[1])] && !h.part[k(b[0], b[1])] && a.every(function(i){ return b.every(function(j){ return (h.opp[k(i, j)] || 0) < 2; }); });
+  }
   // the cost of a match: a partner again is the worst (and more so each time), the same opponent less so
   function amxCost(h, a, b){
     var k = h.k2, c = 0;
@@ -8129,12 +8139,20 @@
       var out = [];
       for (var g = 0; g < C; g++){
         var q = who.slice(4 * g, 4 * g + 4), opts = three(q), best = 0, bc = 1e9;
-        opts.forEach(function(o, j){ var cst = amxCost(h, o[0], o[1]) + j * 20; if (cst < bc){ bc = cst; best = j; } });
+        opts.forEach(function(o, j){ var cst = amxCost(h, o[0], o[1]) + j * 20 + (amxKeeps(h, o[0], o[1]) ? 0 : 1e6); if (cst < bc){ bc = cst; best = j; } });
         out.push({c:g + 1, a:opts[best][0], b:opts[best][1]});
       }
       return out;
     }
-    // Americano: many random draws, each improved by swapping two players while it helps
+    // 8, 12 or 16 players all playing: a whist schedule, everyone with everyone once and against everyone twice, as
+    // long as the rounds so far follow it
+    var wr = amxWhist(t, n, C);
+    if (wr) return wr;
+    // Americano: the club's two rules are hard: never the same partner twice, at most two meetings as opponents. The
+    // round is searched with a few rounds ahead (so it does not end in a corner); when no round keeps the rules any
+    // more, the least bad one by the old cost
+    var ok = amxRuled(t, h, n, C);
+    if (ok) return ok;
     var evalR = function(order){ var s = 0; for (var c = 0; c < C; c++){ var q = order.slice(4 * c, 4 * c + 4), o = three(q), m = 1e9; o.forEach(function(x){ m = Math.min(m, amxCost(h, x[0], x[1])); }); s += m; } return s; };
     var bestO = null, bestC = 1e9;
     for (var tries = 0; tries < 80 && bestC > 0; tries++){
@@ -8156,7 +8174,86 @@
       o2.forEach(function(x, j){ var v = amxCost(h, x[0], x[1]); if (v < bv){ bv = v; bi = j; } });
       res.push({c:c2 + 1, a:o2[bi][0], b:o2[bi][1]});
     }
+    res.broken = true;   // the organiser is told before it is drawn
     return res;
+  }
+  // Whist schedules (cyclic: a base round on 0..n-2 and n-1 fixed, round i adds i mod n-1); found by search and checked
+  var AMX_WHIST = {8:[[[3, 2], [7, 5]], [[1, 6], [0, 4]]], 12:[[[3, 8], [11, 4]], [[0, 9], [7, 6]], [[2, 10], [1, 5]]],
+    16:[[[15, 13], [2, 1]], [[10, 14], [8, 3]], [[4, 6], [5, 11]], [[12, 9], [0, 7]]]};
+  function amxWhistRound(n, i){
+    var m = n - 1, f = function(x){ return x === m ? m : (x + i) % m; };
+    return AMX_WHIST[n].map(function(x, c){ return {c:c + 1, a:x[0].map(f), b:x[1].map(f)}; });
+  }
+  function amxWhist(t, n, C){
+    var R = (t.rounds || []).length, key = function(r){ return r.map(function(x){ return [x.a.slice().sort().join("-"), x.b.slice().sort().join("-")].sort().join("v"); }).sort().join("|"); };
+    if (!AMX_WHIST[n] || 4 * C !== n || R >= n - 1) return null;
+    for (var i = 0; i < R; i++) if (key(t.rounds[i]) !== key(amxWhistRound(n, i))) return null;
+    return amxWhistRound(n, R);
+  }
+  // the next round under the hard rules, found with up to AMX_AHEAD rounds after it (depth first, a time limit); null if none
+  var AMX_AHEAD = 4;
+  function amxRuled(t, h, n, C){
+    var part = {}, opp = {}, played = h.played.slice(), k = h.k2, end = Date.now() + 1500;
+    Object.keys(h.part).forEach(function(x){ part[x] = h.part[x]; });
+    Object.keys(h.opp).forEach(function(x){ opp[x] = h.opp[x]; });
+    if (Object.keys(part).some(function(x){ return part[x] > 1; })) return null;   // already broken (an older americano)
+    var budget;
+    // one round for the players ps: the first free player, a partner never had, two opponents met at most once
+    var oneRound = function(ps){
+      var out = [], used = {};
+      var rec = function(){
+        if (--budget < 0) return false;
+        var free = ps.filter(function(p){ return !used[p]; });
+        if (!free.length) return true;
+        var p = free[0], rest = shuffle(free.slice(1));
+        for (var a = 0; a < rest.length; a++){
+          var q = rest[a];
+          if (part[k(p, q)]) continue;
+          used[p] = used[q] = 1;
+          var others = shuffle(free.filter(function(x){ return !used[x]; }));
+          for (var i = 0; i < others.length; i++) for (var j = i + 1; j < others.length; j++){
+            var r = others[i], s2 = others[j];
+            if (part[k(r, s2)] || (opp[k(p, r)] || 0) >= 2 || (opp[k(p, s2)] || 0) >= 2 || (opp[k(q, r)] || 0) >= 2 || (opp[k(q, s2)] || 0) >= 2) continue;
+            used[r] = used[s2] = 1; out.push({a:[p, q], b:[r, s2]});
+            if (rec()) return true;
+            out.pop(); used[r] = used[s2] = 0;
+          }
+          used[p] = used[q] = 0;
+        }
+        return false;
+      };
+      return rec() ? out.slice() : null;
+    };
+    var apply = function(r, d){ r.forEach(function(m){ [m.a, m.b].forEach(function(x){ var y = k(x[0], x[1]); part[y] = (part[y] || 0) + d; }); m.a.forEach(function(x){ m.b.forEach(function(y){ var z = k(x, y); opp[z] = (opp[z] || 0) + d; }); }); m.a.concat(m.b).forEach(function(x){ played[x] += d; }); }); };
+    var dfs = function(depth){
+      if (!depth) return [];
+      if (Date.now() > end) return null;
+      var seen = {};
+      for (var w = 0; w < (depth > 4 ? 30 : 10); w++){
+        var who = shuffle(t.players.map(function(p, i){ return i; })).sort(function(a, b){ return played[a] - played[b]; }).slice(0, 4 * C);
+        budget = 4000;
+        var r = oneRound(shuffle(who));
+        if (!r) continue;
+        var key = r.map(function(m){ return [m.a.slice().sort().join("-"), m.b.slice().sort().join("-")].sort().join("v"); }).sort().join("|");
+        if (seen[key]) continue;
+        seen[key] = 1;
+        apply(r, 1);
+        var more = dfs(depth - 1);
+        apply(r, -1);
+        if (more) return [r].concat(more);
+      }
+      return null;
+    };
+    // as far ahead as the rules allow at all: up to the last possible round (each plays with everyone once) when that
+    // is found within the time, else fewer
+    var steps = [6, AMX_AHEAD, 2, 1];
+    for (var si = 0; si < steps.length; si++){
+      var ahead = steps[si];
+      end = Date.now() + (si ? 600 : 1200);
+      var plan = dfs(ahead);
+      if (plan) return plan[0].map(function(m, c){ return {c:c + 1, a:m.a, b:m.b}; });
+    }
+    return null;
   }
 
   /* ---- pictures: club players their photo, guests an uploaded one or a drawn figure ---- */
@@ -9227,13 +9324,16 @@
   function renderAmxNew(){
     var box = document.getElementById("amx");
     if (!box) return;
-    var d = AMX.draft = AMX.draft || {name:"", fmt:"americano", mode:"pts", pts:24, courts:2, players:[]};
+    var d = AMX.draft = AMX.draft || {name:"", fmt:"americano", mode:"pts", pts:24, courts:3, players:[]};
     var team = d.fmt === "lag", maxC = Math.max(1, Math.floor(d.players.length / 4)), useC = Math.min(d.courts, maxC);   // the choice stays as more players come
     var chip = function(k, v, lab, on){ return '<button type="button" data-set="' + k + '" data-v="' + esc(v) + '" aria-pressed="' + (on ? "true" : "false") + '">' + esc(lab) + '</button>'; };
-    var vals = d.mode === "pts" ? [16, 21, 24, 32] : d.mode === "games" ? [3, 4, 5, 6, 7, 9] : [];
-    if (vals.length && vals.indexOf(d.pts) < 0) d.pts = d.mode === "pts" ? 24 : 4;
+    // points: 16, 20 or 24, or the organiser's own (8-64)
+    var vals = d.mode === "pts" ? [16, 20, 24] : d.mode === "games" ? [3, 4, 5, 6, 7, 9] : [];
+    if (d.mode === "games" && vals.indexOf(d.pts) < 0) d.pts = 4;
+    if (d.mode === "pts" && !(d.pts >= 8 && d.pts <= 64)) d.pts = 24;
+    var ownPts = d.mode === "pts" && (d.ownPts || vals.indexOf(d.pts) < 0);
     var fmtNote = d.fmt === "mexicano" ? _("Mexicano: första rundan lottas, sedan möts spelarna efter tabellen, fyra och fyra. Parningen i varje grupp väljs så att samma två inte spelar ihop igen.") :
-      team ? _("Lagamericano: fasta par som möter nya par varje runda, de par man mött minst först.") : _("Americano: ny partner varje runda. Lottningen undviker samma medspelare och motståndare, och aldrig samma som förra rundan om det går.");
+      team ? _("Lagamericano: fasta par som möter nya par varje runda, de par man mött minst först.") : _("Americano: ny partner varje runda. Aldrig samma medspelare två gånger, och högst två möten mot samma spelare.");
     var pl = d.players.map(function(p, i){
       var open = AMX.look === i && !p.pid;
       return '<span class="amxp' + (p.pid ? " amxclub" : "") + '"><button type="button" class="amxav" data-look="' + i + '" aria-label="' + esc(p.pid ? p.n : _("Bild för ") + p.n) + '"' + (p.pid ? " disabled" : "") + '>' + amxAv(p) + '</button>' + esc(p.pid ? (BYPID[p.pid] || {}).short || p.n : p.n) +
@@ -9247,9 +9347,11 @@
         '<label class="amxf"><span>' + _("Namn") + '</span><input id="amxName" maxlength="60" value="' + esc(d.name) + '" placeholder="' + esc(_("t.ex. Söndagsamericano")) + '"></label>' +
         '<div class="amxf"><span>' + _("Format") + '</span><div class="seg">' + chip("fmt", "americano", "Americano", d.fmt === "americano") + chip("fmt", "mexicano", "Mexicano", d.fmt === "mexicano") + chip("fmt", "lag", _("Lagamericano"), team) + '</div><small>' + esc(fmtNote) + '</small></div>' +
         '<div class="amxf"><span>' + _("Räkning") + '</span><div class="seg">' + chip("mode", "pts", _("Poäng"), d.mode === "pts") + chip("mode", "games", _("Game"), d.mode === "games") + chip("mode", "free", _("Fritt"), d.mode === "free") + '</div>' +
-          (vals.length ? '<div class="seg amxvals">' + vals.map(function(v){ return chip("pts", v, String(v), d.pts === v); }).join("") + '</div>' : "") +
+          (vals.length ? '<div class="seg amxvals">' + vals.map(function(v){ return chip("pts", v, String(v), !ownPts && d.pts === v); }).join("") +
+            (d.mode === "pts" ? '<button type="button" data-ownpts="1" aria-pressed="' + ownPts + '">' + _("Eget") + '</button>' : "") + '</div>' : "") +
+          (ownPts ? '<input id="amxPts" class="amxpts" type="number" inputmode="numeric" min="8" max="64" value="' + d.pts + '" aria-label="' + esc(_("Poäng per match")) + '">' : "") +
           '<small>' + esc(d.mode === "pts" ? _("Varje match är {n} poäng. Skriv ena lagets poäng, resten räknas ut.", {n:d.pts}) : d.mode === "games" ? _("Först till {n} game. Vid {m}–{m} avgör ett tiebreak, {n}–{m}.", {n:d.pts, m:d.pts - 1}) : _("Fritt resultat, till exempel matcher på tid. Tabellen räknar vunna matcher först.")) + '</small></div>' +
-        '<div class="amxf"><span>' + _("Banor") + '</span><div class="seg">' + [1, 2, 3, 4, 5, 6, 7, 8].map(function(v){ return chip("courts", v, String(v), d.courts === v); }).join("") + '</div>' +
+        '<div class="amxf"><span>' + _("Banor") + '</span><div class="seg">' + [1, 2, 3].map(function(v){ return chip("courts", v, String(v), d.courts === v); }).join("") + '</div>' +
           '<small>' + esc((d.players.length >= 4 ? _("{n} spelare: {c} spelar per runda, {s} vilar.", {n:d.players.length, c:playing, s:d.players.length - playing}) : _("Minst 4 spelare.")) +
             (d.courts > useC ? " " + _("{k} banor behöver minst {p} spelare, så {u} används.", {k:d.courts, p:4 * d.courts, u:d.players.length >= 4 ? useC : 1}) : "")) + '</small></div>' +
       '</div>' +
@@ -9269,6 +9371,8 @@
     roster();
     box.querySelector("#amxQ").oninput = roster;
     box.querySelector("#amxName").oninput = function(e){ d.name = e.target.value; };
+    var ptsIn = box.querySelector("#amxPts");
+    if (ptsIn) ptsIn.oninput = function(){ var v = Math.round(+ptsIn.value); if (v >= 8 && v <= 64) d.pts = v; };
     var addG = function(){ var g = box.querySelector("#amxGuest"), v = g.value.replace(/\s+/g, " ").trim(); if (!v || d.players.length >= 32) return; if (d.players.some(function(p){ return p.n.toLowerCase() === v.toLowerCase(); })) return; d.players.push({n:v, fig:Math.floor(Math.random() * 99991)}); renderAmxNew(); var g2 = document.getElementById("amxGuest"); if (g2) g2.focus(); };
     box.querySelector("#amxAddG").onclick = addG;
     box.querySelector("#amxGuest").onkeydown = function(e){ if (e.key === "Enter"){ e.preventDefault(); addG(); } };
@@ -9280,7 +9384,8 @@
     box.onclick = function(e){
       var b = e.target.closest && e.target.closest("button");
       if (!b) return;
-      if (b.hasAttribute("data-set")){ var k = b.getAttribute("data-set"), v = b.getAttribute("data-v"); d[k] = k === "fmt" || k === "mode" ? v : +v; renderAmxNew(); }
+      if (b.hasAttribute("data-set")){ var k = b.getAttribute("data-set"), v = b.getAttribute("data-v"); d[k] = k === "fmt" || k === "mode" ? v : +v; if (k === "pts") d.ownPts = false; renderAmxNew(); }
+      else if (b.hasAttribute("data-ownpts")){ d.ownPts = true; renderAmxNew(); var pi = document.getElementById("amxPts"); if (pi){ pi.focus(); pi.select(); } }
       else if (b.hasAttribute("data-add")){ var P = BYPID[+b.getAttribute("data-add")]; if (P && d.players.length < 32){ d.players.push({n:P.name, pid:P.pid}); var keep = (document.getElementById("amxQ") || {}).value || ""; renderAmxNew(); var qq = document.getElementById("amxQ"); if (qq && keep){ qq.value = keep; qq.oninput(); } } }
       else if (b.hasAttribute("data-rm")){ d.players.splice(+b.getAttribute("data-rm"), 1); AMX.look = null; renderAmxNew(); }
       else if (b.hasAttribute("data-look")){ var li = +b.getAttribute("data-look"); AMX.look = AMX.look === li ? null : li; renderAmxNew(); }
@@ -9290,6 +9395,7 @@
       else if (b.id === "amxStart"){
         if (AMX.busy || d.players.length < 4 || (team && d.players.length % 2)) return;
         AMX.busy = true; b.disabled = true;
+        if (!team) d.players = shuffle(d.players);   // the schedule follows the order (a whist schedule): a new one each time
         var teams = team ? d.players.map(function(p, i){ return i; }).filter(function(i){ return i % 2 === 0; }).map(function(i){ return [i, i + 1]; }) : null;
         var t = {fmt:d.fmt, mode:d.mode, courts:Math.min(d.courts, Math.floor(d.players.length / 4)), players:d.players, teams:teams, rounds:[]};
         amxApi("/amx", {name:d.name, fmt:d.fmt, mode:d.mode, pts:d.pts, courts:t.courts, teams:teams, round:amxNext(t),
@@ -9394,8 +9500,10 @@
             function(){ b.disabled = false; alert(_("Kunde inte ta bort. Försök igen.")); });
           return;
         }
+        var nr = op === "round" ? amxNext(t) : null;
+        if (nr && nr.broken && !confirm(_("Alla rundor som följer reglerna är spelade (aldrig samma medspelare, högst två möten). Nästa runda bryter mot dem. Lotta ändå?"))) return;
         b.disabled = true;
-        amxSave(op === "round" ? {op:"round", round:amxNext(t)} : {op:op}).then(function(){ if (op === "end" || op === "reopen"){ AMX_ARCH = {}; store.set(AMX_ARCH_KEY, "{}"); } }, function(){ throw 0; }).catch(function(){ b.disabled = false; alert(_("Kunde inte spara. Försök igen.")); });
+        amxSave(op === "round" ? {op:"round", round:nr} : {op:op}).then(function(){ if (op === "end" || op === "reopen"){ AMX_ARCH = {}; store.set(AMX_ARCH_KEY, "{}"); } }, function(){ throw 0; }).catch(function(){ b.disabled = false; alert(_("Kunde inte spara. Försök igen.")); });
       } else if (b.hasAttribute("data-link")){
         var u = b.getAttribute("data-link");
         if (navigator.share) navigator.share({title:t.name, url:u}).catch(function(){});
