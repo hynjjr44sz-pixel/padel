@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AsvnzesmXjeXopLkNwjDR3Bm9NPC+2sTuxmpB19I16U='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-eaXgLtXck6FIGiKuvp0kjNhLe35dOHiA281sFl6sWpY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -982,11 +982,12 @@
     --c-up:#11522F; --c-dn:#8A1F12; --c-w:#0C1631; --c-l:#A0463A; --c-none:rgba(12,22,49,.38);
     --ini1:#1C2A4E; --ini2:#8C97AB; --pill:rgba(255,255,255,.82); --pill-ink:#0C1631;
   }
-  .hero.t-white{
-    --m1:#FFFFFF; --m2:#F3F5F8; --m3:#DFE4EB; --m4:#FFFFFF; --glow:rgba(255,255,255,.1);
-    --c-ink:#0C1631; --c-lab:#1F2A44; --c-line:rgba(12,22,49,.3); --c-mesh:rgba(12,22,49,.07); --c-hi:rgba(255,255,255,.9);
-    --c-up:#11522F; --c-dn:#8A1F12; --c-w:#0C1631; --c-l:#A0463A; --c-none:rgba(12,22,49,.38);
-    --ini1:#1C2A4E; --ini2:#8C97AB; --pill:rgba(255,255,255,.88); --pill-ink:#0C1631;
+  /* not ranked: court green */
+  .hero.t-green{
+    --m1:#E2F6EA; --m2:#AFE2C3; --m3:#6CBF8F; --m4:#D2F0DE; --glow:rgba(108,191,143,.16);
+    --c-ink:#0B2E1B; --c-lab:#123D25; --c-line:rgba(11,46,27,.42); --c-mesh:rgba(11,46,27,.1); --c-hi:rgba(240,255,246,.75);
+    --c-up:#0B4A28; --c-dn:#8A1F12; --c-w:#0B2E1B; --c-l:#9A3A2C; --c-none:rgba(11,46,27,.4);
+    --ini1:#0F3B22; --ini2:#5FA67D; --pill:rgba(240,255,246,.85); --pill-ink:#0B2E1B;
   }
   .hero.t-bronze{
     --m1:#F8DEC2; --m2:#E6B88C; --m3:#C98A58; --m4:#F2CCA6; --glow:rgba(214,150,100,.15);
@@ -7146,7 +7147,7 @@
     var sm = document.getElementById("spvMeta");
     if (sm) sm.textContent = ROSTER.filter(function(p){ return p.member; }).length ? _("{n} spelare i Nynäs Padel Club", {n:ROSTER.length}) : "Nynäs Padel Club";
     host.innerHTML = list.map(function(p){
-      var T = trendOf(p), fol = f.indexOf(p.pid) >= 0, sk = T.skill[0], rk = T.rank[0], L = fol ? "★" : p.name.charAt(0).toUpperCase(), head = "";
+      var T = trendOf(p), fol = f.indexOf(p.pid) >= 0, sk = T.skill[0], rk = sgPoints(p).rank, L = fol ? "★" : p.name.charAt(0).toUpperCase(), head = "";
       if (grouped && L !== lastL){ lastL = L; head = '<li class="plet" aria-hidden="true">' + esc(fol ? _("Du följer") : L) + '</li>'; }
       return head + '<li><a class="prow' + (fol ? " fol" : "") + '" href="#' + esc(p.key) + '"><span class="avs">' + avatar(p.name) + '</span><span><b>' + esc(p.name) + '</b>' +
         '<span class="pmeta">' + esc([sk != null ? "skill " + sk.toFixed(2) : "", rk != null ? "#" + rk : _("ej rankad")].filter(Boolean).join(" · ")) + '</span></span>' +
@@ -7414,8 +7415,8 @@
     return '<div class="ini-big" aria-hidden="true">' + esc(initials(P.name)) + '</div>';
   }
   /* ---- the player card: rating (skill), class, crest, photo, name, official stats; tier by ranking points ---- */
-  // Tier by the SPF ranking points: gold from 50 (about the club's top five), silver from 10, bronze below, white
-  // when not ranked. A class won in the last seven days (from the day of the final) turns the card blue, whatever the
+  // Tier by the SPF ranking points: gold from 50 (about the club's top five), silver from 10, bronze below, green
+  // (a padel court's) when not ranked. A class won in the last seven days (from the day of the final) turns the card blue, whatever the
   // points; without the worker's wins the card simply keeps its colour.
   var CARD_GOLD = 50, CARD_SILVER = 10, CHAMP_DAYS = 7;   // same week as "Veckans vinnare" (WIN_DAYS)
   function cardSkill(P){ var s = trendOf(P).skill[0], b = boardOf(P); return num(s) != null ? s : num(b.sk) != null ? b.sk : num(P.skill); }
@@ -7426,7 +7427,7 @@
         (w.pids || []).map(Number).indexOf(P.pid) >= 0;
     }).sort(function(a, b){ return String(b.date).localeCompare(String(a.date)); })[0] || null;
   }
-  function cardTier(P){ var r = sgPoints(P); return cardChamp(P) ? "champ" : r.rank == null || r.pts == null ? "white" : r.pts >= CARD_GOLD ? "gold" : r.pts >= CARD_SILVER ? "silver" : "bronze"; }
+  function cardTier(P){ var r = sgPoints(P); return cardChamp(P) ? "champ" : r.rank == null || r.pts == null ? "green" : r.pts >= CARD_GOLD ? "gold" : r.pts >= CARD_SILVER ? "silver" : "bronze"; }
   // SPF: the ranking decides the lowest class a player may enter (Bra att veta, Klasser). Not ranked: D.
   function classOf(P, rank){
     if (rank == null) return "D";
@@ -7504,7 +7505,7 @@
     if (!P || !m) return;
     var tier = "t-" + cardTier(P), face = cardFace(P);
     [].forEach.call(m.querySelectorAll(".hero"), function(h){
-      ["t-gold", "t-silver", "t-bronze", "t-white", "t-champ"].forEach(function(c){ h.classList.toggle(c, c === tier); });
+      ["t-gold", "t-silver", "t-bronze", "t-green", "t-champ"].forEach(function(c){ h.classList.toggle(c, c === tier); });
       var f = h.querySelector(".pface");
       if (f && f._h !== face){ f.innerHTML = face; f._h = face; }
     });
@@ -7643,8 +7644,10 @@
   function trendOf(P){
     // this device's own look (opened player) first, then the worker's board (every player, fresh), then players.json
     var c = TRD[P.pid] || {}, b = boardOf(P) || {}, pick = function(x, y){ return num(x) != null ? x : y == null ? null : y; };
-    return {rank:c.rank || [pick(b.rk, P.rank), null], pts:c.pts || [pick(b.rp, P.points), null],
-      skill:c.skill || [pick(b.sk, P.skill), null], hist:c.hist || null, prof:c.prof || null, t:c.t || 0};
+    // a look without a value (the profile had none) never hides the official list's
+    var own = function(a){ return a && num(a[0]) != null ? a : null; };
+    return {rank:own(c.rank) || [pick(b.rk, P.rank), null], pts:own(c.pts) || [pick(b.rp, P.points), null],
+      skill:own(c.skill) || [pick(b.sk, P.skill), null], hist:c.hist || null, prof:c.prof || null, t:c.t || 0};
   }
   function fmtPts(v){ return v.toFixed(v >= 20 ? 1 : 2); }
   function signed(d, n){ return (d > 0 ? "+" : "−") + Math.abs(d).toFixed(n); }
