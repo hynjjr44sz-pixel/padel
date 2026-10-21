@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-NwfzImw6F16hgOsNPB/XzWvg0Gi2tTbaxsZXL7ohcHM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-jUfh3Z43YGVAAq62WReQwBB4ZrZvj+9xIBe0in8dOWk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -676,6 +676,23 @@
   #home.hm-mine #secWeek, #home.hm-mine #secWin, #home.hm-mine #secCtr, #home.hm-mine #acadCard, #home.hm-mine #secTop{ display:none !important; }
   .radsel{ appearance:none; padding:6px 28px 6px 10px; border-radius:99px; border:1px solid var(--line); background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238B8D98' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center; color:var(--ink); font:600 12px/1 "Instrument Sans", sans-serif; }
   .tavf .radsel{ margin-right:8px; }
+  .pcdeal{ margin:10px 0 14px; padding:12px; border-radius:16px; background:linear-gradient(160deg, #0F5132, #0A3B24); color:#fff; overflow:hidden; }
+  .pchead{ margin:0 0 10px; font-size:12.5px; opacity:.85; }
+  .pcrow{ display:flex; align-items:center; gap:8px; padding:6px 0; } .pcrow em{ font-style:normal; font:600 10px/1 "Chivo Mono", monospace; opacity:.7; text-transform:uppercase; }
+  .pccourt{ width:42px; flex:none; font:700 10.5px/1.2 "Chivo Mono", monospace; text-transform:uppercase; opacity:.8; }
+  .pcpair{ display:flex; gap:6px; flex:1; justify-content:center; }
+  .pcw{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+  .pcard{ position:relative; width:46px; height:64px; border-radius:7px; background:#fff; box-shadow:0 3px 10px rgba(0,0,0,.35); display:grid; place-items:center; }
+  .pcard i{ font-style:normal; font-size:26px; line-height:1; } .pcard b{ position:absolute; top:3px; left:5px; font:800 13px/1 Georgia, serif; } .pcard b.pcb{ top:auto; left:auto; bottom:3px; right:5px; transform:rotate(180deg); }
+  .pcard.red{ color:#D11A2A; } .pcard.blk{ color:#111; }
+  .pcn{ max-width:64px; font-size:11.5px; font-weight:700; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pcard.deal{ animation:pc-fly .7s cubic-bezier(.2,.9,.3,1.15) both; } .pcn.deal{ animation:pc-name .4s ease-out both; }
+  @keyframes pc-fly{ 0%{ opacity:0; transform:translate(-40vw, -40vh) rotate(-160deg) scale(.6); } 70%{ opacity:1; } 100%{ opacity:1; transform:none; } }
+  @keyframes pc-name{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce){ .pcard.deal, .pcn.deal{ animation:none; } }
+  .pcdeal.big{ flex:1; display:flex; flex-direction:column; justify-content:space-around; margin:0; padding:1.2em; font-size:1em; }
+  .pcdeal.big .pchead{ font-size:.75em; } .pcdeal.big .pccourt{ width:4em; font-size:.6em; } .pcdeal.big .pcard{ width:3.6em; height:5em; border-radius:.5em; } .pcdeal.big .pcard i{ font-size:2.2em; } .pcdeal.big .pcard b{ font-size:.9em; }
+  .pcdeal.big .pcn{ max-width:7em; font-size:.85em; } .pcdeal.big .pcrow em{ font-size:.55em; }
   .amxpts{ width:100px; height:40px; margin-top:8px; padding:0 12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 16px/1 "Instrument Sans", sans-serif; }
   .amxbar{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 14px; } .amxbar .amxgo{ margin:0; }
   .amxerr{ color:var(--loss); font-size:13.5px; margin:8px 0 0; }
@@ -2098,6 +2115,7 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "Lottningen: röda ess mot svarta ess på bana 1, tvåor på bana 2, treor på bana 3.":"El sorteo: ases rojos contra ases negros en la pista 1, doses en la pista 2, treses en la pista 3.",
     "Klubben":"El club",
     "Mitt padel":"Mi pádel",
     "Du följer ingen än. Tryck på stjärnan på en spelares sida, så visas bara deras matcher och tävlingar här.":"Aún no sigues a nadie. Toca la estrella en la página de un jugador y aquí solo verás sus partidos y torneos.",
@@ -9644,6 +9662,25 @@
     }
     return h + '</div>';
   }
+  // Match 1 as a deal of playing cards: court 1 the aces, court 2 the twos, court 3 the threes; the red pair (hearts,
+  // diamonds) against the black pair (clubs, spades). The draw itself is the app's; the cards fly in one by one the
+  // first time it is shown on this screen (AMX.dealt), still after that.
+  var VIN_RANK = ["A", "2", "3"], VIN_SUIT = [["♥", "red"], ["♦", "red"], ["♣", "blk"], ["♠", "blk"]];
+  function vinDeal(t, big){
+    // a redraw while the cards fly (a poll) carries on where it was: the same order, the delays less the time gone
+    var dk = t.id + (big ? "tv" : ""), dl = (AMX.dealt = AMX.dealt || {})[dk], r0 = t.rounds[0], h = "";
+    if (!dl) dl = AMX.dealt[dk] = {at:Date.now(), order:shuffle(r0.reduce(function(a, x){ return a.concat(x.a, x.b); }, []))};
+    var gone = (Date.now() - dl.at) / 1000, anim = gone < 6, order = dl.order;
+    r0.forEach(function(x, ci){
+      var card = function(i, si){
+        var su = VIN_SUIT[si], k = order.indexOf(i);
+        return '<div class="pcw"><div class="pcard ' + su[1] + (anim ? " deal" : "") + '" style="animation-delay:' + (k * .32 - gone).toFixed(2) + 's"><b>' + VIN_RANK[ci] + '</b><i>' + su[0] + '</i><b class="pcb">' + VIN_RANK[ci] + '</b></div>' +
+          '<span class="pcn' + (anim ? " deal" : "") + '" style="animation-delay:' + (k * .32 + .25 - gone).toFixed(2) + 's">' + esc(amxName(t, i)) + '</span></div>';
+      };
+      h += '<div class="pcrow"><span class="pccourt">' + _("Bana ") + x.c + '</span><div class="pcpair">' + card(x.a[0], 0) + card(x.a[1], 1) + '</div><em>' + _("mot") + '</em><div class="pcpair">' + card(x.b[0], 2) + card(x.b[1], 3) + '</div></div>';
+    });
+    return '<div class="pcdeal' + (big ? " big" : "") + '"><p class="pchead">' + esc(_("Lottningen: röda ess mot svarta ess på bana 1, tvåor på bana 2, treor på bana 3.")) + '</p>' + h + '</div>';
+  }
   function vinBody(t, key, f){
     var R = t.rounds.length, n = t.vin.n, fin = R > n, cur = t.rounds[R - 1], st = vinStand(t), org = !!key && !t.done, h = "", C = t.courts;
     if (AMX.tab === "t"){
@@ -9656,6 +9693,7 @@
         '</tbody></table></div><p class="amxnote">' + (done ? _("Slutplacering efter finalen. Poängen är från matcherna före finalen.") : _("Ordning: poäng, sedan vunna matcher, sedan klunsning.")) + '</p>';
     }
     if (!fin && !t.done) h += '<div class="card vinclock" id="vinClock">' + vinClockHtml(t, org) + '</div>';
+    if (R === 1 && !cur.some(function(x){ return x.w; })) h += vinDeal(t, false);
     h += '<div class="sh"><h2>' + (fin ? _("Final") : _("Match {r} av {n}", {r:R, n:n})) + '</h2><div class="meta">' + esc(fin ? "" : R > 1 ? _("Vinnarna har gått upp en bana, förlorarna ner. Klunsa om paren.") : _("Lottad")) + '</div></div>' +
       cur.map(function(x){ return vinCourt(t, x, R - 1, org); }).join("");
     var all = cur.every(function(x){ return x.w; });
@@ -10837,13 +10875,13 @@
       '<div class="sbrow sbhd"><span></span><span>' + _("Spelare") + '</span><span>' + _("M") + '</span><span>' + _("V") + '</span><span></span><span>' + _("Poäng") + '</span></div>' +
       rows.map(function(o, k){ var p = t.players[o.i], fol = p.pid && f.indexOf(p.pid) >= 0;
         return '<div class="sbrow' + (k === 0 ? " lead" : "") + (fol ? " fol" : "") + '" data-k="p' + o.i + '"><span class="sbpos">' + (done ? pl[o.i] : k + 1) + '</span><span class="sbn">' + amxAvs(t, [o.i]) + '<b>' + esc(amxName(t, o.i)) + '</b></span><span>' + o.m + '</span><span>' + o.w + '</span><span></span><span class="sbp">' + o.p + '</span></div>'; }).join("") + '</div></section>' +
-      '<section class="sbcourts"><h2>' + (fin ? _("Final") : _("Match {r}", {r:R})) + '</h2>' + cur.map(function(x){
+      '<section class="sbcourts"><h2>' + (fin ? _("Final") : _("Match {r}", {r:R})) + '</h2>' + (R === 1 && !cur.some(function(x){ return x.w; }) ? vinDeal(t, true) : cur.map(function(x){
         var side = function(sd){ var won = x.w && sd.every(function(i){ return x.w.indexOf(i) >= 0; }); return '<div class="sbside' + (won ? " w" : "") + '">' + amxAvs(t, sd) + '<b>' + esc(amxSide(t, sd)) + '</b><em>' + (won ? "✓" : "") + '</em></div>'; };
         // pairs settled on the court: the four without pairs until the winners are in
         var body = x.a ? side(x.a) + side(x.b) : x.w ? side(x.w) + side(x.p.filter(function(i){ return x.w.indexOf(i) < 0; })) :
           '<div class="sbside sbfour">' + amxAvs(t, x.p) + '<b>' + esc(x.p.map(function(i){ return amxName(t, i); }).join(" · ")) + '</b><em></em></div>';
         return '<div class="sbcourt' + (x.w ? " done" : " live") + '"><div class="sbc"><span>' + _("Bana ") + x.c + (fin ? "" : " · " + vinPts(t, R - 1, x.c) + " p") + '</span><i>' + (x.w ? _("Klar") : _("Pågår")) + '</i></div>' + body + '</div>';
-      }).join("") + '</section></div>' +
+      }).join("")) + '</section></div>' +
       '<div class="sbf"><div class="sbtick"><span>' + esc(fin ? _("Finalen: 1:an valde partner bland 3 och 4, 5:an bland 7 och 8, 9:an bland 11 och 12.") : _("Vinnarna går upp en bana, förlorarna ner. Match 1 och 2 ger 2 poäng, sedan bana 1: 3, bana 2: 2, bana 3: 1.")) + '</span></div></div>';
     var before = {};
     [].forEach.call(box.querySelectorAll(".sbrow[data-k]"), function(el){ before[el.getAttribute("data-k")] = el.getBoundingClientRect().top; });
