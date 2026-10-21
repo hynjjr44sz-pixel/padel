@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-t3buiw0nYXAjYFAOtvp0fxKL97GjYde3e1UKlajTQ1k='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-IoeEfL6+LV1IoaQcqF1+rNyOr3OGi+C6RUPWimOPpBI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -10898,9 +10898,17 @@
     var host = document.getElementById("tvParade");
     if (!host){ clearInterval(TV.parade); return; }
     if (document.visibilityState === "hidden" || host.children.length >= 6) return;
-    var pool = ROSTER.filter(function(P){ return P.cut || P.img || rinPhoto(P); });
-    if (!pool.length) return;
-    var P = pool[Math.floor(Math.random() * pool.length)], el = document.createElement("div"), sz = 11 + Math.random() * 4, top = 3 + Math.random() * 30, dur = 15 + Math.random() * 7;
+    // a shuffled deck: everyone with a photo once before anyone again; a new round never starts with the last one
+    if (!TV.deck || !TV.deck.length){
+      var pool = ROSTER.filter(function(P){ return P.cut || P.img || rinPhoto(P); }).map(function(P){ return P.pid; });
+      if (!pool.length) return;
+      TV.deck = shuffle(pool);
+      if (TV.deck.length > 1 && TV.deck[TV.deck.length - 1] === TV.lastCard) TV.deck.unshift(TV.deck.pop());
+    }
+    var P = BYPID[TV.deck.pop()];
+    if (!P) return;
+    TV.lastCard = P.pid;
+    var el = document.createElement("div"), sz = 11 + Math.random() * 4, top = 3 + Math.random() * 30, dur = 15 + Math.random() * 7;
     el.className = "tvcard " + heroCls(P);
     // drawn at the card's own size (330 px: its text is sized for that) and scaled down as a whole, so it looks the same
     // on a phone as on the TV
