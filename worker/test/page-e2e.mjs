@@ -278,8 +278,8 @@ try {
   { // Konto: without a login americano is locked; the first admin's link (made with the admin key) logs the phone in;
     // the admin invites Thea as arrangör
     await page.goto(url("#amx/ny"));
-    await page.waitForSelector("#amxGuest", { timeout: 8000 }).catch(() => {});
-    const locked = await page.evaluate(() => [document.querySelector("#amx .ktxt")?.textContent || "", !!document.getElementById("amxGuest")]);
+    await page.waitForSelector("#amx .hallqr[src]", { timeout: 8000 }).catch(() => {});
+    const locked = await page.evaluate(() => [document.querySelector("#amx .ktxt")?.textContent || "", !!document.getElementById("amxGuest"), document.querySelector("#amx .hallqr")?.getAttribute("src") || ""]);
     // Begär konto from Kian's page: the code on the phone, the admin types it in, "Kolla nu" logs the phone in
     await page.goto(url("#kian"));
     await page.waitForSelector("#p-kian .pclaim a", { timeout: 8000 }).catch(() => {});
@@ -306,7 +306,7 @@ try {
     await page.waitForFunction(() => /Välkommen, Mikael/.test(document.querySelector("#konto .kmsg")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
     await page.waitForSelector("#konto .klist", { timeout: 8000 }).catch(() => {});
     const k1 = await page.evaluate(() => [location.hash, document.querySelector("#konto .kmsg")?.textContent, document.getElementById("acct").textContent, document.querySelector("#konto .klist")?.textContent.replace(/\s+/g, " ")]);
-    ok("Konto: americano open without a login; the invite link logs the phone in, leaves the address bar, admin sees the list", locked[1] && k1[0] === "#konto" && /Välkommen, Mikael/.test(k1[1] || "") && k1[2] === "Konto: Mikael" && /Mikael HolmbergAdmin · Inloggad/.test(k1[3] || ""), { locked, k1 });
+    ok("Konto: americano without a login shows the hall QR code; the invite link logs the phone in, leaves the address bar, admin sees the list", /Skanna koden/.test(locked[0]) && !locked[1] && /\/auth\/hall\/qr\?code=[a-z2-9]{10}$/.test(locked[2]) && k1[0] === "#konto" && /Välkommen, Mikael/.test(k1[1] || "") && k1[2] === "Konto: Mikael" && /Mikael HolmbergAdmin · Inloggad/.test(k1[3] || ""), { locked, k1 });
     await page.selectOption("#kPid", "1675246");
     await page.check("#kArr");
     await page.click('[data-k="add"]');
@@ -461,6 +461,46 @@ try {
     await page.waitForFunction(() => !/\/photo\//.test(document.querySelector("#p-thea .hero .pmed img")?.getAttribute("src") || ""), null, { timeout: 8000 }).catch(() => {});
     const back = await page.evaluate(() => document.querySelector("#p-thea .hero .pmed img")?.getAttribute("src"));
     ok("Profilbild: removed -> the club's photo again", /img\/cut\/thea/.test(back || ""), back);
+  }
+  { // Vinnarbana: 12 guests on 3 courts; match 1 drawn in pairs, the winners tapped, the move; the clock runs out; the big screen
+    await page.goto(url("#amx/ny"));
+    await page.waitForSelector("#amxGuest");
+    await page.click('[data-set="fmt"][data-v="vinnar"]');
+    for (let i = 1; i <= 12; i++) { await page.fill("#amxGuest", "Spelare " + String.fromCharCode(64 + i)); await page.click("#amxAddG"); }
+    const startOk = await page.evaluate(() => !document.getElementById("amxStart").disabled);
+    await page.click("#amxStart");
+    await page.waitForSelector("#amx .vinc [data-vpair]", { timeout: 8000 }).catch(() => {});
+    const vid = await page.evaluate(() => location.hash.split("/")[1]);
+    const c1 = await page.$$eval("#amx .vinc", e => e.length);
+    for (let c = 1; c <= 3; c++) { await page.click('#amx .vinc [data-vpair^="' + c + ':"]'); await page.waitForFunction(c => document.querySelectorAll("#amx .vinpair.w").length >= c, c, { timeout: 8000 }).catch(() => {}); }
+    await page.waitForSelector('[data-vop="next"]', { timeout: 8000 }).catch(() => {});
+    await page.click('[data-vop="next"]');
+    await page.waitForFunction(() => /Match 2 av 7/.test(document.querySelector("#amx")?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    let vt = JSON.parse(AMX_KV.get("amx:" + vid) || "null");
+    const moved = vt && vt.rounds.length === 2 && vt.rounds[1][0].p.slice().sort().join() === vt.rounds[0][0].w.concat(vt.rounds[0][1].w).sort().join() && vt.rounds[1][2].p.slice().sort().join() === vt.rounds[0][1].p.filter(i => !vt.rounds[0][1].w.includes(i)).concat(vt.rounds[0][2].p.filter(i => !vt.rounds[0][2].w.includes(i))).sort().join();
+    // match 2: two taps on a court mark its winners
+    const four = await page.$$eval('#amx .vinc [data-vp^="1:"]', e => e.length);
+    await page.click('#amx .vinc [data-vp^="1:"] >> nth=0'); await page.click('#amx .vinc [data-vp^="1:"] >> nth=1');
+    await page.waitForFunction(() => document.querySelectorAll("#amx .vinp.w").length === 2, null, { timeout: 8000 }).catch(() => {});
+    vt = JSON.parse(AMX_KV.get("amx:" + vid) || "null");
+    // the clock: started, then (the record moved back) out: the alarm state on the phone
+    await page.click('[data-vop="timer1"]');
+    await page.waitForSelector('[data-vop="timer0"]', { timeout: 8000 }).catch(() => {});
+    const t2 = JSON.parse(AMX_KV.get("amx:" + vid) || "null");
+    t2.timer.at -= t2.timer.dur + 2000; AMX_KV.set("amx:" + vid, JSON.stringify(t2));
+    await page.reload();
+    await page.waitForSelector("#vinClock.ring", { timeout: 8000 }).catch(() => {});
+    const clock = await page.evaluate(() => document.getElementById("vinClock")?.textContent || "");
+    await page.goto(url("#amx/" + vid + "/tv"));
+    await page.waitForSelector("#amxtv .sbcourt", { timeout: 8000 }).catch(() => {});
+    const tv = await page.evaluate(() => [document.querySelectorAll("#amxtv .sbcourt").length, document.querySelectorAll("#amxtv .sbrow:not(.sbhd)").length, document.getElementById("tvClock")?.textContent, document.querySelector("#amxtv .sbround b")?.textContent]);
+    ok("Vinnarbana: 12 on 3 courts, match 1 in pairs, winners up and losers down, two taps for match 2, the clock out, the big screen", startOk && c1 === 3 && moved && four === 4 && vt.rounds[1][0].w && vt.rounds[1][0].w.length === 2 &&
+      /Tiden är ute/.test(clock) && tv[0] === 3 && tv[1] === 12 && /Tiden är ute/.test(tv[2] || "") && tv[3] === "2/7", { startOk, c1, moved, four, w: vt && vt.rounds[1][0].w, clock, tv });
+    // gone again, so the americano tests below see only theirs
+    const vkey = await page.evaluate(id => JSON.parse(localStorage.getItem("padel.amx.keys") || "{}")[id], vid);
+    await worker.fetch(new Request("https://w/amx/" + vid, { method: "POST", headers: { Origin: AMX_ENV.ORIGIN, "Content-Type": "application/json" }, body: JSON.stringify({ key: vkey, op: "delete" }) }), AMX_ENV);
+    await page.evaluate(id => { const m = JSON.parse(localStorage.getItem("padel.amx.mine") || "[]").filter(x => x.id !== id); localStorage.setItem("padel.amx.mine", JSON.stringify(m)); }, vid);
+    await page.goto(url("#/"));
   }
   { // Americano: set up with a club player and guests, a result (the other side filled in), a new round, the table
     await page.goto(url("#amx/ny"));

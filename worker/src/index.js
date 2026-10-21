@@ -13,6 +13,7 @@ import { academyGet, academyPost, interestPost, interestList, interestMark, payG
 import { canTrain } from "./train.js";
 import { linkSub, notifyAdmins, notifyUsers } from "./notify.js";
 import { trainGet, trainPost, trainClear, threadGet, threadPost, trainMany } from "./train.js";
+import { hallStart, hallQr, hallOk, hallPoll, hallOf, hallEnd } from "./hall.js";
 import { hkKey, hkProfile, hkImport, stravaStart, stravaBack, stravaOff, stravaRun, connOf } from "./health.js";
 import { coachGet, coachPost, libGet, libPost, plansGet, plansPost } from "./coach.js";
 import { pkOptions, pkAdd, pkLogin, pkClear } from "./passkey.js";
@@ -37,7 +38,7 @@ function cors(req, env) {
   // the site; localhost only when the worker runs locally (wrangler dev, tests: ALLOW_LOCALHOST=1)
   const ok = o === env.ORIGIN || (env.ALLOW_LOCALHOST === "1" && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o));
   return ok ? { "Access-Control-Allow-Origin": o, "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-Stats-Key, Authorization", "Access-Control-Max-Age": "86400", "Vary": "Origin" } : { "Vary": "Origin" };
+    "Access-Control-Allow-Headers": "Content-Type, X-Stats-Key, Authorization, X-Hall", "Access-Control-Max-Age": "86400", "Vary": "Origin" } : { "Vary": "Origin" };
 }
 // every answer: no MIME sniffing, no referrer
 const SEC = { "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" };
@@ -164,7 +165,7 @@ async function handle(req, env) {
   // the per-IP rate limits and the cap on subscriptions are what keep KV (1000 writes, 100k reads a day) safe.
   if (req.method === "POST" && !h["Access-Control-Allow-Origin"]) return json({ error: "forbidden" }, 403, h);
   // americano results come several a minute from one phone: the API limit, not the subscribe one
-  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" && url.pathname !== "/auth/request/poll" && !/^\/(train|coach|lib|plans|academy$|academy\/interest\/mark|pay$|hk\/key|hk\/profile|strava\/)/.test(url.pathname) ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
+  if (await limited(req.method === "POST" && !url.pathname.startsWith("/amx") && url.pathname !== "/admin" && url.pathname !== "/auth/request/poll" && !/^\/(train|coach|lib|plans|academy$|academy\/interest\/mark|pay$|hk\/key|hk\/profile|strava\/|auth\/hall\/)/.test(url.pathname) ? env.SUB_RL : url.pathname === "/live" ? env.LIVE_RL || env.API_RL : env.API_RL, req)) return json({ error: "too many requests" }, 429, { ...h, "Retry-After": "60" });
   const route = req.method + " " + url.pathname;
   if (route === "GET /health") {
     const rec = await loadRecord(env);
@@ -235,19 +236,18 @@ async function handle(req, env) {
     return t ? json(publicOf(t), 200, { ...h, "Cache-Control": "no-store" }) : json({ error: "not found" }, 404, h);
   }
   if (route === "POST /amx" || (am && req.method === "POST")) {
-    // anyone may start one (without an account at most AMX_PER_IP a day from one network: notiser reach the players'
-    // followers, and the admin removes any americano); running it takes the americano's own key
+    // starting one takes a login with the role arrangör (or admin), or a hall computer an arrangör approved with its QR
+    // code (hall.js; started in the approver's name); running it takes the americano's own key
     const me = await authUser(env, req, +now(env)), t0 = +now(env);   // me: null at once without an Authorization header
-    let ipHash = null;
-    if (!am && !me && env.DB) {
-      ipHash = await sha("amx:" + (req.headers.get("CF-Connecting-IP") || "local") + ":" + (env.FANOUT_KEY || env.ADMIN_KEY || ""));
-      await env.DB.prepare("DELETE FROM reqlimit WHERE at < ?").bind(t0 - 86400e3).run();
-      if ((await env.DB.prepare("SELECT count(*) AS n FROM reqlimit WHERE ip = ? AND at > ?").bind(ipHash, t0 - 86400e3).first()).n >= AMX_PER_IP) return json({ error: "limit" }, 429, h);
+    let by = me;
+    if (!am && !can(me, "arr")) {
+      const hl = await hallOf(env, req, t0);
+      if (!hl) return json({ error: me ? "role" : "login" }, me ? 403 : 401, h);
+      by = { name: hl.name };
     }
     let b;
     try { b = await readBody(req, 800000); } catch (e) { return json({ error: "bad json" }, 400, h); }   // guests' photos (about 10 kB each)
-    const r = am ? await amxUpdate(env, am[1], b, t0, !!me && me.roles.includes("admin")) : await amxCreate(env, b, BY_PID, t0, me);
-    if (!r.err && ipHash) await env.DB.prepare("INSERT INTO reqlimit (ip, at) VALUES (?, ?)").bind(ipHash, t0).run();
+    const r = am ? await amxUpdate(env, am[1], b, t0, !!me && me.roles.includes("admin")) : await amxCreate(env, b, BY_PID, t0, by);
     return r.err ? json({ error: r.err }, r.status || 400, h) : json(r, 200, h);
   }
   // Club accounts (auth.js): the invite link, who am I, log out; the admin's list and changes
@@ -281,6 +281,18 @@ async function handle(req, env) {
     let b;
     try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
     const r = route === "POST /train" ? await trainPost(env, me, b, +now(env)) : route === "POST /train/comment" ? await threadPost(env, me, b, +now(env)) : await trainClear(env, me, b);
+    return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
+  }
+  // A hall computer approved by an arrangör's phone (hall.js)
+  if (route === "POST /auth/hall/start") return json(await hallStart(env), 200, { ...h, "Cache-Control": "no-store" });
+  if (route === "GET /auth/hall/qr") {
+    const svg = hallQr(env, url.searchParams.get("code"));
+    return svg ? new Response(svg, { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store", ...SEC, ...h } }) : json({ error: "bad code" }, 400, h);
+  }
+  if (route === "POST /auth/hall/ok" || route === "POST /auth/hall/poll" || route === "POST /auth/hall/end") {
+    let b = {};
+    try { b = await readBody(req); } catch (e) { return json({ error: "bad json" }, 400, h); }
+    const r = route === "POST /auth/hall/ok" ? await hallOk(env, await authUser(env, req, +now(env)), b, +now(env)) : route === "POST /auth/hall/poll" ? await hallPoll(env, b, +now(env)) : await hallEnd(env, req);
     return r.err ? json({ error: r.err }, r.status, h) : json(r, 200, { ...h, "Cache-Control": "no-store" });
   }
   // Hälsodata: what is connected; an Apple Hälsa key; Strava on and off
@@ -467,7 +479,7 @@ export function localize(m, lang) {
 }
 const RULES_URL = "https://raw.githubusercontent.com/hynjjr44sz-pixel/padel/tvdata/rules.json";
 const now = env => env.NOW ? new Date(env.NOW) : new Date();   // NOW: local tests only
-const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8, AMX_PER_IP = 5;
+const H = 3600e3, DAY = 24 * H, SUBREQUESTS = 45, FOLD_OVER = 8;
 
 /* ---- discovered events: KV "disc" = {at, events, ended, none, past, photos, board}. Read at most every 5 min per isolate. ---- */
 let MEM = { rec: undefined, readAt: 0, tryAt: 0, wins: undefined, winsAt: 0 };

@@ -9,7 +9,7 @@ const TTL = 30 * 86400, MAX_P = 32, MAX_R = 40, MAX_C = 8, LIST_DAYS = 7;
 // fmt: americano (new partner each round), mexicano (pairs by the table), lag (fixed pairs). mode: "pts" (the match is
 // pts points, the two scores add up to it), "games" (first to pts games, one more on a tie-break), "free" (any score:
 // timed matches).
-const FMT = new Set(["americano", "mexicano", "lag"]), PTS = new Set([16, 21, 24, 32]), GAMES = new Set([3, 4, 5, 6, 7, 8, 9]);
+const FMT = new Set(["americano", "mexicano", "lag", "vinnar"]), PTS = new Set([16, 21, 24, 32]), GAMES = new Set([3, 4, 5, 6, 7, 8, 9]);
 const IMG = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 // a player's picture: a small uploaded photo (data: URL, made on the phone) or a drawn figure (a seed)
 function look(p) {
@@ -28,6 +28,48 @@ export function validScore(t, s) {
 const rid = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); return [...a].map(x => "abcdefghijkmnpqrstuvwxyz23456789"[x % 32]).join(""); };
 async function hash(s) { const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(s))); return [...new Uint8Array(d)].map(x => x.toString(16).padStart(2, "0")).join(""); }
 const clean = s => String(s == null ? "" : s).replace(/[\u0000-\u001f<>]/g, "").replace(/\s+/g, " ").trim();
+
+// Vinnarbana ("deluxe"): exactly 4 a court on 2 or 3 courts, vin.n timed matches (vin.min minutes; the organiser starts
+// the clock) and then a final, round vin.n. Match 1 is drawn, pairs too; after it the winners of a court move up one and
+// the losers down one (court 1's winners and the last court's losers stay), and the pairs are settled on the court (rock,
+// paper, scissors): a court is {c, p:[4], a?, b?, w:[2] | null}. Points to each winner: 2 in matches 1 and 2, then 3 on
+// court 1, 2 on court 2, 1 on court 3 (2 and 1 on two courts). The table: points, wins, then the order the organiser set
+// after a klunsning (t.tie). The final: 1 picks 3 or 4 as partner (2 gets the other), 5 picks 7 or 8, 9 picks 11 or 12;
+// its result gives the places (court 1's winners share place 1, its losers 3, court 2's winners 5 ...).
+export const vinPts = (t, r, c) => r < 2 ? 2 : t.courts - c + 1;
+export function vinStand(t) {
+  const st = t.players.map((p, i) => ({ i, n: p.n, pid: p.pid || null, p: 0, m: 0, w: 0, d: 0, l: 0, pm: 0 }));
+  t.rounds.forEach((r, ri) => { if (ri >= t.vin.n) return; r.forEach(x => { if (x.w) x.p.forEach(i => { const o = st[i]; o.m++; if (x.w.includes(i)) { o.w++; o.p += vinPts(t, ri, x.c); } else o.l++; }); }); });
+  const tie = t.tie || [], pos = i => { const k = tie.indexOf(i); return k < 0 ? 99 : k; };
+  return st.sort((a, b) => b.p - a.p || b.w - a.w || pos(a.i) - pos(b.i) || a.n.localeCompare(b.n, "sv"));
+}
+export function vinPlaces(t) {
+  const f = t.rounds[t.vin.n], pl = {};
+  if (f && f.every(x => x.w)) f.forEach(x => x.p.forEach(i => { pl[i] = 4 * (x.c - 1) + (x.w.includes(i) ? 1 : 3); }));
+  else vinStand(t).forEach((o, k) => { pl[o.i] = k + 1; });
+  return pl;
+}
+// the next match from the last one's winners
+export function vinMove(t) {
+  const last = t.rounds[t.rounds.length - 1], C = t.courts, next = [];
+  for (let c = 1; c <= C; c++) next.push({ c, p: [], w: null });
+  last.forEach(x => {
+    next[Math.max(1, x.c - 1) - 1].p.push(...x.w);
+    next[Math.min(C, x.c + 1) - 1].p.push(...x.p.filter(i => !x.w.includes(i)));
+  });
+  return next;
+}
+// the final from the table and the top seeds' picks (picks[g]: the partner of seed 4g+1, seed 4g+3 or 4g+4)
+export function vinFinal(t, picks) {
+  const s = vinStand(t).map(o => o.i), out = [];
+  for (let g = 0; g < t.courts; g++) {
+    const top = s[4 * g], two = s[4 * g + 1], pk = Number(picks && picks[g]), opts = [s[4 * g + 2], s[4 * g + 3]];
+    if (!opts.includes(pk)) return null;
+    const a = [top, pk], b = [two, opts.find(i => i !== pk)];
+    out.push({ c: g + 1, p: a.concat(b), a, b, w: null });
+  }
+  return out;
+}
 
 export function publicOf(t) { const { kh, ...o } = t; return o; }
 // Standings: points, matches, won/drawn/lost, +/- (points for minus against); sorted by points, then +/-, then wins.
@@ -64,11 +106,19 @@ export function scoreNotes(t, r, m) {
   });
   return out;
 }
+// a court's winners in Vinnarbana: a notis to the followers of the club players among them
+function vinNotes(t, r, x) {
+  const pids = x.w.map(i => t.players[i].pid).filter(Boolean);
+  if (!pids.length) return [];
+  const fin = r >= t.vin.n, what = fin ? "vann finalen på bana " + x.c : "vann på bana " + x.c, whatEs = fin ? "ganaron la final en la pista " + x.c : "ganaron en la pista " + x.c;
+  return [{ pids, m: { title: t.name + ": " + firsts(t, x.w) + " " + what, body: fin ? "Finalen." : "Match " + (r + 1) + " av " + t.vin.n + ".", tag: "padel-amx-" + t.id + "-" + r + "-" + x.c, url: "./#amx/" + t.id,
+    es: { title: t.name + ": " + firsts(t, x.w) + " " + whatEs, body: fin ? "La final." : "Partido " + (r + 1) + " de " + t.vin.n + "." } } }];
+}
 export function startNote(t) {
   const pids = t.players.map(p => p.pid).filter(Boolean);
   if (!pids.length) return [];
-  const kind = t.fmt === "mexicano" ? "Mexicano" : t.fmt === "lag" ? "Lagamericano" : "Americano";
-  const how = t.mode === "games" ? "först till " + t.pts + " game" : t.mode === "free" ? "på tid" : t.pts + " poäng per match";
+  const kind = t.fmt === "mexicano" ? "Mexicano" : t.fmt === "lag" ? "Lagamericano" : t.fmt === "vinnar" ? "Vinnarbana" : "Americano";
+  const how = t.fmt === "vinnar" ? t.vin.n + " matcher à " + t.vin.min + " minuter" : t.mode === "games" ? "först till " + t.pts + " game" : t.mode === "free" ? "på tid" : t.pts + " poäng per match";
   return [{ pids, m: { title: kind + ": " + t.name, body: t.players.length + " spelare, " + how + ". Följ tabellen i appen.", tag: "padel-amx-" + t.id, url: "./#amx/" + t.id,
     es: { title: kind + ": " + t.name, body: t.players.length + " jugadores, " + t.pts + " puntos por partido. Sigue la tabla en la app." } } }];
 }
@@ -100,6 +150,10 @@ export async function amxList(env, now) {
 // The archive rows of an ended americano: per club player the place (shared on a tie; pairs in Lagamericano), of how
 // many, won–lost and points.
 export function archiveRows(t) {
+  if (t.fmt === "vinnar") {
+    const pl = vinPlaces(t);
+    return vinStand(t).filter(o => o.pid).map(o => ({ pid: o.pid, row: { id: t.id, name: t.name, fmt: t.fmt, d: new Date(t.upd).toISOString().slice(0, 10), place: pl[o.i], of: t.players.length, w: o.w, l: o.l, p: o.p, pa: [] } }));
+  }
   const st = standings(t), byW = t.mode && t.mode !== "pts";
   const better = (o, me) => byW ? o.w > me.w || (o.w === me.w && (o.pm > me.pm || (o.pm === me.pm && o.p > me.p))) : o.p > me.p || (o.p === me.p && (o.pm > me.pm || (o.pm === me.pm && o.w > me.w)));
   const units = t.teams ? t.teams.map(p => st.find(o => o.i === p[0])) : st, of = units.length;
@@ -118,6 +172,7 @@ export function archiveRows(t) {
 }
 // The winners of an ended americano: the first names (pairs in Lagamericano) sharing place 1
 export function winners(t) {
+  if (t.fmt === "vinnar") { const pl = vinPlaces(t); return [t.players.map((p, i) => i).filter(i => pl[i] === 1).map(i => t.players[i].n)]; }
   const st = standings(t), byW = t.mode && t.mode !== "pts";
   const better = (o, me) => byW ? o.w > me.w || (o.w === me.w && (o.pm > me.pm || (o.pm === me.pm && o.p > me.p))) : o.p > me.p || (o.p === me.p && (o.pm > me.pm || (o.pm === me.pm && o.w > me.w)));
   const units = t.teams ? t.teams.map(p => st.find(o => o.i === p[0])) : st;
@@ -161,7 +216,9 @@ export async function amxCreate(env, b, byPid, now, by) {
     const pid = Number(p && p.pid), P = pid && byPid.get(pid);
     return P ? { n: P.me, pid } : { n: clean(p && p.n).slice(0, 40), ...look(p || {}) };
   }).filter(p => p.n);
-  if (!fmt || (mode === "pts" && !(Number.isInteger(pts) && pts >= 8 && pts <= 64)) || (mode === "games" && !GAMES.has(pts)) || players.length < 4 || players.length > MAX_P) return { err: "bad americano" };
+  const vin = fmt === "vinnar" ? { n: Math.round(Number(b.vin && b.vin.n)) || 7, min: Math.round(Number(b.vin && b.vin.min)) || 12 } : null;
+  if (vin && (![2, 3].includes(courts) || players.length !== 4 * courts || !(vin.n >= 3 && vin.n <= 15) || !(vin.min >= 3 && vin.min <= 60))) return { err: "bad vinnarbana" };
+  if (!fmt || (!vin && mode === "pts" && !(Number.isInteger(pts) && pts >= 8 && pts <= 64)) || (!vin && mode === "games" && !GAMES.has(pts)) || players.length < 4 || players.length > MAX_P) return { err: "bad americano" };
   if (new Set(players.map(p => p.pid || p.n.toLowerCase())).size !== players.length) return { err: "same player twice" };
   let teams = null;
   if (fmt === "lag") {   // fixed pairs: every player in exactly one
@@ -169,10 +226,10 @@ export async function amxCreate(env, b, byPid, now, by) {
     const seen = new Set();
     if (players.length % 2 || teams.length !== players.length / 2 || !teams.every(p => Array.isArray(p) && p.length === 2 && p.every(i => Number.isInteger(i) && i >= 0 && i < players.length && !seen.has(i) && seen.add(i)))) return { err: "bad teams" };
   }
-  const key = rid(16), t = { v: 1, id: rid(8), name: clean(b.name).slice(0, 60) || (fmt === "mexicano" ? "Mexicano" : fmt === "lag" ? "Lagamericano" : "Americano"), fmt, mode, pts: mode === "free" ? null : pts,
+  const key = rid(16), t = { v: 1, id: rid(8), name: clean(b.name).slice(0, 60) || (fmt === "mexicano" ? "Mexicano" : fmt === "lag" ? "Lagamericano" : fmt === "vinnar" ? "Vinnarbana" : "Americano"), fmt, mode: vin ? "free" : mode, pts: vin || mode === "free" ? null : pts, ...(vin ? { vin } : {}),
     courts: Math.min(courts, Math.floor(players.length / 4)), players, ...(teams ? { teams } : {}), rounds: [], created: now, upd: now, ...(by ? { by: { n: by.name } } : {}), kh: await hash(key) };
-  if (!validRound(t, b.round)) return { err: "bad round" };
-  t.rounds.push(b.round.map(x => ({ c: x.c || null, a: x.a, b: x.b, s: null })));
+  if (!validRound(t, b.round) || (vin && b.round.length !== courts)) return { err: "bad round" };
+  t.rounds.push(b.round.map((x, k) => vin ? { c: k + 1, p: x.a.concat(x.b), a: x.a, b: x.b, w: null } : { c: x.c || null, a: x.a, b: x.b, s: null }));
   await env.PUSH.put("amx:" + t.id, JSON.stringify(t), { expirationTtl: TTL });
   await index(env, t, now);
   await queue(env, startNote(t));
@@ -186,6 +243,7 @@ export async function amxUpdate(env, id, b, now, admin) {
   const byAdmin = !!admin && b && ["end", "reopen", "delete"].includes(b.op);
   if (!byAdmin && (!b || typeof b.key !== "string" || (await hash(b.key)) !== t.kh)) return { err: "forbidden", status: 403 };
   let notes = [];
+  if (t.fmt === "vinnar" && (b.op === "score" || b.op === "round")) return { err: "bad op" };
   if (b.op === "score") {
     const r = Number(b.r), m = Number(b.m), x = t.rounds[r] && t.rounds[r][m], s = Array.isArray(b.s) ? b.s.map(Number) : null;
     if (!x) return { err: "no such match" };
@@ -202,8 +260,33 @@ export async function amxUpdate(env, id, b, now, admin) {
     t.rounds.push(b.round.map(x => ({ c: x.c || null, a: x.a, b: x.b, s: null })));
   } else if (b.op === "drop") {   // the last round, while nothing in it is scored
     const last = t.rounds[t.rounds.length - 1];
-    if (t.rounds.length < 2 || last.some(x => x.s)) return { err: "cannot drop" };
+    if (t.rounds.length < 2 || last.some(x => x.s || x.w)) return { err: "cannot drop" };
     t.rounds.pop();
+    t.timer = null;
+  } else if (t.fmt === "vinnar" && b.op === "vwin") {   // the two winners on a court of the last match (null: not yet)
+    const R = t.rounds.length - 1, x = t.rounds[R].find(y => y.c === Number(b.c));
+    if (!x) return { err: "no such court" };
+    if (b.w === null) x.w = null;
+    else {
+      const w = Array.isArray(b.w) ? b.w.map(Number) : [];
+      if (w.length !== 2 || w[0] === w[1] || !w.every(i => x.p.includes(i))) return { err: "bad winners" };
+      if (x.a && !(x.a.every(i => w.includes(i)) || x.b.every(i => w.includes(i)))) return { err: "bad winners" };   // drawn or chosen pairs
+      const first = !x.w || x.w.some(i => !w.includes(i));
+      x.w = w;
+      if (first) notes = vinNotes(t, R, x);
+    }
+  } else if (t.fmt === "vinnar" && b.op === "vnext") {   // the next match, or the final after the last one
+    const last = t.rounds[t.rounds.length - 1], R = t.rounds.length;
+    if (!last.every(x => x.w) || R > t.vin.n) return { err: "not done" };
+    if (R < t.vin.n) t.rounds.push(vinMove(t));
+    else { const f = vinFinal(t, b.picks); if (!f) return { err: "bad picks" }; t.rounds.push(f); }
+    t.timer = null;
+  } else if (t.fmt === "vinnar" && b.op === "vtie") {   // the order after a klunsning among those level
+    const o = Array.isArray(b.order) ? b.order.map(Number) : [], seen = new Set();
+    if (!o.every(i => Number.isInteger(i) && i >= 0 && i < t.players.length && !seen.has(i) && seen.add(i))) return { err: "bad order" };
+    t.tie = o;
+  } else if (t.fmt === "vinnar" && b.op === "timer") {   // the clock of the current match: started now, or stopped
+    t.timer = b.run ? { at: now, dur: t.vin.min * 60e3 } : null;
   } else if (b.op === "end" || b.op === "reopen") t.done = b.op === "end";
   else if (b.op === "delete") {   // gone: the record, the home list, the players' archives
     await env.PUSH.delete("amx:" + t.id);

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-uW8HHzWaLeOpdlWcFjsXYP55trwGmZLT08CusvqQmBc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-nSlK/4+VQAYDNQD9MLkadZXb4Ujyq2Qm3oDGAdKRMXs='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -267,6 +267,8 @@
   .sbround{ flex:none; } .sbtools{ flex:none; }
   .sbh h1{ margin:0; font:800 2.6em/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.01em; }
   .sbh p{ margin:.25em 0 0; font:500 .8em/1.2 "Chivo Mono", monospace; color:#A6B2D2; }
+  .sbside.sbfour b{ white-space:normal; line-height:1.25; }
+  .sbclock b{ font-size:2em; color:#fff; } .sbclock.ring{ background:#E5484D; animation:vin-ring 1s steps(2) infinite; } .sbclock.ring b{ font-size:1.1em; }
   .sbround{ display:flex; flex-direction:column; align-items:center; padding:.3em 1em; border-radius:16px; background:rgba(255,255,255,.06); }
   .sbround span{ font:600 .6em/1 "Chivo Mono", monospace; letter-spacing:.12em; text-transform:uppercase; color:#A6B2D2; } .sbround b{ font:900 2.4em/1 "Big Shoulders Display", sans-serif; color:#FFD84A; }
   .sbtools{ display:flex; gap:.5em; } .sbtools button, .sbtools a{ appearance:none; display:grid; place-items:center; width:2em; height:2em; border-radius:50%; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.06); color:#fff; font-size:1em; text-decoration:none; cursor:pointer; opacity:.55; }
@@ -652,6 +654,24 @@
   .amxgo{ appearance:none; display:block; width:100%; height:52px; margin:14px 0 6px; border:0; border-radius:14px; background:#FFD84A; color:#0A1733; font:800 20px/1 "Big Shoulders Display", sans-serif; text-transform:uppercase; letter-spacing:.03em; cursor:pointer; }
   .amxgo:disabled{ opacity:.45; }
   .amxsec{ appearance:none; height:44px; padding:0 16px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 14px/1 "Instrument Sans", sans-serif; cursor:pointer; }
+  .vinclock{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 14px; padding:14px 16px; margin:12px 0 4px; } .vinclock .vintime{ font:900 44px/1 "Big Shoulders Display", sans-serif; font-variant-numeric:tabular-nums; }
+  .vinclock span{ flex:1; min-width:120px; font-size:13px; color:var(--dim); } .vinclock .amxgo, .vinclock .amxsec{ width:auto; margin:0; padding:0 18px; height:44px; }
+  .vinclock.ring{ background:#E5484D; color:#fff; animation:vin-ring 1s steps(2) infinite; } .vinclock.ring span{ color:#fff; }
+  @keyframes vin-ring{ 50%{ background:#B4232A; } }
+  .vinc .amxmh i{ font-style:normal; font:600 11px/1 "Chivo Mono", monospace; color:var(--dim); }
+  .vinpl{ display:inline-flex; align-items:center; gap:6px; min-width:0; } .vinpl .av, .vinpl > span{ flex:none; } .vinpl b{ font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .vinpair{ appearance:none; display:flex; align-items:center; gap:8px; width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; text-align:left; cursor:pointer; }
+  .vinpair em{ font-style:normal; color:var(--dim); } .vinpair i{ margin-left:auto; font-style:normal; font:700 11px/1 "Chivo Mono", monospace; text-transform:uppercase; }
+  .vinpair.w, .vinp.w{ background:#FFD84A; border-color:#E0B800; color:#0A1733; }
+  .vinvs{ margin:4px 0; text-align:center; font:600 11px/1 "Chivo Mono", monospace; color:var(--dim); text-transform:uppercase; }
+  .vinfour{ display:grid; grid-template-columns:1fr 1fr; gap:8px; } .vinp{ appearance:none; display:flex; align-items:center; padding:10px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; cursor:pointer; min-width:0; }
+  .vinhint{ display:block; margin-top:8px; color:var(--dim); font-size:12px; }
+  .vinseed{ padding:6px 12px; } .vinrow{ display:flex; align-items:center; gap:10px; padding:7px 4px; border-bottom:1px solid var(--line); } .vinrow > b{ width:22px; font:800 16px/1 "Big Shoulders Display", sans-serif; color:var(--dim); }
+  .vinrow > span:last-of-type{ margin-left:auto; font:500 12px/1 "Chivo Mono", monospace; color:var(--dim); } .vinrow.lev{ background:color-mix(in srgb, #FFC53D 18%, transparent); } .vinrow .amxsec{ height:32px; padding:0 10px; }
+  .vinpick{ padding:12px 14px; margin-top:10px; } .vinpick p{ margin:0 0 6px; font-weight:700; } .vinpick .amxsec[aria-pressed="true"]{ background:var(--solid); color:var(--solid-ink); border-color:var(--solid); }
+  .vinres{ padding:14px 16px; margin-top:12px; font-size:16px; }
+  .hallbox{ display:flex; flex-wrap:wrap; gap:16px; align-items:center; } .hallbox > div{ flex:1; min-width:220px; } .hallqr{ flex:none; width:220px; height:220px; border-radius:12px; background:#fff; }
+  .hallon{ margin:8px 0 0; } .khall{ border:2px solid #FFD84A; }
   .amxpts{ width:100px; height:40px; margin-top:8px; padding:0 12px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 16px/1 "Instrument Sans", sans-serif; }
   .amxbar{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 14px; } .amxbar .amxgo{ margin:0; }
   .amxerr{ color:var(--loss); font-size:13.5px; margin:8px 0 0; }
@@ -2072,6 +2092,54 @@
   // text in that language; ES holds the Spanish keyed by the Swedish, {name} marks a value filled in.
   var LANG = store.get("padel.lang") === "es" ? "es" : "sv";
   var ES = {
+    "final":"final",
+    "match {r}":"partido {r}",
+    "Arrangören startar tiden och får ett larm när den är ute. Finalen spelas utan tid.":"El organizador inicia el tiempo y recibe una alarma cuando se acaba. La final se juega sin tiempo.",
+    "Bana {c}: {n} väljer partner":"Pista {c}: {n} elige compañero",
+    "Bryt matcherna och tryck på vinnarna":"Parad los partidos y marcad a los ganadores",
+    "Datorn får starta americanos i ditt namn i 12 timmar. Den kommer inte åt något annat i ditt konto.":"El ordenador podrá empezar americanos a tu nombre durante 12 horas. No accede a nada más de tu cuenta.",
+    "Datorn är godkänd av {n} till {t}.":"Ordenador aprobado por {n} hasta las {t}.",
+    "Ditt konto har inte behörighet att starta americanos. Be klubben om rollen arrangör.":"Tu cuenta no puede empezar americanos. Pide al club el rol de organizador.",
+    "Exakt {n} spelare.":"Exactamente {n} jugadores.",
+    "Finalen: 1:an valde partner bland 3 och 4, 5:an bland 7 och 8, 9:an bland 11 och 12.":"La final: el 1.º eligió compañero entre el 3.º y el 4.º, el 5.º entre el 7.º y el 8.º, el 9.º entre el 11.º y el 12.º.",
+    "Flytta upp":"Subir",
+    "Godkänn datorn i hallen":"Aprobar el ordenador del club",
+    "Gula rader har lika poäng och vinster: de klunsar, och du flyttar upp den som vann.":"Las filas amarillas tienen los mismos puntos y victorias: lo echan a piedra, papel o tijera, y subes a quien gane.",
+    "Har du ett konto kan du också logga in här under Konto.":"Si tienes cuenta, también puedes iniciar sesión aquí en Cuenta.",
+    "Klart. Datorn kan nu starta americanos.":"Listo. El ordenador ya puede empezar americanos.",
+    "Koden har gått ut. Ta fram en ny på datorn.":"El código ha caducado. Muestra uno nuevo en el ordenador.",
+    "Logga in först, med ett konto som får starta americanos. Skanna sedan koden igen.":"Inicia sesión primero con una cuenta que pueda empezar americanos. Luego escanea el código otra vez.",
+    "Lottad":"Sorteado",
+    "Match {r}":"Partido {r}",
+    "Match {r} av {n}":"Partido {r} de {n}",
+    "Minuter per match":"Minutos por partido",
+    "Nollställ":"Reiniciar",
+    "Nästa match: flytta spelarna":"Siguiente partido: mover a los jugadores",
+    "Ordning: poäng, sedan vunna matcher, sedan klunsning.":"Orden: puntos, luego partidos ganados, luego piedra, papel o tijera.",
+    "QR-kod":"Código QR",
+    "Sedan en final.":"Después, una final.",
+    "Skanna koden med telefonen. Den som får starta americanos godkänner, och sedan kan datorn starta americanos i 12 timmar.":"Escanea el código con el móvil. Quien puede empezar americanos lo aprueba, y el ordenador podrá empezar americanos durante 12 horas.",
+    "Sluta":"Terminar",
+    "Slutplacering efter finalen. Poängen är från matcherna före finalen.":"Clasificación final tras la final. Los puntos son de los partidos antes de la final.",
+    "Starta americanos på den här datorn":"Empezar americanos en este ordenador",
+    "Starta finalen":"Empezar la final",
+    "Starta tiden":"Iniciar el tiempo",
+    "Stoppa":"Parar",
+    "Tid kvar":"Tiempo restante",
+    "Tiden är inte startad":"El tiempo no ha empezado",
+    "Tiden är ute":"Se acabó el tiempo",
+    "Tidigare matcher":"Partidos anteriores",
+    "Till finalen":"A la final",
+    "Tryck på de två som vann.":"Toca a los dos que ganaron.",
+    "Vinnarbana":"Pista de ganadores",
+    "Vinnarbana på {c} banor behöver exakt {n} spelare.":"La pista de ganadores en {c} pistas necesita exactamente {n} jugadores.",
+    "Vinnarbana: första matchen lottas. Sedan går vinnarna upp en bana och förlorarna ner en, och paren klunsas på banan. Vinnarna får 2 poäng i match 1 och 2, sedan 3 på bana 1, 2 på bana 2 och 1 på bana 3.":"Pista de ganadores: el primer partido se sortea. Después los ganadores suben una pista y los perdedores bajan una, y las parejas se deciden en la pista. Los ganadores reciben 2 puntos en los partidos 1 y 2, luego 3 en la pista 1, 2 en la pista 2 y 1 en la pista 3.",
+    "Vinnarna går upp en bana, förlorarna ner. Match 1 och 2 ger 2 poäng, sedan bana 1: 3, bana 2: 2, bana 3: 1.":"Los ganadores suben una pista, los perdedores bajan. Los partidos 1 y 2 dan 2 puntos, luego pista 1: 3, pista 2: 2, pista 3: 1.",
+    "Vinnarna har gått upp en bana, förlorarna ner. Klunsa om paren.":"Los ganadores han subido una pista, los perdedores han bajado. Decidid las parejas.",
+    "kvar av matchen":"restante del partido",
+    "mot":"contra",
+    "{n} matcher à {m} min":"{n} partidos de {m} min",
+    "{p} p till vinnarna":"{p} p para los ganadores",
     "Americano: ny partner varje runda. Aldrig samma medspelare två gånger, och högst två möten mot samma spelare.":"Americano: compañero nuevo cada ronda. Nunca el mismo compañero dos veces, y como máximo dos enfrentamientos contra el mismo jugador.",
     "Eget":"Propio",
     "Poäng per match":"Puntos por partido",
@@ -8077,11 +8145,25 @@
   function amxKey(id){ return amxKeys()[id] || null; }
   function amxSetKey(id, key){ var k = amxKeys(); k[id] = key; Object.keys(k).slice(0, -20).forEach(function(x){ delete k[x]; }); store.set(AMX_KEYS, JSON.stringify(k)); }
   function amxApi(path, body){
-    return withTimeout(fetch(PUSH_API + path, body ? {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, authHdr()), body:JSON.stringify(body), credentials:"omit"} : {credentials:"omit", cache:"no-store"})
+    return withTimeout(fetch(PUSH_API + path, body ? {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, authHdr(), path === "/amx" ? hallHdr() : {}), body:JSON.stringify(body), credentials:"omit"} : {credentials:"omit", cache:"no-store"})
       .then(function(r){ return r.json().then(function(d){ if (!r.ok) throw new Error(d && d.error || "HTTP " + r.status); return d; }); }), 15000);
   }
   function shuffle(a){ a = a.slice(); for (var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+  // Vinnarbana (worker amx.js vinStand): winners get 2 in matches 1-2, then 3/2/1 by court; points, wins, the klunsning
+  function vinPts(t, r, c){ return r < 2 ? 2 : t.courts - c + 1; }
+  function vinStand(t){
+    var st = t.players.map(function(p, i){ return {i:i, n:p.n, pid:p.pid || null, p:0, m:0, w:0, d:0, l:0, pm:0}; }), tie = t.tie || [];
+    t.rounds.forEach(function(r, ri){ if (ri >= t.vin.n) return; r.forEach(function(x){ if (x.w) x.p.forEach(function(i){ var o = st[i]; o.m++; if (x.w.indexOf(i) >= 0){ o.w++; o.p += vinPts(t, ri, x.c); } else o.l++; }); }); });
+    var pos = function(i){ var k = tie.indexOf(i); return k < 0 ? 99 : k; };
+    return st.sort(function(a, b){ return b.p - a.p || b.w - a.w || pos(a.i) - pos(b.i) || a.n.localeCompare(b.n, "sv"); });
+  }
+  function vinPlaces(t){
+    var f = t.rounds[t.vin.n], pl = {};
+    if (f && f.every(function(x){ return x.w; })) f.forEach(function(x){ x.p.forEach(function(i){ pl[i] = 4 * (x.c - 1) + (x.w.indexOf(i) >= 0 ? 1 : 3); }); });
+    return pl;
+  }
   function amxStand(t){
+    if (t.fmt === "vinnar") return vinStand(t);
     var st = t.players.map(function(p, i){ return {i:i, n:p.n, pid:p.pid || null, p:0, m:0, w:0, d:0, l:0, pm:0}; });
     (t.rounds || []).forEach(function(r){ r.forEach(function(x){
       if (!x.s) return;
@@ -8296,8 +8378,8 @@
   function amxName(t, i){ var p = t.players[i], P = p && p.pid && BYPID[p.pid]; return P ? P.short : (p ? p.n.split(" ")[0] : "?"); }
   function amxSide(t, side){ return side.map(function(i){ return amxName(t, i); }).join(" & "); }
   function amxAvs(t, side){ return '<span class="avs sm">' + side.map(function(i){ return amxAv(t.players[i]); }).join("") + '</span>'; }
-  function amxKind(f){ return f === "mexicano" ? "Mexicano" : f === "lag" ? _("Lagamericano") : "Americano"; }
-  function amxHow(t){ return t.mode === "games" ? _("först till {n} game", {n:t.pts}) : t.mode === "free" ? _("fri räkning") : t.pts + _(" poäng"); }
+  function amxKind(f){ return f === "mexicano" ? "Mexicano" : f === "lag" ? _("Lagamericano") : f === "vinnar" ? _("Vinnarbana") : "Americano"; }
+  function amxHow(t){ if (t.fmt === "vinnar") return _("{n} matcher à {m} min", {n:t.vin.n, m:t.vin.min}); return t.mode === "games" ? _("först till {n} game", {n:t.pts}) : t.mode === "free" ? _("fri räkning") : t.pts + _(" poäng"); }
 
   /* ---- the americanos a club player has played (ended ones, worker /amx/pl/<pid>): the player page, Klubbserier ---- */
   var AMX_ARCH = {}, AMX_ARCH_KEY = "padel.amx.arch.v1";
@@ -9320,19 +9402,51 @@
     box.innerHTML = h + '</div>';
   }
 
+  /* ---- #amx/ny without a login: the computer shows a QR code; an arrangör scans it and approves (worker hall.js) ---- */
+  function amxHallView(box){
+    var h = '<div class="phead"><div class="pt"><h1>' + _("Ny americano") + '</h1></div></div>';
+    if (!HALLREQ || HALLREQ.exp < Date.now()){
+      HALLREQ = {busy:true, exp:Date.now() + 9.5 * 60e3};
+      amxApi("/auth/hall/start", {}).then(function(r){ HALLREQ = {code:r.code, secret:r.secret, exp:Date.now() + (r.ttl - 30) * 1000}; if (location.hash === "#amx/ny") renderAmxNew(); hallPoll(); },
+        function(){ HALLREQ = null; box.innerHTML = h + '<p class="empty">' + _("Kunde inte hämta just nu.") + '</p>'; });
+    }
+    box.innerHTML = h + '<div class="card ktxt hallbox">' + (HALLREQ.code ? '<img class="hallqr" src="' + esc(PUSH_API + "/auth/hall/qr?code=" + HALLREQ.code) + '" width="220" height="220" alt="' + esc(_("QR-kod")) + '">' : '<div class="hallqr"></div>') +
+      '<div><p><b>' + _("Starta americanos på den här datorn") + '</b></p><p>' + _("Skanna koden med telefonen. Den som får starta americanos godkänner, och sedan kan datorn starta americanos i 12 timmar.") + '</p>' +
+      '<p class="kdim">' + _("Har du ett konto kan du också logga in här under Konto.") + ' <a href="#konto">' + _("Konto") + '</a></p></div></div>';
+  }
+  function hallPoll(){
+    var r = HALLREQ;
+    if (!r || !r.code || r.polling) return;
+    r.polling = true;
+    var step = function(){
+      if (HALLREQ !== r || r.exp < Date.now() || !(location.hash === "#amx/ny")){ r.polling = false; if (HALLREQ === r && r.exp < Date.now() && location.hash === "#amx/ny") renderAmxNew(); return; }
+      amxApi("/auth/hall/poll", {code:r.code, secret:r.secret}).then(function(d){
+        if (d.token){ HALL = {token:d.token, by:d.by, exp:d.exp}; store.set(HALL_KEY, JSON.stringify(HALL)); HALLREQ = null; r.polling = false; renderAmxNew(); return; }
+        setTimeout(step, 2500);
+      }, function(e){ r.polling = false; if (/expired/.test(e.message)){ HALLREQ = null; renderAmxNew(); } else setTimeout(step, 5000); });
+    };
+    setTimeout(step, 2500);
+  }
+  function hallEnd(){
+    if (HALL && HALL.token) fetch(PUSH_API + "/auth/hall/end", {method:"POST", headers:{"Content-Type":"application/json", "X-Hall":HALL.token}, body:"{}", credentials:"omit"}).catch(function(){});
+    HALL = null; store.set(HALL_KEY, "null"); renderAmxNew();
+  }
+
   /* ---- #amx/ny: set up ---- */
   function renderAmxNew(){
     var box = document.getElementById("amx");
     if (!box) return;
+    if (!authCan("arr") && !hallOn()){ amxHallView(box); return; }
     var d = AMX.draft = AMX.draft || {name:"", fmt:"americano", mode:"pts", pts:24, courts:3, players:[]};
-    var team = d.fmt === "lag", maxC = Math.max(1, Math.floor(d.players.length / 4)), useC = Math.min(d.courts, maxC);   // the choice stays as more players come
+    var team = d.fmt === "lag", vin = d.fmt === "vinnar", maxC = Math.max(1, Math.floor(d.players.length / 4)), useC = Math.min(d.courts, maxC);
+    if (vin){ d.vn = d.vn || 7; d.vmin = d.vmin || 12; if (d.courts < 2) d.courts = 3; }   // the choice stays as more players come
     var chip = function(k, v, lab, on){ return '<button type="button" data-set="' + k + '" data-v="' + esc(v) + '" aria-pressed="' + (on ? "true" : "false") + '">' + esc(lab) + '</button>'; };
     // points: 16, 20 or 24, or the organiser's own (8-64)
     var vals = d.mode === "pts" ? [16, 20, 24] : d.mode === "games" ? [3, 4, 5, 6, 7, 9] : [];
     if (d.mode === "games" && vals.indexOf(d.pts) < 0) d.pts = 4;
     if (d.mode === "pts" && !(d.pts >= 8 && d.pts <= 64)) d.pts = 24;
     var ownPts = d.mode === "pts" && (d.ownPts || vals.indexOf(d.pts) < 0);
-    var fmtNote = d.fmt === "mexicano" ? _("Mexicano: första rundan lottas, sedan möts spelarna efter tabellen, fyra och fyra. Parningen i varje grupp väljs så att samma två inte spelar ihop igen.") :
+    var fmtNote = vin ? _("Vinnarbana: första matchen lottas. Sedan går vinnarna upp en bana och förlorarna ner en, och paren klunsas på banan. Vinnarna får 2 poäng i match 1 och 2, sedan 3 på bana 1, 2 på bana 2 och 1 på bana 3.") : d.fmt === "mexicano" ? _("Mexicano: första rundan lottas, sedan möts spelarna efter tabellen, fyra och fyra. Parningen i varje grupp väljs så att samma två inte spelar ihop igen.") :
       team ? _("Lagamericano: fasta par som möter nya par varje runda, de par man mött minst först.") : _("Americano: ny partner varje runda. Aldrig samma medspelare två gånger, och högst två möten mot samma spelare.");
     var pl = d.players.map(function(p, i){
       var open = AMX.look === i && !p.pid;
@@ -9343,17 +9457,21 @@
     if (team) pl = pl.reduce(function(o, h, i){ if (i % 2 === 0) o.push('<div class="amxpair"><small>' + _("Par ") + (i / 2 + 1) + '</small>' + h + (pl[i + 1] || '<em>' + _("väntar på partner") + '</em>') + '</div>'); return o; }, []);
     var playing = 4 * useC;
     box.innerHTML = '<div class="phead"><div class="pt"><h1>' + _("Ny americano") + '</h1><div class="pm">' + _("Välj spelare och regler. Den här telefonen för in resultaten.") + '</div></div></div>' +
+      (!authCan("arr") && hallOn() ? '<p class="amxnote hallon">' + esc(_("Datorn är godkänd av {n} till {t}.", {n:HALL.by, t:hm(new Date(HALL.exp))})) + ' <button type="button" class="amxlink" data-hallend="1">' + _("Sluta") + '</button></p>' : "") +
       '<div class="card amxset">' +
         '<label class="amxf"><span>' + _("Namn") + '</span><input id="amxName" maxlength="60" value="' + esc(d.name) + '" placeholder="' + esc(_("t.ex. Söndagsamericano")) + '"></label>' +
-        '<div class="amxf"><span>' + _("Format") + '</span><div class="seg">' + chip("fmt", "americano", "Americano", d.fmt === "americano") + chip("fmt", "mexicano", "Mexicano", d.fmt === "mexicano") + chip("fmt", "lag", _("Lagamericano"), team) + '</div><small>' + esc(fmtNote) + '</small></div>' +
-        '<div class="amxf"><span>' + _("Räkning") + '</span><div class="seg">' + chip("mode", "pts", _("Poäng"), d.mode === "pts") + chip("mode", "games", _("Game"), d.mode === "games") + chip("mode", "free", _("Fritt"), d.mode === "free") + '</div>' +
+        '<div class="amxf"><span>' + _("Format") + '</span><div class="seg">' + chip("fmt", "americano", "Americano", d.fmt === "americano") + chip("fmt", "mexicano", "Mexicano", d.fmt === "mexicano") + chip("fmt", "lag", _("Lagamericano"), team) + chip("fmt", "vinnar", _("Vinnarbana"), vin) + '</div><small>' + esc(fmtNote) + '</small></div>' +
+        (vin ? '<div class="amxf"><span>' + _("Matcher") + '</span><div class="seg">' + [5, 6, 7, 8, 9].map(function(v){ return chip("vn", v, String(v), d.vn === v); }).join("") + '</div><small>' + esc(_("Sedan en final.")) + '</small></div>' +
+          '<div class="amxf"><span>' + _("Minuter per match") + '</span><div class="seg">' + [8, 10, 12, 15, 20].map(function(v){ return chip("vmin", v, String(v), d.vmin === v); }).join("") + '</div><small>' + esc(_("Arrangören startar tiden och får ett larm när den är ute. Finalen spelas utan tid.")) + '</small></div>' +
+          '<div class="amxf"><span>' + _("Banor") + '</span><div class="seg">' + [2, 3].map(function(v){ return chip("courts", v, String(v), d.courts === v); }).join("") + '</div><small>' + esc(_("Exakt {n} spelare.", {n:4 * d.courts})) + '</small></div>' : "") +
+        (vin ? "" : '<div class="amxf"><span>' + _("Räkning") + '</span><div class="seg">' + chip("mode", "pts", _("Poäng"), d.mode === "pts") + chip("mode", "games", _("Game"), d.mode === "games") + chip("mode", "free", _("Fritt"), d.mode === "free") + '</div>' +
           (vals.length ? '<div class="seg amxvals">' + vals.map(function(v){ return chip("pts", v, String(v), !ownPts && d.pts === v); }).join("") +
             (d.mode === "pts" ? '<button type="button" data-ownpts="1" aria-pressed="' + ownPts + '">' + _("Eget") + '</button>' : "") + '</div>' : "") +
           (ownPts ? '<input id="amxPts" class="amxpts" type="number" inputmode="numeric" min="8" max="64" value="' + d.pts + '" aria-label="' + esc(_("Poäng per match")) + '">' : "") +
           '<small>' + esc(d.mode === "pts" ? _("Varje match är {n} poäng. Skriv ena lagets poäng, resten räknas ut.", {n:d.pts}) : d.mode === "games" ? _("Först till {n} game. Vid {m}–{m} avgör ett tiebreak, {n}–{m}.", {n:d.pts, m:d.pts - 1}) : _("Fritt resultat, till exempel matcher på tid. Tabellen räknar vunna matcher först.")) + '</small></div>' +
         '<div class="amxf"><span>' + _("Banor") + '</span><div class="seg">' + [1, 2, 3].map(function(v){ return chip("courts", v, String(v), d.courts === v); }).join("") + '</div>' +
           '<small>' + esc((d.players.length >= 4 ? _("{n} spelare: {c} spelar per runda, {s} vilar.", {n:d.players.length, c:playing, s:d.players.length - playing}) : _("Minst 4 spelare.")) +
-            (d.courts > useC ? " " + _("{k} banor behöver minst {p} spelare, så {u} används.", {k:d.courts, p:4 * d.courts, u:d.players.length >= 4 ? useC : 1}) : "")) + '</small></div>' +
+            (d.courts > useC ? " " + _("{k} banor behöver minst {p} spelare, så {u} används.", {k:d.courts, p:4 * d.courts, u:d.players.length >= 4 ? useC : 1}) : "")) + '</small></div>') +
       '</div>' +
       '<section><div class="sh"><h2>' + (team ? _("Paren") : _("Spelare")) + '</h2><div class="meta">' + d.players.length + " / 32" + '</div></div>' +
         (team ? '<p class="amxnote">' + _("Spelarna paras i den ordning de läggs till.") + (d.players.length >= 4 ? ' <button type="button" class="amxlink" data-shuf="1">' + _("Slumpa par") + '</button>' : "") + '</p>' : "") +
@@ -9362,7 +9480,7 @@
         '<label class="amxf"><span>' + _("Klubbens spelare") + '</span><input id="amxQ" placeholder="' + esc(_("Sök namn")) + '" autocomplete="off"></label><div class="amxroster" id="amxRoster"></div>' +
         '<label class="amxf"><span>' + _("Gästspelare") + '</span><span class="amxguest"><input id="amxGuest" maxlength="40" placeholder="' + esc(_("Förnamn Efternamn")) + '" autocomplete="off" enterkeyhint="done"><button type="button" id="amxAddG">' + _("Lägg till") + '</button></span></label>' +
       '</section>' +
-      '<p class="amxerr" id="amxErr" role="alert">' + (team && d.players.length % 2 ? esc(_("Lagamericano behöver ett jämnt antal spelare.")) : "") + '</p><button type="button" class="amxgo" id="amxStart"' + (d.players.length < 4 || (team && d.players.length % 2) ? " disabled" : "") + '>' + _("Starta och lotta första rundan") + '</button>';
+      '<p class="amxerr" id="amxErr" role="alert">' + (team && d.players.length % 2 ? esc(_("Lagamericano behöver ett jämnt antal spelare.")) : vin && d.players.length && d.players.length !== 4 * d.courts ? esc(_("Vinnarbana på {c} banor behöver exakt {n} spelare.", {c:d.courts, n:4 * d.courts})) : "") + '</p><button type="button" class="amxgo" id="amxStart"' + (d.players.length < 4 || (team && d.players.length % 2) || (vin && d.players.length !== 4 * d.courts) ? " disabled" : "") + '>' + _("Starta och lotta första rundan") + '</button>';
     var roster = function(){
       var q = norm((document.getElementById("amxQ") || {}).value || "").trim(), have = d.players.map(function(p){ return p.pid; });
       document.getElementById("amxRoster").innerHTML = ROSTER.filter(function(P){ return have.indexOf(P.pid) < 0 && (!q || norm(P.name).indexOf(q) >= 0); }).slice(0, q ? 12 : 40)
@@ -9391,20 +9509,145 @@
       else if (b.hasAttribute("data-look")){ var li = +b.getAttribute("data-look"); AMX.look = AMX.look === li ? null : li; renderAmxNew(); }
       else if (b.hasAttribute("data-fig")){ var fp = d.players[+b.getAttribute("data-fig")]; fp.fig = Math.floor(Math.random() * 99991); delete fp.img; renderAmxNew(); }
       else if (b.hasAttribute("data-noimg")){ delete d.players[+b.getAttribute("data-noimg")].img; renderAmxNew(); }
+      else if (b.hasAttribute("data-hallend")) hallEnd();
       else if (b.hasAttribute("data-shuf")){ d.players = shuffle(d.players); AMX.look = null; renderAmxNew(); }
       else if (b.id === "amxStart"){
-        if (AMX.busy || d.players.length < 4 || (team && d.players.length % 2)) return;
+        if (AMX.busy || d.players.length < 4 || (team && d.players.length % 2) || (vin && d.players.length !== 4 * d.courts)) return;
         AMX.busy = true; b.disabled = true;
         if (!team) d.players = shuffle(d.players);   // the schedule follows the order (a whist schedule): a new one each time
         var teams = team ? d.players.map(function(p, i){ return i; }).filter(function(i){ return i % 2 === 0; }).map(function(i){ return [i, i + 1]; }) : null;
         var t = {fmt:d.fmt, mode:d.mode, courts:Math.min(d.courts, Math.floor(d.players.length / 4)), players:d.players, teams:teams, rounds:[]};
-        amxApi("/amx", {name:d.name, fmt:d.fmt, mode:d.mode, pts:d.pts, courts:t.courts, teams:teams, round:amxNext(t),
+        // Vinnarbana: match 1 drawn, pairs too (the order was shuffled just above)
+        var first = vin ? [0, 1, 2].slice(0, d.courts).map(function(c){ return {c:c + 1, a:[4 * c, 4 * c + 1], b:[4 * c + 2, 4 * c + 3]}; }) : amxNext(t);
+        amxApi("/amx", {name:d.name, fmt:d.fmt, mode:d.mode, pts:d.pts, courts:t.courts, teams:teams, round:first, vin:vin ? {n:d.vn, min:d.vmin} : undefined,
           players:d.players.map(function(p){ return p.pid ? {pid:p.pid} : {n:p.n, img:p.img, fig:p.fig}; })}).then(function(r){
           AMX.busy = false; amxSetKey(r.id, r.key); amxRemember(r.t); AMX.draft = null; AMX.list = null; AMX.t = r.t; AMX.id = r.id; AMX.tab = "m";
           location.hash = "#amx/" + r.id;
         }, function(er){ AMX.busy = false; b.disabled = false; document.getElementById("amxErr").textContent = er.message === "limit" ? _("Många americanos har startats härifrån idag. Logga in under Konto för att starta fler.") : _("Kunde inte starta: ") + er.message; });
       }
     };
+  }
+
+  /* ---- Vinnarbana: the clock, the courts (tap the two who won), the move, the klunsning and the final ---- */
+  function vinLeft(t){ return t.timer ? t.timer.at + t.timer.dur - Date.now() : null; }
+  function vinMMSS(ms){ var s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ":" + ("0" + s % 60).slice(-2); }
+  function vinClockHtml(t, org){
+    var l = vinLeft(t), out = l != null && l <= 0;
+    return '<b class="vintime">' + (l == null ? vinMMSS(t.vin.min * 60e3) : out ? _("Tiden är ute") : vinMMSS(l)) + '</b><span>' + esc(l == null ? _("Tiden är inte startad") : out ? _("Bryt matcherna och tryck på vinnarna") : _("kvar av matchen")) + '</span>' +
+      (org ? (l == null ? '<button type="button" class="amxgo" data-vop="timer1">' + _("Starta tiden") + '</button>' : '<button type="button" class="amxsec" data-vop="timer0">' + (out ? _("Nollställ") : _("Stoppa")) + '</button>') : "");
+  }
+  // the alarm on the organiser's phone: vibration and three beeps (the sound needs the tap that started the clock)
+  function vinAlarm(){
+    try { if (navigator.vibrate) navigator.vibrate([700, 250, 700, 250, 1200]); } catch (e){}
+    try {
+      var ac = AMX.ac; if (!ac) return;
+      [0, .45, .9, 1.35].forEach(function(at){ var o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 880; o.type = "square"; g.gain.value = .25; o.connect(g); g.connect(ac.destination); o.start(ac.currentTime + at); o.stop(ac.currentTime + at + .3); });
+    } catch (e){}
+  }
+  function vinTick(){
+    var t = AMX.t;
+    if (!t || t.fmt !== "vinnar") return;
+    var l = vinLeft(t), el = document.getElementById("vinClock"), tv = document.getElementById("tvClock"), state = l == null ? "off" : l <= 0 ? "out" : "on";
+    if (el){
+      // the buttons only when the state changes (a tap is not lost to a redraw), the time every tick
+      if (el.getAttribute("data-st") !== state){ el.innerHTML = vinClockHtml(t, !!amxKey(t.id) && !t.done); el.setAttribute("data-st", state); }
+      else if (state === "on") el.querySelector(".vintime").textContent = vinMMSS(l);
+      el.classList.toggle("ring", state === "out");
+    }
+    if (tv){ tv.textContent = l == null ? vinMMSS(t.vin.min * 60e3) : l <= 0 ? _("Tiden är ute") : vinMMSS(l); tv.parentNode.classList.toggle("ring", l != null && l <= 0); }
+    if (l != null && l <= 0 && amxKey(t.id) && AMX.alarmed !== t.timer.at && VIEW.name === "amx"){ AMX.alarmed = t.timer.at; vinAlarm(); }
+  }
+  setInterval(function(){ if (document.visibilityState !== "hidden") vinTick(); }, 500);
+  function vinName(t, i, cls){ var p = t.players[i]; return '<span class="vinpl' + (cls ? " " + cls : "") + '">' + amxAv(p) + '<b>' + esc(amxName(t, i)) + '</b></span>'; }
+  function vinCourt(t, x, r, org){
+    var n = t.vin.n, sel = AMX.vsel && AMX.vsel[x.c], h = '<div class="amxm vinc' + (x.w ? " done" : "") + '"><div class="amxmh"><span>' + _("Bana ") + x.c + '</span><i>' + esc(r < n ? _("{p} p till vinnarna", {p:vinPts(t, r, x.c)}) : _("Final")) + '</i></div>';
+    if (x.a){   // drawn (match 1) or chosen (the final) pairs: tap the pair that won
+      h += [x.a, x.b].map(function(side){
+        var won = x.w && side.every(function(i){ return x.w.indexOf(i) >= 0; });
+        var inner = side.map(function(i){ return vinName(t, i); }).join('<em>&amp;</em>');
+        return org ? '<button type="button" class="vinpair' + (won ? " w" : "") + '" data-vpair="' + x.c + ':' + side.join(",") + '">' + inner + (won ? '<i>' + _("Vann") + '</i>' : "") + '</button>' : '<div class="vinpair' + (won ? " w" : "") + '">' + inner + '</div>';
+      }).join('<div class="vinvs">' + _("mot") + '</div>');
+    } else {   // pairs settled on the court: tap the two who won
+      h += '<div class="vinfour">' + x.p.map(function(i){
+        var on = sel ? sel.indexOf(i) >= 0 : x.w && x.w.indexOf(i) >= 0;
+        return org ? '<button type="button" class="vinp' + (on ? " w" : "") + '" data-vp="' + x.c + ':' + i + '">' + vinName(t, i) + '</button>' : '<div class="vinp' + (on ? " w" : "") + '">' + vinName(t, i) + '</div>';
+      }).join("") + '</div>';
+      if (org && !x.w && !sel) h += '<small class="vinhint">' + _("Tryck på de två som vann.") + '</small>';
+    }
+    return h + '</div>';
+  }
+  function vinBody(t, key, f){
+    var R = t.rounds.length, n = t.vin.n, fin = R > n, cur = t.rounds[R - 1], st = vinStand(t), org = !!key && !t.done, h = "", C = t.courts;
+    if (AMX.tab === "t"){
+      var pl = vinPlaces(t), done = Object.keys(pl).length;
+      var rows = st.slice();
+      if (done) rows.sort(function(a, b){ return pl[a.i] - pl[b.i]; });
+      return h + '<div class="card amxtbl"><table class="gt"><thead><tr><th></th><th>' + _("Spelare") + '</th><th title="' + _("Matcher") + '">' + _("M") + '</th><th title="' + _("Vunna") + '">' + _("V") + '</th><th title="' + _("Poäng") + '">' + _("P") + '</th></tr></thead><tbody>' +
+        rows.map(function(o, k){ var p = t.players[o.i], P = p.pid && BYPID[p.pid], fol = p.pid && f.indexOf(p.pid) >= 0;
+          return '<tr' + (fol ? ' class="me"' : "") + '><td class="tpos">' + (done ? pl[o.i] : k + 1) + '</td><td><span class="amxtn">' + amxAvs(t, [o.i]) + '<span>' + (P ? '<a href="#' + esc(P.key) + '">' + esc(p.n) + '</a>' : esc(p.n)) + '</span></span></td><td>' + o.m + '</td><td>' + o.w + '</td><td><b>' + o.p + '</b></td></tr>'; }).join("") +
+        '</tbody></table></div><p class="amxnote">' + (done ? _("Slutplacering efter finalen. Poängen är från matcherna före finalen.") : _("Ordning: poäng, sedan vunna matcher, sedan klunsning.")) + '</p>';
+    }
+    if (!fin && !t.done) h += '<div class="card vinclock" id="vinClock">' + vinClockHtml(t, org) + '</div>';
+    h += '<div class="sh"><h2>' + (fin ? _("Final") : _("Match {r} av {n}", {r:R, n:n})) + '</h2><div class="meta">' + esc(fin ? "" : R > 1 ? _("Vinnarna har gått upp en bana, förlorarna ner. Klunsa om paren.") : _("Lottad")) + '</div></div>' +
+      cur.map(function(x){ return vinCourt(t, x, R - 1, org); }).join("");
+    var all = cur.every(function(x){ return x.w; });
+    if (org){
+      if (all && R < n) h += '<div class="amxbar"><button type="button" class="amxgo" data-vop="next">' + _("Nästa match: flytta spelarna") + '</button></div>';
+      if (all && R === n){
+        // before the final: those level on points and wins klunsa (move up within the group), then the top seeds pick
+        var lvl = function(a, b){ return a.p === b.p && a.w === b.w; };
+        h += '<div class="sh"><h2>' + _("Till finalen") + '</h2><div class="meta"></div></div><div class="card vinseed">' + st.map(function(o, k){
+          var up = k > 0 && lvl(st[k - 1], o), lev = up || (k < st.length - 1 && lvl(st[k + 1], o));
+          return '<div class="vinrow' + (lev ? " lev" : "") + '"><b>' + (k + 1) + '</b>' + vinName(t, o.i) + '<span>' + o.p + ' p · ' + o.w + ' v</span>' + (up ? '<button type="button" class="amxsec" data-vup="' + k + '" aria-label="' + esc(_("Flytta upp")) + '">↑</button>' : "") + '</div>';
+        }).join("") + (st.some(function(o, k){ return k && lvl(st[k - 1], o); }) ? '<p class="kdim">' + _("Gula rader har lika poäng och vinster: de klunsar, och du flyttar upp den som vann.") + '</p>' : "") + '</div>';
+        AMX.vpick = AMX.vpick || {};
+        for (var g = 0; g < C; g++){
+          var top = st[4 * g].i, o1 = st[4 * g + 2].i, o2 = st[4 * g + 3].i;
+          h += '<div class="card vinpick"><p>' + _("Bana {c}: {n} väljer partner", {c:g + 1, n:amxName(t, top)}) + '</p><div class="amxbar">' + [o1, o2].map(function(i){ return '<button type="button" class="amxsec" data-vpick="' + g + ':' + i + '" aria-pressed="' + (AMX.vpick[g] === i) + '">' + esc(amxName(t, i)) + '</button>'; }).join("") + '</div></div>';
+        }
+        var ready = [0, 1, 2].slice(0, C).every(function(g2){ return AMX.vpick[g2] != null && [st[4 * g2 + 2].i, st[4 * g2 + 3].i].indexOf(AMX.vpick[g2]) >= 0; });
+        h += '<div class="amxbar"><button type="button" class="amxgo" data-vop="final"' + (ready ? "" : " disabled") + '>' + _("Starta finalen") + '</button></div>';
+      }
+      h += '<div class="amxbar">' + (R > 1 && !cur.some(function(x){ return x.w; }) ? '<button type="button" class="amxsec" data-op="drop">' + _("Ångra") + '</button>' : "") +
+        '<button type="button" class="amxsec" data-op="end">' + _("Avsluta") + '</button><button type="button" class="amxsec del" data-op="delete">' + _("Ta bort") + '</button></div>';
+    }
+    if (fin && all){ var pl2 = vinPlaces(t); h += '<div class="card vinres"><b>' + _("Vinnare") + '</b> ' + esc(t.players.map(function(p, i){ return i; }).filter(function(i){ return pl2[i] === 1; }).map(function(i){ return amxName(t, i); }).join(" & ")) + '</div>'; }
+    if (R > 1) h += '<div class="sh"><h2>' + _("Tidigare matcher") + '</h2><div class="meta"></div></div>' + t.rounds.slice(0, -1).map(function(r, i){
+      return '<details class="rsec"><summary><span>' + _("Match {r}", {r:i + 1}) + '</span><i aria-hidden="true"></i></summary><div class="rbody">' + r.map(function(x){ return vinCourt(t, x, i, false); }).join("") + '</div></details>'; }).reverse().join("");
+    return h;
+  }
+  function vinClick(b, t){
+    var st = vinStand(t);
+    if (b.hasAttribute("data-vop")){
+      var op = b.getAttribute("data-vop");
+      if (op === "timer1"){ try { AMX.ac = AMX.ac || new (window.AudioContext || window.webkitAudioContext)(); AMX.ac.resume(); } catch (e){} amxSave({op:"timer", run:true}); }
+      else if (op === "timer0") amxSave({op:"timer", run:false});
+      else if (op === "next"){ b.disabled = true; AMX.vsel = {}; amxSave({op:"vnext"}).catch(function(){ b.disabled = false; alert(_("Kunde inte spara. Försök igen.")); }); }
+      else if (op === "final"){ b.disabled = true; var pk = [0, 1, 2].slice(0, t.courts).map(function(g){ return AMX.vpick[g]; }); amxSave({op:"vnext", picks:pk}).then(function(){ AMX.vpick = {}; }, function(){ b.disabled = false; alert(_("Kunde inte spara. Försök igen.")); }); }
+      return true;
+    }
+    if (b.hasAttribute("data-vpair")){
+      var pp = b.getAttribute("data-vpair").split(":");
+      amxSave({op:"vwin", c:+pp[0], w:pp[1].split(",").map(Number)}).catch(function(){ alert(_("Kunde inte spara. Försök igen.")); });
+      return true;
+    }
+    if (b.hasAttribute("data-vp")){
+      var cp = b.getAttribute("data-vp").split(":"), c = +cp[0], i = +cp[1];
+      AMX.vsel = AMX.vsel || {};
+      var sel = AMX.vsel[c] = AMX.vsel[c] || [], k = sel.indexOf(i);
+      if (k >= 0) sel.splice(k, 1); else sel.push(i);
+      if (sel.length === 2){ var w = sel.slice(); delete AMX.vsel[c]; amxSave({op:"vwin", c:c, w:w}).catch(function(){ alert(_("Kunde inte spara. Försök igen.")); }); }
+      else renderAmx();
+      return true;
+    }
+    if (b.hasAttribute("data-vup")){
+      var at = +b.getAttribute("data-vup"), order = st.map(function(o){ return o.i; }), x = order[at]; order[at] = order[at - 1]; order[at - 1] = x;
+      AMX.vpick = {};
+      amxSave({op:"vtie", order:order});
+      return true;
+    }
+    if (b.hasAttribute("data-vpick")){ var gp = b.getAttribute("data-vpick").split(":"); AMX.vpick = AMX.vpick || {}; AMX.vpick[+gp[0]] = +gp[1]; renderAmx(); return true; }
+    return false;
   }
 
   /* ---- #amx/<id>: Matcher and Tabell ---- */
@@ -9439,9 +9682,10 @@
     var key = amxKey(t.id), f = follows(), st = amxStand(t), R = t.rounds.length;
     if (key) amxRemember(t);   // also one opened with an organiser's link
     var cur = t.rounds[R - 1], allIn = cur.every(function(x){ return !!x.s; }), team = t.fmt === "lag";
-    var h = '<div class="phead"><div class="pt"><h1>' + esc(t.name) + '</h1><div class="pm">' + esc(amxKind(t.fmt) + " · " + amxHow(t) + " · " + t.players.length + _(" spelare") + " · " + _("runda ") + R + (t.done ? " · " + _("klar") : "")) + '</div></div></div>' +
+    var h = '<div class="phead"><div class="pt"><h1>' + esc(t.name) + '</h1><div class="pm">' + esc(amxKind(t.fmt) + " · " + amxHow(t) + " · " + t.players.length + _(" spelare") + " · " + (t.fmt === "vinnar" ? (R > t.vin.n ? _("final") : _("match {r}", {r:R})) : _("runda ") + R) + (t.done ? " · " + _("klar") : "")) + '</div></div></div>' +
       '<div class="seg amxtabs" role="tablist"><button type="button" role="tab" data-tab="m" aria-selected="' + (AMX.tab === "m") + '">' + _("Matcher") + '</button><button type="button" role="tab" data-tab="t" aria-selected="' + (AMX.tab === "t") + '">' + _("Tabell") + '</button></div>';
-    if (AMX.tab === "t"){
+    if (t.fmt === "vinnar") h += vinBody(t, key, f);
+    else if (AMX.tab === "t"){
       // Lagamericano: one row per pair
       var rows = team ? t.teams.map(function(p){ var o = st.filter(function(x){ return x.i === p[0]; })[0]; return {pair:p, o:o}; }).sort(function(a, b){ return st.indexOf(a.o) - st.indexOf(b.o); }) : st.map(function(o){ return {pair:[o.i], o:o}; });
       h += '<div class="card amxtbl"><table class="gt"><thead><tr><th></th><th>' + (team ? _("Par") : _("Spelare")) + '</th><th title="' + _("Matcher") + '">' + _("M") + '</th><th title="' + _("Vunna") + '">' + _("V") + '</th><th>+/-</th><th title="' + _("Poäng") + '">' + (t.mode && t.mode !== "pts" ? _("Game") : _("P")) + '</th></tr></thead><tbody>' +
@@ -9482,6 +9726,7 @@
     box.onclick = function(e){
       var b = e.target.closest && e.target.closest("button");
       if (!b) return;
+      if (t.fmt === "vinnar" && vinClick(b, t)) return;
       if (b.hasAttribute("data-tab")){ AMX.tab = b.getAttribute("data-tab"); renderAmx(); }
       else if (b.hasAttribute("data-fix")){ AMX.edit[b.getAttribute("data-fix")] = 1; renderAmx(); }
       else if (b.hasAttribute("data-ok")){
@@ -9632,6 +9877,10 @@
   function authSave(a){ AUTH = a; store.set(AUTH_KEY, a ? JSON.stringify(a) : "null"); renderAcct(); try { if (VIEW.name === "traning") renderTraining(); } catch (e){} }
   function authCan(role){ var r = (AUTH && AUTH.me && AUTH.me.roles) || []; return r.indexOf("admin") >= 0 || r.indexOf(role) >= 0; }
   function authHdr(){ return AUTH && AUTH.token ? {Authorization:"Bearer " + AUTH.token} : {}; }
+  // a hall computer approved by an arrangör's phone (worker hall.js): may start americanos for 12 hours
+  var HALL_KEY = "padel.hall.v1", HALL = store.json(HALL_KEY), HALLREQ = null;
+  function hallOn(){ return !!(HALL && HALL.token && HALL.exp > Date.now()); }
+  function hallHdr(){ return hallOn() ? {"X-Hall":HALL.token} : {}; }
   function authApi(path, body){
     var hd = authHdr();
     if (body) hd["Content-Type"] = "application/json";
@@ -9704,6 +9953,10 @@
     if (window.top !== window.self){ box.innerHTML = '<div class="card ktxt"><p>' + _("Kontot går bara att använda i appen själv.") + ' <a href="' + esc(location.href) + '" target="_top" rel="noopener">' + _("Öppna appen") + '</a></p></div>'; return; }
     var me = AUTH && AUTH.me, h = '<div class="phead"><div class="pt"><h1>' + _("Konto") + '</h1><div class="pm">' + esc(me ? me.name : _("Inte inloggad")) + '</div></div></div>';
     if (KONTO.msg) h += '<p class="kmsg" role="status">' + esc(KONTO.msg) + '</p>';
+    // a hall computer's QR code scanned: an arrangör says yes
+    if (KONTO.hall) h += '<div class="card ktxt khall"><p><b>' + _("Godkänn datorn i hallen") + '</b></p>' + (authCan("arr") ?
+      '<p>' + _("Datorn får starta americanos i ditt namn i 12 timmar. Den kommer inte åt något annat i ditt konto.") + '</p><div class="amxbar"><button type="button" class="amxgo" data-hallok="1">' + _("Godkänn") + '</button><button type="button" class="amxsec" data-hallno="1">' + _("Avbryt") + '</button></div>' :
+      '<p>' + esc(me ? _("Ditt konto har inte behörighet att starta americanos. Be klubben om rollen arrangör.") : _("Logga in först, med ett konto som får starta americanos. Skanna sedan koden igen.")) + '</p><div class="amxbar"><button type="button" class="amxsec" data-hallno="1">' + _("Stäng") + '</button></div>') + '</div>';
     if (KONTO.code){
       // iPhone: Safari and the app on the home screen keep separate logins
       var ios = /iPhone|iPad/.test(navigator.userAgent || "") && !(navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches));
@@ -9908,6 +10161,14 @@
     konOp({op:"roles", id:u.id, roles:r});
   }
   function konClick(ev){
+    var hb = ev.target.closest("button[data-hallok],button[data-hallno]");
+    if (hb){
+      if (hb.hasAttribute("data-hallno")){ KONTO.hall = null; renderKonto(); return; }
+      hb.disabled = true;
+      authApi("/auth/hall/ok", {code:KONTO.hall}).then(function(){ KONTO.hall = null; KONTO.msg = _("Klart. Datorn kan nu starta americanos."); renderKonto(); },
+        function(e){ hb.disabled = false; KONTO.msg = e.message === "expired" ? _("Koden har gått ut. Ta fram en ny på datorn.") : _("Det gick inte: ") + e.message; renderKonto(); });
+      return;
+    }
     var mv = ev.target.closest("button[data-mvis]");
     if (mv){
       var v = mv.getAttribute("data-mvis");
@@ -10439,6 +10700,7 @@
   function renderAmxTv(){
     var box = document.getElementById("amxtv"), t = AMX.t;
     if (!box || !t) return;
+    if (t.fmt === "vinnar") return renderVinTv(box, t);
     var st = amxStand(t), R = t.rounds.length, cur = t.rounds[R - 1], team = t.fmt === "lag", f = follows();
     var rows = team ? t.teams.map(function(p){ var o = st.filter(function(x){ return x.i === p[0]; })[0]; return {pair:p, o:o, k:"p" + p[0]}; }).sort(function(a, b){ return st.indexOf(a.o) - st.indexOf(b.o); })
       : st.map(function(o){ return {pair:[o.i], o:o, k:"p" + o.i}; });
@@ -10479,6 +10741,40 @@
       if (e.target.closest('[data-tv="fs"]')){ try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); } catch (er){} }
     };
   }
+  // Vinnarbana on the big screen: the table (points, wins), the courts with the four on each, the clock
+  function renderVinTv(box, t){
+    var R = t.rounds.length, n = t.vin.n, fin = R > n, cur = t.rounds[R - 1], st = vinStand(t), f = follows(), pl = vinPlaces(t), done = Object.keys(pl).length;
+    var rows = st.slice(); if (done) rows.sort(function(a, b){ return pl[a.i] - pl[b.i]; });
+    var l = vinLeft(t);
+    var h = '<header class="sbh"><img src="img/nynas-logo.png" alt="" width="54" height="69"><div><h1>' + esc(t.name) + '</h1><p>' + esc(_("Vinnarbana") + " · " + amxHow(t) + " · " + t.players.length + _(" spelare")) + '</p></div>' +
+      '<div class="sbround"><span>' + (fin ? _("Final") : _("Match")) + '</span><b>' + (fin ? "★" : R + "/" + n) + '</b></div>' +
+      (fin || t.done ? "" : '<div class="sbround sbclock' + (l != null && l <= 0 ? " ring" : "") + '"><span>' + _("Tid kvar") + '</span><b id="tvClock">' + (l == null ? vinMMSS(t.vin.min * 60e3) : l <= 0 ? _("Tiden är ute") : vinMMSS(l)) + '</b></div>') +
+      '<div class="sbtools"><button type="button" data-tv="fs" aria-label="' + esc(_("Helskärm")) + '">⛶</button><a href="#amx/' + esc(t.id) + '" aria-label="' + esc(_("Stäng storbild")) + '">×</a></div></header>' +
+      '<div class="sbgrid"><section class="sbtab"><h2>' + (done ? _("Slutställning") : _("Tabellen")) + '</h2><div class="sbrows">' +
+      '<div class="sbrow sbhd"><span></span><span>' + _("Spelare") + '</span><span>' + _("M") + '</span><span>' + _("V") + '</span><span></span><span>' + _("Poäng") + '</span></div>' +
+      rows.map(function(o, k){ var p = t.players[o.i], fol = p.pid && f.indexOf(p.pid) >= 0;
+        return '<div class="sbrow' + (k === 0 ? " lead" : "") + (fol ? " fol" : "") + '" data-k="p' + o.i + '"><span class="sbpos">' + (done ? pl[o.i] : k + 1) + '</span><span class="sbn">' + amxAvs(t, [o.i]) + '<b>' + esc(amxName(t, o.i)) + '</b></span><span>' + o.m + '</span><span>' + o.w + '</span><span></span><span class="sbp">' + o.p + '</span></div>'; }).join("") + '</div></section>' +
+      '<section class="sbcourts"><h2>' + (fin ? _("Final") : _("Match {r}", {r:R})) + '</h2>' + cur.map(function(x){
+        var side = function(sd){ var won = x.w && sd.every(function(i){ return x.w.indexOf(i) >= 0; }); return '<div class="sbside' + (won ? " w" : "") + '">' + amxAvs(t, sd) + '<b>' + esc(amxSide(t, sd)) + '</b><em>' + (won ? "✓" : "") + '</em></div>'; };
+        // pairs settled on the court: the four without pairs until the winners are in
+        var body = x.a ? side(x.a) + side(x.b) : x.w ? side(x.w) + side(x.p.filter(function(i){ return x.w.indexOf(i) < 0; })) :
+          '<div class="sbside sbfour">' + amxAvs(t, x.p) + '<b>' + esc(x.p.map(function(i){ return amxName(t, i); }).join(" · ")) + '</b><em></em></div>';
+        return '<div class="sbcourt' + (x.w ? " done" : " live") + '"><div class="sbc"><span>' + _("Bana ") + x.c + (fin ? "" : " · " + vinPts(t, R - 1, x.c) + " p") + '</span><i>' + (x.w ? _("Klar") : _("Pågår")) + '</i></div>' + body + '</div>';
+      }).join("") + '</section></div>' +
+      '<div class="sbf"><div class="sbtick"><span>' + esc(fin ? _("Finalen: 1:an valde partner bland 3 och 4, 5:an bland 7 och 8, 9:an bland 11 och 12.") : _("Vinnarna går upp en bana, förlorarna ner. Match 1 och 2 ger 2 poäng, sedan bana 1: 3, bana 2: 2, bana 3: 1.")) + '</span></div></div>';
+    var before = {};
+    [].forEach.call(box.querySelectorAll(".sbrow[data-k]"), function(el){ before[el.getAttribute("data-k")] = el.getBoundingClientRect().top; });
+    box.innerHTML = h;
+    [].forEach.call(box.querySelectorAll(".sbrow[data-k]"), function(el){
+      var was = before[el.getAttribute("data-k")];
+      if (was == null) return;
+      var dy = was - el.getBoundingClientRect().top;
+      if (Math.abs(dy) < 2) return;
+      el.style.transition = "none"; el.style.transform = "translateY(" + dy + "px)"; el.classList.add("moved");
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.style.transition = "transform 1.1s cubic-bezier(.2,1,.3,1)"; el.style.transform = ""; }); });
+    });
+    box.onclick = function(e){ if (e.target.closest('[data-tv="fs"]')){ try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); } catch (er){} } };
+  }
   function parseHash(h){
     h = String(h || "");
     if (!h || h === "#" || h === "#/") return {view:"home"};
@@ -10487,6 +10783,8 @@
     var sm = /^#serie\/(\d+)\/([a-z0-9]+)$/.exec(h);
     if (sm) return {view:"match", gid:sm[1], key:sm[2]};
     if (h === "#spelare" || h === "#tavlingar" || h === "#americano" || h === "#traning" || h === "#akademin") return {view:h.slice(1)};
+    var kh = /^#hall\/([a-z2-9]{10})$/.exec(h);
+    if (kh) return {view:"konto", code:null, hall:kh[1]};
     var ki = /^#in\/([a-z2-9]{20})$/.exec(h);
     if (ki || h === "#konto") return {view:"konto", code:ki ? ki[1] : null};
     var kb = /^#konto\/begar\/(\d+)$/.exec(h);
@@ -10602,7 +10900,7 @@
     } else if (x.view === "konto"){
       // the code leaves the address bar; logging in waits for a tap (the link may have opened in the wrong browser)
       if (x.code){ history.replaceState(null, "", "#konto"); KONTO.code = x.code; KONTO.msg = ""; renderKonto(); }
-      else { KONTO.adm = null; KONTO.msg = ""; if (x.pre) KONTO.pre = x.pre; renderKonto(); authCheck(true); areqPoll(); }
+      else { KONTO.adm = null; KONTO.msg = ""; if (x.pre) KONTO.pre = x.pre; if (x.hall){ KONTO.hall = x.hall; history.replaceState(null, "", "#konto"); } renderKonto(); authCheck(true); areqPoll(); }
       showView("konto");
       VIEW = {name:"konto", who:null, team:"konto"};
       document.title = _("Konto") + " · Nynäs Padel";
