@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import worker, { _resetMemory } from "../src/index.js";
 import { fakeD1, arrHeader } from "./d1.mjs";
-import { vinMove, vinStand, vinPlaces } from "../src/amx.js";
+import { vinMove, vinStand, vinPlaces, vinTimersDue } from "../src/amx.js";
 
 const ORIGIN = "https://padel.holmberg.st";
 const kv = () => { const m = new Map(); return { m, get: async k => m.has(k) ? m.get(k) : null, put: async (k, v) => { m.set(k, v); }, delete: async k => { m.delete(k); }, list: async () => ({ keys: [], list_complete: true }) }; };
@@ -24,6 +24,12 @@ test("vinnarbana: 12 on 3 courts; winners up, losers down; points 2, 2, then 3/2
   assert.equal((await op({ op: "vnext" })).error, "not done");
   let t = (await op({ op: "timer", run: true })).t;
   assert.equal(t.timer.dur, 12 * 60e3);
+  // the clock out: a notis to the account that started it (the arrangör), once; not before
+  assert.equal(t.byu, undefined, "the account is not public");
+  assert.deepEqual(await vinTimersDue(env, t.timer.at + 60e3), []);
+  const due = await vinTimersDue(env, t.timer.at + t.timer.dur);
+  assert.deepEqual([due.length, due[0].u, due[0].m.title, due[0].m.url], [1, "arrtest", "Tiden är ute", "./#amx/" + id]);
+  assert.deepEqual(await vinTimersDue(env, t.timer.at + t.timer.dur + 60e3), []);
   await op({ op: "vwin", c: 1, w: [0, 1] }); await op({ op: "vwin", c: 2, w: [6, 7] }); t = (await op({ op: "vwin", c: 3, w: [8, 9] })).t;
   t = (await op({ op: "vnext" })).t;
   assert.equal(t.timer, null);

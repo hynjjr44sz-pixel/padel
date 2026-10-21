@@ -18,7 +18,7 @@ import { hkKey, hkProfile, hkImport, stravaStart, stravaBack, stravaOff, stravaR
 import { coachGet, coachPost, libGet, libPost, plansGet, plansPost } from "./coach.js";
 import { pkOptions, pkAdd, pkLogin, pkClear } from "./passkey.js";
 import { sha, authUser, can, redeem, logout, adminUsers, adminOp, requestAccess, requestPoll, requestCancel } from "./auth.js";
-import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, amxAll, publicOf } from "./amx.js";
+import { amxCreate, amxUpdate, amxGet, amxList, amxPending, amxArchive, amxAll, publicOf, vinTimersDue } from "./amx.js";
 import { eventClub, fetchClubMedia, useClubs, validClubs, TV_LIST_URL, TV_STARTS_URL, tvNotes } from "./tv.js";
 import { fetchBhs, fetchBhsHistory, seriesWinners, newResults, resultsDue, fetchGroupResults, fetchGroupTable } from "./bhs.js";
 import { EVENTS, activeEvents, merge, normalize } from "./events.js";
@@ -243,7 +243,7 @@ async function handle(req, env) {
     if (!am && !can(me, "arr")) {
       const hl = await hallOf(env, req, t0);
       if (!hl) return json({ error: me ? "role" : "login" }, me ? 403 : 401, h);
-      by = { name: hl.name };
+      by = { name: hl.name, id: hl.user };
     }
     let b;
     try { b = await readBody(req, 800000); } catch (e) { return json({ error: "bad json" }, 400, h); }   // guests' photos (about 10 kB each)
@@ -1185,6 +1185,8 @@ export async function tick(env, events) {
   if (!events && mm === 23) try { await stravaRun(env, +t, budget); } catch (e) { console.warn("strava", e.message); }
   // Own profile pictures: a cut-out the GitHub Action has committed (every 5 min, minute 4, 9, ...)
   if (!events && env.PHOTO_OFF !== "1" && mm % 5 === 4) try { const dr = await loadRecord(env); await photosCheck(env, budget, (dr && dr.photos) || null, isMember); } catch (e) { console.warn("photos", e.message); }   // PHOTO_OFF: local tests only
+  // Vinnarbana: a clock run out -> a notis to the account that started it (queued for the line below)
+  if (!events && env.AMX_OFF !== "1") try { for (const d of await vinTimersDue(env, +t)) await notifyUsers(env, [d.u], d.m); } catch (e) { console.warn("vinnarbana", e.message); }
   // Americano / Mexicano: notiser queued by the organiser's phone (amx.js), sent with this tick's
   if (!events && env.AMX_OFF !== "1") try { pubMsgs.push(...await amxPending(env)); } catch (e) { console.warn("americano", e.message); }   // AMX_OFF: local tests only
   // Snart match: every 5 min (minute 1, 6, ...) while something is on, a quarter of an hour before a club pair's match

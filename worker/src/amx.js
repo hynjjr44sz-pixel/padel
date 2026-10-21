@@ -71,7 +71,7 @@ export function vinFinal(t, picks) {
   return out;
 }
 
-export function publicOf(t) { const { kh, ...o } = t; return o; }
+export function publicOf(t) { const { kh, byu, ...o } = t; return o; }
 // Standings: points, matches, won/drawn/lost, +/- (points for minus against); sorted by points, then +/-, then wins.
 export function standings(t) {
   const st = t.players.map((p, i) => ({ i, n: p.n, pid: p.pid || null, p: 0, m: 0, w: 0, d: 0, l: 0, pm: 0 }));
@@ -105,6 +105,26 @@ export function scoreNotes(t, r, m) {
       tag: "padel-amx-" + t.id + "-" + r + "-" + m, url, es: { title: t.name + ": " + firsts(t, side) + " " + resEs + " " + f + "–" + a, body: "Contra " + firsts(t, opp) + ". Ronda " + (r + 1) + "." } } });
   });
   return out;
+}
+// Vinnarbana's clock: when it runs out, a notis to the account that started it (the phone may be locked); KV
+// "amx:timers" [{id, end, u, n}], read by the cron every minute (vinTimersDue)
+async function vinTimerSet(env, t) {
+  let l = [];
+  try { l = JSON.parse((await env.PUSH.get("amx:timers")) || "[]"); } catch (e) { l = []; }
+  l = l.filter(x => x.id !== t.id);
+  if (t.timer && t.byu) l.push({ id: t.id, end: t.timer.at + t.timer.dur, u: t.byu, n: t.name });
+  await env.PUSH.put("amx:timers", JSON.stringify(l.slice(-50)));
+}
+// -> [{u, m}] the clocks run out by now (taken off the list)
+export async function vinTimersDue(env, now) {
+  const raw = await env.PUSH.get("amx:timers");
+  if (!raw || raw === "[]") return [];
+  let l = [];
+  try { l = JSON.parse(raw); } catch (e) { l = []; }
+  const due = l.filter(x => x.end <= now + 15e3);
+  if (!due.length) return [];
+  await env.PUSH.put("amx:timers", JSON.stringify(l.filter(x => x.end > now + 15e3)));
+  return due.map(x => ({ u: x.u, m: { title: "Tiden är ute", body: x.n + ": bryt matcherna och tryck på vinnarna.", tag: "padel-vin-" + x.id, url: "./#amx/" + x.id, es: { title: "Se acabó el tiempo", body: x.n + ": parad los partidos y marcad a los ganadores." } } }));
 }
 // a court's winners in Vinnarbana: a notis to the followers of the club players among them
 function vinNotes(t, r, x) {
@@ -227,7 +247,7 @@ export async function amxCreate(env, b, byPid, now, by) {
     if (players.length % 2 || teams.length !== players.length / 2 || !teams.every(p => Array.isArray(p) && p.length === 2 && p.every(i => Number.isInteger(i) && i >= 0 && i < players.length && !seen.has(i) && seen.add(i)))) return { err: "bad teams" };
   }
   const key = rid(16), t = { v: 1, id: rid(8), name: clean(b.name).slice(0, 60) || (fmt === "mexicano" ? "Mexicano" : fmt === "lag" ? "Lagamericano" : fmt === "vinnar" ? "Vinnarbana" : "Americano"), fmt, mode: vin ? "free" : mode, pts: vin || mode === "free" ? null : pts, ...(vin ? { vin } : {}),
-    courts: Math.min(courts, Math.floor(players.length / 4)), players, ...(teams ? { teams } : {}), rounds: [], created: now, upd: now, ...(by ? { by: { n: by.name } } : {}), kh: await hash(key) };
+    courts: Math.min(courts, Math.floor(players.length / 4)), players, ...(teams ? { teams } : {}), rounds: [], created: now, upd: now, ...(by ? { by: { n: by.name } } : {}), ...(by && by.id ? { byu: by.id } : {}), kh: await hash(key) };
   if (!validRound(t, b.round) || (vin && b.round.length !== courts)) return { err: "bad round" };
   t.rounds.push(b.round.map((x, k) => vin ? { c: k + 1, p: x.a.concat(x.b), a: x.a, b: x.b, w: null } : { c: x.c || null, a: x.a, b: x.b, s: null }));
   await env.PUSH.put("amx:" + t.id, JSON.stringify(t), { expirationTtl: TTL });
@@ -281,12 +301,14 @@ export async function amxUpdate(env, id, b, now, admin) {
     if (R < t.vin.n) t.rounds.push(vinMove(t));
     else { const f = vinFinal(t, b.picks); if (!f) return { err: "bad picks" }; t.rounds.push(f); }
     t.timer = null;
+    await vinTimerSet(env, t);
   } else if (t.fmt === "vinnar" && b.op === "vtie") {   // the order after a klunsning among those level
     const o = Array.isArray(b.order) ? b.order.map(Number) : [], seen = new Set();
     if (!o.every(i => Number.isInteger(i) && i >= 0 && i < t.players.length && !seen.has(i) && seen.add(i))) return { err: "bad order" };
     t.tie = o;
   } else if (t.fmt === "vinnar" && b.op === "timer") {   // the clock of the current match: started now, or stopped
     t.timer = b.run ? { at: now, dur: t.vin.min * 60e3 } : null;
+    await vinTimerSet(env, t);
   } else if (b.op === "end" || b.op === "reopen") t.done = b.op === "end";
   else if (b.op === "delete") {   // gone: the record, the home list, the players' archives
     await env.PUSH.delete("amx:" + t.id);
