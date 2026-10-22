@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-eaXgLtXck6FIGiKuvp0kjNhLe35dOHiA281sFl6sWpY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-2vyfYjuLcvNkxnPN3Jj423a3GkVFOqjz2hmRrFiYdpU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -526,9 +526,9 @@
   .trnav{ width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-size:20px; line-height:1; }
   .trnav:disabled{ opacity:.3; }
   .trstrip{ display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:4px; }
-  .trd{ min-width:0; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 0 7px; border-radius:14px; border:1px solid transparent; background:var(--surface-2); color:var(--ink); }
-  .trd b{ font:700 11px/1 "Chivo Mono", monospace; text-transform:uppercase; } .trd small{ font-size:11px; color:var(--dim); }
-  .trd.trtoday{ border-color:var(--ink); } .trd.trsel{ background:var(--ink); color:var(--surface); } .trd.trsel small{ color:inherit; opacity:.7; } .trd.trfut{ opacity:.5; }
+  .trday{ min-width:0; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 0 7px; border-radius:14px; border:1px solid transparent; background:var(--surface-2); color:var(--ink); }
+  .trday b{ font:700 11px/1 "Chivo Mono", monospace; text-transform:uppercase; } .trday small{ font-size:11px; color:var(--dim); }
+  .trday.trtoday{ border-color:var(--ink); } .trday.trsel{ background:var(--ink); color:var(--surface); } .trday.trsel small{ color:inherit; opacity:.7; } .trday.trfut{ opacity:.5; }
   .trbars{ display:flex; flex-direction:column-reverse; justify-content:flex-start; gap:2px; width:62%; height:64px; margin-bottom:4px; }
   .trbars i{ display:block; border-radius:4px; transform-origin:bottom; animation:tr-grow .6s cubic-bezier(.2,1.4,.4,1) both; }
   @keyframes tr-grow{ from{ transform:scaleY(0); } to{ transform:none; } }
@@ -8663,7 +8663,7 @@
       days.map(function(x){
         var dd = new Date(x.d + "T12:00:00Z"), bars = x.l.map(function(y){ return '<i style="height:' + Math.max(4, Math.round(100 * trLoadOf(y) / max)) + '%;background:' + TR_KIND[y.kind][1] + (y.auto ? ';opacity:.55' : '') + '"></i>'; }).join("");
         var planned = trPlans(pid).some(function(p){ return p.day === x.d && !p.done; }), coming = up.some(function(u){ return u.day === x.d; });
-        return '<button type="button" class="trd' + (x.d === t ? " trtoday" : "") + (x.d === sel ? " trsel" : "") + (x.d > t ? " trfut" : "") + '" data-trd="' + x.d + '"><span class="trbars">' + bars + (planned ? '<em class="trpdot" title="' + esc(_("Planerat")) + '"></em>' : "") + (coming ? '<em class="trmdot" title="' + esc(_("Match")) + '"></em>' : "") + '</span><b>' + esc(DOW[dd.getUTCDay()]) + '</b><small>' + dd.getUTCDate() + '</small></button>';
+        return '<button type="button" class="trday' + (x.d === t ? " trtoday" : "") + (x.d === sel ? " trsel" : "") + (x.d > t ? " trfut" : "") + '" data-trd="' + x.d + '"><span class="trbars">' + bars + (planned ? '<em class="trpdot" title="' + esc(_("Planerat")) + '"></em>' : "") + (coming ? '<em class="trmdot" title="' + esc(_("Match")) + '"></em>' : "") + '</span><b>' + esc(DOW[dd.getUTCDay()]) + '</b><small>' + dd.getUTCDate() + '</small></button>';
       }).join("") + '</div>';
     if (sel){
       var l = items.filter(function(x){ return x.day === sel; }), lu = up.filter(function(u){ return u.day === sel; });
