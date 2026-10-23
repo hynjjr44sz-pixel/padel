@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- CSP: the inline script by hash (worker/csp.mjs keeps it current: npm test / deploy.sh run it) -->
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-2vyfYjuLcvNkxnPN3Jj423a3GkVFOqjz2hmRrFiYdpU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+q+lQ0KNdXwBtCFSRLGNLMvtFKLTwyDXc22HZ5EeQLs='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com; img-src 'self' data: https://padel-push.holmberg-padel.workers.dev https://cdn.rankedin.com https://rankedin-prod-cdn-adavg8d3dwfegkbd.z01.azurefd.net https://i.ytimg.com; connect-src 'self' https://api.rankedin.com https://padel-push.holmberg-padel.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nynäs Padel</title>
@@ -2797,7 +2797,7 @@
     "Lagamericano":"Americano por parejas",
     "först till {n} game":"a {n} juegos",
     "fri räkning":"marcador libre",
-    "Americano, Mexicano eller Lagamericano med klubbens spelare och gäster. Resultat och tabell i appen.":"Americano, Mexicano o por parejas con jugadores del club e invitados. Resultados y tabla en la app.",
+    "Americano, Mexicano, Lagamericano eller Vinnarbana med klubbens spelare och gäster. Resultat och tabell i appen.":"Americano, Mexicano, por parejas o Pista de ganadores con jugadores del club e invitados. Resultados y tabla en la app.",
     "Mexicano: första rundan lottas, sedan möts spelarna efter tabellen, fyra och fyra. Parningen i varje grupp väljs så att samma två inte spelar ihop igen.":"Mexicano: la primera ronda se sortea; después se juntan según la tabla, de cuatro en cuatro, evitando repetir pareja.",
     "Lagamericano: fasta par som möter nya par varje runda, de par man mött minst först.":"Por parejas: parejas fijas que se enfrentan a nuevas parejas cada ronda.",
     "Americano: ny partner varje runda. Lottningen undviker samma medspelare och motståndare, och aldrig samma som förra rundan om det går.":"Americano: nueva pareja cada ronda. El sorteo evita repetir pareja y rivales.",
@@ -9490,7 +9490,7 @@
     var pub = AMX.list || [], st = {}; pub.forEach(function(x){ st[x.id] = x; });
     var others = pub.filter(function(x){ return ids.indexOf(x.id) < 0; }).slice(0, 6);
     // anyone may start one
-    host.innerHTML = '<a class="amxnew" href="#amx/ny"><b>' + _("Starta en americano") + '</b><span>' + _("Americano, Mexicano eller Lagamericano med klubbens spelare och gäster. Resultat och tabell i appen.") + '</span><i aria-hidden="true">→</i></a>' +
+    host.innerHTML = '<a class="amxnew" href="#amx/ny"><b>' + _("Starta en americano") + '</b><span>' + _("Americano, Mexicano, Lagamericano eller Vinnarbana med klubbens spelare och gäster. Resultat och tabell i appen.") + '</span><i aria-hidden="true">→</i></a>' +
       (mine.length ? '<div class="amxh">' + _("Mina") + '</div>' + mine.slice(0, 8).map(function(x){ return row(st[x.id] ? Object.assign({}, x, {done:st[x.id].done, pids:st[x.id].pids}) : x, true); }).join("") : "") +
       (others.length ? '<div class="amxh">' + _("Senaste veckan") + '</div>' + others.map(function(x){ return row(x, false); }).join("") : "") +
       '<a class="amxallk" href="#amx/alla">' + _("Alla americanos") + ' <i aria-hidden="true">→</i></a>';
